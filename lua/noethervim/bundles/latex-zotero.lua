@@ -17,7 +17,7 @@ return {
       require("telescope").load_extension("zotero")
       vim.keymap.set("n", "<localleader>z",
         "<cmd>Telescope zotero<cr>",
-        { desc = "Zotero citation picker" })
+        { buffer = 0, desc = "Zotero citation picker" })
     end,
   },
 }

@@ -20,7 +20,7 @@ return {
 			-- blink v1: LuaSnip is wired via snippets.preset = "luasnip" below.
 		},
 		opts = {
-			-- [C / ]C keymaps in settings/toggle.lua flip vim.g.blink_toggle.
+			-- [oC / ]oC keymaps in toggles.lua flip vim.g.blink_toggle.
 			enabled = function()
 				return vim.g.blink_toggle ~= false
 			end,
@@ -213,7 +213,7 @@ return {
 			vim.o.wildcharm = vim.fn.char2nr(vim.api.nvim_replace_termcodes("<C-z>", true, false, true))
 
 			-- Native <C-Space> fallback: blink overrides this with buffer-local
-			-- keymaps on InsertEnter; when blink is disabled (]C toggle), blink
+			-- keymaps on InsertEnter; when blink is disabled (]oC toggle), blink
 			-- skips the buffer-local keymap and this global mapping fires instead.
 			vim.keymap.set("i", "<C-Space>", function()
 				vim.api.nvim_feedkeys(vim.keycode("<C-n>"), "n", false)

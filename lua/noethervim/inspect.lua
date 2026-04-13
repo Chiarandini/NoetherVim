@@ -4,6 +4,7 @@
 -- See :help noethervim-inspect for documentation.
 
 local SearchLeader = require("noethervim.util").search_leader
+local Snacks = require("snacks")
 
 local M = {}
 

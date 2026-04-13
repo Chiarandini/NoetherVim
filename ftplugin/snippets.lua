@@ -1,1 +1,1 @@
-vim.bo.wrap = false
+vim.wo.wrap = false

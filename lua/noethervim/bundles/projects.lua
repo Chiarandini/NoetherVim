@@ -8,6 +8,7 @@
 -- After selecting a project, cd's into it and opens a file picker
 -- scoped to that directory.
 local SearchLeader = require("noethervim.util").search_leader
+local Snacks = require("snacks")
 
 return {
   {

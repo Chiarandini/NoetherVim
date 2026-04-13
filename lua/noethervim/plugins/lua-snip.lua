@@ -27,7 +27,7 @@ config = function(_, opts)
 			},
 			[types.insertNode] = {
 				active = {
-					virt_text = { { "●", "NonTest" } },
+					virt_text = { { "●", "NonText" } },
 				},
 				unvisited = {
 					virt_text = { { "..", "GruvboxBlue" } },

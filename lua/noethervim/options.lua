@@ -46,7 +46,7 @@ vim.opt.showbreak  = "↳"
 opt.formatoptions  = "tcroq1jn"
 
 -- Diff
-vim.o.diffopt = vim.o.diffopt .. ",vertical"
+vim.opt.diffopt:append("vertical")
 
 -- Search
 opt.ignorecase = true
@@ -69,7 +69,7 @@ opt.sidescrolloff = 8
 vim.opt.smoothscroll = true
 
 -- UI
-opt.shortmess     = opt.shortmess .. "T"
+vim.opt.shortmess:append("T")
 opt.visualbell    = true
 opt.termguicolors = true
 opt.foldcolumn    = "0"
@@ -106,7 +106,7 @@ vim.o.spellfile = vim.fn.stdpath("config") .. "/spell/en.utf-8.add"
 opt.shada = "'1000,<50,s10,h"
 
 -- Wildignore
-opt.wildignore = opt.wildignore .. "*/.git/*,*.swp"
+vim.opt.wildignore:append({"*/.git/*", "*.swp"})
 
 -- Fallback colorscheme applied before plugins load (overwritten by the real theme)
 vim.cmd.colorscheme("slate")

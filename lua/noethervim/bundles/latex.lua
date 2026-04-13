@@ -37,14 +37,6 @@ local function tex_shift_enter()
         return l:match("\\item") and (w:sub(1) or "") or w
       end,
     },
-    {
-      names = { "equivEnumerate" },
-      text  = "\\item[($\\Rw$)] ",
-      adjust_ws = function(l, w)
-        return l:match("\\item") and (w:sub(1) or "") or w
-      end,
-    },
-    { names = { "Exercise", "Answer" }, text = "\\Question " },
   }
 
   for _, env in ipairs(envs) do
@@ -193,7 +185,8 @@ let g:vimtex_compiler_latexmk_engines = {
 
           -- :PDF — open compiled PDF
           vim.api.nvim_buf_create_user_command(ev.buf, "PDF", function()
-            vim.cmd("exe \"!open '\" . expand('%:t:r') . \".pdf'\"")
+            local open_cmd = vim.fn.has("mac") == 1 and "open" or "xdg-open"
+            vim.cmd("exe \"!" .. open_cmd .. " '\" . expand('%:t:r') . \".pdf'\"")
           end, { desc = "open compiled PDF" })
 
           vim.keymap.set("n", "<localleader>vw", "<Cmd>VimtexCountWords<CR>", o("vimtex word count"))
@@ -298,7 +291,6 @@ let g:vimtex_compiler_latexmk_engines = {
     },
     config = function(_, opts)
       require("telescope").load_extension("media_files")
-      require("telescope").setup({ extensions = opts })
     end,
   },
 
@@ -398,9 +390,9 @@ let g:vimtex_compiler_latexmk_engines = {
     ft     = { "tex", "latex" },
     config = function()
       require("telescope").load_extension("latex_labels")
-      vim.keymap.set("n", "<localleader>w",    "<cmd>Telescope latex_labels<cr>",  { desc = "latex labels" })
-      vim.keymap.set("n", "<localleader>vul", "<cmd>LatexLabelsUpdate<cr>",       { desc = "update latex labels" })
-      vim.keymap.set("n", "<localleader>vuh", "<cmd>CachedHeadingsUpdate<cr>",    { desc = "update headings cache" })
+      vim.keymap.set("n", "<localleader>w",    "<cmd>Telescope latex_labels<cr>",  { buffer = 0, desc = "latex labels" })
+      vim.keymap.set("n", "<localleader>vul", "<cmd>LatexLabelsUpdate<cr>",       { buffer = 0, desc = "update latex labels" })
+      vim.keymap.set("n", "<localleader>vuh", "<cmd>CachedHeadingsUpdate<cr>",    { buffer = 0, desc = "update headings cache" })
 
       -- ── gd: goto label definition ────────────────────────────────────────
       -- Extracts the label under the cursor (e.g. "th:bezoutIdentity" from

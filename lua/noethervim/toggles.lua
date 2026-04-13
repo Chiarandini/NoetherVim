@@ -9,7 +9,7 @@
 -- map(lhs, rhs, desc)                         → single directional map
 
 local function TOGGLE_PRINT(text)
-  vim.cmd('echom "' .. text .. '"')
+  vim.notify(text, vim.log.levels.INFO)
 end
 
 local function map(lhs, rhs, desc, echo)
@@ -17,7 +17,7 @@ local function map(lhs, rhs, desc, echo)
   if type(rhs) == "string" then
     if echo ~= false then
       vim.keymap.set("n", lhs,
-        rhs .. '<cmd>lua vim.cmd("echom \\"' .. descr .. '\\"")<cr>',
+        rhs .. '<cmd>lua vim.notify("' .. descr .. '", vim.log.levels.INFO)<cr>',
         { desc = descr })
     else
       vim.keymap.set("n", lhs, rhs, { desc = descr })
@@ -25,8 +25,8 @@ local function map(lhs, rhs, desc, echo)
   elseif type(rhs) == "function" then
     if echo ~= false then
       vim.keymap.set("n", lhs, function()
-        TOGGLE_PRINT(descr)
         rhs()
+        TOGGLE_PRINT(descr)
       end, { desc = descr })
     else
       vim.keymap.set("n", lhs, rhs, { desc = descr })
@@ -45,8 +45,19 @@ end
 
 toggle("oa", "<cmd>setl autochdir<cr>",      "<cmd>setl noautochdir<cr>",      "autochdir")
 toggle("oN",
-  "<cmd>nnoremap n nzz<cr><cmd>nnoremap N Nzz<cr>",
-  "<cmd>nnoremap n n<cr><cmd>nnoremap N N<cr>",
+  function()
+    vim.keymap.set({ "n", "v" }, "n", "nzz", { desc = "search forward (centered)" })
+    vim.keymap.set({ "n", "v" }, "N", "Nzz", { desc = "search backward (centered)" })
+  end,
+  function()
+    -- Restore the original direction-normalizing expr mappings from keymaps.lua
+    vim.keymap.set({ "n", "v" }, "n",
+      function() return vim.v.searchforward == 1 and "n" or "N" end,
+      { expr = true, silent = true, desc = "search forward" })
+    vim.keymap.set({ "n", "v" }, "N",
+      function() return vim.v.searchforward == 1 and "N" or "n" end,
+      { expr = true, silent = true, desc = "search backward" })
+  end,
   "centered n/N")
 
 toggle("o<c-i>",
@@ -118,8 +129,8 @@ local function toggle_cmp(bool)
   vim.g.blink_toggle = bool
   vim.notify("completion " .. (bool and "enabled" or "disabled"), vim.log.levels.INFO)
 end
-vim.keymap.set("n", "[C", function() toggle_cmp(true)  end, { desc = "enable completion" })
-vim.keymap.set("n", "]C", function() toggle_cmp(false) end, { desc = "disable completion" })
+vim.keymap.set("n", "[oC", function() toggle_cmp(true)  end, { desc = "enable completion" })
+vim.keymap.set("n", "]oC", function() toggle_cmp(false) end, { desc = "disable completion" })
 
 -- Quickfix navigation
 map("[Q", "<cmd>cfirst<cr>", "quickfix first", false)
@@ -184,7 +195,7 @@ map("[b", "<cmd>bp<cr>", "prev buffer", false)
 map("]b", "<cmd>bn<cr>", "next buffer", false)
 
 -- DAP virtual text
-toggle("V",
+toggle("oV",
   "<cmd>DapVirtualTextEnable<cr>",
   "<cmd>DapVirtualTextDisable<cr>",
   "debug virtual text")

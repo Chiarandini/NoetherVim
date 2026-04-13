@@ -8,7 +8,7 @@ local M = {}
 
 -- Spacing and separating components
 M.Align = { provider = "%=" }
-M.Seperator = { flexible = ctx.priority.mid, { provider = "|" }, { provider = "" } }
+M.Separator = { flexible = ctx.priority.mid, { provider = "|" }, { provider = "" } }
 M.Space = { provider = " " }
 
 -- Luasnip jump detecting

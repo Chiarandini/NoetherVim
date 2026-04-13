@@ -41,7 +41,7 @@ return {
           end
           local suffix = ""
           for _ = 1, 4 do
-            suffix = suffix .. string.char(math.random(65, 90)) .. "-RENAME_ME"
+            suffix = suffix .. string.char(math.random(65, 90))
           end
           return tostring(os.time()) .. "-" .. suffix
         end,
@@ -149,9 +149,9 @@ return {
       end
 
       local client = require("obsidian").get_client()
-      vim.keymap.set("n", "<leader>ol", function() default_to_first_link(client) end, { desc = "follow link" })
-      vim.keymap.set("i", "<c-s>", "<c-o>:Obsidian quick_switch<cr>")
-      vim.keymap.set("n", SearchLeader .. "oq", "<cmd>Obsidian quick_switch<cr>", { desc = "obsidian quick switch" })
+      vim.keymap.set("n", "<leader>ol", function() default_to_first_link(client) end, { buffer = 0, desc = "follow link" })
+      vim.keymap.set("i", "<c-s>", "<c-o>:Obsidian quick_switch<cr>", { buffer = 0 })
+      vim.keymap.set("n", SearchLeader .. "oq", "<cmd>Obsidian quick_switch<cr>", { buffer = 0, desc = "obsidian quick switch" })
     end,
   },
 }

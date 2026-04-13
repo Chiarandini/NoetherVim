@@ -113,7 +113,7 @@ return {
           end
           return { fg = ctx.colors.text_gray, bg = ctx.colors.light_gray }
         end,
-        misc.Seperator,
+        misc.Separator,
         misc.Lazy,
         ruler.FileSize,
         ruler.Percentage,
