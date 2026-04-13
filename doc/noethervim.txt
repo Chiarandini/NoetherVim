@@ -40,7 +40,7 @@ providing a robust user configuration system that survives upstream updates.
 Key principles:~
 - Update-safe: user files and distro files never overlap.
 - Last-write wins: user overrides load after core modules.
-- opts is the happy path: plugin overrides use lazy.nvim spec merging.
+- opts table: plugin overrides use lazy.nvim spec merging.
 - Minimal magic: user files are plain Lua, no special APIs.
 
 ==============================================================================
@@ -854,6 +854,10 @@ A: vim-abolish (tpope) provides three features:
    3. Coercion operators — `crs` snake_case, `crm` MixedCase,
       `crc` camelCase, `cru` UPPER_CASE, `cr-` dash-case
    Add personal typo corrections in `lua/user/plugins/abolish.lua`.
+
+Q: Can I made my `leader` and `searchleader` the same?
+A: Yes; simply map both to the same key in your `init.lua` file. You can map
+your LocalLeader to the same key as well.
 
 ==============================================================================
 vim:tw=78:ts=8:ft=help:norl:
