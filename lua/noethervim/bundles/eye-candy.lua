@@ -30,7 +30,7 @@ return {
 			winblend  = 90,
 		},
 		config = function(_, opts)
-			local curTime = tonumber(string.sub(os.date(), 12, 13))
+			local curTime = tonumber(os.date("%H"))
 			if curTime >= 21 or curTime <= 6 then
 				opts.themes = {theme = "stars"}
 			else

@@ -15,7 +15,7 @@
 --     Handles all case variants automatically:
 --       :Abolish teh the   →  corrects teh, Teh, TEH
 --
---    A particulalrly powerful feature is the ability to stack cases:
+--    A particularly powerful feature is the ability to stack cases:
 --       :Abolish neeed{ed} need{}
 --         → neeed → need, neeeded → needed
 --       :Abolish {,sub}lienear {}linear
@@ -43,5 +43,5 @@
 return {
 	"tpope/vim-abolish",
 	ft = {'tex'},
-	event = { "InsertEnter", "CmdlineEnter" },
+	event = "VeryLazy",
 }

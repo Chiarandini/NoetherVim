@@ -47,7 +47,8 @@ return {
 				-- supports nvim-cmp, but this distro uses blink.cmp. Neorg
 				-- completions require a blink source adapter if available.
 				["core.export"]            = { config = { export_dir = "export/markdown-export" } },
-				["core.presenter"]         = { config = { zen_mode = "zen-mode" } },
+				-- core.presenter removed in recent neorg versions
+				-- ["core.presenter"]         = { config = { zen_mode = "zen-mode" } },
 				["core.latex.renderer"]    = { config = { render_on_enter = true } },
 			},
 		},

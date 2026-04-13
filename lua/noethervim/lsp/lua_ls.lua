@@ -6,7 +6,7 @@ vim.lsp.config('lua_ls', {
 			},
 			diagnostics = {
 				disable = { 'incomplete-signature-doc', 'missing-fields' },
-				globals = { 'MiniMap', 'vim' },
+				globals = { 'vim' },
 			},
 			hint = {
 				enable = false,

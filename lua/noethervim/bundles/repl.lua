@@ -23,7 +23,7 @@ return {
 			config = {
 				scratch_repl = true,
 				repl_definition = {
-					sh     = { command = { "zsh" } },
+					sh     = { command = { vim.o.shell } },
 				},
 				highlight        = { italic = true },
 				ignore_blank_lines = true,

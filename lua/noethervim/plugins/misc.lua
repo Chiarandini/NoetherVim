@@ -74,5 +74,5 @@ return {
 		end,
 	},
 
-	{ "nvzone/volt" }, -- UI primitive used by popupmenu and nvim-utils/wrapped.nvim
+	{ "nvzone/volt", lazy = true }, -- UI primitive used by popupmenu and nvim-utils/wrapped.nvim
 }

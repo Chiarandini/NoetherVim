@@ -32,7 +32,7 @@ return {
 	-- Tutorial: vim -Nu path/to/visual-multi/tutorialrc
 	{
 		"mg979/vim-visual-multi",
-		event = "InsertEnter",
+		event = "BufReadPost",
 	},
 
 	--  delete extra white space
