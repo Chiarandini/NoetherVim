@@ -403,21 +403,11 @@ return {
 			end,
 			desc = "[f]ind [p]roject files",
 		},
-		-- Recent dirs via zoxide → find files within the chosen dir
+		-- Find files
 		{
 			SearchLeader .. "ff",
-			function()
-				Snacks.picker.zoxide({
-					finder       = "files",
-					format       = "file",
-					show_empty   = true,
-					hidden       = false,
-					ignored      = false,
-					follow       = false,
-					supports_live = true,
-				})
-			end,
-			desc = "[f]ind via zoxide",
+			function() Snacks.picker.files() end,
+			desc = "[f]ind [f]iles",
 		},
 		-- Current buffer fuzzy find
 		{ SearchLeader .. "/",  function() Snacks.picker.lines({ title = "Buffer Lines" })    end, desc = "fuzzy search current buffer" },
