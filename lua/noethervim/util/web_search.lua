@@ -125,7 +125,7 @@ end
 
 function M.open_plugin_repo()
   local word = vim.fn.expand("<cWORD>")
-  local repo = word:match("([^\"\\s]+/[^\"\\s]+)")
+  local repo = word:match('([^"%s]+/[^"%s]+)')
   if repo then
     open_url("https://github.com/" .. repo)
   else

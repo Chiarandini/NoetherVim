@@ -2,7 +2,7 @@
 -- Smart list continuation keymap.
 -- spell + <C-l> spell-fix are set by the prose autocmd in autocmds.lua
 
-vim.wo.conceallevel = 2            -- render markdown formatting (links, bold, etc.)
+vim.opt_local.conceallevel = 2     -- render markdown formatting (links, bold, etc.)
 
 local function shift_enter()
   local row, col = unpack(vim.api.nvim_win_get_cursor(0))

@@ -210,11 +210,14 @@ return {
 				local curr_name = vim.fn.expand('<cword>')
 				vim.ui.input({ prompt = 'LSP Rename', default = curr_name }, function(new_name)
 					if not new_name or #new_name == 0 or curr_name == new_name then return end
-					local params = vim.lsp.util.make_position_params()
+					local clients = vim.lsp.get_clients({ bufnr = 0 })
+					if #clients == 0 then return end
+					local params = vim.lsp.util.make_position_params(0, clients[1].offset_encoding)
 					params.newName = new_name
 					vim.lsp.buf_request(0, 'textDocument/rename', params, function(_, res, ctx)
 						if not res then return end
 						local client = vim.lsp.get_client_by_id(ctx.client_id)
+						if not client then return end
 						vim.lsp.util.apply_workspace_edit(res, client.offset_encoding)
 						local changes = count_lsp_res_changes(res)
 						vim.notify(string.format(

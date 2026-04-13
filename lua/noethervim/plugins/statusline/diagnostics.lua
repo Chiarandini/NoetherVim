@@ -111,10 +111,15 @@ M.Diagnostics = {
   },
 
   init = function(self)
-    self.errors = #vim.diagnostic.get(0, { severity = vim.diagnostic.severity.ERROR })
-    self.warnings = #vim.diagnostic.get(0, { severity = vim.diagnostic.severity.WARN })
-    self.hints = #vim.diagnostic.get(0, { severity = vim.diagnostic.severity.HINT })
-    self.info = #vim.diagnostic.get(0, { severity = vim.diagnostic.severity.INFO })
+    local diags = vim.diagnostic.get(0)
+    self.errors, self.warnings, self.hints, self.info = 0, 0, 0, 0
+    for _, d in ipairs(diags) do
+      if d.severity == vim.diagnostic.severity.ERROR then self.errors = self.errors + 1
+      elseif d.severity == vim.diagnostic.severity.WARN then self.warnings = self.warnings + 1
+      elseif d.severity == vim.diagnostic.severity.HINT then self.hints = self.hints + 1
+      elseif d.severity == vim.diagnostic.severity.INFO then self.info = self.info + 1
+      end
+    end
   end,
 
   update = { "DiagnosticChanged", "BufEnter", "WinResized", "InsertEnter", "InsertLeave" },

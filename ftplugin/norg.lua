@@ -1,4 +1,4 @@
 -- NoetherVim ftplugin: norg
 -- Buffer-local options for Neorg files.
 
-vim.wo.conceallevel = 2            -- required for core.concealer rendering
+vim.opt_local.conceallevel = 2     -- required for core.concealer rendering

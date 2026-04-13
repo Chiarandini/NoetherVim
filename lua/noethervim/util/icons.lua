@@ -1,5 +1,3 @@
-local M = {}
-
 local kind_icons = {
 	Method = "m",
 	nvim_lsp = "λ",
@@ -7,7 +5,7 @@ local kind_icons = {
 	Field = "",
 	Interface = "",
 	Module = "",
-	Property = "ﰠ", -- 
+	Property = "",
 	Unit = "",
 	Constant = "",
 	Value = "",
@@ -27,9 +25,9 @@ local kind_icons = {
 	Variable = "󰀫",
 	File = "",
 	Folder = "",
-	Class = "ﴯ", -- 󰋜
+	Class = "󰋜",
 }
-M = {
+local M = {
 	kind_icons = kind_icons,
 	-- NOTE: These are duplicated here so that I don't double name variable in the future
 	method        = "m",
@@ -38,7 +36,7 @@ M = {
 	field         = "",
 	interface     = "",
 	module        = "",
-	property      = "ﰠ", -- 
+	property      = "",
 	unit          = "",
 	constant      = "",
 	value         = "",
@@ -57,7 +55,7 @@ M = {
 	variable      = "󰀫",
 	file          = "",
 	folder        = "",
-	class         = "ﴯ", -- 󰋜
+	class         = "󰋜",
 
 	-- whichkey
 	toggle_on   = "",

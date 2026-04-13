@@ -60,7 +60,7 @@ return {
           },
         },
         ui = {
-          enable = true,
+          enable = false,
           ignore_conceal_warn = false,
           update_debounce = 200,
           max_file_length = 5000,

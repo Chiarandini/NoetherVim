@@ -123,8 +123,8 @@ return {
 					{ type = "go", name = "Attach (remote)",     mode = "remote", request = "attach", port = "9080" },
 				},
 				javascript = {
-					{ type = "node2", name = "Launch", request = "launch", program = "${file}", cwd = vim.fn.getcwd(), sourceMaps = true, protocol = "inspector", console = "integratedTerminal" },
-					{ type = "node2", name = "Attach", request = "attach", program = "${file}", cwd = vim.fn.getcwd(), sourceMaps = true, protocol = "inspector", console = "integratedTerminal" },
+					{ type = "pwa-node", name = "Launch", request = "launch", program = "${file}", cwd = vim.fn.getcwd(), sourceMaps = true, protocol = "inspector", console = "integratedTerminal" },
+					{ type = "pwa-node", name = "Attach", request = "attach", program = "${file}", cwd = vim.fn.getcwd(), sourceMaps = true, protocol = "inspector", console = "integratedTerminal" },
 				},
 				lua = {
 					{ type = "nlua", request = "attach", name = "Attach to running Neovim instance" },
