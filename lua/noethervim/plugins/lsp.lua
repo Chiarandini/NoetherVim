@@ -245,7 +245,6 @@ return {
 						return { buffer = bufnr, silent = true, desc = desc }
 					end
 
-					vim.keymap.set('n', 'L',   function() vim.lsp.buf.hover({ border = 'rounded', max_width = 80 }) end, km_opts('hover docs'))
 					vim.keymap.set('n', 'gd',  vim.lsp.buf.definition,      km_opts('[g]o to [d]efinition'))
 					vim.keymap.set('n', 'gD',  vim.lsp.buf.declaration,     km_opts('[g]o to [D]eclaration'))
 					vim.keymap.set('n', 'gt',  vim.lsp.buf.type_definition, km_opts('[g]o to [t]ype definition'))
@@ -257,10 +256,10 @@ return {
 					vim.keymap.set('i', '<C-h>', function() vim.lsp.buf.signature_help({ border = 'rounded' }) end, km_opts('signature help'))
 					vim.keymap.set('n', 'gl', vim.diagnostic.open_float, km_opts('diagnostics float'))
 					vim.keymap.set('n', ']d', function()
-						vim.diagnostic.goto_next({ float = { border = 'rounded' } })
+						vim.diagnostic.jump({ count = 1, float = { border = 'rounded' } })
 					end, km_opts('next [d]iagnostic'))
 					vim.keymap.set('n', '[d', function()
-						vim.diagnostic.goto_prev({ float = { border = 'rounded' } })
+						vim.diagnostic.jump({ count = -1, float = { border = 'rounded' } })
 					end, km_opts('prev [d]iagnostic'))
 					-- gra/grn: Neovim 0.12 defaults (code action, rename) — don't override
 					vim.keymap.set('n',      '<F1>', vim.lsp.buf.code_action,  km_opts('code action'))
@@ -269,7 +268,7 @@ return {
 					vim.keymap.set('n',      '<F2>', LspRename,                km_opts('rename (with count)'))
 					-- <Leader>ff: format via conform (falls back to LSP if no formatter configured)
 					vim.keymap.set({ 'n', 'x' }, '<Leader>ff', function()
-						require("conform").format({ lsp_fallback = true, bufnr = bufnr })
+						require("conform").format({ lsp_format = "fallback", bufnr = bufnr })
 					end, km_opts('format buffer'))
 					vim.keymap.set('n', 'go', '<cmd>Outline<cr>', km_opts('symbols [o]utline'))
 					vim.keymap.set('n', SearchLeader .. 'li', vim.lsp.buf.incoming_calls, km_opts('[l]sp [i]ncoming calls'))

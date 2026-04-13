@@ -113,7 +113,7 @@ function M.setup(opts)
   vim.keymap.set("n", "<c-w>lp", "<cmd>Lazy profile<cr>",     { desc = "Lazy profile" })
   vim.keymap.set("n", "<c-w>ld", "<cmd>Lazy debug<cr>",       { desc = "Lazy debug" })
   vim.keymap.set("n", "<c-w><c-g>",
-    "<cmd>lua require('lazy.util').float_term('lazygit')<cr>", { desc = "lazygit" })
+    "<cmd>lua Snacks.terminal('lazygit')<cr>", { desc = "lazygit" })
 
   -- ── LSP server configs ─────────────────────────────────────────
   -- Core servers (lua/noethervim/lsp/*.lua)

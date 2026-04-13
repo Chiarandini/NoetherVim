@@ -89,7 +89,7 @@ M.GitBlock = {
   on_click = {
     callback = function()
       vim.defer_fn(function()
-        vim.cmd("lua require('lazy.util').float_term('lazygit')")
+        Snacks.terminal('lazygit')
       end, 100)
     end,
     name = "heirline_git",

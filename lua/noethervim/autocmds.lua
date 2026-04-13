@@ -131,6 +131,7 @@ hl_event("HeirlinePDFModeOn",    function()
   vim.g.heirline_lsp_show       = false
   vim.g.heirline_directory_show = false
   vim.g.heirline_pdfsize_show   = true
+  vim.cmd.redrawstatus()
 end)
 
 -- ──────────────────────────────────────────────────────────────

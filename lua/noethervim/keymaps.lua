@@ -209,12 +209,6 @@ vim.keymap.set("v", "P", '"*p',  { desc = "paste from clipboard" })
 -- Paste over selection without polluting unnamed register
 vim.keymap.set("v", "p", '"_dP', { desc = "paste over (keep register)" })
 
--- Replace selection with regex
-vim.keymap.set("v", "c",  "y:let @0=escape(@0, '\\/.*$^~[]')<cr>:%s/<c-r>0/",
-  { desc = "replace selection globally" })
-vim.keymap.set("v", "gv", ":s/\\%V", { desc = "replace in visual area" })
-vim.keymap.set("v", "D",  ":s/\\%V//g<left><left><left>", { desc = "delete in visual area" })
-
 -- Inner-line text object: il = between first non-blank and last non-blank char
 vim.keymap.set("x", "il", "g_o^",          { desc = "inner line" })
 vim.keymap.set("o", "il", ":normal vil<CR>", { desc = "inner line" })

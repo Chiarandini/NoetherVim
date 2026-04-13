@@ -80,7 +80,7 @@ return {
 			{ "<leader>dg", function() require("dap").session()                                    end, desc = "DAP: Get Session" },
 			{ "<leader>dh", function() require("dap.ui.widgets").hover()                           end, desc = "DAP: Hover Variables" },
 			{ "<leader>dS", function() require("dap.ui.widgets").scopes()                          end, desc = "DAP: Scopes" },
-			{ "<leader>dp", function() require("dap").pause.toggle()                               end, desc = "DAP: Pause" },
+			{ "<leader>dp", function() require("dap").pause()                                      end, desc = "DAP: Pause" },
 			{ "<leader>dq", function() require("dap").close()                                      end, desc = "DAP: Quit" },
 			{ "<leader>ds", function() require("dap").continue()                                   end, desc = "DAP: Start" },
 			{ "<leader>dw", function() require("dap-view").elements.watches.add(vim.fn.expand("<cword>")) end, desc = "DAP: Watch Word" },

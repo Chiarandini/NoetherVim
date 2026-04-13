@@ -31,7 +31,7 @@ function M.setup()
     vim.api.nvim_exec_autocmds("User", {
       pattern = "HeirlinePDFModeOn",
     })
-  end, { desc = "Pwd In Statusline" })
+  end, { desc = "PDF Mode" })
 end
 
 return M

@@ -29,8 +29,11 @@ M.DAPMessages = {
 -- VimTeX compiler status
 M.VimtexCompilerStatus = {
   init = function(self)
-    ---@diagnostic disable-next-line: undefined-field
-    self.status = vim.b.vimtex.compiler.status
+    if vim.b.vimtex and vim.b.vimtex.compiler then
+      self.status = vim.b.vimtex.compiler.status
+    else
+      self.status = 0
+    end
     self.color = "white" -- default
   end,
   condition = function()

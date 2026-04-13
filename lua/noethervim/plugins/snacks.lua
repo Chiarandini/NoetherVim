@@ -19,6 +19,9 @@ local _header = table.concat({
 ---@param opts table
 local find_files_project_dir = function(opts)
 	local gitPath = vim.fn.systemlist("git rev-parse --show-toplevel")[1]
+	if not gitPath or gitPath:match("^fatal") then
+		gitPath = vim.fn.getcwd()
+	end
 	opts = opts or {}
 	opts.cwd = gitPath
 	require("snacks").picker.files(opts)
@@ -390,6 +393,9 @@ return {
 			SearchLeader .. "fp",
 			function()
 				local root = vim.fn.systemlist("git rev-parse --show-toplevel")[1]
+				if not root or root:match("^fatal") then
+					root = vim.fn.getcwd()
+				end
 				local name = vim.fn.fnamemodify(root, ":t")
 				find_files_project_dir({
 					title = "Project Files (" .. name .. ")",
@@ -446,6 +452,9 @@ return {
 			SearchLeader .. "gp",
 			function()
 				local root = vim.fn.systemlist("git rev-parse --show-toplevel")[1]
+				if not root or root:match("^fatal") then
+					root = vim.fn.getcwd()
+				end
 				local name = vim.fn.fnamemodify(root, ":t")
 				Snacks.picker.grep({ cwd = root, title = "Grep Project (" .. name .. ")" })
 			end,

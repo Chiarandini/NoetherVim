@@ -1,7 +1,11 @@
 -- NoetherVim highlight overrides
 
--- Keep sign column visually integrated with the background
-vim.cmd("hi! link SignColumn Normal")
+-- Keep sign column visually integrated with the background.
+-- Re-applied on ColorScheme so it persists across theme changes.
+local function apply_signcolumn_hl()
+  vim.cmd("hi! link SignColumn Normal")
+end
+apply_signcolumn_hl()
 
 -- ── Helpers ──────────────────────────────────────────────────────
 
@@ -29,6 +33,11 @@ end
 vim.api.nvim_create_autocmd("ColorScheme", {
   group    = vim.api.nvim_create_augroup("noethervim_dashboard_header", { clear = true }),
   callback = apply_dashboard_header_hl,
+})
+
+vim.api.nvim_create_autocmd("ColorScheme", {
+  group    = vim.api.nvim_create_augroup("noethervim_signcolumn", { clear = true }),
+  callback = apply_signcolumn_hl,
 })
 
 -- ──────────────────────────────────────────────────────────────
