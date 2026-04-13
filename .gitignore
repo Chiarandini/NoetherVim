@@ -5,3 +5,4 @@ tests/
 .claude/
 **/.luarc.json
 docs/
+CONTRIBUTING.md
