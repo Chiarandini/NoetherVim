@@ -338,11 +338,18 @@ Available bundles: ~
                      Recommended: also enable the markdown bundle.
                      Configure vault path in lua/user/config.lua.
     `flash`          Enhanced f/t and / motions with jump labels.
+                     Note: the flash bundle remaps `S` in normal mode from the
+                     core global-substitute shortcut to a flash jump.  The core
+                     `S` behavior remains accessible via `:%s/`.
     `hardtime`       Motion habit trainer.
     `minimap`        Sidebar minimap with diagnostics and git signs.
     `refactoring`    Extract function/variable/block.
     `web-dev`        JS/TS template string + inline color preview.
     `tmux`           Tmux window naming.
+                     Note: vim-tmux-navigator remaps `<C-h/j/k/l>` to navigate
+                     both Neovim splits and tmux panes seamlessly.  This
+                     overrides the core window-navigation shortcuts (which do
+                     the same thing for Neovim splits only).
     `dev-tools`      StartupTime benchmarking, Luapad Lua scratchpad.
     `training`       Vim motion and typing practice (vim-be-good,
                      speedtyper, typr).
@@ -513,7 +520,7 @@ Prefixes: ~
                       i(gnorecase)  I(lluminate)  T(reeSitter)
                       D(irty whitespace/tidy)  G(uide column/deadcolumn)
                       G persists across sessions (stored in stdpath("state")).
-                      `[C`/`]C` toggle blink.cmp completion on/off
+                      `[oC`/`]oC` toggle blink.cmp completion on/off
                                                         *noethervim-Z*
     `Z`                 Buffer operations
                       ZA(ll quit)  ZB(uffer delete)  ZD(scratch delete)
@@ -533,6 +540,23 @@ Other notable keymaps: ~
     `n` / `N`         Consistent search direction
     `-`               Highlight word under cursor + count
     `L`               Hover docs (LSP)
+
+    Note: `L` is mapped to fold-peek (via nvim-ufo), which falls back
+    to LSP hover when the cursor is not on a fold.  If you prefer the
+    traditional Vim `K` for hover, add to `lua/user/keymaps.lua`:
+>lua
+    vim.keymap.set('n', 'K', function()
+      vim.lsp.buf.hover({ border = 'rounded', max_width = 80 })
+    end, { desc = 'hover docs' })
+<
+    Similarly, `<C-w>d` is mapped to `:DiffOrig` (diff against saved
+    version).  Neovim 0.10+ maps `<C-w>d` to show diagnostics under the
+    cursor by default.  To restore the built-in behavior:
+>lua
+    vim.keymap.set('n', '<C-w>d', function()
+      vim.diagnostic.open_float()
+    end, { desc = 'show diagnostics' })
+<
     `<F2>`            Rename (with count, LSP)
 
     Visual: ~
@@ -587,6 +611,9 @@ These keymaps activate only in their respective filetype.
 
     markdown: ~
     `<S-CR>`            Smart newline in lists (insert)
+    Note: `<S-CR>` requires a terminal that sends distinct escape
+    sequences for Shift+Enter (Kitty, WezTerm, Ghostty, Neovide).
+    Some terminals send plain `<CR>` for both.
     `<C-l>`             Auto-fix nearest spelling error (insert)
 
     qf (quickfix): ~
@@ -606,7 +633,7 @@ with the `<C-w>s` prefix:
     `<C-w>sp`           Toggle PDF size indicator
     `<C-w>sl`           Toggle LSP component
     `<C-w>sP`           Show full file path
-    `<C-w>s<C-p>`       Toggle all components
+    `<C-w>s<C-p>`       Toggle PDF mode
 
 Customize statusline colors and extra components via opts: >lua
     { "Chiarandini/NoetherVim", opts = {
@@ -616,6 +643,19 @@ Customize statusline colors and extra components via opts: >lua
         },
     } }
 <
+    Available color keys (from `util/palette.lua`): ~
+    `mode_n`, `mode_i`, `mode_v`, `mode_c`, `mode_t`, `mode_R`,
+    `green`, `blue`, `orange`, `red`, `purple`, `default_gray`,
+    `lazy_updates`, `text_gray`
+
+    Example — change normal-mode indicator to blue: >lua
+    { "Chiarandini/NoetherVim", opts = {
+        statusline = {
+          colors = { mode_n = "#458588" },
+        },
+    } }
+<
+    For custom component authoring, see |heirline-cookbook|.
 
 ------------------------------------------------------------------------------
 9.3 TABLINE                                              *noethervim-tabline*
@@ -629,6 +669,8 @@ Tab management keymaps: ~
     `+`                 Open a new tab
     `<C-w><A-h>`        Move current tab left
     `<C-w><A-l>`        Move current tab right
+    `[t` / `]t`         Previous / next tab
+    `>t` / `<t`         Move current tab right / left
 
                                               *noethervim-tabline-bufferline*
 Switching to a bufferline ~
@@ -710,7 +752,7 @@ Default keybindings: ~
   Insert mode: ~
     `<C-Space>`   Show menu / toggle documentation.
                   Falls back to native |i_CTRL-N| when blink is
-                  disabled (|noethervim-option-toggles| `]C`).
+                  disabled (|noethervim-option-toggles| `]oC`).
     `<C-n>`       Next item
     `<C-p>`       Previous item
     `<C-y>`       Accept selected item
@@ -842,8 +884,9 @@ A: Use `cond = false` (or `enabled = false`) in your `user/plugins/` spec:
 Q: I typed `:NeotherVim` and it worked?~
 A: Yes. Years of typing `neo-` will do that. The alias is there so you
    don't have to think about it. `:help neothervim` works too. I did consider
-   naming the distribution `NeotherVim`, but this felt it would inadvertently induce the
-   Mandela-effect forevermore on the reading of the name `Noether`.
+   naming the distribution `NeotherVim`, but this felt it would
+   inadvertently induce the Mandela-effect forevermore on the
+   reading of the name `Noether`.
 
 Q: What is vim-abolish and how do I use it?~
 A: vim-abolish (tpope) provides three features:
@@ -855,7 +898,7 @@ A: vim-abolish (tpope) provides three features:
       `crc` camelCase, `cru` UPPER_CASE, `cr-` dash-case
    Add personal typo corrections in `lua/user/plugins/abolish.lua`.
 
-Q: Can I made my `leader` and `searchleader` the same?
+Q: Can I make my `leader` and `searchleader` the same?~
 A: Yes; simply map both to the same key in your `init.lua` file. You can map
 your LocalLeader to the same key as well.
 

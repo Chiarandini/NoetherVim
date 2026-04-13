@@ -2,12 +2,12 @@
 
 A Neovim distribution with a minimal abstraction layer. The name is after [Emmy Noether](https://en.wikipedia.org/wiki/Emmy_Noether) (the name also contains *nvim* - *noether**Vim***). If muscle memory makes you type `:NeotherVim`, that works too.
 
-LaTeX, BibTeX, and VimTeX get the same level of support as LSP and treesitter Everything else you'd expect is configured out of the box: completion (blink.cmp), DAP, diagnostics, formatters. Startup is fast by using lazy-loading.
+LaTeX, BibTeX, and VimTeX get the same level of support as LSP and treesitter. Everything else you'd expect is configured out of the box: completion (blink.cmp), DAP, diagnostics, formatters. Startup is fast by using lazy-loading.
 
 The distro is opinionated, but anything can be overridden through `lua/user/` without forking or editing distro files (see [Configuration](#configuration))
 
 > [!NOTE]
-> NoetherVim is in **alpha**. The core is stable for daily use, but what counts as a "default" vs. an "overridable" option is still being refined. These choices grew out of my neovim  use are my best idea of good agnostic defaults. If you think there are better choices, [open an issue](https://github.com/Chiarandini/NoetherVim/issues) and we can address it there.
+> NoetherVim is in **alpha**. The core is stable for daily use, but what counts as a "default" vs. an "overridable" option is still being refined. These choices grew out of my Neovim use and represent my best idea of good, agnostic defaults. If you think there are better choices, [open an issue](https://github.com/Chiarandini/NoetherVim/issues) and we can address it there.
 
 ## Why another distribution?
 
