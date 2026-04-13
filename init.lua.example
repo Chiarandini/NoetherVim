@@ -1,0 +1,155 @@
+-- noethervim-template-version: 1
+-- NoetherVim user config template.
+-- Copy this file to ~/.config/nvim/init.lua
+--
+-- Quick start (see README):
+--
+--   mkdir -p ~/.config/nvim
+--   cp /path/to/NoetherVim/init.lua.example ~/.config/nvim/init.lua
+--   nvim
+--
+-- Personal overrides go in lua/user/ — see :help noethervim-user-config.
+-- To debug without your overrides:  NOETHERVIM_NO_USER=1 nvim
+
+
+
+-- ── 1. Leaders — must come before lazy.nvim loads ──────────────────────────
+-- Plugins register keymaps at spec-load time using these globals.
+
+vim.g.mapleader         = "\\"       -- <Leader>  — global actions
+vim.g.maplocalleader    = ","        -- <LocalLeader> — filetype actions
+vim.g.mapsearchleader = "<space>"    -- search/navigation prefix (default: <Space>)
+
+-- ── 2. Bootstrap lazy.nvim and NoetherVim ─────────────────────────────────
+-- Both must be on the rtp BEFORE lazy.setup() so that
+-- `import = "noethervim.plugins"` resolves on first launch.
+
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not vim.uv.fs_stat(lazypath) then
+	vim.fn.system({
+		"git", "clone", "--filter=blob:none",
+		"https://github.com/folke/lazy.nvim.git",
+		"--branch=stable",
+		lazypath,
+	})
+end
+vim.opt.rtp:prepend(lazypath)
+
+local noethervimpath = vim.fn.stdpath("data") .. "/lazy/NoetherVim"
+if not vim.uv.fs_stat(noethervimpath) then
+	vim.fn.system({
+		"git", "clone", "--filter=blob:none",
+		"https://github.com/Chiarandini/NoetherVim.git",
+		noethervimpath,
+	})
+end
+vim.opt.rtp:prepend(noethervimpath)
+
+-- ── 3. Start NoetherVim ────────────────────────────────────────────────────
+
+require("lazy").setup({
+
+	spec = {
+
+		-- ── Distro core ──────────────────────────────────────────────────
+		-- Installs NoetherVim as a lazy plugin and imports all core plugins.
+		-- Update with :Lazy update (or :Lazy sync).
+		{
+			"Chiarandini/NoetherVim",
+			import = "noethervim.plugins",
+			opts = {
+				colorscheme = "gruvbox",       -- default colorscheme
+				-- statusline  = {                -- statusline overrides
+				--   colors     = {},
+				--   extra_right = {},
+				-- },
+			},
+			config = function(_, opts)
+				require("noethervim").setup(opts)
+			end,
+		},
+
+		-- ── Bundles (opt-in) ─────────────────────────────────────────────
+		-- Uncomment the bundles you want. Full list: lua/noethervim/bundles/
+
+		-- Languages
+		-- { import = "noethervim.bundles.rust" },        -- rustaceanvim (beyond plain rust-analyzer)
+		-- { import = "noethervim.bundles.go" },          -- go.nvim (test gen, struct tags, fill struct)
+		-- { import = "noethervim.bundles.java" },        -- nvim-jdtls (proper Java LSP support)
+		-- { import = "noethervim.bundles.python" },      -- venv-selector (virtual environment switching)
+		-- { import = "noethervim.bundles.latex" },       -- VimTeX + snippets/textobjects
+		-- { import = "noethervim.bundles.latex-zotero" }, -- Zotero citation picker (needs Zotero + Better BibTeX)
+		-- { import = "noethervim.bundles.web-dev" },     -- JS/TS template string + color preview
+
+		-- Tools
+		-- { import = "noethervim.bundles.debug" },       -- nvim-dap + UI (Python, Lua, JS/TS, Go)
+		-- { import = "noethervim.bundles.test" },        -- neotest test runner
+		-- { import = "noethervim.bundles.repl" },        -- iron.nvim REPL
+		-- { import = "noethervim.bundles.task-runner" }, -- overseer + compiler.nvim
+		-- { import = "noethervim.bundles.database" },    -- vim-dadbod + UI + SQL completion
+		-- { import = "noethervim.bundles.http" },        -- kulala.nvim HTTP/REST client
+		-- { import = "noethervim.bundles.git" },         -- Fugit2, diffview, git-conflict
+		-- { import = "noethervim.bundles.ai" },          -- CodeCompanion (needs ANTHROPIC_API_KEY)
+		-- { import = "noethervim.bundles.refactoring" }, -- extract function/variable/block
+
+		-- Navigation & editing
+		-- { import = "noethervim.bundles.harpoon" },     -- fast per-project file marks
+		-- { import = "noethervim.bundles.flash" },       -- enhanced f/t and / motions
+		-- { import = "noethervim.bundles.projects" },    -- project switcher (snacks.picker)
+		-- { import = "noethervim.bundles.editing-extras" }, -- argmark + comment boxes
+		-- { import = "noethervim.bundles.neoclip" },     -- clipboard history via Telescope
+
+		-- Writing & notes
+		-- { import = "noethervim.bundles.markdown" },    -- render, preview, tables, math, image paste
+		-- { import = "noethervim.bundles.obsidian" },    -- Obsidian vault (also enable markdown bundle)
+		-- { import = "noethervim.bundles.neorg" },       -- .norg wiki / note-taking
+		-- { import = "noethervim.bundles.translation" }, -- in-editor translation
+
+		-- Terminal & environment
+		-- { import = "noethervim.bundles.better-term" }, -- named terminal windows
+		-- { import = "noethervim.bundles.tmux" },        -- tmux window naming
+		-- { import = "noethervim.bundles.remote-dev" },  -- distant.nvim SSH editing
+
+		-- UI & appearance
+		-- { import = "noethervim.bundles.colorscheme" }, -- 10 popular themes + persistence
+		-- { import = "noethervim.bundles.eye-candy" },   -- animations, scrollbar, block display
+		-- { import = "noethervim.bundles.minimap" },     -- sidebar minimap
+		-- { import = "noethervim.bundles.helpview" },    -- rendered :help pages
+
+		-- Practice & utilities
+		-- { import = "noethervim.bundles.training" },    -- vim-be-good, speedtyper, typr
+		-- { import = "noethervim.bundles.dev-tools" },   -- StartupTime, Luapad
+		-- { import = "noethervim.bundles.presentation" },-- presenting.nvim + showkeys
+		-- { import = "noethervim.bundles.hardtime" },    -- motion habit trainer
+
+		-- ── Your personal plugins & plugin overrides ─────────────────────
+		-- Drop .lua files in lua/user/plugins/ to add new plugins or
+		-- override existing plugin opts.  See templates/user/plugins/example.lua.
+		-- Skipped when NOETHERVIM_NO_USER is set, vim.g.noethervim_no_user is
+		-- true, or lua/user/plugins/ doesn't exist.
+		not vim.env.NOETHERVIM_NO_USER
+			and not vim.g.noethervim_no_user
+			and vim.uv.fs_stat(vim.fn.stdpath("config") .. "/lua/user/plugins")
+			and { import = "user.plugins" } or nil,
+
+	},
+
+	-- lazy-lock.json lives in your config dir (the default).
+	-- :Lazy update pins versions there; :Lazy restore reverts to them.
+
+	install  = { colorscheme = { "gruvbox", "habamax" } },
+	checker  = { enabled = true },
+
+	performance = {
+		rtp = {
+			-- Keep the user config dir on the rtp after lazy's reset,
+			-- so that user.plugins and user.configs are importable.
+			paths = { vim.fn.stdpath("config") },
+			disabled_plugins = {
+				"gzip", "matchit", "matchparen", "netrwPlugin",
+				"tarPlugin", "tohtml", "tutor", "zipPlugin",
+			},
+		},
+	},
+
+})

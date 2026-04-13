@@ -1,0 +1,859 @@
+*noethervim.txt*    NoetherVim distribution — user guide
+
+Author:   Chiarandini
+License:  MIT
+
+==============================================================================
+CONTENTS                                                  *noethervim-contents*
+
+    1. Introduction ........................ |noethervim|
+    2. Installation ........................ |noethervim-install|
+    3. Quickstart .......................... |noethervim-quickstart|
+    4. User configuration .................. |noethervim-user-config|
+       4.1 Directory structure ............. |noethervim-user-dir|
+       4.2 Options ......................... |noethervim-user-options|
+       4.3 Keymaps ......................... |noethervim-user-keymaps|
+       4.4 Autocommands .................... |noethervim-user-autocmds|
+       4.5 Highlights ...................... |noethervim-user-highlights|
+       4.6 Plugin overrides ................ |noethervim-user-plugins|
+       4.7 LSP server overrides ............ |noethervim-user-lsp|
+       4.8 Imperative overrides ............ |noethervim-user-overrides|
+    5. Bundles ............................. |noethervim-bundles|
+    6. Inspection .......................... |noethervim-inspect|
+    7. Comparison .......................... |noethervim-diff|
+    8. Toggling ............................ |noethervim-toggle|
+    9. Keymap namespaces ................... |noethervim-keymaps|
+       9.1 Filetype keymaps ................ |noethervim-ftplugin|
+       9.2 Statusline ...................... |noethervim-statusline|
+   10. Commands ............................ |noethervim-commands|
+   11. Completion sources .................. |noethervim-completion|
+   12. Health check ........................ |noethervim-health|
+   13. FAQ ................................. |noethervim-faq|
+
+==============================================================================
+1. INTRODUCTION                                    *noethervim* *neothervim*
+
+NoetherVim is an opinionated Neovim distribution built on lazy.nvim. It
+ships sensible defaults, 30+ core plugins, and 36 opt-in bundles — while
+providing a robust user configuration system that survives upstream updates.
+
+Key principles:~
+- Update-safe: user files and distro files never overlap.
+- Last-write wins: user overrides load after core modules.
+- opts is the happy path: plugin overrides use lazy.nvim spec merging.
+- Minimal magic: user files are plain Lua, no special APIs.
+
+==============================================================================
+2. INSTALLATION                          *noethervim-install* *neothervim-install*
+
+If you have an existing Neovim config, back it up first: >bash
+    mv ~/.config/nvim ~/.config/nvim.bak
+    mv ~/.local/share/nvim ~/.local/share/nvim.bak
+    mv ~/.local/state/nvim ~/.local/state/nvim.bak
+    mv ~/.cache/nvim ~/.cache/nvim.bak
+<
+Copy the starter config and open Neovim: >bash
+    mkdir -p ~/.config/nvim
+    curl -fLo ~/.config/nvim/init.lua \
+      https://raw.githubusercontent.com/Chiarandini/NoetherVim/main/init.lua.example
+    nvim
+<
+On first launch, lazy.nvim and NoetherVim bootstrap themselves and all
+plugins install automatically. Copy any personal settings into `lua/user/`
+afterwards (see |noethervim-user-config|).
+
+                                                    *noethervim-nvim-appname*
+Trying NoetherVim without replacing your config: ~
+
+Neovim's `NVIM_APPNAME` feature lets you run multiple configs side by
+side. Your existing `~/.config/nvim/` stays untouched: >bash
+    mkdir -p ~/.config/noethervim
+    curl -fLo ~/.config/noethervim/init.lua \
+      https://raw.githubusercontent.com/Chiarandini/NoetherVim/main/init.lua.example
+    NVIM_APPNAME=noethervim nvim
+<
+Add an alias for convenience: >bash
+    alias nv='NVIM_APPNAME=noethervim nvim'
+<
+
+Updating: ~
+
+Run inside Neovim. This updates the distro and all plugins: >vim
+    :Lazy update
+<
+
+Uninstalling: ~
+                                                    *noethervim-uninstall*
+Remove the config, data, state, and cache directories. Restore your
+backup if you made one: >bash
+    rm -rf ~/.config/nvim ~/.local/share/nvim ~/.local/state/nvim ~/.cache/nvim
+<
+
+==============================================================================
+3. QUICKSTART                                          *noethervim-quickstart*
+
+1. Copy `init.lua.example` to `~/.config/nvim/init.lua` (see above).
+2. Uncomment the bundles you want (see |noethervim-bundles|).
+3. Launch `nvim`. Plugins install automatically.
+4. To customize, create files in `lua/user/` (see |noethervim-user-config|).
+
+==============================================================================
+4. USER CONFIGURATION                                  *noethervim-user-config*
+
+NoetherVim is designed so that the source code is its own documentation.
+Browse core source files with SearchLeader+cnn or `:NoetherVim files`, and
+live-grep them with SearchLeader+cng. All source files open read-only to
+prevent accidental edits. See |noethervim-inspect| for the full set of
+navigation commands.
+
+NoetherVim loads user override files automatically after each core module.
+User files live in your config directory's `lua/user/` folder and are
+never touched by upstream updates.
+
+The loading order is: >
+    noethervim/options.lua   ->  user/options.lua
+    noethervim/lsp/*.lua     ->  user/lsp/*.lua
+    noethervim/keymaps.lua   \
+    noethervim/toggles.lua    >  user/keymaps.lua
+    noethervim/autocmds.lua  ->  user/autocmds.lua
+    noethervim/highlights.lua \
+    colorscheme               >  user/highlights.lua
+    user/overrides/*.lua         (last-resort hooks)
+<
+Plugin specs in `user/plugins/` are merged by lazy.nvim before any of
+the above runs.
+
+------------------------------------------------------------------------------
+4.1 DIRECTORY STRUCTURE                                  *noethervim-user-dir*
+
+>
+    ~/.config/nvim/lua/user/
+    |-- config.lua           Data table (vault paths, feature flags)
+    |-- options.lua          vim.o overrides
+    |-- keymaps.lua          Keymap overrides and additions
+    |-- autocmds.lua         Autocommand additions
+    |-- highlights.lua       Highlight overrides (after colorscheme)
+    |-- lsp/                 LSP server config overrides
+    |   `-- lua_ls.lua       e.g., override lua_ls workspace settings
+    |-- plugins/             Personal plugins and distro opts overrides
+    |   `-- telescope.lua    e.g., override telescope opts
+    `-- overrides/           Imperative after-hooks (last resort)
+        `-- *.lua
+<
+Template files are provided in the `templates/user/` directory of the
+NoetherVim repo.  Copy the ones you need to your `lua/user/` and
+uncomment the relevant lines.
+
+------------------------------------------------------------------------------
+4.2 OPTIONS                                          *noethervim-user-options*
+
+Create `lua/user/options.lua`. It runs after `noethervim/options.lua`,
+so any value you set overwrites the distro default: >lua
+    -- lua/user/options.lua
+    vim.o.textwidth = 100       -- default: 90
+    vim.o.scrolloff = 8         -- default: 4
+    vim.o.autochdir = true      -- default: false
+<
+See `noethervim/options.lua` for all defaults.
+
+------------------------------------------------------------------------------
+4.3 KEYMAPS                                          *noethervim-user-keymaps*
+
+Create `lua/user/keymaps.lua`. It runs after core keymaps and toggles: >lua
+    -- Override a core keymap (last-write wins)
+    vim.keymap.set("n", ";", ";")   -- revert ; to default
+
+    -- Remove a core keymap entirely
+    vim.keymap.del("n", "<C-a>")
+
+    -- Add personal keymaps
+    vim.keymap.set("n", "<space>ev", "<cmd>e $MYVIMRC<cr>", { desc = "edit vimrc" })
+<
+NoetherVim keymap philosophy: >
+    SearchLeader    fuzzy navigation / search (default: <Space>)
+    <Leader>        global actions
+    <LocalLeader>   filetype-specific actions
+    <C-w>           window navigation / management
+    [x / ]x         prev / next directional navigation
+    [ox / ]ox       toggle option on / off
+<
+
+                                                            *g:mapsearchleader*
+g:mapsearchleader ~
+    The key prefix for all search/navigation keymaps.  Defaults to `<Space>`.
+    Works like |mapleader| — set it in your init.lua BEFORE `lazy.setup()`: >lua
+        vim.g.mapsearchleader = "<C-s>"   -- or ";", "\\", etc.
+<
+    All keymaps in the SearchLeader namespace (find, grep, LSP, git, config,
+    diagnostics, etc.) will use the new prefix.  which-key popups and the
+    keymap diff picker automatically reflect the change.
+
+    When unset, all search keymaps use `<Space>` (the default).
+
+------------------------------------------------------------------------------
+4.4 AUTOCOMMANDS                                    *noethervim-user-autocmds*
+
+Create `lua/user/autocmds.lua`. New autocommands are additive.
+To override a core autocmd, clear its augroup first: >lua
+    -- Clear a core augroup and replace it
+    vim.api.nvim_create_augroup("noethervim_q_close", { clear = true })
+    -- Then re-create with your preferred list
+<
+
+------------------------------------------------------------------------------
+4.5 HIGHLIGHTS                                    *noethervim-user-highlights*
+
+Create `lua/user/highlights.lua`. This file runs AFTER the colorscheme
+is applied, so your overrides are not wiped by the theme: >lua
+    vim.api.nvim_set_hl(0, "Normal", { bg = "#1d2021" })
+    vim.api.nvim_set_hl(0, "SnacksDashboardHeader", { fg = "#89b4fa" })
+<
+                                            *noethervim-colorscheme-tweaks*
+Highlight tweaks (colorscheme bundle): ~
+
+Plain `nvim_set_hl` calls are lost when you switch colorschemes. If the
+`colorscheme` bundle is enabled, use the tweak helper instead — tweaks
+re-apply automatically on every colorscheme change: >lua
+    -- lua/user/highlights.lua
+    require("noethervim.util.colorscheme").tweak({
+        Comment    = { italic = true },
+        CursorLine = { bg = "#1a1a2e" },
+        LineNr     = { fg = "#555555" },
+    })
+<
+Common highlight groups to tweak: ~
+    `Normal`           Main text and background
+    `Comment`          Code comments (try `italic = true`)
+    `CursorLine`       Line the cursor is on
+    `LineNr`           Line numbers
+    `Visual`           Visual selection
+    `Search`           Search matches
+    `DiagnosticError`  Error diagnostics
+    `DiagnosticWarn`   Warning diagnostics
+    `@keyword`         Treesitter keywords
+    `@function`        Treesitter functions
+    `@string`          Treesitter strings
+
+------------------------------------------------------------------------------
+4.6 PLUGIN OVERRIDES                                *noethervim-user-plugins*
+
+Create files in `lua/user/plugins/`. Each file returns a lazy.nvim spec
+table. To override an existing plugin, use the EXACT same repository
+string — lazy.nvim deep-merges `opts` tables automatically: >lua
+    -- lua/user/plugins/telescope.lua
+    return {
+      { "nvim-telescope/telescope.nvim",
+        opts = {
+          defaults = { layout_strategy = "vertical" },
+        },
+      },
+    }
+<
+You only need to specify the fields you want to change. Core defaults
+fill in everything else.
+
+To add extra keymaps to an existing plugin: >lua
+    { "nvim-telescope/telescope.nvim",
+      keys = {
+        { "<space>fg", "<cmd>Telescope live_grep<cr>", desc = "live grep" },
+      },
+    }
+<
+lazy.nvim unions `keys`, `cmd`, `event`, and `ft` tables from all specs
+for the same plugin.
+
+NOTE: `opts` arrays (like `ensure_installed`) are REPLACED, not merged.
+If you override an array, include the full list you want.
+
+NOTE: if you specify `config = function()` in your override spec, it
+REPLACES the upstream config function entirely. Only do this as a last
+resort.
+
+See `templates/user/plugins/example.lua` for more examples.
+
+------------------------------------------------------------------------------
+4.7 LSP SERVER OVERRIDES                                *noethervim-user-lsp*
+
+Create files in `lua/user/lsp/`. Neovim's `vim.lsp.config()` deep-merges
+when called again for the same server: >lua
+    -- lua/user/lsp/lua_ls.lua
+    vim.lsp.config("lua_ls", {
+      settings = {
+        Lua = {
+          workspace = { library = { "/my/custom/lib" } },
+        },
+      },
+    })
+    -- No need to call vim.lsp.enable() again.
+<
+
+------------------------------------------------------------------------------
+4.8 IMPERATIVE OVERRIDES                          *noethervim-user-overrides*
+
+Create files in `lua/user/overrides/`. These run at the very end of
+`noethervim.setup()`, after everything else has loaded. Use this only
+when opts merging and module hooks are insufficient: >lua
+    -- lua/user/overrides/custom-diagnostics.lua
+    vim.diagnostic.config({ virtual_text = { prefix = ">>" } })
+<
+WARNING: lazy-loaded plugins may not be loaded yet when overrides run.
+For lazy-loaded plugin config, use |noethervim-user-plugins| (spec
+merging) instead — lazy.nvim handles the timing correctly.
+
+==============================================================================
+5. BUNDLES                                 *noethervim-bundles* *neothervim-bundles*
+
+Bundles are opt-in plugin groups. Enable them by uncommenting the
+corresponding `import` line in your `init.lua`: >lua
+    { import = "noethervim.bundles.latex" },
+<
+Available bundles: ~
+
+    `rust`           rustaceanvim — enhanced Rust beyond rust-analyzer.
+    `go`             go.nvim — Go test gen, struct tags, interface impl.
+    `java`           nvim-jdtls — proper Java LSP (requires special setup).
+    `python`         venv-selector.nvim — virtual environment switching.
+    `database`       vim-dadbod + UI + SQL completion via blink.cmp.
+    `http`           kulala.nvim HTTP/REST/gRPC/GraphQL client.
+    `latex`          VimTeX, img-clip, bibtex picker, LaTeX textobjects.
+                     Requires: latexmk, TeX distribution.
+    `latex-zotero`   Zotero citation picker.
+                     Requires: Zotero.
+    `debug`          nvim-dap + UI (Python, Lua, JS/TS, Go).
+    `test`           neotest test runner framework.
+    `repl`           iron.nvim interactive REPL.
+    `task-runner`    overseer.nvim + compiler.nvim.
+    `git`            Fugitive, Flog, Fugit2, diffview, git-conflict.
+    `ai`             CodeCompanion (Anthropic, OpenAI, Gemini, Ollama, …).
+                     Default: Anthropic. Override adapter in user/plugins/.
+                     Requires: API key env var for cloud providers.
+    `harpoon`        Fast per-project file marks.
+    `neoclip`        Clipboard history via Telescope.
+    `better-term`    Named terminal windows.
+    `translation`    In-editor translation (Google, Yandex).
+    `neorg`          .norg wiki / note-taking.
+    `markdown`       render-markdown, markdown-preview, tables, math,
+                     img-clip (image paste from clipboard).
+    `obsidian`       Obsidian vault integration (obsidian.nvim).
+                     Recommended: also enable the markdown bundle.
+                     Configure vault path in lua/user/config.lua.
+    `flash`          Enhanced f/t and / motions with jump labels.
+    `hardtime`       Motion habit trainer.
+    `minimap`        Sidebar minimap with diagnostics and git signs.
+    `refactoring`    Extract function/variable/block.
+    `web-dev`        JS/TS template string + inline color preview.
+    `tmux`           Tmux window naming.
+    `dev-tools`      StartupTime benchmarking, Luapad Lua scratchpad.
+    `training`       Vim motion and typing practice (vim-be-good,
+                     speedtyper, typr).
+    `presentation`   Slide presentations (presenting.nvim) + showkeys.
+    `helpview`       Rendered :help pages.
+    `editing-extras` Argument marking (argmark) + decorative comment boxes.
+    `remote-dev`     distant.nvim SSH editing.
+    `eye-candy`      Animations, scrollbar, code block visualizer.
+    `projects`       Project switcher via snacks.picker.
+    `colorscheme`    10 popular themes + persistence + highlight tweaks.
+                     Themes: gruvbox, catppuccin, tokyonight, rose-pine,
+                     kanagawa, onedark, nord, everforest, nightfox,
+                     solarized. All lazy — only the active one loads.
+                     SearchLeader+C picks persist across restarts.
+                     See |noethervim-colorscheme-tweaks| for highlight
+                     overrides that survive theme switches.
+
+Each bundle file contains full documentation — plugins, keymaps,
+commands, and requirements — in its header comment. Browse them with
+`:NoetherVim bundles` or SearchLeader+cb.
+
+Configuring noethervim-tex (latex bundle): ~
+
+The `latex` bundle includes `noethervim-tex`, which provides LaTeX snippets,
+treesitter textobjects, a preamble completion source, and a spell
+dictionary of common mathematical terms. Configure it
+via opts override in `user/plugins/`: >lua
+    { "Chiarandini/noethervim-tex", opts = {
+        preamble_folder = "~/my/preambles/",
+        extra_snippet_paths = { "~/shared-snippets/" },
+        textobjects = false,
+    } }
+<
+Writing custom snippets: ~
+
+LuaSnip loads user snippets from `stdpath("config")/LuaSnip/<filetype>/`.
+Create a directory for the target filetype (e.g. `LuaSnip/tex/`,
+`LuaSnip/python/`) and add `.lua` files inside it — each file should
+return a snippet list.  LuaSnip auto-loads them alongside any
+plugin-provided snippets.
+
+For LaTeX snippets, `noethervim-tex` exposes helper functions: >lua
+    local helper = require("noethervim-tex").luasnip_helper
+    local tex_utils = helper.tex_utils   -- in_mathzone, in_text, etc.
+    local get_visual = helper.get_visual_node
+<
+
+==============================================================================
+6. INSPECTION                                            *noethervim-inspect*
+
+Browse and search NoetherVim source code from within the editor.
+All commands are available as `:NoetherVim <subcommand>` and most have
+keymaps under the SearchLeader+c prefix (default: `<Space>c`; see
+|g:mapsearchleader|).  Source files open as non-modifiable to prevent
+accidental edits to the distribution.
+
+    SearchLeader+cnn  `:NoetherVim files`      Browse NoetherVim source
+    SearchLeader+cng  `:NoetherVim grep`       Live grep NoetherVim source
+    SearchLeader+cu   (snacks)                 Browse user config files
+    SearchLeader+cb   `:NoetherVim bundles`    Browse bundle source files
+    SearchLeader+ce   `:NoetherVim override`   Edit/create user override
+    SearchLeader+cL   (snacks)                 Lazy plugin list
+    `<Leader>i`     (inspect)                Open init.lua for editing
+
+Run `:NoetherVim status` to see which user override files are active.
+
+==============================================================================
+7. COMPARISON                                                *noethervim-diff*
+
+Compare your user overrides against NoetherVim defaults.
+
+    SearchLeader+ck `:NoetherVim diff keymaps`
+                    Smart picker showing all keymaps annotated with:
+                    `[CORE]` — unchanged NoetherVim default
+                    `[USER]` — keymap added by your user/keymaps.lua
+                    `[OVERRIDE]` — core keymap you changed
+                    `[DELETED]` — core keymap you removed
+
+    SearchLeader+co `:NoetherVim diff options`
+                    Smart picker showing all tracked options (the set of
+                    options NoetherVim explicitly configures) annotated with:
+                    `[CORE]` — unchanged NoetherVim default
+                    `[OVERRIDE]` — option you changed in user/options.lua
+
+    SearchLeader+cd `:NoetherVim diff`
+                    Smart picker listing all NoetherVim modules across
+                    Core, Plugin, Bundle, and LSP categories. Each entry
+                    shows whether a user override exists. Selecting a
+                    module opens the upstream file (readonly) and user
+                    override in a side-by-side vertical split.
+                    Also accepts a direct argument:
+                    `:NoetherVim diff telescope`
+
+==============================================================================
+8. TOGGLING                                                *noethervim-toggle*
+
+Disable all user overrides for debugging.
+
+Environment variable (before starting Neovim): >bash
+    NOETHERVIM_NO_USER=1 nvim
+<
+Vim global (set in init.lua before lazy.setup): >lua
+    vim.g.noethervim_no_user = true
+<
+When active, all `user/` module hooks, LSP overrides, and
+`user/overrides/` files are skipped. Plugin spec merging from
+`user/plugins/` is also skipped (via the conditional import in
+init.lua.example).
+
+This is NOT a runtime toggle — restart Neovim to apply.
+
+Check current status: `:NoetherVim status`
+
+==============================================================================
+9. KEYMAP NAMESPACES                     *noethervim-keymaps* *neothervim-keymaps*
+
+NoetherVim groups keymaps by prefix. Press any prefix and wait for
+which-key to show available actions, or use SearchLeader+fk to search
+all keymaps interactively.
+
+The which-key popup appears after a 1500 ms delay by default. To
+change this, add to `lua/user/plugins/whichkey.lua`: >lua
+    return {
+      { "folke/which-key.nvim",
+        opts = { delay = function() return 500 end },
+        config = function(_, opts)
+          vim.o.timeoutlen = 500
+          require("which-key").setup(opts)
+        end,
+      },
+    }
+<
+
+Prefixes: ~
+                                                        *noethervim-space*
+                                                        *noethervim-mapsearchleader*
+    `SearchLeader`      Search & navigation (default: `<Space>`)
+                      f(ind)  g(rep)  G(it)  l(sp)  d(iagnostics)
+                      c(onfig)  D(ebug)  s(ession)  o(bsidian)  w(iki)
+                      Configurable via |g:mapsearchleader|.
+                                                        *noethervim-leader*
+    `<Leader>` (\)      Global actions
+                      f(ormat)  h(unk)  d(ebug)  R(EPL)  r(efactor)
+                      m(inimap)  b(ox)  a(i)  z(en)
+                                                        *noethervim-localleader*
+    `<LocalLeader>` (,) Filetype-specific actions
+                      LaTeX: vimtex commands, image paste
+                      Neorg: wiki navigation
+                                                        *noethervim-ctrl-w*
+    `<C-w>`             Windows & panels
+                      l(azy)  s(tatusline)  t(erminal)  F(ugit2)
+                      [d / ]d (diffview)  <C-h> (harpoon)  <C-e> (explorer)
+                                                        *noethervim-g*
+    `g`                 LSP & go-to
+                      gd(efinition)  gD(eclaration)  gR(eferences float)
+                      gt(ype def)  gi(mplementation)  gs(ignature)
+                      gl(diagnostics)  go(utline)
+                      gr* = Neovim 0.12 defaults (grr/grn/gra…)
+                      SearchLeader+li / +lO (call hierarchy in/out)
+                                                        *noethervim-brackets*
+    `[x` / `]x`         Directional navigation
+                      d(iagnostic)  t(ab)  b(uffer)  q(uickfix)
+                      T(odo)  f(ile)  e(xchange line)  <Space>(blank line)
+                                                        *noethervim-option-toggles*
+    `[ox` / `]ox`       Toggle options
+                      w(rap)  s(pell)  n(umbers)  r(elative)  h(lsearch)
+                      L(SP)  b(ackground)  c(ursorline)  l(ist)  t(extwidth)
+                      i(gnorecase)  I(lluminate)  T(reeSitter)
+                      D(irty whitespace/tidy)  G(uide column/deadcolumn)
+                      G persists across sessions (stored in stdpath("state")).
+                      `[C`/`]C` toggle blink.cmp completion on/off
+                                                        *noethervim-Z*
+    `Z`                 Buffer operations
+                      ZA(ll quit)  ZB(uffer delete)  ZD(scratch delete)
+                      ZF(orce quit)  ZG(force delete)
+
+Other notable keymaps: ~
+
+    Normal: ~
+    `<C-a>` / `<C-x>` Enhanced increment/decrement (numbers, booleans,
+                      dates, operators, semver — via dial.nvim)
+    `g<C-a>`/`g<C-x>` Sequential increment/decrement in visual selection
+    `<C-/>`           Toggle comment (builtin gc/gcc, all modes)
+    `<C-S-r>`         Comment lines and paste uncommented copy below
+    `s`               Substitute without polluting register
+    `S`               Global search/replace (:%s/)
+    `;`               Command-line (replaces :)
+    `n` / `N`         Consistent search direction
+    `-`               Highlight word under cursor + count
+    `L`               Hover docs (LSP)
+    `<F2>`            Rename (with count, LSP)
+
+    Visual: ~
+    `Y`               Yank to clipboard
+    `P`               Paste from clipboard
+    `p`               Paste over (keep register)
+    `il`              Inner-line text object
+    `<Down>` / `<Up>` Move block
+
+    Insert: ~
+    `<M-BS>`          Delete word backward
+    `<C-v>`           Paste from clipboard
+    `<C-=>`           Expression register
+
+    Command-line: ~
+    `<C-l>`           Insert cwd
+    `<C-y>`           Yank cmdline to clipboard
+    `<C-o>`           Redirect output to buffer
+
+Shadowed defaults: ~
+                                                *noethervim-shadowed*
+    These core keymaps replace standard Vim behavior. The original
+    functionality is available through the alternatives listed.
+
+    `J`             Scroll down visual line
+                    (default: join lines — use `gJ` or visual `K`)
+    `K`             Scroll up visual line
+                    (default: keyword lookup — use `L` for LSP hover)
+    `s`             Substitute without register
+                    (default: same as `cl`)
+    `S`             Global `:%s/` replace
+                    (default: same as `cc`)
+    `|`             Vertical split tmp
+                    (default: go to screen column)
+    `_`             Horizontal split tmp
+                    (default: go N-1 lines down, first non-blank)
+    `+`             New tab
+                    (default: go to next line, first non-blank)
+    `<C-w><C-q>`    Open quickfix
+                    (default: close window — use `<C-w>q` or `:q`)
+
+------------------------------------------------------------------------------
+9.1 FILETYPE KEYMAPS                                   *noethervim-ftplugin*
+
+These keymaps activate only in their respective filetype.
+
+    tex: ~
+    `:PDF`              Open compiled PDF
+    `<S-CR>`            Smart newline in environments (insert)
+    `<C-l>`             Auto-fix nearest spelling error (insert)
+    `<LocalLeader>vw`   VimTeX word count
+
+    markdown: ~
+    `<S-CR>`            Smart newline in lists (insert)
+    `<C-l>`             Auto-fix nearest spelling error (insert)
+
+    qf (quickfix): ~
+    `q`                 Close quickfix window
+    `<CR>`              Open entry and close quickfix
+    `<S-CR>`            Open entry, keep quickfix open
+    `<C-j>` / `<C-n>`  Navigate down
+    `<C-p>`             Navigate up
+
+------------------------------------------------------------------------------
+9.2 STATUSLINE                                        *noethervim-statusline*
+
+NoetherVim uses heirline.nvim for its statusline. Toggle components
+with the `<C-w>s` prefix:
+
+    `<C-w>sg`           Toggle git component
+    `<C-w>sp`           Toggle PDF size indicator
+    `<C-w>sl`           Toggle LSP component
+    `<C-w>sP`           Show full file path
+    `<C-w>s<C-p>`       Toggle all components
+
+Customize statusline colors and extra components via opts: >lua
+    { "Chiarandini/NoetherVim", opts = {
+        statusline = {
+          colors     = { ... },     -- override heirline color table
+          extra_right = { ... },    -- heirline component specs
+        },
+    } }
+<
+
+------------------------------------------------------------------------------
+9.3 TABLINE                                              *noethervim-tabline*
+
+NoetherVim ships a tab-based tabline (not a bufferline). Each tab shows
+its focused buffer's file icon, `project: filename` label (derived from
+git root), and a `●` modified indicator. Tabs have per-tab close
+buttons and shrink gracefully when many tabs are open.
+
+Tab management keymaps: ~
+    `+`                 Open a new tab
+    `<C-w><A-h>`        Move current tab left
+    `<C-w><A-l>`        Move current tab right
+
+                                              *noethervim-tabline-bufferline*
+Switching to a bufferline ~
+
+NoetherVim defaults to a tabline because tabs and buffers serve
+different purposes in Vim's model — tabs are layout viewports, buffers
+are open files. Reaching for a bufferline to manage open files often
+signals that a fuzzy-finder or |:ls| would be a more effective habit.
+That said, if you prefer a bufferline, replacing the tabline is
+straightforward. See the example in
+`templates/user/plugins/bufferline.example.lua`, or drop this into your
+`lua/user/plugins/` directory: >lua
+    { "akinsho/bufferline.nvim",
+      event = "UIEnter",
+      dependencies = "nvim-tree/nvim-web-devicons",
+      opts = {},
+      config = function(_, opts)
+        require("bufferline").setup(opts)
+        -- Disable heirline's tabline so bufferline owns the area.
+        vim.o.tabline = ""
+        vim.o.showtabline = 2
+      end,
+    }
+<
+
+==============================================================================
+10. COMMANDS                                            *noethervim-commands*
+
+`:NoetherVim` [subcommand]    Inspection and comparison commands.
+                              See |noethervim-inspect| and |noethervim-diff|.
+
+`:NoetherVim override`        Open the user override file corresponding to
+                              the current buffer's NoetherVim source file.
+                              Creates the file (and parent directories) if it
+                              does not exist, seeding it with minimal
+                              boilerplate.  Opens the override in a vertical
+                              split so you can read the source alongside your
+                              customization.
+                              Path mapping:
+                                `plugins/<name>.lua`  -> `user/plugins/<name>.lua`
+                                `bundles/<name>.lua`  -> `user/plugins/<name>.lua`
+                                `lsp/<name>.lua`      -> `user/lsp/<name>.lua`
+                                `options.lua` etc.    -> `user/<name>.lua`
+                                `ftplugin/<ft>.lua`   -> `<config>/ftplugin/<ft>.lua`
+                              For internal modules (util/, sources/) or files
+                              outside the NoetherVim tree, a warning is shown.
+
+`:Reset[!]`                   Close all buffers, open dashboard.
+                              Use ! to force (discard unsaved changes).
+
+`:Redir` {cmd}                Redirect command or shell output to a
+                              scratch buffer. Example: `:Redir !ls -la`
+
+`:LspRename`                  LSP rename with instance count notification.
+
+Web search commands: ~                                *noethervim-web-search*
+
+`:Search` {query}             Search the web (default engine).
+`:SearchWith` {engine} {query}  Search using a specific engine.
+`:Wikipedia` {query}          Search Wikipedia.
+`:StackOverflow` {query}      Search StackOverflow.
+`:YouTube` {query}            Search YouTube.
+`:SetSearchEngine` {engine}   Set default search engine.
+
+Available engines: brave (default), duckduckgo, google, ecosia,
+github, startpage, reddit, stackoverflow, wikipedia, youtube.
+
+Tab-completion is available for engine names.
+
+==============================================================================
+11. COMPLETION                                        *noethervim-completion*
+
+NoetherVim uses blink.cmp for completion. The default keybindings are
+designed around a "Tab jumps snippets, C-n/p navigates the menu" model.
+See |noethervim-completion-custom| below to change this.
+
+Default keybindings: ~
+                                              *noethervim-completion-keys*
+  Insert mode: ~
+    `<C-Space>`   Show menu / toggle documentation.
+                  Falls back to native |i_CTRL-N| when blink is
+                  disabled (|noethervim-option-toggles| `]C`).
+    `<C-n>`       Next item
+    `<C-p>`       Previous item
+    `<C-y>`       Accept selected item
+    `<C-e>`       Dismiss menu
+    `<Tab>`       Jump to next snippet node (or expand snippet)
+    `<S-Tab>`     Jump to previous snippet node
+    `<C-b>`       Scroll documentation up
+    `<C-f>`       Scroll documentation down
+
+  Cmdline mode: ~
+    `<Tab>`       Select and insert next item (cycles through matches)
+    `<S-Tab>`     Select and insert previous item
+    `<C-y>`       Accept (inherited from insert mode)
+
+Customizing keybindings: ~
+                                           *noethervim-completion-custom*
+Override in `user/plugins/` using opts merging. Each key maps to a list
+of actions — blink tries them in order and stops at the first that
+succeeds.
+
+Tab to accept (instead of snippet jump): >lua
+    { "saghen/blink.cmp", opts = {
+        keymap = {
+            ["<Tab>"]   = { "accept", "snippet_forward", "fallback" },
+            ["<S-Tab>"] = { "snippet_backward", "fallback" },
+        },
+    } }
+<
+Enter to accept, Tab/S-Tab to navigate menu: >lua
+    { "saghen/blink.cmp", opts = {
+        keymap = {
+            ["<CR>"]    = { "accept", "fallback" },
+            ["<Tab>"]   = { "select_next", "fallback" },
+            ["<S-Tab>"] = { "select_prev", "fallback" },
+        },
+    } }
+<
+Use a blink preset (replaces all keymaps): >lua
+    { "saghen/blink.cmp", opts = {
+        keymap = { preset = "super-tab" },
+    } }
+<
+Cmdline-only overrides (insert mode keymaps stay unchanged): >lua
+    { "saghen/blink.cmp", opts = {
+        cmdline = {
+            keymap = {
+                preset = "inherit",
+                ["<Tab>"]   = { "accept", "fallback" },
+            },
+        },
+    } }
+<
+
+Custom completion sources: ~
+
+NoetherVim ships two custom blink.cmp completion sources.
+
+images ~
+    Triggered when the entire line is "." in a .tex file. Lists image
+    files from ./images/ and inserts a complete \begin{figure}...\end{figure}
+    block.
+
+todos ~
+    Triggered by typing "@" at the start of a line. Inserts a
+    language-appropriate comment prefix + keyword (TODO, FIXME, BUG, etc.).
+    Supported filetypes: lua, vim, tex, python, typescript, javascript.
+
+==============================================================================
+12. HEALTH CHECK                                         *noethervim-health*
+
+Run `:checkhealth noethervim` to verify your setup. Checks include:
+
+- Required tools: git, rg (ripgrep)
+- Optional tools: node, zoxide, lazygit
+- LaTeX toolchain (if latex bundle enabled)
+- Template version: warns if your init.lua is outdated
+- User override status: lists loaded user modules
+- Configuration: user config dir, plugin dir, vault paths
+
+==============================================================================
+13. FAQ                                          *noethervim-faq* *neothervim-faq*
+
+Q: How do I add a new LSP server?~
+A: Create `lua/user/lsp/<server>.lua` with `vim.lsp.config()` and
+   `vim.lsp.enable()` calls. Add the server to Mason's ensure_installed
+   via a plugin override:
+>lua
+    { "neovim/nvim-lspconfig",
+      opts = { ensure_installed = { "lua_ls", "basedpyright", ..., "gopls" } } }
+<
+
+Q: How do I add a linter?~
+A: NoetherVim uses nvim-lint alongside conform.nvim. Most linting is
+   provided by LSP servers; nvim-lint fills the gap for non-LSP tools.
+   Add linters via opts override in `user/plugins/`:
+>lua
+    { "mfussenegger/nvim-lint",
+      opts = { linters_by_ft = { sh = { "shellcheck" }, yaml = { "yamllint" } } } }
+<
+
+Q: How do I change a telescope keymap?~
+A: Telescope keymaps that reference `telescope.actions` live in the
+   `config` function, not in `opts`. Override them in `user/keymaps.lua`
+   or by specifying `keys` in your override spec.
+
+Q: Why does my override have no effect?~
+A: Check `:NoetherVim status` to verify your files are loaded. Check
+   `:NoetherVim diff keymaps` or `:NoetherVim diff options` to see what
+   changed. If using `NOETHERVIM_NO_USER`, your overrides are disabled.
+
+Q: How do I completely replace a plugin's config?~
+A: Specify `config = function(_, opts) ... end` in your override spec.
+   This replaces the upstream config entirely. Use with caution — you
+   must call the plugin's setup yourself.
+
+Q: Can I disable a plugin from a bundle?~
+A: Use `cond = false` (or `enabled = false`) in your `user/plugins/` spec:
+>lua
+    { "some/plugin", cond = false }
+<
+   Both work: lazy.nvim resolves these on the merged plugin (last-write-
+   wins), and user fragments are always last.  `cond = false` keeps the
+   plugin in lazy's disabled list (visible in `:Lazy`); `enabled = false`
+   removes it entirely.
+
+   Alternatively, comment out the bundle's `import` line in your init.lua
+   to disable the entire bundle.
+
+Q: I typed `:NeotherVim` and it worked?~
+A: Yes. Years of typing `neo-` will do that. The alias is there so you
+   don't have to think about it. `:help neothervim` works too. I did consider
+   naming the distribution `NeotherVim`, but this felt it would inadvertently induce the
+   Mandela-effect forevermore on the reading of the name `Noether`.
+
+Q: What is vim-abolish and how do I use it?~
+A: vim-abolish (tpope) provides three features:
+   1. `:Subvert` — case-preserving find/replace (facility->building
+      preserves Facility->Building, FACILITY->BUILDING)
+   2. `:Abolish` — smart auto-correct (:Abolish teh the corrects all
+      case variants in insert mode)
+   3. Coercion operators — `crs` snake_case, `crm` MixedCase,
+      `crc` camelCase, `cru` UPPER_CASE, `cr-` dash-case
+   Add personal typo corrections in `lua/user/plugins/abolish.lua`.
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl:

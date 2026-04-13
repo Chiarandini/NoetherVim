@@ -1,0 +1,75 @@
+-- Drop your personal plugin specs in this directory.
+-- Any .lua file here is auto-imported by lazy.nvim.
+--
+-- See :help noethervim-user-plugins for documentation.
+--
+-- ── Adding new plugins ───────────────────────────────────────────────────────
+--
+-- Personal plugins you don't want in the distro:
+--   { "some/private-plugin", event = "VeryLazy", opts = {} }
+--
+-- Local / in-development plugins:
+--   { dir = "~/programming/my-plugin", config = function() ... end }
+--   { "my-plugin", dev = true, config = function() ... end }   -- uses lazy.nvim dev.path
+--
+-- ── Overriding existing plugin configuration ─────────────────────────────────
+--
+-- Use the EXACT same plugin repo string as NoetherVim uses.
+-- lazy.nvim deep-merges opts tables automatically - you only need
+-- to specify the keys you want to change.
+--
+-- Override telescope defaults:
+--   { "nvim-telescope/telescope.nvim",
+--     opts = { defaults = { layout_strategy = "vertical" } } }
+--
+-- Add extra keymaps to an existing plugin:
+--   { "nvim-telescope/telescope.nvim",
+--     keys = { { "<space>fg", "<cmd>Telescope live_grep<cr>", desc = "live grep" } } }
+--
+-- Override blink.cmp completion settings:
+--   { "saghen/blink.cmp",
+--     opts = { completion = { list = { max_items = 10 } } } }
+--
+-- Customize completion keybindings (see :help noethervim-completion-custom):
+--
+-- Tab to accept, S-Tab for snippet backward:
+--   { "saghen/blink.cmp", opts = { keymap = {
+--       ["<Tab>"]   = { "accept", "snippet_forward", "fallback" },
+--       ["<S-Tab>"] = { "snippet_backward", "fallback" },
+--   } } }
+--
+-- Enter to accept, Tab/S-Tab to navigate menu:
+--   { "saghen/blink.cmp", opts = { keymap = {
+--       ["<CR>"]    = { "accept", "fallback" },
+--       ["<Tab>"]   = { "select_next", "fallback" },
+--       ["<S-Tab>"] = { "select_prev", "fallback" },
+--   } } }
+--
+-- Override cmdline keys only (insert mode unchanged):
+--   { "saghen/blink.cmp", opts = { cmdline = { keymap = {
+--       preset = "inherit",
+--       ["<Tab>"] = { "accept", "fallback" },
+--   } } } }
+--
+-- Override Mason's ensure_installed servers:
+--   { "neovim/nvim-lspconfig",
+--     opts = { ensure_installed = { "gopls", "rust_analyzer" } } }
+--
+-- ── Disabling a plugin ──────────────────────────────────────────────────────
+--
+-- Prevent a plugin from loading with cond = false (or enabled = false):
+--   { "jmbuhr/telescope-zotero.nvim", cond = false }
+--
+-- Both work: lazy.nvim resolves these on the merged plugin (last-write-wins),
+-- and user fragments are always last.  `cond = false` keeps the plugin in
+-- lazy's disabled list (visible in :Lazy); `enabled = false` removes it
+-- entirely.
+--
+-- Replace a broken plugin with your own fork:
+--   { "jmbuhr/telescope-zotero.nvim", cond = false },
+--   { "yourname/telescope-zotero.nvim", dev = true },
+--
+-- To fully remove a bundle's plugins, just comment out the import in init.lua.
+--
+-- This file itself is just documentation - it returns an empty table.
+return {}

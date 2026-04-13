@@ -1,0 +1,7 @@
+lazy-lock.json
+tests/
+.DS_Store
+.cache
+.claude/
+**/.luarc.json
+docs/

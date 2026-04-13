@@ -1,0 +1,25 @@
+-- Personal autocommand additions for NoetherVim.
+-- Copy this file to lua/user/autocmds.lua and uncomment/add the lines you want.
+-- lua/user/autocmds.lua is gitignored - it never ships with the distribution.
+--
+-- This file runs after noethervim/autocmds.lua.  New autocommands are
+-- additive.  To override a core autocmd, clear its augroup first.
+--
+-- See noethervim/autocmds.lua for all defaults.
+-- See :help noethervim-user-autocmds for documentation.
+
+-- ── Add an autocommand ───────────────────────────────────────────────────────
+-- vim.api.nvim_create_autocmd("BufWritePre", {
+--   group    = vim.api.nvim_create_augroup("user_trim_whitespace", { clear = true }),
+--   pattern  = "*",
+--   callback = function()
+--     local pos = vim.api.nvim_win_get_cursor(0)
+--     vim.cmd([[%s/\s\+$//e]])
+--     vim.api.nvim_win_set_cursor(0, pos)
+--   end,
+-- })
+
+-- ── Override a core autocommand ──────────────────────────────────────────────
+-- To disable the q-to-quit autocmd for a specific filetype, clear the group:
+-- vim.api.nvim_create_augroup("noethervim_q_close", { clear = true })
+-- Then re-create it with your preferred list (see noethervim/autocmds.lua).
