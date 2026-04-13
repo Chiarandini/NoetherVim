@@ -155,7 +155,7 @@ return {
 										end
 										for _, w in ipairs({ lwin, rwin }) do
 											local buf = vim.api.nvim_win_get_buf(w)
-											vim.keymap.set("n", "q", close_both, { buffer = buf })
+											vim.keymap.set("n", "q", close_both, { buf = buf })
 										end
 									end)
 								end,

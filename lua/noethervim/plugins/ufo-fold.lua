@@ -9,7 +9,7 @@ local function peekOrHover()
         local bufnr = vim.api.nvim_win_get_buf(winid)
         local keys = {'a', 'i', 'o', 'A', 'I', 'O', 'gd', 'gR'}
 		for _, k in ipairs(keys) do
-            vim.keymap.set('n', k, '<CR>' .. k, {noremap = false, buffer = bufnr})
+            vim.keymap.set('n', k, '<CR>' .. k, {noremap = false, buf = bufnr})
         end
     else
         vim.lsp.buf.hover()

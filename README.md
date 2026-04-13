@@ -27,7 +27,7 @@ setup into a distribution.
 
 ## Requirements
 
-- Neovim >= 0.11
+- Neovim >= 0.12
 - A [Nerd Font](https://www.nerdfonts.com/) for icons
 - `git`, `fd`, `ripgrep`, a C compiler (for treesitter parsers)
 
@@ -43,7 +43,7 @@ brew install neovim ripgrep fd
 > `apt install neovim` ships an outdated version on most releases.
 > Use the [Neovim PPA](https://github.com/neovim/neovim/blob/master/INSTALL.md#ubuntu),
 > an [AppImage](https://github.com/neovim/neovim/releases), or
-> [bob](https://github.com/MordechaiHadad/bob) to get Neovim >= 0.11.
+> [bob](https://github.com/MordechaiHadad/bob) to get Neovim >= 0.12.
 ```bash
 sudo apt install ripgrep fd-find
 ```

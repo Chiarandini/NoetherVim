@@ -245,7 +245,7 @@ return {
 					end
 
 					local km_opts = function(desc)
-						return { buffer = bufnr, silent = true, desc = desc }
+						return { buf = bufnr, silent = true, desc = desc }
 					end
 
 					vim.keymap.set('n', 'gd',  vim.lsp.buf.definition,      km_opts('[g]o to [d]efinition'))
@@ -259,10 +259,10 @@ return {
 					vim.keymap.set('i', '<C-h>', function() vim.lsp.buf.signature_help({ border = 'rounded' }) end, km_opts('signature help'))
 					vim.keymap.set('n', 'gl', vim.diagnostic.open_float, km_opts('diagnostics float'))
 					vim.keymap.set('n', ']d', function()
-						vim.diagnostic.jump({ count = 1, float = { border = 'rounded' } })
+						vim.diagnostic.jump({ count = 1, on_jump = function() vim.diagnostic.open_float({ border = 'rounded' }) end })
 					end, km_opts('next [d]iagnostic'))
 					vim.keymap.set('n', '[d', function()
-						vim.diagnostic.jump({ count = -1, float = { border = 'rounded' } })
+						vim.diagnostic.jump({ count = -1, on_jump = function() vim.diagnostic.open_float({ border = 'rounded' }) end })
 					end, km_opts('prev [d]iagnostic'))
 					-- gra/grn: Neovim 0.12 defaults (code action, rename) — don't override
 					vim.keymap.set('n',      '<F1>', vim.lsp.buf.code_action,  km_opts('code action'))

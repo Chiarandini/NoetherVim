@@ -56,4 +56,4 @@ local function shift_enter()
   continue_with("")
 end
 
-vim.keymap.set("i", "<s-cr>", shift_enter, { buffer = true, silent = true, desc = "smart list continuation" })
+vim.keymap.set("i", "<s-cr>", shift_enter, { buf = 0, silent = true, desc = "smart list continuation" })

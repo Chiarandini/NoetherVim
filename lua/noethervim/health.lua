@@ -17,11 +17,11 @@ function M.check()
   -- ── Neovim version ──────────────────────────────────────────────────
   h.start("Neovim version")
   local v = vim.version()
-  if v.major > 0 or (v.major == 0 and v.minor >= 11) then
+  if v.major > 0 or (v.major == 0 and v.minor >= 12) then
     h.ok(string.format("Neovim %d.%d.%d", v.major, v.minor, v.patch))
   else
     h.error(string.format(
-      "Neovim %d.%d.%d — NoetherVim requires >= 0.11 (vim.lsp.config)",
+      "Neovim %d.%d.%d — NoetherVim requires >= 0.12",
       v.major, v.minor, v.patch
     ))
   end

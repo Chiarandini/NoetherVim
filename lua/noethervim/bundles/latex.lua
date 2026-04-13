@@ -72,8 +72,8 @@ return {
       local ns = vim.api.nvim_create_namespace("noethervim_latex_highlights")
 
       local function highlight_theorem_tags(bufnr)
-        local ok, parser = pcall(vim.treesitter.get_parser, bufnr, "latex")
-        if not ok or not parser then return end
+        local parser = vim.treesitter.get_parser(bufnr, "latex")
+        if not parser then return end
         vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
         local tree = parser:parse()[1]
         if not tree then return end
@@ -390,9 +390,9 @@ let g:vimtex_compiler_latexmk_engines = {
     ft     = { "tex", "latex" },
     config = function()
       require("telescope").load_extension("latex_labels")
-      vim.keymap.set("n", "<localleader>w",    "<cmd>Telescope latex_labels<cr>",  { buffer = 0, desc = "latex labels" })
-      vim.keymap.set("n", "<localleader>vul", "<cmd>LatexLabelsUpdate<cr>",       { buffer = 0, desc = "update latex labels" })
-      vim.keymap.set("n", "<localleader>vuh", "<cmd>CachedHeadingsUpdate<cr>",    { buffer = 0, desc = "update headings cache" })
+      vim.keymap.set("n", "<localleader>w",    "<cmd>Telescope latex_labels<cr>",  { buf = 0, desc = "latex labels" })
+      vim.keymap.set("n", "<localleader>vul", "<cmd>LatexLabelsUpdate<cr>",       { buf = 0, desc = "update latex labels" })
+      vim.keymap.set("n", "<localleader>vuh", "<cmd>CachedHeadingsUpdate<cr>",    { buf = 0, desc = "update headings cache" })
 
       -- ── gd: goto label definition ────────────────────────────────────────
       -- Extracts the label under the cursor (e.g. "th:bezoutIdentity" from

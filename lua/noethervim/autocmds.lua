@@ -20,7 +20,7 @@ vim.api.nvim_create_autocmd("FileType", {
   group = vim.api.nvim_create_augroup("noethervim_q_close", { clear = true }),
   pattern = q_close_ft,
   callback = function(ev)
-    vim.keymap.set("n", "q", "<cmd>close<cr>", { buffer = ev.buf, silent = true, nowait = true })
+    vim.keymap.set("n", "q", "<cmd>close<cr>", { buf = ev.buf, silent = true, nowait = true })
   end,
 })
 
@@ -66,7 +66,7 @@ vim.api.nvim_create_autocmd("FileType", {
   group = vim.api.nvim_create_augroup("noethervim_esc_close", { clear = true }),
   pattern = "sagarename",
   callback = function(ev)
-    vim.keymap.set("i", "<esc>", "<esc>ZQ", { buffer = ev.buf, silent = true })
+    vim.keymap.set("i", "<esc>", "<esc>ZQ", { buf = ev.buf, silent = true })
   end,
 })
 

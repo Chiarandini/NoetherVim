@@ -149,9 +149,9 @@ return {
       end
 
       local client = require("obsidian").get_client()
-      vim.keymap.set("n", "<leader>ol", function() default_to_first_link(client) end, { buffer = 0, desc = "follow link" })
-      vim.keymap.set("i", "<c-s>", "<c-o>:Obsidian quick_switch<cr>", { buffer = 0 })
-      vim.keymap.set("n", SearchLeader .. "oq", "<cmd>Obsidian quick_switch<cr>", { buffer = 0, desc = "obsidian quick switch" })
+      vim.keymap.set("n", "<leader>ol", function() default_to_first_link(client) end, { buf = 0, desc = "follow link" })
+      vim.keymap.set("i", "<c-s>", "<c-o>:Obsidian quick_switch<cr>", { buf = 0 })
+      vim.keymap.set("n", SearchLeader .. "oq", "<cmd>Obsidian quick_switch<cr>", { buf = 0, desc = "obsidian quick switch" })
     end,
   },
 }

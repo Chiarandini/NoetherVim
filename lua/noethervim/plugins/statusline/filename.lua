@@ -28,7 +28,7 @@ local function warning_popup(text)
 
   local win = vim.api.nvim_open_win(buf, false, opts)
 
-  vim.api.nvim_buf_set_keymap(buf, "n", "q", "<cmd>q<CR>", { noremap = true, silent = true })
+  vim.keymap.set("n", "q", "<cmd>q<CR>", { buf = buf, noremap = true, silent = true })
 
   vim.api.nvim_set_current_win(win)
 end
