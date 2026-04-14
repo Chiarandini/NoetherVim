@@ -101,6 +101,7 @@ vim.keymap.set("n", "_", function() split_scratch("sp") end,  { desc = "horizont
 
 vim.keymap.set("n", "ZA", "<cmd>qa<cr>",         { desc = "quit all" })
 vim.keymap.set("n", "ZF", "<cmd>q!<cr>",         { desc = "quit force" })
+vim.keymap.set("n", "ZK", "<cmd>qa!<cr>",         { desc = "quit all! (kill nvim)" })
 vim.keymap.set("n", "ZB", "<cmd>bdelete<cr>",    { desc = "delete buffer" })
 vim.keymap.set("n", "ZG", "<cmd>bdelete!<cr>",   { desc = "delete buffer force" })
 vim.keymap.set("n", "ZD", function()

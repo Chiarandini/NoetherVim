@@ -132,6 +132,10 @@ function M.setup(opts)
   end
 
   -- ── Core keymaps + toggles ─────────────────────────────────────
+  -- Baseline: keymaps that exist before NoetherVim core loads
+  -- (Neovim defaults + lazy plugin handler keymaps).
+  -- Used to filter Neovim defaults from the diff picker.
+  if load_user then M._snapshots.keymaps_baseline = snapshot_keymaps() end
   require("noethervim.keymaps")
   require("noethervim.toggles")
   if load_user then M._snapshots.keymaps_before = snapshot_keymaps() end

@@ -9,7 +9,17 @@ return {
 	{
 		"stevearc/overseer.nvim",
 		cmd  = { "OverseerRun", "OverseerToggle" },
-		opts = {},
+		opts = {
+			task_list = {
+				keymaps = {
+					-- defaults use <C-j>/<C-k> which conflict with window navigation
+					["<C-j>"] = false,
+					["<C-k>"] = false,
+					["<C-d>"] = "keymap.scroll_output_down",
+					["<C-u>"] = "keymap.scroll_output_up",
+				},
+			},
+		},
 	},
 
 	{

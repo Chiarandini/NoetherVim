@@ -3,7 +3,7 @@
 return { "windwp/nvim-autopairs",
     event = "InsertEnter",
 	opts = {
-		disable_filetype = { "TelescopePrompt" , "tex" },
+		disable_filetype = { "TelescopePrompt", "snacks_picker_input", "tex" },
 	},
 	config = function (_, opts)
 		require('nvim-autopairs').setup(opts)

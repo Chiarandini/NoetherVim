@@ -18,6 +18,15 @@ local function noethervim_root()
   return vim.fn.fnamemodify(init, ":h:h:h")
 end
 
+--- Return the effective NoetherVim root: the dev directory when
+--- vim.g.noethervim_dev is set, otherwise the installed location.
+local function effective_root()
+  if vim.g.noethervim_dev then
+    return vim.fn.expand(vim.g.noethervim_dev)
+  end
+  return noethervim_root()
+end
+
 --- Resolve the user config lua/user/ directory.
 local function user_dir()
   return vim.fn.stdpath("config") .. "/lua/user/"
@@ -30,15 +39,26 @@ end
 
 --- Confirm callback for pickers that should open files readonly.
 --- Prevents accidental edits to distribution source or installed plugins.
+--- In dev mode (vim.g.noethervim_dev), NoetherVim source files open editable.
 local function confirm_readonly(picker, item)
   picker:close()
   if not item or not item.file then return end
   -- Resolve the full path (item.file may be relative to item.cwd)
   local file = Snacks.picker.util.path(item)
   if not file then return end
-  vim.cmd("view " .. vim.fn.fnameescape(file))
-  vim.bo.readonly = true
-  vim.bo.modifiable = false
+  -- In dev mode, open NoetherVim source files as editable
+  local editable = false
+  if vim.g.noethervim_dev then
+    local dev = vim.fs.normalize(vim.fn.expand(vim.g.noethervim_dev))
+    editable = vim.startswith(vim.fs.normalize(file), dev)
+  end
+  if editable then
+    vim.cmd("edit " .. vim.fn.fnameescape(file))
+  else
+    vim.cmd("view " .. vim.fn.fnameescape(file))
+    vim.bo.readonly = true
+    vim.bo.modifiable = false
+  end
   if item.pos and item.pos[1] and item.pos[1] > 0 then
     pcall(vim.api.nvim_win_set_cursor, 0, { item.pos[1], item.pos[2] or 0 })
     vim.cmd("norm! zzzv")
@@ -102,13 +122,13 @@ local cat_order = { Languages = 1, Tools = 2, Navigation = 3, Writing = 4, Termi
 -- ── File & Grep Pickers (Phase 5) ───────────────────────────────
 
 function M.files()
-  local root = noethervim_root()
+  local root = effective_root()
   if not root then return vim.notify("NoetherVim: cannot locate source directory", vim.log.levels.ERROR) end
   Snacks.picker.files({ cwd = root, title = "NoetherVim Source", confirm = confirm_readonly })
 end
 
 function M.grep()
-  local root = noethervim_root()
+  local root = effective_root()
   if not root then return vim.notify("NoetherVim: cannot locate source directory", vim.log.levels.ERROR) end
   Snacks.picker.grep({ cwd = root, title = "NoetherVim Grep", confirm = confirm_readonly })
 end
@@ -122,7 +142,7 @@ function M.user()
 end
 
 function M.bundles()
-  local root = noethervim_root()
+  local root = effective_root()
   if not root then return vim.notify("NoetherVim: cannot locate source directory", vim.log.levels.ERROR) end
 
   -- Detect which bundles are enabled via lazy.nvim's imported modules
@@ -218,6 +238,248 @@ function M.status()
   vim.notify(table.concat(lines, "\n"), vim.log.levels.INFO, { title = "NoetherVim" })
 end
 
+-- ── Keymap source helpers ────────────────────────────────────────
+
+-- Characters that are special in Vim's magic-mode regex and need
+-- escaping.  Notably, ( ) { } + are NOT special in magic mode —
+-- escaping them would turn them INTO regex operators (\(, \+, etc.).
+local VIM_ESCAPE_CHARS = "/\\[].*^$~"
+
+-- Vim regex character class matching either quote type (" or ').
+-- Lua source code uses both interchangeably.
+local Q = [=[["']]=]
+
+--- Compare two keymap snapshots for equality.
+--- Callback functions from nvim_get_keymap get new references on each
+--- call, so identity comparison fails for Neovim defaults.  When both
+--- have callbacks and the same rhs, treat them as equal.
+local function same_mapping(a, b)
+  if a.rhs ~= b.rhs then return false end
+  if a.callback == b.callback then return true end
+  if a.callback and b.callback then return true end
+  return false
+end
+
+--- Build Vim search patterns that might locate how `lhs` is written
+--- in source code.  Leaders are resolved at runtime so we try every
+--- plausible notation, most-specific first.
+---
+--- Pattern philosophy:
+---   1. Leader-specific (most reliable)
+---   2. Context-aware quoted: "lhs" preceded by { ( , or ..
+---      (avoids matching mode strings like "n" in vim.keymap.set)
+---   3. Toggle-strip for [x / ]x style keymaps
+---   4. Vimscript mapping commands
+---   5. Bare unquoted (last resort, only for longer keymaps)
+local function keymap_search_patterns(lhs)
+  local sl           = vim.g.mapsearchleader or "<Space>"
+  local resolved_sl  = vim.api.nvim_replace_termcodes(sl, true, true, true)
+  local leader       = vim.g.mapleader or "\\"
+  local localleader  = vim.g.maplocalleader or "\\"
+
+  local starts_with_leader      = #leader > 0      and lhs:sub(1, #leader) == leader
+  local starts_with_localleader = #localleader > 0  and lhs:sub(1, #localleader) == localleader
+  local starts_with_sl          = #resolved_sl > 0  and lhs:sub(1, #resolved_sl) == resolved_sl
+
+  local pats = {}
+
+  -- ── 1. Leader-specific ────────────────────────────────────────
+  -- <Leader>tail — matches `"<leader>tail"` or `'<leader>tail'`
+  if starts_with_leader then
+    local tail = vim.fn.escape(lhs:sub(#leader + 1), VIM_ESCAPE_CHARS)
+    pats[#pats + 1] = [[\c<Leader>]] .. tail .. Q
+    pats[#pats + 1] = [[\c<Leader>]] .. tail
+  end
+
+  -- <LocalLeader>tail
+  if starts_with_localleader then
+    local tail = vim.fn.escape(lhs:sub(#localleader + 1), VIM_ESCAPE_CHARS)
+    pats[#pats + 1] = [[\c<LocalLeader>]] .. tail .. Q
+    pats[#pats + 1] = [[\c<LocalLeader>]] .. tail
+  end
+
+  -- SearchLeader concatenation: SearchLeader .. "tail"
+  -- For single-char tails, the generic `.. "x"` pattern matches noise
+  -- like `dir .. "/"` or `mkdir(_, "p")`.  Match the literal variable
+  -- name `SearchLeader` instead — it's consistent across all distro specs.
+  -- For multi-char tails, the generic `.. "tail"` is specific enough.
+  if starts_with_sl then
+    local tail_raw = lhs:sub(#resolved_sl + 1)
+    local tail_esc = vim.fn.escape(tail_raw, VIM_ESCAPE_CHARS)
+    -- Specific: SearchLeader .. "tail" (reliable for any tail length)
+    pats[#pats + 1] = [[\cSearchLeader\s*\.\.\s*]] .. Q .. tail_esc .. Q
+    -- Generic: .. "tail" (only for multi-char tails)
+    if #tail_raw > 1 then
+      pats[#pats + 1] = [[\C\.\.\s*]] .. Q .. tail_esc .. Q
+    end
+    -- keytrans notation for special-key tails (<space>, <C-B>, etc.)
+    local tail_notation = vim.fn.keytrans(tail_raw)
+    if tail_notation ~= tail_raw then
+      local notation_esc = vim.fn.escape(tail_notation, VIM_ESCAPE_CHARS)
+      pats[#pats + 1] = [[\c\.\.\s*]] .. Q .. notation_esc .. Q
+      pats[#pats + 1] = [[\c]] .. Q .. notation_esc .. Q
+    end
+  end
+
+  -- ── 2. Context-aware quoted ───────────────────────────────────
+  -- Match "lhs" or 'lhs' in keymap-defining contexts.
+  -- Q matches either ' or " (Lua uses both interchangeably).
+  --
+  -- Use \C (case-sensitive) for short keymaps so that "S" doesn't
+  -- match "s" (a different keymap); use \c for longer keymaps where
+  -- case differences in <Key> notation need to be tolerated.
+  local escaped = vim.fn.escape(lhs, VIM_ESCAPE_CHARS)
+  local case = #lhs <= 2 and [[\C]] or [[\c]]
+
+  -- Comma-preceded: matches the 2nd arg of vim.keymap.set("mode", "lhs")
+  -- without matching the 1st arg (mode string).  Critical for single-char
+  -- keymaps like "n" where mode == lhs.
+  pats[#pats + 1] = case .. [[,\s*]] .. Q .. escaped .. Q
+  -- Brace/paren/comma-preceded: also matches lazy spec { "lhs", ... }
+  pats[#pats + 1] = case .. [=[[{,(]\s*]=] .. Q .. escaped .. Q
+  pats[#pats + 1] = case .. [[\.\.\s*]] .. Q .. escaped .. Q
+  -- Case-insensitive retry if lhs contains <Key> notation
+  if #lhs <= 2 and lhs:find("<") then
+    pats[#pats + 1] = [=[\c[{,(]\s*]=] .. Q .. escaped .. Q
+  end
+
+  -- ── 3. Toggle keymaps ─────────────────────────────────────────
+  -- toggle("base", ...) prepends [ or ].
+  -- AFTER context-aware so that direct definitions like
+  -- map("[<C-L>", ...) are found first.
+  if lhs:match("^[%[%]]") and #lhs > 2 then
+    local base = vim.fn.escape(lhs:sub(2), VIM_ESCAPE_CHARS)
+    pats[#pats + 1] = case .. [=[[{,(]\s*]=] .. Q .. base .. Q
+  end
+
+  -- ── 4. keytrans notation ────────────────────────────────────────
+  -- The API resolves special keys (e.g. <Space> → literal space).
+  -- User spec files often write `"<space>h"` — keytrans converts the
+  -- resolved lhs back to notation form so we can match it.
+  local lhs_notation = vim.fn.keytrans(lhs)
+  if lhs_notation ~= lhs then
+    local notation_esc = vim.fn.escape(lhs_notation, VIM_ESCAPE_CHARS)
+    pats[#pats + 1] = [=[\c[{,(]\s*]=] .. Q .. notation_esc .. Q
+    pats[#pats + 1] = [[\c]] .. Q .. notation_esc .. Q
+  end
+
+  -- ── 5. Vimscript mappings ─────────────────────────────────────
+  pats[#pats + 1] = [[\cmap\s\+]] .. escaped
+  if lhs_notation ~= lhs then
+    local notation_esc = vim.fn.escape(lhs_notation, VIM_ESCAPE_CHARS)
+    pats[#pats + 1] = [[\cmap\s\+]] .. notation_esc
+  end
+
+  -- ── 6. Bare unquoted (last resort) ────────────────────────────
+  -- Only useful for multi-char keymaps; for single/double-char
+  -- keymaps it matches noise everywhere.
+  if #lhs > 2 then
+    pats[#pats + 1] = [[\c]] .. escaped
+  end
+
+  -- ── Synonym expansion ─────────────────────────────────────────
+  -- <M- ↔ <A- (API normalises <A- to <M-), <lt> → <
+  local extra = {}
+  for _, p in ipairs(pats) do
+    if p:find("<M%-") then
+      extra[#extra + 1] = (p:gsub("<M%-", "<A-"))
+    elseif p:find("<A%-") then
+      extra[#extra + 1] = (p:gsub("<A%-", "<M-"))
+    end
+    if p:find("<lt>") then
+      extra[#extra + 1] = (p:gsub("<lt>", "<"))
+    end
+  end
+  for _, e in ipairs(extra) do pats[#pats + 1] = e end
+
+  return pats
+end
+
+--- Build plain-text needles for detecting which core file defines a
+--- keymap.  Used for content:find(needle, 1, true) matching.
+local function keymap_file_needles(lhs)
+  local sl          = vim.g.mapsearchleader or "<Space>"
+  local resolved_sl = vim.api.nvim_replace_termcodes(sl, true, true, true)
+  local leader      = vim.g.mapleader or "\\"
+  local localleader = vim.g.maplocalleader or "\\"
+
+  local needles = {}
+  if #leader > 0 and lhs:sub(1, #leader) == leader then
+    needles[#needles + 1] = "<leader>" .. lhs:sub(#leader + 1)
+  end
+  if #localleader > 0 and lhs:sub(1, #localleader) == localleader then
+    needles[#needles + 1] = "<localleader>" .. lhs:sub(#localleader + 1)
+  end
+  if #resolved_sl > 0 and lhs:sub(1, #resolved_sl) == resolved_sl then
+    local tail = lhs:sub(#resolved_sl + 1)
+    needles[#needles + 1] = '"' .. tail .. '"'
+    needles[#needles + 1] = "'" .. tail .. "'"
+  end
+  if lhs:match("^[%[%]]") then
+    local base = lhs:sub(2)
+    -- Only add toggle-strip needles for multi-char bases; single-char
+    -- bases like "e" or "q" match dashboard keys and other noise.
+    if #base > 1 then
+      needles[#needles + 1] = '"' .. base .. '"'
+      needles[#needles + 1] = "'" .. base .. "'"
+    end
+  end
+  -- keytrans notation: API resolves <Space> to literal space, etc.
+  -- User files write "<space>h" — keytrans gives us "<Space>h".
+  local lhs_notation = vim.fn.keytrans(lhs)
+  if lhs_notation ~= lhs then
+    needles[#needles + 1] = lhs_notation
+  end
+  -- Quoted full lhs (both quote types; more specific than raw)
+  needles[#needles + 1] = '"' .. lhs .. '"'
+  needles[#needles + 1] = "'" .. lhs .. "'"
+  needles[#needles + 1] = lhs
+
+  -- Synonyms: <M- ↔ <A-, <lt> → <
+  local extra = {}
+  for _, n in ipairs(needles) do
+    if n:find("<M%-") then extra[#extra + 1] = (n:gsub("<M%-", "<A-")) end
+    if n:find("<lt>") then extra[#extra + 1] = (n:gsub("<lt>", "<")) end
+  end
+  for _, e in ipairs(extra) do needles[#needles + 1] = e end
+  return needles
+end
+
+--- Files that may define keymaps via vim.keymap.set (not lazy specs).
+--- Includes core modules, plugin/bundle config() functions, and user keymaps.
+local function keymap_candidate_files(root)
+  local files = {
+    root .. "/lua/noethervim/keymaps.lua",
+    root .. "/lua/noethervim/toggles.lua",
+    root .. "/lua/noethervim/inspect.lua",
+    root .. "/lua/noethervim/commands.lua",
+    root .. "/lua/noethervim/autocmds.lua",
+    root .. "/lua/noethervim/init.lua",
+  }
+  -- Plugin and bundle files (keymaps set in config() functions)
+  for _, dir in ipairs({
+    root .. "/lua/noethervim/plugins",
+    root .. "/lua/noethervim/bundles",
+  }) do
+    local handle = vim.uv.fs_scandir(dir)
+    if handle then
+      while true do
+        local name, ftype = vim.uv.fs_scandir_next(handle)
+        if not name then break end
+        if (ftype == "file" or ftype == "link") and name:match("%.lua$") then
+          files[#files + 1] = dir .. "/" .. name
+        end
+      end
+    end
+  end
+  -- User keymaps file (vim.keymap.set calls outside lazy specs)
+  local ukeymaps = vim.fn.stdpath("config") .. "/lua/user/keymaps.lua"
+  if vim.uv.fs_stat(ukeymaps) then
+    files[#files + 1] = ukeymaps
+  end
+  return files
+end
+
 -- ── Comparison: Keymaps (Phase 6.1) ─────────────────────────────
 
 function M.diff_keymaps()
@@ -230,14 +492,25 @@ function M.diff_keymaps()
   local after  = snap.keymaps_after
   local items  = {}
 
+  -- Map resolved keymaps to lazy plugin modules for source navigation.
+  -- `managed` includes ALL lazy handler keys (even user-only dev plugins
+  -- that keymap_sources can't map to a spec file).
+  local key_sources, lazy_managed = require("noethervim.util").keymap_sources()
+
+  -- Baseline: keymaps that existed before NoetherVim core loaded.
+  -- Keymaps present in baseline, unchanged by core AND user, and not
+  -- from any lazy spec are Neovim defaults — skip them.
+  local baseline = snap.keymaps_baseline or {}
+
   -- Collect all keys from both snapshots
   local all_keys = {}
   for k in pairs(before) do all_keys[k] = true end
   for k in pairs(after)  do all_keys[k] = true end
 
   for key in pairs(all_keys) do
-    local b = before[key]
-    local a = after[key]
+    local bl = baseline[key]
+    local b  = before[key]
+    local a  = after[key]
     local tag, mode, lhs, desc
 
     if a and not b then
@@ -261,6 +534,12 @@ function M.diff_keymaps()
         lhs  = a.lhs
         desc = a.desc ~= "" and a.desc or b.desc
       else
+        -- Skip Neovim defaults: present in baseline, unchanged by
+        -- core and user, and not managed by any lazy spec.
+        if bl and not key_sources[key] and not lazy_managed[key]
+           and same_mapping(bl, b) then
+          goto continue
+        end
         tag  = "[CORE]"
         mode = a.mode
         lhs  = a.lhs
@@ -269,13 +548,58 @@ function M.diff_keymaps()
     end
 
     if tag then
+      local display_lhs = lhs:gsub(" ", "␣"):gsub("<lt>", "<")
       table.insert(items, {
-        text   = tag .. " " .. mode .. " " .. lhs .. " " .. desc,
+        text   = tag .. " " .. mode .. " " .. display_lhs .. " " .. desc,
         tag    = tag,
         mode   = mode,
         lhs    = lhs,
         desc   = desc,
+        source = key_sources[key],
       })
+    end
+    ::continue::
+  end
+
+  -- Re-classify [CORE] keymaps from lazy handlers: if none of the
+  -- file-detection needles match the attributed distro spec file,
+  -- the key was added by a user spec override → show as [USER].
+  local reclassify_cache = {}
+  for _, item in ipairs(items) do
+    if item.tag == "[CORE]" and item.source then
+      local src = item.source
+      if reclassify_cache[src] == nil then
+        reclassify_cache[src] = vim.uv.fs_stat(src)
+          and table.concat(vim.fn.readfile(src), "\n") or ""
+      end
+      local content = reclassify_cache[src]
+      local needles = keymap_file_needles(item.lhs)
+      local found_in_distro = false
+      for _, needle in ipairs(needles) do
+        -- Skip the raw lhs: too broad, matches comments/descriptions.
+        -- Use case-sensitive matching so "fB" doesn't match distro's "fb".
+        if needle ~= item.lhs and content:find(needle, 1, true) then
+          found_in_distro = true
+          break
+        end
+      end
+      -- Retry case-insensitive for <Leader>/<LocalLeader> notation
+      -- differences (e.g. <Leader> vs <leader>).
+      if not found_in_distro then
+        local content_lower = content:lower()
+        for _, needle in ipairs(needles) do
+          if needle ~= item.lhs and needle:find("<[Ll]") then
+            if content_lower:find(needle:lower(), 1, true) then
+              found_in_distro = true
+              break
+            end
+          end
+        end
+      end
+      if not found_in_distro then
+        item.tag = "[USER]"
+        item.text = "[USER]" .. item.text:sub(7)
+      end
     end
   end
 
@@ -299,28 +623,160 @@ function M.diff_keymaps()
     title  = "NoetherVim Keymap Comparison",
     items  = items,
     layout = { preset = "select", preview = "main" },
+    win = { input = { keys = {
+      -- Space inserts ␣ so the search matches the visible display
+      ["<Space>"] = {
+        function() vim.api.nvim_feedkeys("␣", "n", true) end,
+        mode = { "i" }, nowait = true, desc = "insert ␣",
+      },
+    } } },
     format = function(item)
       local ret = {} ---@type snacks.picker.Highlight[]
       ret[#ret + 1] = { string.format("%-11s", item.tag), tag_hl[item.tag] or "Comment" }
       ret[#ret + 1] = { string.format(" [%s] ", item.mode), "Special" }
-      ret[#ret + 1] = { string.format("%-16s ", item.lhs), "SnacksPickerFile" }
+      -- Replace literal spaces with ␣ so SearchLeader prefixes are visible
+      ret[#ret + 1] = { string.format("%-16s ", item.lhs:gsub(" ", "␣"):gsub("<lt>", "<")), "SnacksPickerFile" }
       ret[#ret + 1] = { item.desc, "Comment" }
       return ret
     end,
     confirm = function(picker, item)
       picker:close()
-      local file, is_upstream
       if item.tag == "[USER]" or item.tag == "[OVERRIDE]" then
-        file = user_dir() .. "keymaps.lua"
-      else
-        local root = noethervim_root()
-        if root then file = root .. "/lua/noethervim/keymaps.lua" end
-        is_upstream = true
+        local file = user_dir() .. "keymaps.lua"
+        if vim.uv.fs_stat(file) then
+          vim.cmd("edit " .. vim.fn.fnameescape(file))
+          vim.fn.search(vim.fn.escape(item.lhs, VIM_ESCAPE_CHARS), "w")
+        end
+        return
       end
-      if file and vim.uv.fs_stat(file) then
-        vim.cmd((is_upstream and "view " or "edit ") .. vim.fn.fnameescape(file))
-        if is_upstream then vim.bo.readonly = true; vim.bo.modifiable = false end
-        vim.fn.search(vim.fn.escape(item.lhs, "/\\[]{}().*+^$~"), "w")
+
+      local root = effective_root()
+      if not root then return end
+      local readonly = not vim.g.noethervim_dev
+      local patterns = keymap_search_patterns(item.lhs)
+
+      --- Try all search patterns in the current buffer.
+      --- Two passes: first prefers lines where a compatible mode appears
+      --- (avoids jumping to a different-mode definition of the same lhs,
+      --- e.g. "i" <M-BS> vs "c" <M-BS>).  Falls back to any match.
+      ---
+      --- Mode equivalences: "v" in vim.keymap.set creates both visual
+      --- and select modes (v+s), while "x" is visual-only and "s" is
+      --- select-only.  So a [s] keymap matches "v" or "s" on the line;
+      --- a [v] keymap matches "v" or "x"; etc.
+      local function try_patterns()
+        -- Build list of mode strings that would define this mode
+        local mode_strs = { '"' .. item.mode .. '"' }
+        if item.mode == "s" or item.mode == "x" then
+          -- "v" creates both visual and select
+          mode_strs[#mode_strs + 1] = '"v"'
+        elseif item.mode == "v" then
+          mode_strs[#mode_strs + 1] = '"x"'
+        end
+
+        local function line_has_mode(line)
+          for _, mq in ipairs(mode_strs) do
+            if line:find(mq, 1, true) then return true end
+          end
+          return false
+        end
+
+        -- Pass 1: mode-matching lines only
+        for _, pat in ipairs(patterns) do
+          local found = vim.fn.search(pat, "w")
+          while found > 0 do
+            local line = vim.fn.getline(found)
+            if line:match("^%s*%-%-") then
+              found = vim.fn.search(pat, "W")
+            elseif line_has_mode(line) then
+              return true
+            else
+              found = vim.fn.search(pat, "W")
+            end
+          end
+        end
+        -- Pass 2: any non-comment match
+        for _, pat in ipairs(patterns) do
+          local found = vim.fn.search(pat, "w")
+          while found > 0 and vim.fn.getline(found):match("^%s*%-%-") do
+            found = vim.fn.search(pat, "W")
+          end
+          if found > 0 then return true end
+        end
+        return false
+      end
+
+      --- Open a file (readonly or editable depending on dev mode).
+      local function open_file(path)
+        vim.cmd((readonly and "view " or "edit ") .. vim.fn.fnameescape(path))
+        if readonly then vim.bo.readonly = true; vim.bo.modifiable = false end
+      end
+
+      -- Resolve source file: use lazy handler data when available.
+      -- For keymaps without a source, search core files for the lhs.
+      local file = item.source
+      if not file or not vim.uv.fs_stat(file) then
+        local needles = keymap_file_needles(item.lhs)
+        local candidates = keymap_candidate_files(root)
+        -- Two-pass scan: specific needles first (quoted, leader, keytrans),
+        -- then raw lhs as fallback.  This prevents the raw needle from
+        -- matching comments/mode-strings in early candidate files while
+        -- still catching Vimscript keymaps that aren't quoted.
+        for pass = 1, 2 do
+          for _, path in ipairs(candidates) do
+            if vim.uv.fs_stat(path) then
+              local content = table.concat(vim.fn.readfile(path), "\n"):lower()
+              for _, needle in ipairs(needles) do
+                local is_raw = (needle == item.lhs)
+                if (pass == 1 and not is_raw) or (pass == 2 and is_raw) then
+                  if content:find(needle:lower(), 1, true) then
+                    file = path
+                    break
+                  end
+                end
+              end
+              if file then break end
+            end
+          end
+          if file then break end
+        end
+        file = file or candidates[1]
+      end
+
+      open_file(file)
+      if try_patterns() then return end
+
+      -- Search failed in the primary file.  The keymap may have been
+      -- added by user spec overrides (lua/user/plugins/) which
+      -- keymap_sources() can't distinguish from distro specs.
+      -- Try matching user plugin/keymaps files before giving up.
+      local udir = user_dir()
+      local user_candidates = {}
+      if item.source then
+        local src_name = vim.fn.fnamemodify(item.source, ":t")
+        user_candidates[#user_candidates + 1] = udir .. "plugins/" .. src_name
+      end
+      user_candidates[#user_candidates + 1] = udir .. "keymaps.lua"
+      -- Scan all user plugin files as a last resort
+      local user_plugins = udir .. "plugins/"
+      local handle = vim.uv.fs_scandir(user_plugins)
+      if handle then
+        while true do
+          local name, ftype = vim.uv.fs_scandir_next(handle)
+          if not name then break end
+          if (ftype == "file" or ftype == "link") and name:match("%.lua$") then
+            user_candidates[#user_candidates + 1] = user_plugins .. name
+          end
+        end
+      end
+
+      local seen = { [file] = true }
+      for _, upath in ipairs(user_candidates) do
+        if not seen[upath] and vim.uv.fs_stat(upath) then
+          seen[upath] = true
+          open_file(upath)
+          if try_patterns() then return end
+        end
       end
     end,
   })
@@ -379,21 +835,192 @@ function M.diff_options()
     end,
     confirm = function(picker, item)
       picker:close()
-      local file, is_upstream
+      local file, readonly
       if item.tag == "[OVERRIDE]" then
         file = user_dir() .. "options.lua"
+        readonly = false
       else
-        local root = noethervim_root()
+        local root = effective_root()
         if root then file = root .. "/lua/noethervim/options.lua" end
-        is_upstream = true
+        readonly = not vim.g.noethervim_dev
       end
       if file and vim.uv.fs_stat(file) then
-        vim.cmd((is_upstream and "view " or "edit ") .. vim.fn.fnameescape(file))
-        if is_upstream then vim.bo.readonly = true; vim.bo.modifiable = false end
+        vim.cmd((readonly and "view " or "edit ") .. vim.fn.fnameescape(file))
+        if readonly then vim.bo.readonly = true; vim.bo.modifiable = false end
         vim.fn.search(vim.fn.escape(item.name, "/\\[]{}().*+^$~"), "w")
       end
     end,
   })
+end
+
+-- ── Debug: keymap source diagnostic ─────────────────────────────
+
+--- Test source-file detection and search-pattern matching for every
+--- keymap.  Opens a scratch buffer with OK/MISS status per keymap.
+--- Run with :NoetherVim debug keymaps
+function M.debug_keymaps()
+  local snap = snapshots()
+  if not snap.keymaps_before or not snap.keymaps_after then
+    return vim.notify("NoetherVim: no keymap snapshots", vim.log.levels.WARN)
+  end
+
+  local key_sources, lazy_managed = require("noethervim.util").keymap_sources()
+  local root = effective_root()
+  if not root then return end
+
+  local baseline   = snap.keymaps_baseline or {}
+  local before     = snap.keymaps_before
+  local after      = snap.keymaps_after
+  local candidates = keymap_candidate_files(root)
+
+  -- Also include user plugin files as search candidates
+  local udir = user_dir() .. "plugins/"
+  local user_files = {}
+  local handle = vim.uv.fs_scandir(udir)
+  if handle then
+    while true do
+      local name, ftype = vim.uv.fs_scandir_next(handle)
+      if not name then break end
+      if (ftype == "file" or ftype == "link") and name:match("%.lua$") then
+        user_files[#user_files + 1] = udir .. name
+      end
+    end
+  end
+
+  -- Cache file contents for repeated scanning
+  local file_cache = {}
+  local function get_lines(path)
+    if file_cache[path] == nil then
+      file_cache[path] = vim.uv.fs_stat(path) and vim.fn.readfile(path) or {}
+    end
+    return file_cache[path]
+  end
+
+  --- Try search patterns against a file's lines.
+  local function try_file(path, patterns)
+    local lines = get_lines(path)
+    for _, pat in ipairs(patterns) do
+      for i, line in ipairs(lines) do
+        if not line:match("^%s*%-%-") and vim.fn.match(line, pat) >= 0 then
+          return pat, i
+        end
+      end
+    end
+    return nil, nil
+  end
+
+  local results = {}
+  local skipped = 0
+
+  -- Only test keymaps that would appear in the diff picker
+  -- (skip Neovim defaults using the same filter as diff_keymaps).
+  local all_keys = {}
+  for k in pairs(before) do all_keys[k] = true end
+  for k in pairs(after)  do all_keys[k] = true end
+
+  for key in pairs(all_keys) do
+    local b  = before[key]
+    local a  = after[key]
+    local bl = baseline[key]
+
+    -- Same Neovim-default filter as diff_keymaps
+    if a and b and bl and not key_sources[key] and not lazy_managed[key]
+       and same_mapping(bl, b) and same_mapping(b, a) then
+      skipped = skipped + 1
+      goto next_key
+    end
+
+    local km = a or b
+    local lhs = km.lhs
+
+    -- Step 1: determine source file (distro)
+    local file = key_sources[key]
+    if not file or not vim.uv.fs_stat(file) then
+      file = nil
+      local needles = keymap_file_needles(lhs)
+      for pass = 1, 2 do
+        for _, path in ipairs(candidates) do
+          local lines = get_lines(path)
+          if #lines > 0 then
+            local content = table.concat(lines, "\n"):lower()
+            for _, needle in ipairs(needles) do
+              local is_raw = (needle == lhs)
+              if (pass == 1 and not is_raw) or (pass == 2 and is_raw) then
+                if content:find(needle:lower(), 1, true) then
+                  file = path
+                  break
+                end
+              end
+            end
+            if file then break end
+          end
+        end
+        if file then break end
+      end
+    end
+
+    -- Step 2: test search patterns
+    local patterns = keymap_search_patterns(lhs)
+    local found_pat, found_line
+    if file then
+      found_pat, found_line = try_file(file, patterns)
+    end
+
+    -- Step 3: if distro file failed, try user plugin files
+    if not found_pat then
+      for _, upath in ipairs(user_files) do
+        found_pat, found_line = try_file(upath, patterns)
+        if found_pat then
+          file = upath
+          break
+        end
+      end
+    end
+
+    results[#results + 1] = {
+      mode  = km.mode,
+      lhs   = lhs,
+      desc  = km.desc,
+      file  = file and vim.fn.fnamemodify(file, ":t") or "???",
+      found = found_line ~= nil,
+      line  = found_line or 0,
+      pat   = found_pat,
+    }
+    ::next_key::
+  end
+
+  -- Sort: misses first, then by mode+lhs
+  table.sort(results, function(a, b)
+    if a.found ~= b.found then return not a.found end
+    if a.mode ~= b.mode then return a.mode < b.mode end
+    return a.lhs < b.lhs
+  end)
+
+  local fail_count = 0
+  for _, r in ipairs(results) do
+    if not r.found then fail_count = fail_count + 1 end
+  end
+
+  local out = {
+    "NoetherVim Keymap Source Diagnostic",
+    string.format("Total: %d keymaps, %d found, %d missed (%d Neovim defaults filtered)",
+      #results, #results - fail_count, fail_count, skipped),
+    string.rep("─", 80),
+  }
+  for _, r in ipairs(results) do
+    out[#out + 1] = string.format("[%s] [%s] %-20s  %-16s L%-5s %s",
+      r.found and "OK  " or "MISS",
+      r.mode, r.lhs, r.file,
+      r.found and tostring(r.line) or "?",
+      r.desc)
+  end
+
+  vim.cmd("tabnew")
+  vim.bo.buftype = "nofile"
+  vim.bo.bufhidden = "wipe"
+  vim.bo.swapfile = false
+  vim.api.nvim_buf_set_name(0, "noethervim://keymap-diagnostic")
+  vim.api.nvim_buf_set_lines(0, 0, -1, false, out)
 end
 
 -- ── Comparison: File side-by-side (Phase 6.3) ───────────────────
@@ -417,7 +1044,7 @@ end
 --- Open a side-by-side split for a specific module (direct call path).
 --- Used by :NoetherVim diff <name> when a name is provided.
 local function open_diff_split(module_name)
-  local root = noethervim_root()
+  local root = effective_root()
   if not root then return vim.notify("NoetherVim: cannot locate source directory", vim.log.levels.ERROR) end
 
   local upstream = nil
@@ -453,9 +1080,14 @@ local function open_diff_split(module_name)
     end
   end
 
-  vim.cmd("view " .. vim.fn.fnameescape(upstream))
-  vim.bo.readonly = true
-  vim.bo.modifiable = false
+  local readonly = not vim.g.noethervim_dev
+  if readonly then
+    vim.cmd("view " .. vim.fn.fnameescape(upstream))
+    vim.bo.readonly = true
+    vim.bo.modifiable = false
+  else
+    vim.cmd("edit " .. vim.fn.fnameescape(upstream))
+  end
   if user_file then
     vim.cmd("vsplit " .. vim.fn.fnameescape(user_file))
   else
@@ -471,7 +1103,7 @@ function M.diff_file(module_name)
   end
 
   -- Picker mode — browse all diffable modules
-  local root = noethervim_root()
+  local root = effective_root()
   if not root then return vim.notify("NoetherVim: cannot locate source directory", vim.log.levels.ERROR) end
   local udir = user_dir()
   local icons = require("noethervim.util.icons")
@@ -559,9 +1191,14 @@ function M.diff_file(module_name)
     end,
     confirm = function(picker, item)
       picker:close()
-      vim.cmd("view " .. vim.fn.fnameescape(item.upstream))
-      vim.bo.readonly = true
-      vim.bo.modifiable = false
+      local readonly = not vim.g.noethervim_dev
+      if readonly then
+        vim.cmd("view " .. vim.fn.fnameescape(item.upstream))
+        vim.bo.readonly = true
+        vim.bo.modifiable = false
+      else
+        vim.cmd("edit " .. vim.fn.fnameescape(item.upstream))
+      end
       if item.user_file then
         vim.cmd("vsplit " .. vim.fn.fnameescape(item.user_file))
       else
@@ -593,7 +1230,7 @@ local CORE_OVERRIDE_MODULES = {
 --- Map a NoetherVim source file to its user override path.
 --- Returns (user_path, category) or (nil, nil).
 local function map_to_user_path(bufpath)
-  local root = noethervim_root()
+  local root = effective_root()
   if not root then return nil, nil end
   local config = vim.fn.stdpath("config")
   local udir = user_dir()
@@ -676,7 +1313,7 @@ function M.override()
   -- Seed the file with a minimal template if it's new
   local is_new = not vim.uv.fs_stat(user_path)
   if is_new then
-    local root = vim.fs.normalize(noethervim_root())
+    local root = vim.fs.normalize(effective_root())
     local rel = vim.fs.normalize(bufpath):sub(#root + 2)
     local content = seed_content(rel, category)
     local fd = vim.uv.fs_open(user_path, "w", 420) -- 0644
@@ -703,6 +1340,10 @@ local subcommands = {
   status   = M.status,
   diff     = function(args) M.diff(args) end,
   override = M.override,
+  debug    = function(args)
+    if args == "keymaps" then M.debug_keymaps()
+    else vim.notify("NoetherVim: debug targets: keymaps", vim.log.levels.INFO) end
+  end,
 }
 
 local subcommand_names = vim.tbl_keys(subcommands)
@@ -740,7 +1381,7 @@ function M.setup()
       if args[2] == "diff" and #args <= 3 then
         local targets = {}
         local seen = {}
-        local root = noethervim_root()
+        local root = effective_root()
         if root then
           for _, dir in ipairs({
             root .. "/lua/noethervim",
@@ -760,6 +1401,12 @@ function M.setup()
         return vim.tbl_filter(function(s)
           return s:find(args[3] or "", 1, true) == 1
         end, targets)
+      end
+      -- Complete debug targets
+      if args[2] == "debug" and #args <= 3 then
+        return vim.tbl_filter(function(s)
+          return s:find(args[3] or "", 1, true) == 1
+        end, { "keymaps" })
       end
       return {}
     end,

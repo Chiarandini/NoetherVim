@@ -1,6 +1,6 @@
 # NoetherVim
 
-A Neovim distribution with a minimal abstraction layer. The name is after [Emmy Noether](https://en.wikipedia.org/wiki/Emmy_Noether) (the name also contains *nvim* - *noether**Vim***). If muscle memory makes you type `:NeotherVim`, that works too.
+A Neovim distribution with a minimal abstraction layer. The name is after [Emmy Noether](https://en.wikipedia.org/wiki/Emmy_Noether) (the name also contains *nvim* - *noether**Vim***).
 
 LaTeX, BibTeX, and VimTeX get the same level of support as LSP and treesitter. Everything else you'd expect is configured out of the box: completion (blink.cmp), DAP, diagnostics, formatters. Startup is fast by using lazy-loading.
 
@@ -244,6 +244,9 @@ Bundles are optional feature groups. Enable them in `init.lua` (see [Enabling bu
 
 **Discovering keymaps:** press any prefix key and wait for which-key to show available actions. Use SearchLeader+fk (default: `<Space>fk`) to search all keymaps by description, or run `:NoetherVim diff keymaps` to see what you've changed.
 
+
+> [!NOTE]
+> If muscle memory makes you type `:NeotherVim`, that works too.
 ---
 
 ## Structure
