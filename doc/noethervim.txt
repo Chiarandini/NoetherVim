@@ -502,6 +502,7 @@ Prefixes: ~
     `<C-w>`             Windows & panels
                       l(azy)  s(tatusline)  t(erminal)  F(ugit2)
                       [d / ]d (diffview)  <C-h> (harpoon)  <C-e> (explorer)
+                      <C-o> (Oil)
                                                         *noethervim-g*
     `g`                 LSP & go-to
                       gd(efinition)  gD(eclaration)  gR(eferences float)
@@ -622,6 +623,17 @@ These keymaps activate only in their respective filetype.
     `<S-CR>`            Open entry, keep quickfix open
     `<C-j>` / `<C-n>`  Navigate down
     `<C-p>`             Navigate up
+
+    oil (file explorer, `<C-w><C-o>` or `:Oil`): ~
+    `g?`                Show all Oil keymaps (including defaults)
+    `gf`                Fuzzy find files in current directory
+    `gV`                Pick destination, open dual-pane float (q closes both)
+    `gd`                Toggle detail view (permissions, size, mtime)
+    `gX`                Open directory in system file browser
+    `gS`                Create symlink in current directory
+    `g.`                Toggle hidden files
+    `g\`                Toggle trash
+    `C`                 Copy file to system clipboard
 
 ------------------------------------------------------------------------------
 9.2 STATUSLINE                                        *noethervim-statusline*

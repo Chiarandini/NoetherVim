@@ -94,7 +94,15 @@ return {
 					callback = function()
 						local dir = require("oil").get_current_dir()
 						if not dir then return end
-						require("snacks").picker.files({ cwd = dir })
+						local title
+						local git_root = vim.fn.systemlist("git -C " .. vim.fn.shellescape(dir) .. " rev-parse --show-toplevel")[1]
+						if git_root and not git_root:match("^fatal") then
+							title = dir:sub(#git_root + 2) -- strip root + trailing /
+							if title == "" then title = "." end
+						else
+							title = vim.fn.fnamemodify(dir, ":~")
+						end
+						require("snacks").picker.files({ cwd = dir, title = title })
 					end,
 				},
 				["gV"] = {
