@@ -83,7 +83,7 @@ local bundle_catalog = {
   { name = "debug",          cat = "Tools",      desc = "nvim-dap + UI (Python, Lua, JS/TS, Go)" },
   { name = "test",           cat = "Tools",      desc = "neotest test runner" },
   { name = "repl",           cat = "Tools",      desc = "iron.nvim interactive REPL" },
-  { name = "task-runner",    cat = "Tools",      desc = "overseer.nvim + compiler.nvim" },
+  { name = "task-runner",    cat = "Tools",      desc = "overseer.nvim + compiler.nvim (run file)" },
   { name = "database",       cat = "Tools",      desc = "vim-dadbod + UI + SQL completion" },
   { name = "http",           cat = "Tools",      desc = "kulala.nvim HTTP/REST/gRPC/GraphQL client" },
   { name = "git",            cat = "Tools",      desc = "Fugit2, diffview, git-conflict" },
