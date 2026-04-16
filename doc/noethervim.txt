@@ -919,7 +919,7 @@ A: vim-abolish (tpope) provides three features:
 
 Q: Can I make my `leader` and `searchleader` the same?~
 A: Yes; simply map both to the same key in your `init.lua` file. You can map
-your LocalLeader to the same key as well.
+   your LocalLeader to the same key as well.
 
 ==============================================================================
 vim:tw=78:ts=8:ft=help:norl:
