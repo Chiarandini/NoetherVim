@@ -480,6 +480,132 @@ local function keymap_candidate_files(root)
   return files
 end
 
+-- ── Shared: jump to keymap source definition ────────────────────
+-- Used by diff_keymaps (confirm handler) and the guide (<CR>).
+
+--- Jump to the source definition of a keymap.
+--- Opens the file containing the definition (readonly in non-dev mode)
+--- and positions the cursor on the defining line.
+---
+--- @param mode string   Keymap mode ("n", "i", "v", etc.)
+--- @param lhs  string   Resolved keymap lhs (from nvim_get_keymap)
+--- @param opts? table   { source = string? }  Optional lazy handler source hint.
+function M.jump_to_keymap(mode, lhs, opts)
+  opts = opts or {}
+  local root = effective_root()
+  if not root then return end
+  local readonly = not vim.g.noethervim_dev
+  local patterns = keymap_search_patterns(lhs)
+
+  --- Try all search patterns in the current buffer.
+  --- Two passes: first prefers lines where a compatible mode appears
+  --- (avoids jumping to a different-mode definition of the same lhs,
+  --- e.g. "i" <M-BS> vs "c" <M-BS>).  Falls back to any match.
+  local function try_patterns_in_buffer()
+    local mode_strs = { '"' .. mode .. '"' }
+    if mode == "s" or mode == "x" then
+      mode_strs[#mode_strs + 1] = '"v"'
+    elseif mode == "v" then
+      mode_strs[#mode_strs + 1] = '"x"'
+    end
+
+    local function line_has_mode(line)
+      for _, mq in ipairs(mode_strs) do
+        if line:find(mq, 1, true) then return true end
+      end
+      return false
+    end
+
+    -- Pass 1: mode-matching lines only
+    for _, pat in ipairs(patterns) do
+      local found = vim.fn.search(pat, "w")
+      while found > 0 do
+        local line = vim.fn.getline(found)
+        if line:match("^%s*%-%-") then
+          found = vim.fn.search(pat, "W")
+        elseif line_has_mode(line) then
+          return true
+        else
+          found = vim.fn.search(pat, "W")
+        end
+      end
+    end
+    -- Pass 2: any non-comment match
+    for _, pat in ipairs(patterns) do
+      local found = vim.fn.search(pat, "w")
+      while found > 0 and vim.fn.getline(found):match("^%s*%-%-") do
+        found = vim.fn.search(pat, "W")
+      end
+      if found > 0 then return true end
+    end
+    return false
+  end
+
+  local function open_file(path)
+    vim.cmd((readonly and "view " or "edit ") .. vim.fn.fnameescape(path))
+    if readonly then vim.bo.readonly = true; vim.bo.modifiable = false end
+  end
+
+  -- Resolve source file: use hint when available, else scan candidates.
+  local file = opts.source
+  if not file or not vim.uv.fs_stat(file) then
+    file = nil
+    local needles = keymap_file_needles(lhs)
+    local candidates = keymap_candidate_files(root)
+    for pass = 1, 2 do
+      for _, path in ipairs(candidates) do
+        if vim.uv.fs_stat(path) then
+          local content = table.concat(vim.fn.readfile(path), "\n"):lower()
+          for _, needle in ipairs(needles) do
+            local is_raw = (needle == lhs)
+            if (pass == 1 and not is_raw) or (pass == 2 and is_raw) then
+              if content:find(needle:lower(), 1, true) then
+                file = path
+                break
+              end
+            end
+          end
+          if file then break end
+        end
+      end
+      if file then break end
+    end
+    file = file or candidates[1]
+  end
+
+  open_file(file)
+  if try_patterns_in_buffer() then return end
+
+  -- Search failed in the primary file.  Try user plugin/keymaps files.
+  local udir = user_dir()
+  local user_candidates = {}
+  if opts.source then
+    local src_name = vim.fn.fnamemodify(opts.source, ":t")
+    user_candidates[#user_candidates + 1] = udir .. "plugins/" .. src_name
+  end
+  user_candidates[#user_candidates + 1] = udir .. "keymaps.lua"
+  local user_plugins = udir .. "plugins/"
+  local handle = vim.uv.fs_scandir(user_plugins)
+  if handle then
+    while true do
+      local name, ftype = vim.uv.fs_scandir_next(handle)
+      if not name then break end
+      if (ftype == "file" or ftype == "link") and name:match("%.lua$") then
+        user_candidates[#user_candidates + 1] = user_plugins .. name
+      end
+    end
+  end
+
+  local seen = { [file] = true }
+  for _, upath in ipairs(user_candidates) do
+    if not seen[upath] and vim.uv.fs_stat(upath) then
+      seen[upath] = true
+      open_file(upath)
+      if try_patterns_in_buffer() then return end
+    end
+  end
+end
+
 -- ── Comparison: Keymaps (Phase 6.1) ─────────────────────────────
 
 function M.diff_keymaps()
@@ -649,135 +775,7 @@ function M.diff_keymaps()
         end
         return
       end
-
-      local root = effective_root()
-      if not root then return end
-      local readonly = not vim.g.noethervim_dev
-      local patterns = keymap_search_patterns(item.lhs)
-
-      --- Try all search patterns in the current buffer.
-      --- Two passes: first prefers lines where a compatible mode appears
-      --- (avoids jumping to a different-mode definition of the same lhs,
-      --- e.g. "i" <M-BS> vs "c" <M-BS>).  Falls back to any match.
-      ---
-      --- Mode equivalences: "v" in vim.keymap.set creates both visual
-      --- and select modes (v+s), while "x" is visual-only and "s" is
-      --- select-only.  So a [s] keymap matches "v" or "s" on the line;
-      --- a [v] keymap matches "v" or "x"; etc.
-      local function try_patterns()
-        -- Build list of mode strings that would define this mode
-        local mode_strs = { '"' .. item.mode .. '"' }
-        if item.mode == "s" or item.mode == "x" then
-          -- "v" creates both visual and select
-          mode_strs[#mode_strs + 1] = '"v"'
-        elseif item.mode == "v" then
-          mode_strs[#mode_strs + 1] = '"x"'
-        end
-
-        local function line_has_mode(line)
-          for _, mq in ipairs(mode_strs) do
-            if line:find(mq, 1, true) then return true end
-          end
-          return false
-        end
-
-        -- Pass 1: mode-matching lines only
-        for _, pat in ipairs(patterns) do
-          local found = vim.fn.search(pat, "w")
-          while found > 0 do
-            local line = vim.fn.getline(found)
-            if line:match("^%s*%-%-") then
-              found = vim.fn.search(pat, "W")
-            elseif line_has_mode(line) then
-              return true
-            else
-              found = vim.fn.search(pat, "W")
-            end
-          end
-        end
-        -- Pass 2: any non-comment match
-        for _, pat in ipairs(patterns) do
-          local found = vim.fn.search(pat, "w")
-          while found > 0 and vim.fn.getline(found):match("^%s*%-%-") do
-            found = vim.fn.search(pat, "W")
-          end
-          if found > 0 then return true end
-        end
-        return false
-      end
-
-      --- Open a file (readonly or editable depending on dev mode).
-      local function open_file(path)
-        vim.cmd((readonly and "view " or "edit ") .. vim.fn.fnameescape(path))
-        if readonly then vim.bo.readonly = true; vim.bo.modifiable = false end
-      end
-
-      -- Resolve source file: use lazy handler data when available.
-      -- For keymaps without a source, search core files for the lhs.
-      local file = item.source
-      if not file or not vim.uv.fs_stat(file) then
-        local needles = keymap_file_needles(item.lhs)
-        local candidates = keymap_candidate_files(root)
-        -- Two-pass scan: specific needles first (quoted, leader, keytrans),
-        -- then raw lhs as fallback.  This prevents the raw needle from
-        -- matching comments/mode-strings in early candidate files while
-        -- still catching Vimscript keymaps that aren't quoted.
-        for pass = 1, 2 do
-          for _, path in ipairs(candidates) do
-            if vim.uv.fs_stat(path) then
-              local content = table.concat(vim.fn.readfile(path), "\n"):lower()
-              for _, needle in ipairs(needles) do
-                local is_raw = (needle == item.lhs)
-                if (pass == 1 and not is_raw) or (pass == 2 and is_raw) then
-                  if content:find(needle:lower(), 1, true) then
-                    file = path
-                    break
-                  end
-                end
-              end
-              if file then break end
-            end
-          end
-          if file then break end
-        end
-        file = file or candidates[1]
-      end
-
-      open_file(file)
-      if try_patterns() then return end
-
-      -- Search failed in the primary file.  The keymap may have been
-      -- added by user spec overrides (lua/user/plugins/) which
-      -- keymap_sources() can't distinguish from distro specs.
-      -- Try matching user plugin/keymaps files before giving up.
-      local udir = user_dir()
-      local user_candidates = {}
-      if item.source then
-        local src_name = vim.fn.fnamemodify(item.source, ":t")
-        user_candidates[#user_candidates + 1] = udir .. "plugins/" .. src_name
-      end
-      user_candidates[#user_candidates + 1] = udir .. "keymaps.lua"
-      -- Scan all user plugin files as a last resort
-      local user_plugins = udir .. "plugins/"
-      local handle = vim.uv.fs_scandir(user_plugins)
-      if handle then
-        while true do
-          local name, ftype = vim.uv.fs_scandir_next(handle)
-          if not name then break end
-          if (ftype == "file" or ftype == "link") and name:match("%.lua$") then
-            user_candidates[#user_candidates + 1] = user_plugins .. name
-          end
-        end
-      end
-
-      local seen = { [file] = true }
-      for _, upath in ipairs(user_candidates) do
-        if not seen[upath] and vim.uv.fs_stat(upath) then
-          seen[upath] = true
-          open_file(upath)
-          if try_patterns() then return end
-        end
-      end
+      M.jump_to_keymap(item.mode, item.lhs, { source = item.source })
     end,
   })
 end
@@ -1340,6 +1338,7 @@ local subcommands = {
   status   = M.status,
   diff     = function(args) M.diff(args) end,
   override = M.override,
+  guide    = function() require("noethervim.guide").open() end,
   debug    = function(args)
     if args == "keymaps" then M.debug_keymaps()
     else vim.notify("NoetherVim: debug targets: keymaps", vim.log.levels.INFO) end
@@ -1425,6 +1424,10 @@ function M.setup()
   vim.keymap.set("n", SearchLeader .. "cb", M.bundles,       { desc = "[b]undles" })
   vim.keymap.set("n", SearchLeader .. "ck", M.diff_keymaps, { desc = "diff [k]eymaps" })
   vim.keymap.set("n", SearchLeader .. "co", M.diff_options, { desc = "diff [o]ptions" })
+
+  vim.keymap.set("n", SearchLeader .. "?", function()
+    require("noethervim.guide").open()
+  end, { desc = "keymap guide" })
 
   vim.keymap.set("n", "<leader>i", "<cmd>edit $MYVIMRC<cr>", { desc = "open [i]nit.lua" })
 

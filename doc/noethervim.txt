@@ -412,9 +412,32 @@ accidental edits to the distribution.
     SearchLeader+cb   `:NoetherVim bundles`    Browse bundle source files
     SearchLeader+ce   `:NoetherVim override`   Edit/create user override
     SearchLeader+cL   (snacks)                 Lazy plugin list
+    SearchLeader+?    `:NoetherVim guide`      Keymap namespace reference
     `<Leader>i`     (inspect)                Open init.lua for editing
 
 Run `:NoetherVim status` to see which user override files are active.
+
+                                                         *noethervim-guide*
+Keymap namespace guide: ~
+
+    SearchLeader+?    `:NoetherVim guide`
+
+Opens a reference buffer showing all active keymaps organized by
+NoetherVim's namespace philosophy:
+
+    SearchLeader      fuzzy navigation and search (sub-grouped by topic)
+    `[` / `]`           directional navigation and option toggles (paired)
+    `<C-w>`             window and panel management
+    `g`                 goto and LSP actions
+    `Z`                 buffer management
+    `<Leader>`          global actions
+    Normal / Insert / Visual / Command-line mode sections
+
+The guide is dynamic: it reads the current keymap state, so it reflects
+active bundles, user additions, and buffer-local LSP keymaps.
+
+Press `q` to close.  Press `<CR>` on any keymap line to jump to its
+source definition in the distribution or user config.
 
 ==============================================================================
 7. COMPARISON                                                *noethervim-diff*
