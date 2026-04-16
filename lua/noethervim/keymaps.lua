@@ -60,9 +60,6 @@ vim.keymap.set("n", ";", ":", { desc = "command-line" })
 -- <C-g> shows extended file info
 vim.keymap.set("n", "<c-g>", "g<c-g>", { desc = "file info" })
 
--- Diff vs saved version
-vim.keymap.set("n", "<c-w>d", "<cmd>DiffOrig<cr>", { desc = "diff unsaved changes" })
-
 -- ──────────────────────────────────────────────────────────────
 --  Normal mode — window / tab management  (<C-w> namespace)
 -- ──────────────────────────────────────────────────────────────

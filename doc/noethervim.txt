@@ -553,14 +553,6 @@ Other notable keymaps: ~
       vim.lsp.buf.hover({ border = 'rounded', max_width = 80 })
     end, { desc = 'hover docs' })
 <
-    Similarly, `<C-w>d` is mapped to `:DiffOrig` (diff against saved
-    version).  Neovim 0.10+ maps `<C-w>d` to show diagnostics under the
-    cursor by default.  To restore the built-in behavior:
->lua
-    vim.keymap.set('n', '<C-w>d', function()
-      vim.diagnostic.open_float()
-    end, { desc = 'show diagnostics' })
-<
     `<F2>`            Rename (with count, LSP)
 
     Visual: ~
@@ -650,6 +642,17 @@ with the `<C-w>s` prefix:
     `<C-w>sl`           Toggle LSP component
     `<C-w>sP`           Show full file path
     `<C-w>s<C-p>`       Toggle PDF mode
+
+Clickable components: ~
+
+    Every statusline component below responds to mouse clicks:
+
+    Diagnostics count   Open buffer diagnostics picker
+    File name           Open current directory in system file browser
+    Modified indicator  Diff unsaved changes against saved version
+    LSP indicator       Open `:LspInfo`
+    Git branch/status   Open lazygit in a terminal
+    Update indicator    Open Lazy plugin manager
 
 Customize statusline colors and extra components via opts: >lua
     { "Chiarandini/NoetherVim", opts = {

@@ -172,7 +172,16 @@ M.ChangeFlag = {
   hl = { fg = "orange" },
   on_click = {
     callback = function()
-      vim.cmd("DiffOrig")
+      local ft = vim.bo.filetype
+      vim.cmd("vert new")
+      vim.bo.buftype = "nofile"
+      vim.bo.bufhidden = "wipe"
+      vim.bo.filetype = ft
+      vim.cmd("r ++edit #")
+      vim.cmd("0d_")
+      vim.cmd("diffthis")
+      vim.cmd("wincmd p")
+      vim.cmd("diffthis")
     end,
     name = "heirline_unsaved_diff",
   },
