@@ -7,6 +7,7 @@
 --
 -- Keymaps:
 --   <leader>Rf    run current file (filetype-aware, version-manager-aware)
+--   <c-w><c-r>   toggle task list
 
 -- Filetype → interpreter command.
 -- For commands with subcommands (e.g. "go run"), the first word is resolved
@@ -117,6 +118,7 @@ return {
 				end,
 				desc = "Run this [f]ile",
 			},
+			{ "<c-w><c-r>", "<cmd>OverseerToggle<cr>", desc = "Task list" },
 		},
 		opts = {
 			task_list = {
