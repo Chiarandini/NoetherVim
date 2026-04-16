@@ -66,7 +66,6 @@ return {
 	{
 		"Chiarandini/which-key.nvim",
 		branch = "feat/picker-integration",
-		dir = vim.fn.expand("~/programming/which-key.nvim"),
 		event = "VeryLazy",
 		dependencies = {
 			'echasnovski/mini.icons'
