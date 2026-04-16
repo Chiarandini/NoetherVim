@@ -18,8 +18,17 @@ editor.
 
 NoetherVim takes a different approach: plugin specs are standard lazy.nvim, options are
 `vim.o`, keymaps are `vim.keymap.set()`, and so forth. Overriding a default means writing
-the same Lua you would write in a vanilla Neovim config, and the distro just makes sure your
-file loads after its own.
+the same Lua you would write in a vanilla Neovim config, and the distro just makes sure
+your file loads after its own.
+
+The same principle applies to keybindings. Keymaps build on Vim's own prefix conventions
+rather than funneling everything through `<Leader>` subgroups: `<C-w>` for anything
+window-related (panels, terminal, undo tree), `[`/`]` for directional navigation,
+`[o`/`]o` for option toggles, `g` for goto and LSP actions. `<Leader>` and `<LocalLeader>`
+stay separate (global actions vs. filetype-specific), following `:help maplocalleader`.
+Features use Neovim's built-in APIs directly (`vim.lsp.config()`, `vim.diagnostic`,
+`vim.fn.setqflist()`) and where Neovim 0.12 ships good defaults, the distro leaves them
+alone.
 
 Also, after using vim/nvim for ~10 years, my nvim dotfiles have grown to be 5000+ lines of
 code. So this is partly a fun project to convert the core functionality of my personal
