@@ -23,7 +23,6 @@ return {
 		dependencies = {
 			{ "nvim-lua/plenary.nvim" },
 			{ "nvim-lua/popup.nvim" },
-			{ "folke/trouble.nvim" },
 			{ "Chiarandini/telescope-cached-headings.nvim", dependencies = { "nvim-lua/plenary.nvim" } },
 		},
 		cmd = "Telescope",
@@ -99,8 +98,6 @@ return {
 			local telescope      = require("telescope")
 			local actions        = require("telescope.actions")
 			local action_state   = require("telescope.actions.state")
-			local open_with_trouble = require("trouble.sources.telescope").open
-
 			-- ── Custom action functions ──────────────────────────────────
 			local function change_directory(prompt_bufnr)
 				local selection = action_state.get_selected_entry()
@@ -168,7 +165,7 @@ return {
 					["<c-y>"]   = yank_entry,
 					["<Tab>"]   = actions.close,
 					["<S-Tab>"] = actions.close,
-					["<C-q>"]   = open_with_trouble,
+					["<C-q>"]   = actions.send_to_qflist + actions.open_qflist,
 					["<M-q>"]   = actions.send_selected_to_qflist + actions.open_qflist,
 					["<C-l>"]   = actions.complete_tag,
 					["<C-h>"]   = actions.which_key,

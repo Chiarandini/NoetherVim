@@ -132,9 +132,38 @@ end
 vim.keymap.set("n", "[oC", function() toggle_cmp(true)  end, { desc = "enable completion" })
 vim.keymap.set("n", "]oC", function() toggle_cmp(false) end, { desc = "disable completion" })
 
--- Quickfix navigation
-map("[Q", "<cmd>cfirst<cr>", "quickfix first", false)
-map("]Q", "<cmd>clast<cr>",  "quickfix last",  false)
+-- Quickfix / Trouble navigation (context-aware)
+-- When Trouble is open, ]q/[q/]Q/[Q navigate its items.
+-- When Trouble is closed, they navigate the native quickfix list.
+local function trouble_or_qf(trouble_fn, qf_cmd)
+  return function()
+    local ok, trouble = pcall(require, "trouble")
+    if ok and trouble.is_open() then
+      trouble_fn(trouble)
+    else
+      local success, err = pcall(vim.cmd, qf_cmd)
+      if not success and err then
+        vim.notify(err:gsub("^.*:%s*", ""), vim.log.levels.WARN)
+      end
+    end
+  end
+end
+
+vim.keymap.set("n", "]q", trouble_or_qf(
+  function(t) t.next({ jump = true }) end, "cnext"
+), { desc = "next quickfix/Trouble item" })
+
+vim.keymap.set("n", "[q", trouble_or_qf(
+  function(t) t.prev({ jump = true }) end, "cprev"
+), { desc = "prev quickfix/Trouble item" })
+
+vim.keymap.set("n", "]Q", trouble_or_qf(
+  function(t) t.last({ jump = true }) end, "clast"
+), { desc = "last quickfix/Trouble item" })
+
+vim.keymap.set("n", "[Q", trouble_or_qf(
+  function(t) t.first({ jump = true }) end, "cfirst"
+), { desc = "first quickfix/Trouble item" })
 
 -- Unimpaired-style option toggles
 map("[ob", "<cmd>set background=light<cr>",    "light background")

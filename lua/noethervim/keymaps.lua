@@ -76,6 +76,18 @@ vim.keymap.set("n", "<c-l>", "<c-w>l", { desc = "window right" })
 vim.keymap.set("n", "<c-w><a-h>", "<cmd>tabm -<cr>", { desc = "move tab left" })
 vim.keymap.set("n", "<c-w><a-l>", "<cmd>tabm +<cr>", { desc = "move tab right" })
 vim.keymap.set("n", "<c-w><c-q>", "<cmd>copen<cr>",  { desc = "open quickfix" })
+
+-- Toggle quickfix window (SearchLeader+q)
+local SearchLeader = require("noethervim.util").search_leader
+vim.keymap.set("n", SearchLeader .. "q", function()
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    if vim.fn.getwinvar(win, "&buftype") == "quickfix" then
+      vim.cmd("cclose")
+      return
+    end
+  end
+  vim.cmd("copen")
+end, { desc = "[q]uickfix toggle" })
 -- <c-w>u: set in commands.lua (show unsaved buffers)
 
 -- Resize splits with arrow keys

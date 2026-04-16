@@ -488,7 +488,8 @@ Prefixes: ~
                                                         *noethervim-mapsearchleader*
     `SearchLeader`      Search & navigation (default: `<Space>`)
                       f(ind)  g(rep)  G(it)  l(sp)  d(iagnostics)
-                      c(onfig)  D(ebug)  s(ession)  o(bsidian)  w(iki)
+                      q(uickfix)  c(onfig)  D(ebug)  s(ession)
+                      o(bsidian)  w(iki)
                       Configurable via |g:mapsearchleader|.
                                                         *noethervim-leader*
     `<Leader>` (\)      Global actions
@@ -501,6 +502,7 @@ Prefixes: ~
                                                         *noethervim-ctrl-w*
     `<C-w>`             Windows & panels
                       l(azy)  s(tatusline)  t(erminal)  F(ugit2)
+                      Q (Trouble diagnostics)  <C-q> (quickfix)
                       [d / ]d (diffview)  <C-h> (harpoon)  <C-e> (explorer)
                       <C-o> (Oil)
                                                         *noethervim-g*
@@ -512,8 +514,9 @@ Prefixes: ~
                       SearchLeader+li / +lO (call hierarchy in/out)
                                                         *noethervim-brackets*
     `[x` / `]x`         Directional navigation
-                      d(iagnostic)  t(ab)  b(uffer)  q(uickfix)
-                      T(odo)  f(ile)  e(xchange line)  <Space>(blank line)
+                      d(iagnostic)  t(ab)  b(uffer)  f(ile)
+                      q(uickfix / Trouble when open)
+                      T(odo)  e(xchange line)  <Space>(blank line)
                                                         *noethervim-option-toggles*
     `[ox` / `]ox`       Toggle options
                       w(rap)  s(pell)  n(umbers)  r(elative)  h(lsearch)
@@ -597,7 +600,8 @@ Shadowed defaults: ~
     `+`             New tab
                     (default: go to next line, first non-blank)
     `<C-w><C-q>`    Open quickfix
-                    (default: close window — use `<C-w>q` or `:q`)
+                    (default: close window -- use `<C-w>q` or `:q`)
+    `<C-w>Q`        Toggle Trouble diagnostics panel
 
 ------------------------------------------------------------------------------
 9.1 FILETYPE KEYMAPS                                   *noethervim-ftplugin*

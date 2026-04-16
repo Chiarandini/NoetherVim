@@ -98,7 +98,7 @@ M.Diagnostics = {
 
   on_click = {
     callback = function()
-      require("trouble").toggle({ mode = "diagnostics", filter = { buf = 0 } })
+      require("snacks").picker.diagnostics_buffer({ title = "Diagnostics (Buffer)" })
     end,
     name = "heirline_diagnostics",
   },

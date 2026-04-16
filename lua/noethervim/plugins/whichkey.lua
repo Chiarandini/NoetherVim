@@ -1,9 +1,72 @@
 -- NoetherVim plugin: Which-Key
 -- Popup that shows available keybindings after a prefix key.
 -- Also integrates marks, registers, and spelling suggestions.
+
+--- Open a Snacks picker populated with the current which-key items.
+--- Groups recurse into a sub-picker; leaf mappings are executed.
+local function wk_picker(data)
+	local View = require("which-key.view")
+
+	local function pick(items, node)
+		local title = (node.desc and node.desc ~= "") and node.desc or node.keys or "Which Key"
+
+		require("snacks").picker({
+			title = title,
+			items = (function()
+				local ret = {}
+				for _, item in ipairs(items) do
+					ret[#ret + 1] = {
+						text = item.raw_key .. " " .. (item.desc or ""),
+						formatted_key = item.key,
+						desc = item.desc or "",
+						icon = item.icon or "",
+						icon_hl = item.icon_hl,
+						is_group = item.group or false,
+						node = item.node,
+					}
+				end
+				return ret
+			end)(),
+
+			format = function(item)
+				local ret = {}
+				if item.icon ~= "" then
+					ret[#ret + 1] = { item.icon .. " ", item.icon_hl or "WhichKeyIcon" }
+				end
+				ret[#ret + 1] = { string.format("%-8s", item.formatted_key), "WhichKey" }
+				ret[#ret + 1] = { item.desc, item.is_group and "WhichKeyGroup" or "WhichKeyDesc" }
+				return ret
+			end,
+
+			confirm = function(picker, item)
+				picker:close()
+				if not item then return end
+				if item.is_group and item.node:is_group() then
+					local sub = View.get_items_for_node(item.node)
+					if #sub > 0 then
+						pick(sub, item.node)
+						return
+					end
+				end
+				-- leaf: execute
+				if item.node.action then
+					item.node.action()
+				else
+					local feed = vim.api.nvim_replace_termcodes(item.node.keys, true, true, true)
+					vim.api.nvim_feedkeys(feed, "mit", false)
+				end
+			end,
+		})
+	end
+
+	pick(data.items, data.node)
+end
+
 return {
 	{
-		"folke/which-key.nvim",
+		"Chiarandini/which-key.nvim",
+		branch = "feat/picker-integration",
+		dir = vim.fn.expand("~/programming/which-key.nvim"),
 		event = "VeryLazy",
 		dependencies = {
 			'echasnovski/mini.icons'
@@ -13,6 +76,10 @@ return {
 			delay = function(ctx)
 				return ctx.plugin and 0 or 1500
 			end,
+			keys = {
+				picker = "<C-f>",
+			},
+			picker = wk_picker,
 			plugins = {
 				marks = true,
 				registers = true,
@@ -58,7 +125,7 @@ return {
 					{SearchLeader .. "l" , icon = {icon = icons.nvim_lsp, color = "azure"}, group= "LSP" },
 					{SearchLeader .. "w" , icon = {icon = icons.wiki, color = "blue"}, group= "Wiki" },
 					{SearchLeader .. "s" , icon = {icon = icons.session, color = "purple"}, group= "Session" },
-					{SearchLeader .. "q" , icon = {icon = icons.wrench, color = "blue"}, group= "quickfix (Trouble)" },
+					{SearchLeader .. "q" , icon = {icon = icons.wrench, color = "blue"}, group= "quickfix" },
 					{SearchLeader .. "t" , icon = {icon = icons.toc, color = "blue"}, group= "table of content" },
 					{SearchLeader .. "r" , icon = {icon = icons.pencil, color = "blue"}, group= "resume" },
 					{SearchLeader .. "D" , icon = {icon = icons.debug, color = "red"}, group= "Debug" },
