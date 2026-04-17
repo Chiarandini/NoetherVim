@@ -9,7 +9,7 @@ local function get_files_in_directory(directory)
 	if not ok then return {} end
 	local files = {}
 	for _, entry in ipairs(entries) do
-		if vim.fn.isdirectory(directory .. "/" .. entry) == 0 then
+		if vim.fn.isdirectory(vim.fs.joinpath(directory, entry)) == 0 then
 			table.insert(files, entry)
 		end
 	end
@@ -46,7 +46,7 @@ function Source:get_completions(context, callback)
 		return
 	end
 
-	local dir = vim.fn.expand("%:p:h") .. "/images"
+	local dir = vim.fs.joinpath(vim.fn.expand("%:p:h"), "images")
 	local images = get_files_in_directory(dir)
 	local items  = {}
 	for _, image in ipairs(images) do

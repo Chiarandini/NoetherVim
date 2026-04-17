@@ -9,11 +9,11 @@ return {
 		"danymat/neogen",
 		keys = {
 			{
-				"<leader>rd",
+				"<leader>Rd",
 				function()
 					require("neogen").generate({})
 				end,
-				desc = "[r]efactor: generate [d]oc comment",
+				desc = "[R]efactor: generate [d]oc comment",
 				noremap = true,
 				silent = true,
 			},

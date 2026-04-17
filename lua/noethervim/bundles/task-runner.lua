@@ -6,7 +6,7 @@
 --   compiler.nvim:    project compiler UI  (:CompilerOpen, :CompilerToggleResults)
 --
 -- Keymaps:
---   <leader>Rf    run current file (filetype-aware, version-manager-aware)
+--   <leader>rf    run current file (filetype-aware, version-manager-aware)
 --   <c-w><c-r>   toggle task list
 
 -- Filetype → interpreter command.
@@ -89,7 +89,7 @@ return {
 		cmd  = { "OverseerRun", "OverseerToggle" },
 		keys = {
 			{
-				"<leader>Rf",
+				"<leader>rf",
 				function()
 					local ft = vim.bo.filetype
 					local cmd = runners[ft]

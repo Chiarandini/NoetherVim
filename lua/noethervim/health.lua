@@ -43,10 +43,24 @@ function M.check()
   h.start("LaTeX (noethervim.bundles.latex / core vimtex)")
   check_exe("latexmk",  false)
   check_exe("pdflatex", false)
-  if vim.fn.has("mac") == 1 then
-    check_exe("skim",   false)
-  else
-    check_exe("zathura", false)
+  do
+    local viewers
+    if vim.fn.has("mac") == 1 then
+      viewers = { "skim" }
+    elseif vim.fn.has("win32") == 1 then
+      viewers = { "SumatraPDF", "SumatraPDF.exe" }
+    else
+      viewers = { "zathura", "okular", "sioyek", "evince" }
+    end
+    local found
+    for _, viewer in ipairs(viewers) do
+      if vim.fn.executable(viewer) == 1 then found = viewer; break end
+    end
+    if found then
+      h.ok("PDF viewer (" .. found .. ")")
+    else
+      h.warn("no PDF viewer found — tried: " .. table.concat(viewers, ", "))
+    end
   end
 
   -- Treesitter latex parser: nvim-treesitter marks this parser as requiring

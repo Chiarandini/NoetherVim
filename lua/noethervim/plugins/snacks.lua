@@ -131,7 +131,7 @@ return {
 							if name:sub(1, 1) ~= "." then
 								items[#items + 1] = {
 									text = name,
-									file = dir .. "/" .. name,
+									file = vim.fs.joinpath(dir, name),
 									dir  = (type == "directory"),
 								}
 							end
@@ -163,7 +163,7 @@ return {
 						browse_create_open = function(picker)
 							local text = vim.api.nvim_buf_get_lines(picker.input.win.buf, 0, 1, false)[1] or ""
 							if text == "" then return end
-							local path = picker:cwd() .. "/" .. text
+							local path = vim.fs.joinpath(picker:cwd(), text)
 							vim.fn.mkdir(vim.fs.dirname(path), "p")
 							local fd = vim.uv.fs_open(path, "w", 420)
 							if fd then vim.uv.fs_close(fd) end
@@ -173,7 +173,7 @@ return {
 						browse_create = function(picker)
 							vim.ui.input({ prompt = "New (end with / for dir): " }, function(name)
 								if not name or name == "" then return end
-								local path = picker:cwd() .. "/" .. name
+								local path = vim.fs.joinpath(picker:cwd(), name)
 								if name:sub(-1) == "/" then
 									vim.fn.mkdir(path, "p")
 								else
@@ -198,7 +198,7 @@ return {
 							if not item or not item.file then return end
 							vim.ui.input({ prompt = "Rename: ", default = vim.fn.fnamemodify(item.file, ":t") }, function(name)
 								if not name or name == "" then return end
-								vim.uv.fs_rename(item.file, picker:cwd() .. "/" .. name)
+								vim.uv.fs_rename(item.file, vim.fs.joinpath(picker:cwd(), name))
 								picker:find()
 							end)
 						end,
@@ -207,7 +207,7 @@ return {
 							if not item or not item.file then return end
 							vim.ui.input({ prompt = "Copy to: ", default = vim.fn.fnamemodify(item.file, ":t") }, function(name)
 								if not name or name == "" then return end
-								vim.uv.fs_copyfile(item.file, picker:cwd() .. "/" .. name)
+								vim.uv.fs_copyfile(item.file, vim.fs.joinpath(picker:cwd(), name))
 								picker:find()
 							end)
 						end,
@@ -222,7 +222,7 @@ return {
 								return vim.notify("Nothing yanked", vim.log.levels.WARN, { title = "Browse" })
 							end
 							local name = vim.fn.fnamemodify(_browse_yanked, ":t")
-							local dest = picker:cwd() .. "/" .. name
+							local dest = vim.fs.joinpath(picker:cwd(), name)
 							if vim.uv.fs_stat(dest) then
 								return vim.notify(name .. " already exists", vim.log.levels.WARN, { title = "Browse" })
 							end

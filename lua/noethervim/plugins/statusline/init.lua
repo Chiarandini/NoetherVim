@@ -79,6 +79,7 @@ return {
         misc.Space,
         diag.Diagnostics,
         misc.Space,
+        misc.Busy,
         filename.FileNameBlock,
         misc.Align,
         bundle.PdfFileSize,

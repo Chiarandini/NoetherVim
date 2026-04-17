@@ -185,8 +185,14 @@ let g:vimtex_compiler_latexmk_engines = {
 
           -- :PDF — open compiled PDF
           vim.api.nvim_buf_create_user_command(ev.buf, "PDF", function()
-            local open_cmd = vim.fn.has("mac") == 1 and "open" or "xdg-open"
-            vim.cmd("exe \"!" .. open_cmd .. " '\" . expand('%:t:r') . \".pdf'\"")
+            local pdf = vim.fn.expand("%:t:r") .. ".pdf"
+            if vim.fn.has("macunix") == 1 then
+              vim.fn.jobstart({ "open", pdf }, { detach = true })
+            elseif vim.fn.has("win32") == 1 then
+              vim.fn.jobstart({ "cmd.exe", "/c", "start", "", pdf }, { detach = true })
+            else
+              vim.fn.jobstart({ "xdg-open", pdf }, { detach = true })
+            end
           end, { desc = "open compiled PDF" })
 
           vim.keymap.set("n", "<localleader>vw", "<Cmd>VimtexCountWords<CR>", o("vimtex word count"))

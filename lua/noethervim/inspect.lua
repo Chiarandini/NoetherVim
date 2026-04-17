@@ -162,7 +162,7 @@ function M.bundles()
     local is_enabled = enabled[entry.name] or false
     table.insert(items, {
       text = entry.cat .. " " .. entry.name .. " " .. entry.desc .. (is_enabled and " enabled" or ""),
-      file = bundles_dir .. "/" .. entry.name .. ".lua",
+      file = vim.fs.joinpath(bundles_dir, entry.name .. ".lua"),
       cat_order = cat_order[entry.cat] or 99,
       cat_text = "[" .. entry.cat .. "]",
       bundle_name = entry.name,
@@ -467,7 +467,7 @@ local function keymap_candidate_files(root)
         local name, ftype = vim.uv.fs_scandir_next(handle)
         if not name then break end
         if (ftype == "file" or ftype == "link") and name:match("%.lua$") then
-          files[#files + 1] = dir .. "/" .. name
+          files[#files + 1] = vim.fs.joinpath(dir, name)
         end
       end
     end
@@ -1128,7 +1128,7 @@ function M.diff_file(module_name)
   for _, group in ipairs(groups) do
     for _, mod in ipairs(scan_lua_modules(group.dir)) do
       if not (group.cat == "Core" and mod == "init") then
-        local upstream_path = group.dir .. "/" .. mod .. ".lua"
+        local upstream_path = vim.fs.joinpath(group.dir, mod .. ".lua")
         local user_path = nil
         for _, ud in ipairs(group.user_dirs) do
           local candidate = ud .. mod .. ".lua"

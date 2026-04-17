@@ -58,7 +58,7 @@ end
 local WorkDir = {
   init = function(self)
     self.icon = " "
-    self.cwd = ProjRelativeFilename()
+    self.cwd = vim.fs.normalize(ProjRelativeFilename())
   end,
   condition = function()
     return vim.g.heirline_directory_show
@@ -122,9 +122,11 @@ local BufNotCwdWarning = {
 M.FileName = {
   on_click = {
     callback = function()
-      if vim.fn.has("mac") == 1 then
+      if vim.fn.has("macunix") == 1 then
         vim.cmd("!open .")
-      elseif vim.fn.has("unix") == 1 then
+      elseif vim.fn.has("win32") == 1 then
+        vim.cmd("!explorer .")
+      else
         vim.cmd("!xdg-open .")
       end
     end,
@@ -219,9 +221,11 @@ M.OilBuffer = {
 
   on_click = {
     callback = function()
-      if vim.fn.has("mac") == 1 then
+      if vim.fn.has("macunix") == 1 then
         vim.cmd("!open .")
-      elseif vim.fn.has("unix") == 1 then
+      elseif vim.fn.has("win32") == 1 then
+        vim.cmd("!explorer .")
+      else
         vim.cmd("!xdg-open .")
       end
     end,

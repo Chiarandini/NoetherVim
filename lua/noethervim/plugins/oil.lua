@@ -10,8 +10,32 @@
 --   g.          Toggle hidden files
 --   g\          Toggle trash
 --   C           Copy file to system clipboard
+--   yp / yd / yn   Yank full path / dir / filename to unnamed register
+--   Yp / Yd / Yn   Same, but straight to the system clipboard (+)
 
 local detail = false
+
+-- Yank the entry under the cursor. `mods` is a |fnamemodify()| mods string
+-- (e.g. ":h", ":t"), or nil for the full path. `reg` is the target register
+-- ("+" for system clipboard, "" for unnamed).
+-- We apply fnamemodify to the raw path first, then append a trailing "/" for
+-- directories only when showing the full path — otherwise `:h` returns the
+-- directory itself instead of its parent, and `:t` returns an empty string.
+local function yank_entry(reg, mods)
+	return function()
+		local oil = require("oil")
+		local entry, dir = oil.get_cursor_entry(), oil.get_current_dir()
+		if not entry or not dir then return end
+		local path = dir .. entry.name
+		if mods then
+			path = vim.fn.fnamemodify(path, mods)
+		elseif entry.type == "directory" then
+			path = path .. "/"
+		end
+		vim.fn.setreg(reg, path)
+		if reg == "+" then vim.notify("Copied: " .. path) end
+	end
+end
 
 return {
 	{
@@ -82,9 +106,11 @@ return {
 					callback = function()
 						local dir = require("oil").get_current_dir()
 						if not dir then return end
-						if vim.fn.has("mac") == 1 then
+						if vim.fn.has("macunix") == 1 then
 							vim.fn.jobstart({ "open", dir }, { detach = true })
-						elseif vim.fn.has("unix") == 1 then
+						elseif vim.fn.has("win32") == 1 then
+							vim.fn.jobstart({ "explorer", dir }, { detach = true })
+						else
 							vim.fn.jobstart({ "xdg-open", dir }, { detach = true })
 						end
 					end,
@@ -102,7 +128,12 @@ return {
 						else
 							title = vim.fn.fnamemodify(dir, ":~")
 						end
-						require("snacks").picker.files({ cwd = dir, title = title })
+						require("snacks").picker.files({
+							cwd = dir,
+							title = title,
+							hidden = require("oil.config").view_options.show_hidden,
+							ignored = true,
+						})
 					end,
 				},
 				["gV"] = {
@@ -132,7 +163,8 @@ return {
 									if not item then return end
 									picker:close()
 									local dest = item.file
-									if not vim.startswith(dest, "/") then dest = dir .. dest end
+									local is_abs = dest:sub(1, 1) == "/" or dest:match("^%a:[/\\]") ~= nil
+									if not is_abs then dest = vim.fs.joinpath(dir, dest) end
 									vim.schedule(function()
 										local total_w = math.floor(vim.o.columns * 0.8)
 										local total_h = math.floor(vim.o.lines * 0.7)
@@ -173,6 +205,12 @@ return {
 				},
 				["g."] = { "actions.toggle_hidden", mode = "n" },
 				["g\\"] = { "actions.toggle_trash", mode = "n" },
+				["yp"] = { desc = "yank full path",           mode = "n", callback = yank_entry("",  nil)  },
+				["yd"] = { desc = "yank parent dir",          mode = "n", callback = yank_entry("",  ":h") },
+				["yn"] = { desc = "yank name",                mode = "n", callback = yank_entry("",  ":t") },
+				["Yp"] = { desc = "yank full path (+clip)",   mode = "n", callback = yank_entry("+", nil)  },
+				["Yd"] = { desc = "yank parent dir (+clip)",  mode = "n", callback = yank_entry("+", ":h") },
+				["Yn"] = { desc = "yank name (+clip)",        mode = "n", callback = yank_entry("+", ":t") },
 				["gS"] = {
 					desc = "Create symlink in current directory",
 					callback = function()

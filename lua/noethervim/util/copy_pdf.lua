@@ -20,42 +20,38 @@ function M.copy_pdf_to_clipboard()
     return
   end
 
-  -- Detect OS and use appropriate clipboard command
+  -- Detect OS and build appropriate argv for clipboard copy.
   local os_name = vim.uv.os_uname().sysname
-  local cmd
-
-  local escaped = vim.fn.shellescape(pdf_file)
+  local argv
 
   if os_name == 'Linux' then
     -- Try xclip first, then xsel as fallback
     if vim.fn.executable('xclip') == 1 then
-      cmd = 'xclip -selection clipboard -t application/pdf ' .. escaped
+      argv = { 'sh', '-c', 'xclip -selection clipboard -t application/pdf < "$1"', 'sh', pdf_file }
     elseif vim.fn.executable('xsel') == 1 then
-      cmd = 'xsel --clipboard --input < ' .. escaped
+      argv = { 'sh', '-c', 'xsel --clipboard --input < "$1"', 'sh', pdf_file }
     else
       vim.notify('xclip or xsel not found. Please install one of them.', vim.log.levels.ERROR)
       return
     end
   elseif os_name == 'Darwin' then -- macOS
-    cmd = 'osascript -e \'set the clipboard to (read (POSIX file ' .. escaped .. ') as «class PDF »)\''
+    local script = 'set the clipboard to (read (POSIX file "' .. pdf_file:gsub('"', '\\"') .. '") as «class PDF »)'
+    argv = { 'osascript', '-e', script }
   elseif os_name:match('Windows') then
-    -- Windows doesn't have a built-in command to copy files to clipboard
-    -- This copies the file path instead
-    cmd = 'echo ' .. escaped .. ' | clip'
-    vim.notify('Note: Copying file path to clipboard (Windows limitation)', vim.log.levels.INFO)
+    -- PowerShell Set-Clipboard -Path puts the file on the clipboard as a file drop;
+    -- this pastes into Zotero, email clients, Explorer, etc. as the PDF attachment.
+    local ps_path = pdf_file:gsub("'", "''")
+    argv = { 'powershell', '-NoProfile', '-Command', "Set-Clipboard -LiteralPath '" .. ps_path .. "'" }
   else
     vim.notify('Unsupported operating system: ' .. os_name, vim.log.levels.ERROR)
     return
   end
 
-  -- Execute the command
-  local result = vim.fn.system(cmd)
-  local exit_code = vim.v.shell_error
-
-  if exit_code == 0 then
+  local obj = vim.system(argv, { text = true }):wait()
+  if obj.code == 0 then
     vim.notify('PDF copied to clipboard: ' .. vim.fn.fnamemodify(pdf_file, ':t'))
   else
-    vim.notify('Failed to copy PDF to clipboard: ' .. result, vim.log.levels.ERROR)
+    vim.notify('Failed to copy PDF to clipboard: ' .. (obj.stderr or ''), vim.log.levels.ERROR)
   end
 end
 
