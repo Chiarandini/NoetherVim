@@ -106,9 +106,11 @@ return {
 					callback = function()
 						local dir = require("oil").get_current_dir()
 						if not dir then return end
-						if vim.fn.has("mac") == 1 then
+						if vim.fn.has("macunix") == 1 then
 							vim.fn.jobstart({ "open", dir }, { detach = true })
-						elseif vim.fn.has("unix") == 1 then
+						elseif vim.fn.has("win32") == 1 then
+							vim.fn.jobstart({ "explorer", dir }, { detach = true })
+						else
 							vim.fn.jobstart({ "xdg-open", dir }, { detach = true })
 						end
 					end,
@@ -161,7 +163,8 @@ return {
 									if not item then return end
 									picker:close()
 									local dest = item.file
-									if not vim.startswith(dest, "/") then dest = dir .. dest end
+									local is_abs = dest:sub(1, 1) == "/" or dest:match("^%a:[/\\]") ~= nil
+									if not is_abs then dest = vim.fs.joinpath(dir, dest) end
 									vim.schedule(function()
 										local total_w = math.floor(vim.o.columns * 0.8)
 										local total_h = math.floor(vim.o.lines * 0.7)
