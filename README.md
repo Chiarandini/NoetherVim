@@ -112,7 +112,7 @@ Run `:Lazy update` inside Neovim. This updates the distro and all plugins.
 
 ### Uninstalling
 
-The following are important paths for a Neovim setup:
+The following are important files/locations for a Neovim setup:
 
 | Path | Contents |
 |---|---|
