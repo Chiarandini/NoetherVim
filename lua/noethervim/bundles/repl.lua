@@ -2,10 +2,10 @@
 -- Enable with: { import = "noethervim.bundles.repl" }
 --
 -- Provides iron.nvim — interactive REPL for any language.
---   <leader>Rs   start REPL
---   <leader>Rr   restart REPL
---   <leader>Rf   focus REPL
---   <leader>Rh   hide REPL
+--   <leader>rs   start REPL
+--   <leader>rr   restart REPL
+--   <leader>rF   focus REPL           (capital F; <leader>rf is reserved for run-file)
+--   <leader>rh   hide REPL
 --
 -- Send-to-REPL keymaps use <localleader>s* (motion, visual, file, line).
 
@@ -13,10 +13,10 @@ return {
 	{
 		"Vigemus/iron.nvim",
 		keys = {
-			{ "<leader>Rs", "<cmd>IronRepl<cr>",    desc = "REPL [s]tart" },
-			{ "<leader>Rr", "<cmd>IronRestart<cr>", desc = "REPL [r]estart" },
-			{ "<leader>Rf", "<cmd>IronFocus<cr>",   desc = "REPL [f]ocus" },
-			{ "<leader>Rh", "<cmd>IronHide<cr>",    desc = "REPL [h]ide" },
+			{ "<leader>rs", "<cmd>IronRepl<cr>",    desc = "REPL [s]tart" },
+			{ "<leader>rr", "<cmd>IronRestart<cr>", desc = "REPL [r]estart" },
+			{ "<leader>rF", "<cmd>IronFocus<cr>",   desc = "REPL [F]ocus" },
+			{ "<leader>rh", "<cmd>IronHide<cr>",    desc = "REPL [h]ide" },
 		},
 		cmd = { "IronRepl", "IronHide", "IronFocus", "IronRestart" },
 		opts = {
