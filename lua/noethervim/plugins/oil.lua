@@ -10,8 +10,32 @@
 --   g.          Toggle hidden files
 --   g\          Toggle trash
 --   C           Copy file to system clipboard
+--   yp / yd / yn   Yank full path / dir / filename to unnamed register
+--   Yp / Yd / Yn   Same, but straight to the system clipboard (+)
 
 local detail = false
+
+-- Yank the entry under the cursor. `mods` is a |fnamemodify()| mods string
+-- (e.g. ":h", ":t"), or nil for the full path. `reg` is the target register
+-- ("+" for system clipboard, "" for unnamed).
+-- We apply fnamemodify to the raw path first, then append a trailing "/" for
+-- directories only when showing the full path — otherwise `:h` returns the
+-- directory itself instead of its parent, and `:t` returns an empty string.
+local function yank_entry(reg, mods)
+	return function()
+		local oil = require("oil")
+		local entry, dir = oil.get_cursor_entry(), oil.get_current_dir()
+		if not entry or not dir then return end
+		local path = dir .. entry.name
+		if mods then
+			path = vim.fn.fnamemodify(path, mods)
+		elseif entry.type == "directory" then
+			path = path .. "/"
+		end
+		vim.fn.setreg(reg, path)
+		if reg == "+" then vim.notify("Copied: " .. path) end
+	end
+end
 
 return {
 	{
@@ -178,6 +202,12 @@ return {
 				},
 				["g."] = { "actions.toggle_hidden", mode = "n" },
 				["g\\"] = { "actions.toggle_trash", mode = "n" },
+				["yp"] = { desc = "yank full path",           mode = "n", callback = yank_entry("",  nil)  },
+				["yd"] = { desc = "yank parent dir",          mode = "n", callback = yank_entry("",  ":h") },
+				["yn"] = { desc = "yank name",                mode = "n", callback = yank_entry("",  ":t") },
+				["Yp"] = { desc = "yank full path (+clip)",   mode = "n", callback = yank_entry("+", nil)  },
+				["Yd"] = { desc = "yank parent dir (+clip)",  mode = "n", callback = yank_entry("+", ":h") },
+				["Yn"] = { desc = "yank name (+clip)",        mode = "n", callback = yank_entry("+", ":t") },
 				["gS"] = {
 					desc = "Create symlink in current directory",
 					callback = function()

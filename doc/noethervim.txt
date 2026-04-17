@@ -653,6 +653,8 @@ These keymaps activate only in their respective filetype.
     `g.`                Toggle hidden files
     `g\`                Toggle trash
     `C`                 Copy file to system clipboard
+    `yp` `yd` `yn`      Yank full path / parent dir / name to unnamed reg
+    `Yp` `Yd` `Yn`      Same, but to the system clipboard ("+)
 
 ------------------------------------------------------------------------------
 9.2 STATUSLINE                                        *noethervim-statusline*
