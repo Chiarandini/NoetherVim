@@ -102,7 +102,12 @@ return {
 						else
 							title = vim.fn.fnamemodify(dir, ":~")
 						end
-						require("snacks").picker.files({ cwd = dir, title = title })
+						require("snacks").picker.files({
+							cwd = dir,
+							title = title,
+							hidden = require("oil.config").view_options.show_hidden,
+							ignored = true,
+						})
 					end,
 				},
 				["gV"] = {
