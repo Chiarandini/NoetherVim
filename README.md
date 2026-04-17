@@ -112,7 +112,7 @@ Run `:Lazy update` inside Neovim. This updates the distro and all plugins.
 
 ### Uninstalling
 
-What counts as "personal" in a NoetherVim setup:
+The following are important paths for a Neovim setup:
 
 | Path | Contents |
 |---|---|
