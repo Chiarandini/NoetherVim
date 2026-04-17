@@ -47,7 +47,7 @@ function M.keymap_sources()
         local name, ftype = vim.uv.fs_scandir_next(handle)
         if not name then break end
         if (ftype == "file" or ftype == "link") and name:match("%.lua$") then
-          local filepath = dir .. "/" .. name
+          local filepath = vim.fs.joinpath(dir, name)
           -- Track brace depth to skip `dependencies = { ... }` blocks.
           -- A repo like trouble.nvim appears as a dependency in
           -- telescope.lua; without skipping, telescope.lua would claim
