@@ -111,7 +111,6 @@ return {
 						components = {
 							"default",
 							{ "on_complete_notify", statuses = { "SUCCESS", "FAILURE" } },
-							"on_output_summarize",
 							"open_output",
 						},
 					}):start()
