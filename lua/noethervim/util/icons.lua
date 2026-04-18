@@ -80,6 +80,13 @@ local M = {
 	wrench      = "",
 	toc         = "󰉸",
 
+	-- DAP signcolumn glyphs (consumed by bundles/debug.lua)
+	dap_breakpoint           = "●",
+	dap_breakpoint_condition = "󰋗",
+	dap_breakpoint_rejected  = "󰅙",
+	dap_log_point            = "◉",
+	dap_stopped              = "󰜴",
+
 	-- special symbols
 	plus   = "",
 	window = "",

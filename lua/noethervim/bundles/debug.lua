@@ -91,16 +91,28 @@ return {
 		config = function()
 			local dap   = require("dap")
 			local dapui = require("dap-view")
+			local ic    = require("noethervim.util.icons")
 
-			local icons = {
-				Stopped             = { " ", "DiagnosticWarn", "DapStoppedLine" },
-				Breakpoint          = " ",
-				BreakpointCondition = " ",
-				BreakpointRejected  = { " ", "DiagnosticError" },
-				LogPoint            = " >",
+			-- Define a highlight for the line the debugger is currently stopped on.
+			-- Linked to Visual so it tracks the active colorscheme, and re-applied on
+			-- ColorScheme events so theme switches don't blank it out.
+			local function apply_dap_stopped_line()
+				vim.api.nvim_set_hl(0, "DapStoppedLine", { link = "Visual", default = true })
+			end
+			apply_dap_stopped_line()
+			vim.api.nvim_create_autocmd("ColorScheme", {
+				group    = vim.api.nvim_create_augroup("noethervim_dap_highlights", { clear = true }),
+				callback = apply_dap_stopped_line,
+			})
+
+			local signs = {
+				Stopped             = { ic.dap_stopped,              "DiagnosticWarn",  "DapStoppedLine" },
+				Breakpoint          = { ic.dap_breakpoint,           "DiagnosticError" },
+				BreakpointCondition = { ic.dap_breakpoint_condition, "DiagnosticWarn"  },
+				BreakpointRejected  = { ic.dap_breakpoint_rejected,  "DiagnosticError" },
+				LogPoint            = { ic.dap_log_point,            "DiagnosticInfo"  },
 			}
-			for name, sign in pairs(icons) do
-				sign = type(sign) == "table" and sign or { sign }
+			for name, sign in pairs(signs) do
 				vim.fn.sign_define("Dap" .. name, {
 					text   = sign[1],
 					texthl = sign[2] or "DiagnosticInfo",
