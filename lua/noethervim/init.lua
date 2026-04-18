@@ -150,12 +150,15 @@ function M.setup(opts)
   require("noethervim.commands")
 
   -- ── Highlights & colorscheme ───────────────────────────────────
-  -- When the colorscheme bundle is active, restore the persisted pick
-  -- BEFORE the fallback so the user's last choice wins.
+  -- setup_tweaks() registers the ColorScheme autocmd that re-applies
+  -- user tweaks on theme switches. It runs unconditionally so that
+  -- util.colorscheme.tweak() works whether or not the colorscheme
+  -- bundle is enabled. setup_persistence() is bundle-gated because it
+  -- overrides opts.colorscheme with the saved pick.
+  local cs = require("noethervim.util.colorscheme")
+  cs.setup_tweaks()
   if opts.colorscheme_persistence then
-    local cs = require("noethervim.util.colorscheme")
     cs.setup_persistence()
-    cs.setup_tweaks()
   end
   if opts.colorscheme then
     -- Persistence may have already applied a saved scheme; only apply
