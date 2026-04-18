@@ -20,6 +20,10 @@ vim.g.mapleader         = "\\"       -- <Leader>  — global actions
 vim.g.maplocalleader    = ","        -- <LocalLeader> — filetype actions
 vim.g.mapsearchleader = "<space>"    -- search/navigation prefix (default: <Space>)
 
+-- Opt-out of the Snacks dashboard shown on empty-arg startup.
+-- Uncomment to open straight into an empty buffer instead.
+-- vim.g.noethervim_dashboard = false
+
 -- ── 2. Bootstrap lazy.nvim and NoetherVim ─────────────────────────────────
 -- Both must be on the rtp BEFORE lazy.setup() so that
 -- `import = "noethervim.plugins"` resolves on first launch.

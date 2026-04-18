@@ -486,6 +486,17 @@ This is NOT a runtime toggle — restart Neovim to apply.
 
 Check current status: `:NoetherVim status`
 
+                                                        *noethervim-dashboard*
+Disabling the startup dashboard: ~
+
+The Snacks dashboard shown on empty-arg startup (`nvim` with no file)
+can be turned off with a single flag in your init.lua, set before
+`lazy.setup`: >lua
+    vim.g.noethervim_dashboard = false
+<
+With the flag set, `nvim` opens straight into an empty buffer. Set it
+to `true` or leave unset to keep the dashboard (default).
+
 ==============================================================================
 9. KEYMAP NAMESPACES                     *noethervim-keymaps* *neothervim-keymaps*
 
