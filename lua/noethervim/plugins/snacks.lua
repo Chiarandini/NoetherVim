@@ -515,5 +515,41 @@ return {
 				},
 			}
 		end
+
+		-- Workaround for snacks.nvim #2724: the dashboard registers one handler
+		-- on both BufDelete and BufWipeout that calls nvim_del_augroup_by_id.
+		-- When the bufhidden=wipe dashboard buffer is replaced (e.g. selecting
+		-- a file from Snacks.picker.recent()), both events fire in sequence and
+		-- the second call errors with E367. We hook the User SnacksDashboardOpened
+		-- event (fired after dashboard:init registers the buggy autocmd) and
+		-- replace it with a pcall'd version. FileType won't work here because
+		-- snacks sets `eventignore=all` while setting the buffer's filetype.
+		-- Remove once PR #2725 merges.
+		vim.api.nvim_create_autocmd("User", {
+			pattern = "SnacksDashboardOpened",
+			callback = function()
+				for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+					if vim.bo[bufnr].filetype == "snacks_dashboard" then
+						for _, ac in ipairs(vim.api.nvim_get_autocmds({
+							event = { "BufDelete", "BufWipeout" },
+							buffer = bufnr,
+						})) do
+							pcall(vim.api.nvim_del_autocmd, ac.id)
+						end
+						local augroup = vim.api.nvim_create_augroup("snacks_dashboard", { clear = false })
+						vim.api.nvim_create_autocmd({ "BufDelete", "BufWipeout" }, {
+							buffer = bufnr,
+							callback = function()
+								vim.api.nvim_exec_autocmds("User", {
+									pattern = "SnacksDashboardClosed",
+									modeline = false,
+								})
+								pcall(vim.api.nvim_del_augroup_by_id, augroup)
+							end,
+						})
+					end
+				end
+			end,
+		})
 	end,
 }
