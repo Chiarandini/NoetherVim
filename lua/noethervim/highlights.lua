@@ -41,6 +41,31 @@ vim.api.nvim_create_autocmd("ColorScheme", {
 })
 
 -- ──────────────────────────────────────────────────────────────
+--  Signcolumn icon cleanup
+--  Colorschemes often style the base Diagnostic<Level> groups with
+--  extra attrs (italic, underline, bg) meant for virtual text. When
+--  those groups are used as a sign's texthl the extras leak into the
+--  glyph, producing a colored square in the signcolumn that doesn't
+--  match the surrounding bg. Neovim ships DiagnosticSign<Level> for
+--  this purpose -- re-derive each one as fg-only so any plugin that
+--  uses them (DAP, diagnostics, mini.diff, etc.) renders cleanly.
+-- ──────────────────────────────────────────────────────────────
+local function clean_diagnostic_sign_hls()
+  for _, lvl in ipairs({ "Error", "Warn", "Info", "Hint" }) do
+    local fg = get_hl_fg("DiagnosticSign" .. lvl) or get_hl_fg("Diagnostic" .. lvl)
+    if fg then
+      vim.api.nvim_set_hl(0, "DiagnosticSign" .. lvl, { fg = fg })
+    end
+  end
+end
+clean_diagnostic_sign_hls()
+
+vim.api.nvim_create_autocmd("ColorScheme", {
+  group    = vim.api.nvim_create_augroup("noethervim_diagnostic_sign_hls", { clear = true }),
+  callback = clean_diagnostic_sign_hls,
+})
+
+-- ──────────────────────────────────────────────────────────────
 --  Blink.cmp completion highlights
 --  Derive all colors from the active colorscheme so the completion
 --  menu adapts to any theme.  Re-applied on ColorScheme changes.

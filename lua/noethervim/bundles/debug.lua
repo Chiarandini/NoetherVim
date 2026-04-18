@@ -105,17 +105,21 @@ return {
 				callback = apply_dap_stopped_line,
 			})
 
+			-- texthl uses DiagnosticSign* (not Diagnostic*) so colorscheme
+			-- attrs meant for virtual text (italic, bg, underline) don't leak
+			-- into the signcolumn glyph. Sign groups are normalized to fg-only
+			-- in highlights.lua.
 			local signs = {
-				Stopped             = { ic.dap_stopped,              "DiagnosticWarn",  "DapStoppedLine" },
-				Breakpoint          = { ic.dap_breakpoint,           "DiagnosticError" },
-				BreakpointCondition = { ic.dap_breakpoint_condition, "DiagnosticWarn"  },
-				BreakpointRejected  = { ic.dap_breakpoint_rejected,  "DiagnosticError" },
-				LogPoint            = { ic.dap_log_point,            "DiagnosticInfo"  },
+				Stopped             = { ic.dap_stopped,              "DiagnosticSignWarn",  "DapStoppedLine" },
+				Breakpoint          = { ic.dap_breakpoint,           "DiagnosticSignError" },
+				BreakpointCondition = { ic.dap_breakpoint_condition, "DiagnosticSignWarn"  },
+				BreakpointRejected  = { ic.dap_breakpoint_rejected,  "DiagnosticSignError" },
+				LogPoint            = { ic.dap_log_point,            "DiagnosticSignInfo"  },
 			}
 			for name, sign in pairs(signs) do
 				vim.fn.sign_define("Dap" .. name, {
 					text   = sign[1],
-					texthl = sign[2] or "DiagnosticInfo",
+					texthl = sign[2] or "DiagnosticSignInfo",
 					linehl = sign[3],
 					numhl  = sign[3],
 				})
