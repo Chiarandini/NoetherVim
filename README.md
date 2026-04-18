@@ -158,13 +158,13 @@ Once you're running, you can bring over your personal settings:
 
 ### Enabling bundles
 
-Open `~/.config/nvim/init.lua` and uncomment the bundles you want in the `spec` table:
+Open `~/.config/nvim/init.lua` and uncomment the bundles you want in the `spec` table. Each import path is `noethervim.bundles.<category>.<name>`:
 
 ```lua
 -- inside require("lazy").setup({ spec = { ... } })
-{ import = "noethervim.bundles.latex" },
-{ import = "noethervim.bundles.debug" },
-{ import = "noethervim.bundles.git" },
+{ import = "noethervim.bundles.languages.latex" },
+{ import = "noethervim.bundles.tools.debug" },
+{ import = "noethervim.bundles.tools.git" },
 ```
 
 All bundles are opt-in - the core is fully functional with none enabled. See [Bundles](#bundles) for the full list.
@@ -257,6 +257,7 @@ Bundles are optional feature groups. Enable them in `init.lua` (see [Enabling bu
 | `eye-candy` | Animations (drop.nvim, cellular-automaton), scrollbar, block display |
 | `minimap` | Sidebar minimap with git/diagnostic markers |
 | `helpview` | Rendered `:help` pages |
+| `tableaux` | noethervim-tableaux — animated mathematical dashboard scenes |
 | **Practice & utilities** | |
 | `training` | Vim motion and typing practice (vim-be-good, speedtyper, typr) |
 | `dev-tools` | Startup profiling (`:StartupTime`), Lua scratchpad (`:Luapad`) |
@@ -295,7 +296,14 @@ lua/
 ├── noethervim/
 │   ├── init.lua            ← noethervim.setup() - runs after all plugins load
 │   ├── plugins/            ← core plugin specs (always loaded)
-│   ├── bundles/            ← optional feature bundles
+│   ├── bundles/            ← optional feature bundles, grouped by category
+│   │   ├── languages/      ← rust, go, java, python, latex, …
+│   │   ├── tools/          ← debug, test, git, ai, database, …
+│   │   ├── navigation/     ← harpoon, flash, projects, …
+│   │   ├── writing/        ← markdown, obsidian, neorg, translation
+│   │   ├── terminal/       ← better-term, tmux, remote-dev
+│   │   ├── ui/             ← colorscheme, eye-candy, minimap, tableaux, …
+│   │   └── practice/       ← training, dev-tools, presentation, hardtime
 │   ├── lsp/                ← per-server LSP configurations
 │   ├── util/               ← shared utilities and icons
 │   └── …                   ← options, keymaps, autocmds, …

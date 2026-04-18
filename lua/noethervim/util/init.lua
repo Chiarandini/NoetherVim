@@ -18,6 +18,43 @@ function M.str_replace(s, substring, replacement, n)
   return (s:gsub(substring:gsub("%p", "%%%0"), replacement:gsub("%%", "%%%%"), n))
 end
 
+--- Enumerate all bundle files under `bundles_dir`.
+--- Walks the category-subdirectory layout: bundles/<category>/<name>.lua.
+--- Returns a list of { path, name, category } entries, sorted by
+--- (category, name).
+---@param bundles_dir string  absolute path to lua/noethervim/bundles
+---@return { path: string, name: string, category: string }[]
+function M.scan_bundles(bundles_dir)
+  local result = {}
+  local root = vim.uv.fs_scandir(bundles_dir)
+  if not root then return result end
+  while true do
+    local cat_name, cat_type = vim.uv.fs_scandir_next(root)
+    if not cat_name then break end
+    if cat_type == "directory" then
+      local sub = vim.uv.fs_scandir(vim.fs.joinpath(bundles_dir, cat_name))
+      if sub then
+        while true do
+          local fname, ftype = vim.uv.fs_scandir_next(sub)
+          if not fname then break end
+          if (ftype == "file" or ftype == "link") and fname:match("%.lua$") then
+            result[#result + 1] = {
+              path     = vim.fs.joinpath(bundles_dir, cat_name, fname),
+              name     = fname:gsub("%.lua$", ""),
+              category = cat_name,
+            }
+          end
+        end
+      end
+    end
+  end
+  table.sort(result, function(a, b)
+    if a.category ~= b.category then return a.category < b.category end
+    return a.name < b.name
+  end)
+  return result
+end
+
 --- Map resolved keymap lhs values to the spec file that defines them.
 --- Combines lazy.nvim's key handler data (key_id -> plugin_name) with a
 --- scan of NoetherVim spec files (plugin_name -> file path).
@@ -36,41 +73,46 @@ function M.keymap_sources()
 
   local plugin_files = {}
   local user_plugins = vim.fn.stdpath("config") .. "/lua/user/plugins"
-  for _, dir in ipairs({
-    root .. "/lua/noethervim/plugins",
-    root .. "/lua/noethervim/bundles",
-    user_plugins,
-  }) do
+
+  -- Collect files: plugins/ (flat), bundles/ (category subdirs), user/plugins/ (flat).
+  local files = {}
+  for _, dir in ipairs({ root .. "/lua/noethervim/plugins", user_plugins }) do
     local handle = vim.uv.fs_scandir(dir)
     if handle then
       while true do
         local name, ftype = vim.uv.fs_scandir_next(handle)
         if not name then break end
         if (ftype == "file" or ftype == "link") and name:match("%.lua$") then
-          local filepath = vim.fs.joinpath(dir, name)
-          -- Track brace depth to skip `dependencies = { ... }` blocks.
-          -- A repo like trouble.nvim appears as a dependency in
-          -- telescope.lua; without skipping, telescope.lua would claim
-          -- trouble.nvim's handler keys.
-          local deps_depth = nil
-          local depth = 0
-          for _, line in ipairs(vim.fn.readfile(filepath)) do
-            if line:find("dependencies") and line:find("{") then
-              deps_depth = depth
-            end
-            for c in line:gmatch("[{}]") do
-              depth = depth + (c == "{" and 1 or -1)
-            end
-            if deps_depth and depth <= deps_depth then
-              deps_depth = nil
-            end
-            if not deps_depth then
-              for repo in line:gmatch('"[%w_%-]+/([%w_%-%.]+)"') do
-                if not plugin_files[repo] then
-                  plugin_files[repo] = filepath
-                end
-              end
-            end
+          files[#files + 1] = vim.fs.joinpath(dir, name)
+        end
+      end
+    end
+  end
+  for _, entry in ipairs(M.scan_bundles(root .. "/lua/noethervim/bundles")) do
+    files[#files + 1] = entry.path
+  end
+
+  for _, filepath in ipairs(files) do
+    -- Track brace depth to skip `dependencies = { ... }` blocks.
+    -- A repo like trouble.nvim appears as a dependency in
+    -- telescope.lua; without skipping, telescope.lua would claim
+    -- trouble.nvim's handler keys.
+    local deps_depth = nil
+    local depth = 0
+    for _, line in ipairs(vim.fn.readfile(filepath)) do
+      if line:find("dependencies") and line:find("{") then
+        deps_depth = depth
+      end
+      for c in line:gmatch("[{}]") do
+        depth = depth + (c == "{" and 1 or -1)
+      end
+      if deps_depth and depth <= deps_depth then
+        deps_depth = nil
+      end
+      if not deps_depth then
+        for repo in line:gmatch('"[%w_%-]+/([%w_%-%.]+)"') do
+          if not plugin_files[repo] then
+            plugin_files[repo] = filepath
           end
         end
       end

@@ -40,7 +40,7 @@ function M.check()
   check_exe("tree-sitter",  false)  -- required by nvim-treesitter to build parsers
 
   -- ── LaTeX ────────────────────────────────────────────────────────────
-  h.start("LaTeX (noethervim.bundles.latex / core vimtex)")
+  h.start("LaTeX (noethervim.bundles.languages.latex / core vimtex)")
   check_exe("latexmk",  false)
   check_exe("pdflatex", false)
   do

@@ -66,59 +66,71 @@ local function confirm_readonly(picker, item)
 end
 
 -- ── Bundle catalog ──────────────────────────────────────────────
--- Static metadata for the :NoetherVim bundles picker.
--- When adding a new bundle, add an entry here too.
--- See docs/bundle-development.md for details.
+-- Short human-readable descriptions keyed by bundle name.  The filesystem
+-- layout (bundles/<category>/<name>.lua) is the authoritative source for
+-- which bundles exist and which category they belong to; this table just
+-- adds the prose for the picker.  Adding a bundle without an entry here
+-- falls back to "(no description)" — see docs/bundle-development.md.
 
-local bundle_catalog = {
-  -- Languages
-  { name = "rust",           cat = "Languages",  desc = "rustaceanvim — macro expansion, runnables, crate graph" },
-  { name = "go",             cat = "Languages",  desc = "go.nvim — test gen, struct tags, interface impl" },
-  { name = "java",           cat = "Languages",  desc = "nvim-jdtls — proper Java LSP support" },
-  { name = "python",         cat = "Languages",  desc = "venv-selector — virtual environment switching" },
-  { name = "latex",          cat = "Languages",  desc = "VimTeX + noethervim-tex (snippets, textobjects)" },
-  { name = "latex-zotero",   cat = "Languages",  desc = "Zotero citation picker" },
-  { name = "web-dev",        cat = "Languages",  desc = "template-string auto-conversion + color preview" },
-  -- Tools
-  { name = "debug",          cat = "Tools",      desc = "nvim-dap + UI (Python, Lua, JS/TS, Go)" },
-  { name = "test",           cat = "Tools",      desc = "neotest test runner" },
-  { name = "repl",           cat = "Tools",      desc = "iron.nvim interactive REPL" },
-  { name = "task-runner",    cat = "Tools",      desc = "overseer.nvim + compiler.nvim (run file)" },
-  { name = "database",       cat = "Tools",      desc = "vim-dadbod + UI + SQL completion" },
-  { name = "http",           cat = "Tools",      desc = "kulala.nvim HTTP/REST/gRPC/GraphQL client" },
-  { name = "git",            cat = "Tools",      desc = "Fugit2, diffview, git-conflict" },
-  { name = "ai",             cat = "Tools",      desc = "CodeCompanion (Anthropic, OpenAI, Gemini, Ollama)" },
-  { name = "smart-actions",  cat = "Tools",      desc = "AI-suggested code actions on grA (Claude Code / Anthropic)" },
-  { name = "refactoring",    cat = "Tools",      desc = "extract function/variable/block" },
-  -- Navigation & editing
-  { name = "harpoon",        cat = "Navigation", desc = "fast per-project file marks" },
-  { name = "flash",          cat = "Navigation", desc = "enhanced f/t and / motions with labels" },
-  { name = "projects",       cat = "Navigation", desc = "project switcher via snacks.picker" },
-  { name = "editing-extras", cat = "Navigation", desc = "argmark + decorative comment boxes" },
-  { name = "neoclip",        cat = "Navigation", desc = "persistent clipboard history" },
-  -- Writing & notes
-  { name = "markdown",       cat = "Writing",    desc = "render, preview, tables, math, image paste" },
-  { name = "obsidian",       cat = "Writing",    desc = "Obsidian vault integration (pair with markdown bundle)" },
-  { name = "neorg",          cat = "Writing",    desc = ".norg wiki / note-taking" },
-  { name = "translation",    cat = "Writing",    desc = "in-editor translation (Google, Yandex)" },
-  -- Terminal & environment
-  { name = "better-term",    cat = "Terminal",   desc = "named/numbered terminal windows" },
-  { name = "tmux",           cat = "Terminal",   desc = "automatic tmux window naming" },
-  { name = "remote-dev",     cat = "Terminal",   desc = "distant.nvim SSH editing" },
-  -- UI & appearance
-  { name = "colorscheme",    cat = "UI",         desc = "10 popular themes + persistence" },
-  { name = "eye-candy",      cat = "UI",         desc = "animations, scrollbar, block display" },
-  { name = "minimap",        cat = "UI",         desc = "sidebar minimap with git/diagnostic markers" },
-  { name = "helpview",       cat = "UI",         desc = "rendered :help pages" },
-  -- Practice & utilities
-  { name = "training",       cat = "Practice",   desc = "vim-be-good, speedtyper, typr" },
-  { name = "dev-tools",      cat = "Practice",   desc = "StartupTime benchmarking, Luapad scratchpad" },
-  { name = "presentation",   cat = "Practice",   desc = "presenting.nvim + showkeys" },
-  { name = "hardtime",       cat = "Practice",   desc = "motion habit trainer" },
+local bundle_descriptions = {
+  -- languages
+  rust            = "rustaceanvim — macro expansion, runnables, crate graph",
+  go              = "go.nvim — test gen, struct tags, interface impl",
+  java            = "nvim-jdtls — proper Java LSP support",
+  python          = "venv-selector — virtual environment switching",
+  latex           = "VimTeX + noethervim-tex (snippets, textobjects)",
+  ["latex-zotero"] = "Zotero citation picker",
+  ["web-dev"]     = "template-string auto-conversion + color preview",
+  -- tools
+  debug           = "nvim-dap + UI (Python, Lua, JS/TS, Go)",
+  test            = "neotest test runner",
+  repl            = "iron.nvim interactive REPL",
+  ["task-runner"] = "overseer.nvim + compiler.nvim (run file)",
+  database        = "vim-dadbod + UI + SQL completion",
+  http            = "kulala.nvim HTTP/REST/gRPC/GraphQL client",
+  git             = "Fugit2, diffview, git-conflict",
+  ai              = "CodeCompanion (Anthropic, OpenAI, Gemini, Ollama)",
+  ["smart-actions"] = "AI-suggested code actions on grA (Claude Code / Anthropic)",
+  refactoring     = "extract function/variable/block",
+  -- navigation
+  harpoon         = "fast per-project file marks",
+  flash           = "enhanced f/t and / motions with labels",
+  projects        = "project switcher via snacks.picker",
+  ["editing-extras"] = "argmark + decorative comment boxes",
+  neoclip         = "persistent clipboard history",
+  -- writing
+  markdown        = "render, preview, tables, math, image paste",
+  obsidian        = "Obsidian vault integration (pair with markdown bundle)",
+  neorg           = ".norg wiki / note-taking",
+  translation     = "in-editor translation (Google, Yandex)",
+  -- terminal
+  ["better-term"] = "named/numbered terminal windows",
+  tmux            = "automatic tmux window naming",
+  ["remote-dev"]  = "distant.nvim SSH editing",
+  -- ui
+  colorscheme     = "10 popular themes + persistence",
+  ["eye-candy"]   = "animations, scrollbar, block display",
+  minimap         = "sidebar minimap with git/diagnostic markers",
+  helpview        = "rendered :help pages",
+  tableaux        = "noethervim-tableaux — animated mathematical dashboard scenes",
+  -- practice
+  training        = "vim-be-good, speedtyper, typr",
+  ["dev-tools"]   = "StartupTime benchmarking, Luapad scratchpad",
+  presentation    = "presenting.nvim + showkeys",
+  hardtime        = "motion habit trainer",
 }
 
--- Category display order (matches init.lua.example)
-local cat_order = { Languages = 1, Tools = 2, Navigation = 3, Writing = 4, Terminal = 5, UI = 6, Practice = 7 }
+-- Display order and human-readable labels for filesystem category names.
+-- Any category present on disk but missing here renders as its raw name at
+-- the end of the list.
+local cat_order = {
+  languages = 1, tools = 2, navigation = 3, writing = 4,
+  terminal = 5, ui = 6, practice = 7,
+}
+local cat_label = {
+  languages = "Languages", tools = "Tools", navigation = "Navigation",
+  writing = "Writing", terminal = "Terminal", ui = "UI", practice = "Practice",
+}
 
 -- ── File & Grep Pickers (Phase 5) ───────────────────────────────
 
@@ -146,28 +158,35 @@ function M.bundles()
   local root = effective_root()
   if not root then return vim.notify("NoetherVim: cannot locate source directory", vim.log.levels.ERROR) end
 
-  -- Detect which bundles are enabled via lazy.nvim's imported modules
+  -- Detect which bundles are enabled via lazy.nvim's imported modules.
+  -- Import keys look like "noethervim.bundles.<category>.<name>"; keep
+  -- only the trailing <name> so the lookup matches filesystem basenames.
   local enabled = {}
   local ok, lazy_cfg = pcall(require, "lazy.core.config")
   if ok and lazy_cfg.spec then
     for _, mod in ipairs(lazy_cfg.spec.modules) do
-      local name = mod:match("^noethervim%.bundles%.(.+)$")
-      if name then enabled[name] = true end
+      local tail = mod:match("^noethervim%.bundles%.(.+)$")
+      if tail then
+        local name = tail:match("([^.]+)$")
+        enabled[name] = true
+      end
     end
   end
 
+  local util = require("noethervim.util")
   local icons = require("noethervim.util.icons")
-  local bundles_dir = root .. "/lua/noethervim/bundles"
   local items = {}
-  for _, entry in ipairs(bundle_catalog) do
+  for _, entry in ipairs(util.scan_bundles(root .. "/lua/noethervim/bundles")) do
     local is_enabled = enabled[entry.name] or false
+    local desc = bundle_descriptions[entry.name] or "(no description)"
+    local label = cat_label[entry.category] or entry.category
     table.insert(items, {
-      text = entry.cat .. " " .. entry.name .. " " .. entry.desc .. (is_enabled and " enabled" or ""),
-      file = vim.fs.joinpath(bundles_dir, entry.name .. ".lua"),
-      cat_order = cat_order[entry.cat] or 99,
-      cat_text = "[" .. entry.cat .. "]",
+      text = label .. " " .. entry.name .. " " .. desc .. (is_enabled and " enabled" or ""),
+      file = entry.path,
+      cat_order = cat_order[entry.category] or 99,
+      cat_text = "[" .. label .. "]",
       bundle_name = entry.name,
-      desc = entry.desc,
+      desc = desc,
       enabled = is_enabled,
     })
   end
@@ -457,21 +476,20 @@ local function keymap_candidate_files(root)
     root .. "/lua/noethervim/autocmds.lua",
     root .. "/lua/noethervim/init.lua",
   }
-  -- Plugin and bundle files (keymaps set in config() functions)
-  for _, dir in ipairs({
-    root .. "/lua/noethervim/plugins",
-    root .. "/lua/noethervim/bundles",
-  }) do
-    local handle = vim.uv.fs_scandir(dir)
-    if handle then
-      while true do
-        local name, ftype = vim.uv.fs_scandir_next(handle)
-        if not name then break end
-        if (ftype == "file" or ftype == "link") and name:match("%.lua$") then
-          files[#files + 1] = vim.fs.joinpath(dir, name)
-        end
+  -- Flat plugin specs
+  local handle = vim.uv.fs_scandir(root .. "/lua/noethervim/plugins")
+  if handle then
+    while true do
+      local name, ftype = vim.uv.fs_scandir_next(handle)
+      if not name then break end
+      if (ftype == "file" or ftype == "link") and name:match("%.lua$") then
+        files[#files + 1] = vim.fs.joinpath(root .. "/lua/noethervim/plugins", name)
       end
     end
+  end
+  -- Bundle specs (category subdirectories)
+  for _, entry in ipairs(require("noethervim.util").scan_bundles(root .. "/lua/noethervim/bundles")) do
+    files[#files + 1] = entry.path
   end
   -- User keymaps file (vim.keymap.set calls outside lazy specs)
   local ukeymaps = vim.fn.stdpath("config") .. "/lua/user/keymaps.lua"
@@ -1050,13 +1068,21 @@ local function open_diff_split(module_name)
   local candidates = {
     root .. "/lua/noethervim/" .. module_name .. ".lua",
     root .. "/lua/noethervim/plugins/" .. module_name .. ".lua",
-    root .. "/lua/noethervim/bundles/" .. module_name .. ".lua",
     root .. "/lua/noethervim/lsp/" .. module_name .. ".lua",
   }
   for _, path in ipairs(candidates) do
     if vim.uv.fs_stat(path) then
       upstream = path
       break
+    end
+  end
+  if not upstream then
+    -- Bundles live under category subdirectories; search by basename.
+    for _, entry in ipairs(require("noethervim.util").scan_bundles(root .. "/lua/noethervim/bundles")) do
+      if entry.name == module_name then
+        upstream = entry.path
+        break
+      end
     end
   end
 
@@ -1108,57 +1134,73 @@ function M.diff_file(module_name)
   local icons = require("noethervim.util.icons")
 
   local diff_cat_order = { Core = 1, Plugin = 2, Bundle = 3, LSP = 4 }
+  -- Flat-scan groups (bundles are handled separately — they live under
+  -- category subdirectories, not directly in bundles/).
   local groups = {
     { cat = "Core",   dir = root .. "/lua/noethervim",         user_dirs = { udir } },
     { cat = "Plugin", dir = root .. "/lua/noethervim/plugins", user_dirs = { udir .. "plugins/" } },
-    { cat = "Bundle", dir = root .. "/lua/noethervim/bundles", user_dirs = { udir .. "plugins/" } },
     { cat = "LSP",    dir = root .. "/lua/noethervim/lsp",     user_dirs = { udir .. "lsp/" } },
   }
 
-  -- Detect which bundles are enabled (same logic as M.bundles())
+  -- Detect which bundles are enabled (same logic as M.bundles()).
   local enabled_bundles = {}
   local ok, lazy_cfg = pcall(require, "lazy.core.config")
   if ok and lazy_cfg.spec then
     for _, mod in ipairs(lazy_cfg.spec.modules) do
-      local name = mod:match("^noethervim%.bundles%.(.+)$")
-      if name then enabled_bundles[name] = true end
+      local tail = mod:match("^noethervim%.bundles%.(.+)$")
+      if tail then
+        local name = tail:match("([^.]+)$")
+        enabled_bundles[name] = true
+      end
     end
   end
 
   local items = {}
+
+  local function add_item(cat, name, upstream_path, user_candidates, is_enabled)
+    local user_path = nil
+    for _, candidate in ipairs(user_candidates) do
+      if vim.uv.fs_stat(candidate) then
+        user_path = candidate
+        break
+      end
+    end
+    if not user_path then
+      local override = udir .. "overrides/" .. name .. ".lua"
+      if vim.uv.fs_stat(override) then user_path = override end
+    end
+    table.insert(items, {
+      text      = cat .. " " .. name
+                  .. (is_enabled and " enabled" or "")
+                  .. (user_path and " override" or ""),
+      file      = upstream_path,
+      cat       = cat,
+      cat_order = diff_cat_order[cat] or 99,
+      name      = name,
+      upstream  = upstream_path,
+      user_file = user_path,
+      has_override = user_path ~= nil,
+      enabled   = is_enabled,
+    })
+  end
+
   for _, group in ipairs(groups) do
     for _, mod in ipairs(scan_lua_modules(group.dir)) do
       if not (group.cat == "Core" and mod == "init") then
         local upstream_path = vim.fs.joinpath(group.dir, mod .. ".lua")
-        local user_path = nil
+        local user_candidates = {}
         for _, ud in ipairs(group.user_dirs) do
-          local candidate = ud .. mod .. ".lua"
-          if vim.uv.fs_stat(candidate) then
-            user_path = candidate
-            break
-          end
+          user_candidates[#user_candidates + 1] = ud .. mod .. ".lua"
         end
-        if not user_path then
-          local override = udir .. "overrides/" .. mod .. ".lua"
-          if vim.uv.fs_stat(override) then user_path = override end
-        end
-
-        local is_enabled = group.cat ~= "Bundle" or enabled_bundles[mod] or false
-        table.insert(items, {
-          text      = group.cat .. " " .. mod
-                      .. (is_enabled and " enabled" or "")
-                      .. (user_path and " override" or ""),
-          file      = upstream_path,
-          cat       = group.cat,
-          cat_order = diff_cat_order[group.cat] or 99,
-          name      = mod,
-          upstream  = upstream_path,
-          user_file = user_path,
-          has_override = user_path ~= nil,
-          enabled   = is_enabled,
-        })
+        add_item(group.cat, mod, upstream_path, user_candidates, true)
       end
     end
+  end
+
+  -- Bundles (category subdirectories)
+  for _, entry in ipairs(require("noethervim.util").scan_bundles(root .. "/lua/noethervim/bundles")) do
+    add_item("Bundle", entry.name, entry.path, { udir .. "plugins/" .. entry.name .. ".lua" },
+      enabled_bundles[entry.name] or false)
   end
 
   table.sort(items, function(a, b)
@@ -1248,8 +1290,10 @@ local function map_to_user_path(bufpath)
   -- lua/noethervim/plugins/<name>.lua → user/plugins/<name>.lua
   local plugin = rel:match("^lua/noethervim/plugins/(.+%.lua)$")
   if plugin then return udir .. "plugins/" .. plugin, "plugin" end
-  -- lua/noethervim/bundles/<name>.lua → user/plugins/<name>.lua
-  local bundle = rel:match("^lua/noethervim/bundles/(.+%.lua)$")
+  -- lua/noethervim/bundles/<category>/<name>.lua → user/plugins/<name>.lua
+  -- User overrides target the bundle by its bare name — the category
+  -- subdirectory is purely organizational in the distro.
+  local bundle = rel:match("^lua/noethervim/bundles/[^/]+/([^/]+%.lua)$")
   if bundle then return udir .. "plugins/" .. bundle, "bundle" end
   -- lua/noethervim/lsp/<name>.lua → user/lsp/<name>.lua
   local lsp = rel:match("^lua/noethervim/lsp/(.+%.lua)$")
@@ -1386,7 +1430,6 @@ function M.setup()
           for _, dir in ipairs({
             root .. "/lua/noethervim",
             root .. "/lua/noethervim/plugins",
-            root .. "/lua/noethervim/bundles",
             root .. "/lua/noethervim/lsp",
           }) do
             for _, mod in ipairs(scan_lua_modules(dir)) do
@@ -1394,6 +1437,12 @@ function M.setup()
                 seen[mod] = true
                 targets[#targets + 1] = mod
               end
+            end
+          end
+          for _, entry in ipairs(require("noethervim.util").scan_bundles(root .. "/lua/noethervim/bundles")) do
+            if not seen[entry.name] then
+              seen[entry.name] = true
+              targets[#targets + 1] = entry.name
             end
           end
         end

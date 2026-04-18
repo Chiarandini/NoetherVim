@@ -34,7 +34,7 @@ CONTENTS                                                  *noethervim-contents*
 1. INTRODUCTION                                    *noethervim* *neothervim*
 
 NoetherVim is an opinionated Neovim distribution built on lazy.nvim. It
-ships sensible defaults, 30+ core plugins, and 36 opt-in bundles — while
+ships sensible defaults, 30+ core plugins, and 38 opt-in bundles — while
 providing a robust user configuration system that survives upstream updates.
 
 Key principles:~
@@ -303,62 +303,68 @@ merging) instead — lazy.nvim handles the timing correctly.
 ==============================================================================
 5. BUNDLES                                 *noethervim-bundles* *neothervim-bundles*
 
-Bundles are opt-in plugin groups. Enable them by uncommenting the
-corresponding `import` line in your `init.lua`: >lua
-    { import = "noethervim.bundles.latex" },
+Bundles are opt-in plugin groups.  They live under
+`lua/noethervim/bundles/<category>/<name>.lua`; enable them by
+uncommenting the corresponding `import` line in your `init.lua`: >lua
+    { import = "noethervim.bundles.languages.latex" },
+    { import = "noethervim.bundles.tools.debug" },
 <
-Available bundles: ~
+Available bundles (grouped by category): ~
 
+    languages/ ~
     `rust`           rustaceanvim — enhanced Rust beyond rust-analyzer.
     `go`             go.nvim — Go test gen, struct tags, interface impl.
     `java`           nvim-jdtls — proper Java LSP (requires special setup).
     `python`         venv-selector.nvim — virtual environment switching.
-    `database`       vim-dadbod + UI + SQL completion via blink.cmp.
-    `http`           kulala.nvim HTTP/REST/gRPC/GraphQL client.
     `latex`          VimTeX, img-clip, bibtex picker, LaTeX textobjects.
                      Requires: latexmk, TeX distribution.
     `latex-zotero`   Zotero citation picker.
                      Requires: Zotero.
+    `web-dev`        JS/TS template string + inline color preview.
+
+    tools/ ~
     `debug`          nvim-dap + UI (Python, Lua, JS/TS, Go).
     `test`           neotest test runner framework.
     `repl`           iron.nvim interactive REPL.
     `task-runner`    overseer.nvim + compiler.nvim.
+    `database`       vim-dadbod + UI + SQL completion via blink.cmp.
+    `http`           kulala.nvim HTTP/REST/gRPC/GraphQL client.
     `git`            Fugitive, Flog, Fugit2, diffview, git-conflict.
     `ai`             CodeCompanion (Anthropic, OpenAI, Gemini, Ollama, …).
                      Default: Anthropic. Override adapter in user/plugins/.
                      Requires: API key env var for cloud providers.
+    `smart-actions`  AI code actions on grA (Claude Code / Anthropic).
+    `refactoring`    Extract function/variable/block.
+
+    navigation/ ~
     `harpoon`        Fast per-project file marks.
+    `flash`          Enhanced f/t and / motions with jump labels.
+                     Note: the flash bundle remaps `S` in normal mode from the
+                     core global-substitute shortcut to a flash jump.  The core
+                     `S` behavior remains accessible via `:%s/`.
+    `projects`       Project switcher via snacks.picker.
+    `editing-extras` Argument marking (argmark) + decorative comment boxes.
     `neoclip`        Clipboard history via Telescope.
-    `better-term`    Named terminal windows.
-    `translation`    In-editor translation (Google, Yandex).
-    `neorg`          .norg wiki / note-taking.
+
+    writing/ ~
     `markdown`       render-markdown, markdown-preview, tables, math,
                      img-clip (image paste from clipboard).
     `obsidian`       Obsidian vault integration (obsidian.nvim).
                      Recommended: also enable the markdown bundle.
                      Configure vault path in lua/user/config.lua.
-    `flash`          Enhanced f/t and / motions with jump labels.
-                     Note: the flash bundle remaps `S` in normal mode from the
-                     core global-substitute shortcut to a flash jump.  The core
-                     `S` behavior remains accessible via `:%s/`.
-    `hardtime`       Motion habit trainer.
-    `minimap`        Sidebar minimap with diagnostics and git signs.
-    `refactoring`    Extract function/variable/block.
-    `web-dev`        JS/TS template string + inline color preview.
+    `neorg`          .norg wiki / note-taking.
+    `translation`    In-editor translation (Google, Yandex).
+
+    terminal/ ~
+    `better-term`    Named terminal windows.
     `tmux`           Tmux window naming.
                      Note: vim-tmux-navigator remaps `<C-h/j/k/l>` to navigate
                      both Neovim splits and tmux panes seamlessly.  This
                      overrides the core window-navigation shortcuts (which do
                      the same thing for Neovim splits only).
-    `dev-tools`      StartupTime benchmarking, Luapad Lua scratchpad.
-    `training`       Vim motion and typing practice (vim-be-good,
-                     speedtyper, typr).
-    `presentation`   Slide presentations (presenting.nvim) + showkeys.
-    `helpview`       Rendered :help pages.
-    `editing-extras` Argument marking (argmark) + decorative comment boxes.
     `remote-dev`     distant.nvim SSH editing.
-    `eye-candy`      Animations, scrollbar, code block visualizer.
-    `projects`       Project switcher via snacks.picker.
+
+    ui/ ~
     `colorscheme`    10 popular themes + persistence + highlight tweaks.
                      Themes: gruvbox, catppuccin, tokyonight, rose-pine,
                      kanagawa, onedark, nord, everforest, nightfox,
@@ -366,6 +372,18 @@ Available bundles: ~
                      SearchLeader+C picks persist across restarts.
                      See |noethervim-colorscheme-tweaks| for highlight
                      overrides that survive theme switches.
+    `eye-candy`      Animations, scrollbar, code block visualizer.
+    `minimap`        Sidebar minimap with diagnostics and git signs.
+    `helpview`       Rendered :help pages.
+    `tableaux`       noethervim-tableaux — animated mathematical dashboard
+                     scenes (Sieve, Collatz, Lorenz, Game of Life, …).
+
+    practice/ ~
+    `training`       Vim motion and typing practice (vim-be-good,
+                     speedtyper, typr).
+    `dev-tools`      StartupTime benchmarking, Luapad Lua scratchpad.
+    `presentation`   Slide presentations (presenting.nvim) + showkeys.
+    `hardtime`       Motion habit trainer.
 
 Each bundle file contains full documentation — plugins, keymaps,
 commands, and requirements — in its header comment. Browse them with
@@ -765,11 +783,11 @@ straightforward. See the example in
                               split so you can read the source alongside your
                               customization.
                               Path mapping:
-                                `plugins/<name>.lua`  -> `user/plugins/<name>.lua`
-                                `bundles/<name>.lua`  -> `user/plugins/<name>.lua`
-                                `lsp/<name>.lua`      -> `user/lsp/<name>.lua`
-                                `options.lua` etc.    -> `user/<name>.lua`
-                                `ftplugin/<ft>.lua`   -> `<config>/ftplugin/<ft>.lua`
+                                `plugins/<name>.lua`              -> `user/plugins/<name>.lua`
+                                `bundles/<cat>/<name>.lua`        -> `user/plugins/<name>.lua`
+                                `lsp/<name>.lua`                  -> `user/lsp/<name>.lua`
+                                `options.lua` etc.                -> `user/<name>.lua`
+                                `ftplugin/<ft>.lua`               -> `<config>/ftplugin/<ft>.lua`
                               For internal modules (util/, sources/) or files
                               outside the NoetherVim tree, a warning is shown.
 
