@@ -26,7 +26,20 @@ return {
 				lazy = true,
 				---@module 'dap-view'
 				---@type dapview.Config
-				opts = {},
+				opts = {
+					winbar = {
+						-- "console" as a section folds the process terminal into
+						-- the sidebar (no separate dap-view-term window).
+						sections = { "watches", "scopes", "exceptions", "breakpoints", "threads", "repl", "console" },
+						default_section = "scopes",
+						controls = { enabled = true },
+					},
+					windows = {
+						position = "right",
+						size = 0.30,
+					},
+					auto_toggle = true,
+				},
 			},
 			{
 				"theHamsta/nvim-dap-virtual-text",
@@ -59,7 +72,7 @@ return {
 		keys = {
 			{ "<F5>",  function() require("dap").continue()                                        end, desc = "DAP: Continue" },
 			{ "<F6>",  function() require("dap").restart()                                         end, desc = "DAP: Restart" },
-			{ "<F17>", function() require("dap").terminate(); require("dap-view").toggle()         end, desc = "DAP: Terminate" }, -- <S-F5>
+			{ "<F17>", function() require("dap").terminate()                                       end, desc = "DAP: Terminate" }, -- <S-F5>
 			{ "<F10>", function() require("dap").step_over()                                       end, desc = "DAP: Step Over" },
 			{ "<F11>", function() require("dap").step_into()                                       end, desc = "DAP: Step Into" },
 			{ "<F23>", function() require("dap").step_out()                                        end, desc = "DAP: Step Out" }, -- <S-F11>
@@ -78,20 +91,23 @@ return {
 			{ "<leader>du", function() require("dap-view").toggle()                                end, desc = "DAP: Toggle UI" },
 			{ "<c-w><c-d>", function() require("dap-view").toggle()                                end, desc = "DAP: Toggle UI" },
 			{ "<leader>dg", function() require("dap").session()                                    end, desc = "DAP: Get Session" },
-			{ "<leader>dh", function() require("dap.ui.widgets").hover()                           end, desc = "DAP: Hover Variables" },
-			{ "<leader>dS", function() require("dap.ui.widgets").scopes()                          end, desc = "DAP: Scopes" },
 			{ "<leader>dp", function() require("dap").pause()                                      end, desc = "DAP: Pause" },
 			{ "<leader>dq", function() require("dap").close()                                      end, desc = "DAP: Quit" },
-			{ "<leader>ds", function() require("dap").continue()                                   end, desc = "DAP: Start" },
-			{ "<leader>dw", function() require("dap-view").elements.watches.add(vim.fn.expand("<cword>")) end, desc = "DAP: Watch Word" },
-			{ "<leader>dx", function() require("dap").terminate()                                  end, desc = "DAP: Terminate" },
+			{ "<leader>dw", function() require("dap-view").add_expr(vim.fn.expand("<cword>"))      end, desc = "DAP: Watch Word" },
 			{ "<leader>dt", function() require("dap").disconnect()                                 end, desc = "DAP: Disconnect" },
-			{ "<leader>do", function() require("dap-view").toggle(2); require("dap").repl.close()  end, desc = "DAP: Open Output" },
+
+			-- ── Jump directly to a dap-view section ───────────────────────────
+			{ "<leader>dvw", function() require("dap-view").show_view("watches")     end, desc = "DAP: view [w]atches" },
+			{ "<leader>dvs", function() require("dap-view").show_view("scopes")      end, desc = "DAP: view [s]copes" },
+			{ "<leader>dvb", function() require("dap-view").show_view("breakpoints") end, desc = "DAP: view [b]reakpoints" },
+			{ "<leader>dvt", function() require("dap-view").show_view("threads")     end, desc = "DAP: view [t]hreads" },
+			{ "<leader>dvr", function() require("dap-view").show_view("repl")        end, desc = "DAP: view [r]epl" },
+			{ "<leader>dve", function() require("dap-view").show_view("exceptions")  end, desc = "DAP: view [e]xceptions" },
+			{ "<leader>dvc", function() require("dap-view").show_view("console")     end, desc = "DAP: view [c]onsole" },
 		},
 		config = function()
-			local dap   = require("dap")
-			local dapui = require("dap-view")
-			local ic    = require("noethervim.util.icons")
+			local dap = require("dap")
+			local ic  = require("noethervim.util.icons")
 
 			-- Define a highlight for the line the debugger is currently stopped on.
 			-- Linked to Visual so it tracks the active colorscheme, and re-applied on
@@ -125,11 +141,8 @@ return {
 				})
 			end
 
-			dapui.setup({})
-
-			dap.listeners.after.event_initialized["dapui_config"]  = function() dapui.open({}) end
-			dap.listeners.before.event_terminated["dapui_config"]  = function() dapui.close({}) end
-			dap.listeners.before.event_exited["dapui_config"]      = function() dapui.close({}) end
+			-- dap-view auto_toggle=true handles open/close on session events,
+			-- so no manual dap.listeners are needed here.
 
 			dap.configurations = {
 				go = {
