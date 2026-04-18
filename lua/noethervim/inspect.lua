@@ -88,6 +88,7 @@ local bundle_catalog = {
   { name = "http",           cat = "Tools",      desc = "kulala.nvim HTTP/REST/gRPC/GraphQL client" },
   { name = "git",            cat = "Tools",      desc = "Fugit2, diffview, git-conflict" },
   { name = "ai",             cat = "Tools",      desc = "CodeCompanion (Anthropic, OpenAI, Gemini, Ollama)" },
+  { name = "smart-actions",  cat = "Tools",      desc = "AI-suggested code actions on grA (Claude Code / Anthropic)" },
   { name = "refactoring",    cat = "Tools",      desc = "extract function/variable/block" },
   -- Navigation & editing
   { name = "harpoon",        cat = "Navigation", desc = "fast per-project file marks" },
