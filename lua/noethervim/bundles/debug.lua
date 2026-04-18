@@ -2,8 +2,8 @@
 -- Enable with: { import = "noethervim.bundles.debug" }
 --
 -- Provides:
---   • nvim-dap + dap-view UI, virtual text, language adapters
---     (Python, Neovim Lua, JS/TS via vscode-js-debug, Go)
+--   • nvim-dap + nvim-dap-ui (multi-panel sidebar), virtual text,
+--     language adapters (Python, Neovim Lua, JS/TS via vscode-js-debug, Go)
 --   • telescope-dap:   SearchLeader+D* pickers for commands/breakpoints/variables/frames
 --
 -- Related bundles (enable separately):
@@ -22,23 +22,34 @@ return {
 		"mfussenegger/nvim-dap",
 		dependencies = {
 			{
-				"igorlfs/nvim-dap-view",
+				"rcarriga/nvim-dap-ui",
+				dependencies = { "nvim-neotest/nvim-nio" },
 				lazy = true,
-				---@module 'dap-view'
-				---@type dapview.Config
 				opts = {
-					winbar = {
-						-- "console" as a section folds the process terminal into
-						-- the sidebar (no separate dap-view-term window).
-						sections = { "watches", "scopes", "exceptions", "breakpoints", "threads", "repl", "console" },
-						default_section = "scopes",
-						controls = { enabled = true },
+					-- Right sidebar holds inspection panels simultaneously.
+					-- Bottom tray holds interactive REPL + process console.
+					layouts = {
+						{
+							position = "right",
+							size = 50,
+							elements = {
+								{ id = "scopes",      size = 0.30 },
+								{ id = "watches",     size = 0.25 },
+								{ id = "stacks",      size = 0.25 },
+								{ id = "breakpoints", size = 0.20 },
+							},
+						},
+						{
+							position = "bottom",
+							size = 10,
+							elements = {
+								{ id = "repl",    size = 0.5 },
+								{ id = "console", size = 0.5 },
+							},
+						},
 					},
-					windows = {
-						position = "right",
-						size = 0.30,
-					},
-					auto_toggle = true,
+					controls = { enabled = true, element = "repl" },
+					floating = { border = "rounded" },
 				},
 			},
 			{
@@ -84,30 +95,22 @@ return {
 			{ "<leader>dR", function() require("dap").run_to_cursor()                              end, desc = "DAP: Run to Cursor" },
 			{ "<leader>dr", "<cmd>DapVirtualTextForceRefresh<cr>",                                     desc = "DAP: Refresh Virtual Text" },
 			{ "<leader>di", function() require("dap.ui.widgets").hover()                           end, desc = "DAP: Information" },
-			{ "<leader>de", function() require("dap-view").eval()                                  end, mode = { "n", "v" }, desc = "DAP: Evaluate" },
-			{ "<leader>dE", function() require("dap-view").eval(vim.fn.input("Expression > "))     end, desc = "DAP: Evaluate Input" },
+			{ "<leader>de", function() require("dapui").eval()                                     end, mode = { "n", "v" }, desc = "DAP: Evaluate" },
+			{ "<leader>dE", function() require("dapui").eval(vim.fn.input("Expression > "))        end, desc = "DAP: Evaluate Input" },
 			{ "<leader>dC", function() require("dap").set_breakpoint(vim.fn.input("[Condition] > ")) end, desc = "DAP: Conditional Breakpoint" },
 			{ "<leader>dl", function() require("dap").set_breakpoint(nil, nil, vim.fn.input("Log point message: ")) end, desc = "DAP: Log Breakpoint" },
-			{ "<leader>du", function() require("dap-view").toggle()                                end, desc = "DAP: Toggle UI" },
-			{ "<c-w><c-d>", function() require("dap-view").toggle()                                end, desc = "DAP: Toggle UI" },
+			{ "<leader>du", function() require("dapui").toggle()                                   end, desc = "DAP: Toggle UI" },
+			{ "<c-w><c-d>", function() require("dapui").toggle()                                   end, desc = "DAP: Toggle UI" },
 			{ "<leader>dg", function() require("dap").session()                                    end, desc = "DAP: Get Session" },
 			{ "<leader>dp", function() require("dap").pause()                                      end, desc = "DAP: Pause" },
 			{ "<leader>dq", function() require("dap").close()                                      end, desc = "DAP: Quit" },
-			{ "<leader>dw", function() require("dap-view").add_expr(vim.fn.expand("<cword>"))      end, desc = "DAP: Watch Word" },
+			{ "<leader>dw", function() require("dapui").elements.watches.add(vim.fn.expand("<cword>")) end, desc = "DAP: Watch Word" },
 			{ "<leader>dt", function() require("dap").disconnect()                                 end, desc = "DAP: Disconnect" },
-
-			-- ── Jump directly to a dap-view section ───────────────────────────
-			{ "<leader>dvw", function() require("dap-view").show_view("watches")     end, desc = "DAP: view [w]atches" },
-			{ "<leader>dvs", function() require("dap-view").show_view("scopes")      end, desc = "DAP: view [s]copes" },
-			{ "<leader>dvb", function() require("dap-view").show_view("breakpoints") end, desc = "DAP: view [b]reakpoints" },
-			{ "<leader>dvt", function() require("dap-view").show_view("threads")     end, desc = "DAP: view [t]hreads" },
-			{ "<leader>dvr", function() require("dap-view").show_view("repl")        end, desc = "DAP: view [r]epl" },
-			{ "<leader>dve", function() require("dap-view").show_view("exceptions")  end, desc = "DAP: view [e]xceptions" },
-			{ "<leader>dvc", function() require("dap-view").show_view("console")     end, desc = "DAP: view [c]onsole" },
 		},
 		config = function()
-			local dap = require("dap")
-			local ic  = require("noethervim.util.icons")
+			local dap   = require("dap")
+			local dapui = require("dapui")
+			local ic    = require("noethervim.util.icons")
 
 			-- Define a highlight for the line the debugger is currently stopped on.
 			-- Linked to Visual so it tracks the active colorscheme, and re-applied on
@@ -141,8 +144,9 @@ return {
 				})
 			end
 
-			-- dap-view auto_toggle=true handles open/close on session events,
-			-- so no manual dap.listeners are needed here.
+			dap.listeners.after.event_initialized["dapui_config"] = function() dapui.open({}) end
+			dap.listeners.before.event_terminated["dapui_config"] = function() dapui.close({}) end
+			dap.listeners.before.event_exited["dapui_config"]     = function() dapui.close({}) end
 
 			dap.configurations = {
 				go = {
