@@ -23,7 +23,7 @@ opt.mousemoveevent = true
 
 -- File handling
 opt.autowrite    = true
-opt.autowriteall = true
+opt.autowriteall = false
 opt.autoread     = true
 opt.swapfile     = false
 

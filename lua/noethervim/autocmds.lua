@@ -75,13 +75,39 @@ vim.api.nvim_create_autocmd("FileType", {
 -- ──────────────────────────────────────────────────────────────
 
 vim.api.nvim_create_autocmd(
-  { "FocusGained", "BufEnter", "FileChangedShell" },
+  { "FocusGained", "BufEnter", "InsertEnter", "InsertLeave", "FileChangedShell" },
   {
     group   = vim.api.nvim_create_augroup("noethervim_autoread", { clear = true }),
     pattern = "*",
     callback = function() vim.cmd("checktime") end,
   }
 )
+
+-- ──────────────────────────────────────────────────────────────
+--  Out-of-sync detection
+--  When a file changes on disk AND the buffer has unsaved edits,
+--  autoread can't silently reload (would clobber user changes).
+--  Flag the buffer so UI (statusline) can surface the conflict.
+--  Cleared on next successful write or read.
+-- ──────────────────────────────────────────────────────────────
+
+vim.api.nvim_create_autocmd("FileChangedShell", {
+  group = vim.api.nvim_create_augroup("noethervim_out_of_sync_set", { clear = true }),
+  callback = function(ev)
+    if vim.bo[ev.buf].modified then
+      vim.b[ev.buf].noethervim_out_of_sync = true
+      vim.cmd.redrawstatus()
+    end
+  end,
+})
+
+vim.api.nvim_create_autocmd({ "BufWritePost", "BufReadPost" }, {
+  group = vim.api.nvim_create_augroup("noethervim_out_of_sync_clear", { clear = true }),
+  callback = function(ev)
+    vim.b[ev.buf].noethervim_out_of_sync = nil
+    vim.cmd.redrawstatus()
+  end,
+})
 
 -- ──────────────────────────────────────────────────────────────
 --  Terminal window tweaks

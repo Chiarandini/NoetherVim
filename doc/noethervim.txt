@@ -797,6 +797,14 @@ straightforward. See the example in
 `:Redir` {cmd}                Redirect command or shell output to a
                               scratch buffer. Example: `:Redir !ls -la`
 
+`:DiffOrig`                   Diff the current buffer against the file
+                              on disk. Opens a vertical split with the
+                              on-disk version and enters diff mode on
+                              both sides. Useful when the buffer has
+                              unsaved changes or the file was modified
+                              externally. Close the scratch split with
+                              `:q` when done.
+
 `:LspRename`                  LSP rename with instance count notification.
 
 Web search commands: ~                                *noethervim-web-search*

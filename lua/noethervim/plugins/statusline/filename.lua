@@ -33,6 +33,47 @@ local function warning_popup(text)
   vim.api.nvim_set_current_win(win)
 end
 
+local function out_of_sync_popup()
+  local lines = {
+    " Buffer and disk file are out of sync. ",
+    " [D]iff   [C]ancel ",
+  }
+  local width = 0
+  for _, l in ipairs(lines) do
+    if #l > width then width = #l end
+  end
+
+  local mouse_pos = vim.fn.getmousepos()
+  local opts = {
+    relative = "editor",
+    row      = math.max(0, mouse_pos.screenrow - #lines - 2),
+    col      = mouse_pos.screencol,
+    width    = width,
+    height   = #lines,
+    style    = "minimal",
+    border   = "rounded",
+  }
+
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  vim.api.nvim_set_option_value("modifiable", false, { scope = "local", buf = buf })
+  vim.api.nvim_set_option_value("bufhidden",  "wipe",  { scope = "local", buf = buf })
+
+  local win = vim.api.nvim_open_win(buf, true, opts)
+
+  local function close() pcall(vim.api.nvim_win_close, win, true) end
+  local function diff() close(); vim.cmd("DiffOrig") end
+
+  local km = { buffer = buf, noremap = true, silent = true, nowait = true }
+  vim.keymap.set("n", "d",     diff,  km)
+  vim.keymap.set("n", "y",     diff,  km)
+  vim.keymap.set("n", "<CR>",  diff,  km)
+  vim.keymap.set("n", "c",     close, km)
+  vim.keymap.set("n", "n",     close, km)
+  vim.keymap.set("n", "q",     close, km)
+  vim.keymap.set("n", "<Esc>", close, km)
+end
+
 local function ProjRelativeFilename()
   local filePath = vim.fn.expand("%:p:h")
   local gitPath = ctx.cached_git_root(filePath)
@@ -171,23 +212,25 @@ M.ChangeFlag = {
   condition = function()
     return vim.bo.modified
   end,
-  hl = { fg = "orange" },
+  hl = function()
+    return { fg = vim.b.noethervim_out_of_sync and ctx.colors.red or "orange" }
+  end,
   on_click = {
     callback = function()
-      local ft = vim.bo.filetype
-      vim.cmd("vert new")
-      vim.bo.buftype = "nofile"
-      vim.bo.bufhidden = "wipe"
-      vim.bo.filetype = ft
-      vim.cmd("r ++edit #")
-      vim.cmd("0d_")
-      vim.cmd("diffthis")
-      vim.cmd("wincmd p")
-      vim.cmd("diffthis")
+      if vim.b.noethervim_out_of_sync then
+        out_of_sync_popup()
+      else
+        vim.cmd("DiffOrig")
+      end
     end,
     name = "heirline_unsaved_diff",
   },
-  provider = icons.pencil .. " ",
+  provider = function()
+    if vim.b.noethervim_out_of_sync then
+      return icons.warning .. " "
+    end
+    return icons.pencil .. " "
+  end,
 }
 
 local FileNameModifer = {

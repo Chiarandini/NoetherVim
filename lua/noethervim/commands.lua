@@ -29,6 +29,23 @@ end, {
 })
 
 -- ──────────────────────────────────────────────────────────────
+--  DiffOrig  — diff the current buffer against its on-disk version
+-- ──────────────────────────────────────────────────────────────
+
+vim.api.nvim_create_user_command("DiffOrig", function()
+  local ft = vim.bo.filetype
+  vim.cmd("vert new")
+  vim.bo.buftype   = "nofile"
+  vim.bo.bufhidden = "wipe"
+  vim.bo.filetype  = ft
+  vim.cmd("r ++edit #")
+  vim.cmd("0d_")
+  vim.cmd("diffthis")
+  vim.cmd("wincmd p")
+  vim.cmd("diffthis")
+end, { desc = "diff buffer against on-disk file" })
+
+-- ──────────────────────────────────────────────────────────────
 --  Redir  — redirect :command / !shell output to scratch buffer
 -- ──────────────────────────────────────────────────────────────
 
