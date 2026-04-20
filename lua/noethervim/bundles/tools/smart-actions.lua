@@ -16,8 +16,33 @@
 --       default_scope = "function",
 --   } }
 --
+-- Statusline integration: while a request is in flight the NoetherVim
+-- Busy component is recoloured and labelled "ai" (via the
+-- register_busy_override hook). User config can register a richer
+-- override (e.g. on_click → status popup) to take priority.
+--
 -- See :help smart-actions for the full surface (categories, context,
 -- extension points, known limitations).
+
+-- Register the busy-slot takeover at spec-import time — not inside
+-- `config` — so a user override of `config` in user/plugins/ does not
+-- bypass it. The override function itself guards against smart_actions
+-- not being loaded yet.
+pcall(function()
+	local sl = require("noethervim.statusline")
+	if not sl.register_busy_override then return end
+	sl.register_busy_override(function()
+		local ok, status = pcall(require, "smart_actions.status")
+		if not ok then return nil end
+		local rec = status.current()
+		if not rec then return nil end
+		local palette = require("noethervim.util.palette").resolve()
+		return {
+			label = rec.state == "pending" and "ai…" or "ai",
+			hl    = { fg = palette.purple or "#c678dd", bold = true },
+		}
+	end)
+end)
 
 return {
 	{

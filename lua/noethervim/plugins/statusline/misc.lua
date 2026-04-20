@@ -96,14 +96,46 @@ vim.api.nvim_create_autocmd("VimLeavePre", {
   callback = stop_busy,
 })
 
+-- Resolve a busy-component override from the statusline registry. Walks
+-- the list back-to-front so the most recently registered override wins
+-- (last-write-wins). Returns nil if no override is claiming the slot.
+local function resolve_busy_override()
+  local ok, sl = pcall(require, "noethervim.statusline")
+  if not ok or not sl.get_busy_overrides then return nil end
+  local overrides = sl.get_busy_overrides()
+  for i = #overrides, 1, -1 do
+    local ok2, spec = pcall(overrides[i])
+    if ok2 and spec then return spec end
+  end
+  return nil
+end
+
 M.Busy = {
   condition = function()
-    return (vim.bo.busy or 0) > 0
+    return resolve_busy_override() ~= nil or (vim.bo.busy or 0) > 0
   end,
-  provider = function()
-    return busy_frames[busy_frame] .. " "
+  init = function(self)
+    self.override = resolve_busy_override()
   end,
-  hl = { fg = "orange", bold = true },
+  provider = function(self)
+    local icon = (self.override and self.override.icon) or busy_frames[busy_frame]
+    local label = self.override and self.override.label
+    if label and label ~= "" then
+      return icon .. " " .. label .. " "
+    end
+    return icon .. " "
+  end,
+  hl = function(self)
+    if self.override and self.override.hl then return self.override.hl end
+    return { fg = "orange", bold = true }
+  end,
+  on_click = {
+    callback = function()
+      local spec = resolve_busy_override()
+      if spec and spec.on_click then pcall(spec.on_click) end
+    end,
+    name = "noethervim_busy_click",
+  },
 }
 
 -- Filetype

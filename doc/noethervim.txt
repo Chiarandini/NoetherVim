@@ -730,6 +730,32 @@ Customize statusline colors and extra components via opts: >lua
 <
     For custom component authoring, see |heirline-cookbook|.
 
+                                         *noethervim-statusline-busy-override*
+Greedy Busy-component takeover ~
+
+The Busy component (animated spinner while `vim.bo.busy > 0`) can be
+greedily claimed by a bundle or by user config via
+`register_busy_override`. The override supplies a label, highlight and
+optional click handler, and temporarily replaces the default spinner
+rendering. The most recently registered override that returns a
+non-nil spec wins (last-write-wins), so user config overrides bundle
+defaults naturally: >lua
+    require("noethervim.statusline").register_busy_override(function()
+      -- return nil to yield; return a spec to claim the slot:
+      return {
+        icon     = nil,                       -- falls back to the spinner
+        label    = "ai",                      -- shown after icon
+        hl       = { fg = "#c678dd", bold = true },
+        on_click = function() ... end,        -- mouse handler
+      }
+    end)
+<
+    The animation timer only ticks while something is driving
+    `vim.bo.busy` > 0, so overrides wanting animation should also
+    increment busy on the relevant buffer. The smart-actions bundle
+    uses this hook to recolour the spinner while a request is in
+    flight; see |smart-actions|.
+
 ------------------------------------------------------------------------------
 9.3 TABLINE                                              *noethervim-tabline*
 
