@@ -14,6 +14,22 @@ end
 local M = {}
 
 function M.check()
+  -- ── Active bundles (computed once; reused by gating + listing) ───────
+  -- lazy.core.config.spec.modules is the authoritative list of what was
+  -- imported during lazy.setup(). Per-plugin spec._.module / spec._.imported
+  -- do not exist; reading them returns nil for every plugin.
+  local active_bundles = {}
+  do
+    local ok_lazy_cfg, lazy_cfg = pcall(require, "lazy.core.config")
+    if ok_lazy_cfg and lazy_cfg.spec and lazy_cfg.spec.modules then
+      for _, mod in ipairs(lazy_cfg.spec.modules) do
+        local bundle = mod:match("^noethervim%.bundles%.(.+)$")
+        if bundle then active_bundles[bundle] = true end
+      end
+    end
+  end
+  local function bundle_active(name) return active_bundles[name] == true end
+
   -- ── Neovim version ──────────────────────────────────────────────────
   h.start("Neovim version")
   local v = vim.version()
@@ -39,43 +55,60 @@ function M.check()
   check_exe("lazygit",      false)  -- <c-w><c-g> float terminal
   check_exe("tree-sitter",  false)  -- required by nvim-treesitter to build parsers
 
-  -- ── LaTeX ────────────────────────────────────────────────────────────
-  h.start("LaTeX (noethervim.bundles.languages.latex / core vimtex)")
-  check_exe("latexmk",  false)
-  check_exe("pdflatex", false)
-  do
-    local viewers
-    if vim.fn.has("mac") == 1 then
-      viewers = { "skim" }
-    elseif vim.fn.has("win32") == 1 then
-      viewers = { "SumatraPDF", "SumatraPDF.exe" }
-    else
-      viewers = { "zathura", "okular", "sioyek", "evince" }
-    end
-    local found
-    for _, viewer in ipairs(viewers) do
-      if vim.fn.executable(viewer) == 1 then found = viewer; break end
-    end
-    if found then
-      h.ok("PDF viewer (" .. found .. ")")
-    else
-      h.warn("no PDF viewer found — tried: " .. table.concat(viewers, ", "))
-    end
-  end
+  -- ── LaTeX (only when bundle is enabled) ──────────────────────────────
+  -- Skip the whole section when the latex bundle isn't active, otherwise
+  -- users without LaTeX get noise about missing latexmk / parsers.
+  if bundle_active("languages.latex") or bundle_active("languages.latex-zotero") then
+    h.start("LaTeX (noethervim.bundles.languages.latex / core vimtex)")
+    check_exe("latexmk",  false)
+    check_exe("pdflatex", false)
 
-  -- Treesitter latex parser: nvim-treesitter marks this parser as requiring
-  -- tree-sitter generate, but NoetherVim overrides that so only a C compiler
-  -- is needed. Check that cc is available and the parser is installed.
-  if vim.fn.executable("cc") == 1 then
-    h.ok("cc (C compiler — required for :TSInstall latex)")
-  else
-    h.error("cc not found — needed to compile the latex treesitter parser (:TSInstall latex)")
-  end
-  local parser_path = vim.fn.stdpath("data") .. "/lazy/nvim-treesitter/parser/latex.so"
-  if vim.uv.fs_stat(parser_path) then
-    h.ok("latex treesitter parser installed")
-  else
-    h.warn("latex treesitter parser not installed — run :TSInstall latex")
+    -- PDF viewer detection. macOS apps live in /Applications and are not
+    -- on PATH, so executable() always fails for them — must fs_stat the
+    -- .app bundle directly.
+    if vim.fn.has("mac") == 1 then
+      local mac_apps = { "Skim.app", "Preview.app" }
+      local found
+      for _, app in ipairs(mac_apps) do
+        if vim.uv.fs_stat("/Applications/" .. app) then found = app; break end
+      end
+      if found then
+        h.ok("PDF viewer (" .. found .. ")")
+      else
+        h.warn("no PDF viewer found in /Applications — tried: " .. table.concat(mac_apps, ", "))
+      end
+    else
+      local viewers
+      if vim.fn.has("win32") == 1 then
+        viewers = { "SumatraPDF", "SumatraPDF.exe" }
+      else
+        viewers = { "zathura", "okular", "sioyek", "evince" }
+      end
+      local found
+      for _, viewer in ipairs(viewers) do
+        if vim.fn.executable(viewer) == 1 then found = viewer; break end
+      end
+      if found then
+        h.ok("PDF viewer (" .. found .. ")")
+      else
+        h.warn("no PDF viewer found — tried: " .. table.concat(viewers, ", "))
+      end
+    end
+
+    -- Treesitter latex parser: nvim-treesitter marks this parser as requiring
+    -- tree-sitter generate, but NoetherVim overrides that so only a C compiler
+    -- is needed. Check that cc is available and the parser is installed.
+    if vim.fn.executable("cc") == 1 then
+      h.ok("cc (C compiler — required for :TSInstall latex)")
+    else
+      h.error("cc not found — needed to compile the latex treesitter parser (:TSInstall latex)")
+    end
+    local parser_path = vim.fn.stdpath("data") .. "/lazy/nvim-treesitter/parser/latex.so"
+    if vim.uv.fs_stat(parser_path) then
+      h.ok("latex treesitter parser installed")
+    else
+      h.warn("latex treesitter parser not installed — run :TSInstall latex")
+    end
   end
 
   -- ── User override system ──────────────────────────────────────────────
@@ -108,8 +141,12 @@ function M.check()
   end
 
   -- ── Template version ─────────────────────────────────────────────────
+  -- Skip in dev mode: the local-testing init.lua is a wrapper, not a
+  -- user-template instance, so it intentionally has no version marker.
   h.start("Template version")
-
+  if vim.g.noethervim_dev then
+    h.info("Skipped (vim.g.noethervim_dev set — not a user-template install)")
+  else
   local user_init = vim.fn.stdpath("config") .. "/init.lua"
   local upstream_init = vim.api.nvim_get_runtime_file("init.lua.example", false)[1]
 
@@ -145,6 +182,7 @@ function M.check()
     ))
   else
     h.ok("Template version: " .. user_version .. " (up to date)")
+  end
   end
 
   -- ── Configuration ────────────────────────────────────────────────────
@@ -192,37 +230,90 @@ function M.check()
 
   -- ── Bundles ──────────────────────────────────────────────────────────
   h.start("Active bundles")
-  local ok_lazy, lazy = pcall(require, "lazy")
-  if ok_lazy then
-    local active = {}
-    for _, spec in ipairs(lazy.plugins()) do
-      if spec._ and spec._.module then
-        local mod = spec._.module
-        if type(mod) == "string" then
-          local bundle = mod:match("^noethervim%.bundles%.(.+)$")
-          if bundle then active[bundle] = true end
-        end
-      end
-    end
-    -- Also detect via import paths in the lazy config
-    for _, spec in ipairs(lazy.plugins()) do
-      local imp = spec._ and spec._.imported
-      if imp then
-        local bundle = imp:match("^noethervim%.bundles%.(.+)$")
-        if bundle then active[bundle] = true end
-      end
-    end
-    if next(active) then
-      local names = vim.tbl_keys(active)
-      table.sort(names)
-      for _, name in ipairs(names) do
-        h.ok("noethervim.bundles." .. name)
-      end
-    else
-      h.info("No bundles enabled")
+  if next(active_bundles) then
+    local names = vim.tbl_keys(active_bundles)
+    table.sort(names)
+    for _, name in ipairs(names) do
+      h.ok("noethervim.bundles." .. name)
     end
   else
-    h.warn("lazy.nvim not available — cannot check active bundles")
+    h.info("No bundles enabled")
+  end
+
+  -- ── Override conflicts ───────────────────────────────────────────────
+  -- Diff the keymap snapshots captured by init.lua around user.keymaps load
+  -- to surface every core mapping the user redefined. Informational only —
+  -- redefining a core mapping is a supported pattern, not an error.
+  h.start("Override conflicts")
+  if not nv._user_loaded then
+    h.info("Skipped (user overrides disabled)")
+  elseif not (nv._snapshots and nv._snapshots.keymaps_before and nv._snapshots.keymaps_after) then
+    h.info("Snapshots unavailable — keymap diff cannot be computed")
+  else
+    local before = nv._snapshots.keymaps_before
+    local after  = nv._snapshots.keymaps_after
+    local conflicts = {}
+    for key, after_km in pairs(after) do
+      local before_km = before[key]
+      if before_km and before_km.desc ~= after_km.desc then
+        table.insert(conflicts, string.format("[%s] %s  '%s' -> '%s'",
+          after_km.mode, after_km.lhs,
+          before_km.desc ~= "" and before_km.desc or "(no desc)",
+          after_km.desc  ~= "" and after_km.desc  or "(no desc)"))
+      end
+    end
+    if #conflicts == 0 then
+      h.ok("No core keymaps overridden by user")
+    else
+      table.sort(conflicts)
+      h.info(("User overrides %d core keymap(s):"):format(#conflicts))
+      for _, c in ipairs(conflicts) do h.info("  " .. c) end
+    end
+  end
+
+  -- ── LSP servers ──────────────────────────────────────────────────────
+  -- List the LSP configs NoetherVim ships in lua/noethervim/lsp/. Server
+  -- binaries can come from Mason or the system; checking each individually
+  -- requires a server-name -> binary-name map we don't maintain here, so
+  -- defer detail to :Mason / :LspInfo.
+  h.start("LSP servers")
+  local lsp_files = vim.api.nvim_get_runtime_file("lua/noethervim/lsp/*.lua", true)
+  local server_names = {}
+  for _, p in ipairs(lsp_files) do
+    table.insert(server_names, vim.fn.fnamemodify(p, ":t:r"))
+  end
+  table.sort(server_names)
+  if #server_names > 0 then
+    h.ok(("Core LSP configs (%d): %s"):format(#server_names, table.concat(server_names, ", ")))
+  else
+    h.warn("No LSP configs found in lua/noethervim/lsp/")
+  end
+  if pcall(require, "mason") then
+    h.ok("mason.nvim loaded — run :Mason to inspect installation status")
+  else
+    h.info("mason.nvim not loaded — install LSP binaries manually or via :Mason")
+  end
+
+  -- ── Feature flags ────────────────────────────────────────────────────
+  -- Runtime-detected capabilities and distribution opt-out flags, so users
+  -- can confirm what's active in their session. Add new entries here as
+  -- flags are introduced; remove entries when the flag is gone.
+  h.start("Feature flags")
+  if vim.api.nvim__redraw then
+    h.ok("nvim__redraw API present (statusline busy-spinner updates smoothly)")
+  else
+    h.warn("nvim__redraw missing — busy-spinner falls back to redrawstatus")
+  end
+  if vim.g.noethervim_dashboard == false then
+    h.info("Dashboard: disabled (vim.g.noethervim_dashboard = false)")
+  else
+    h.ok("Dashboard: enabled")
+  end
+  if vim.g.noethervim_dev then
+    h.info("Dev mode: ON (vim.g.noethervim_dev set)")
+  end
+  if vim.env.NOETHERVIM_NO_USER or vim.g.noethervim_no_user then
+    h.info("User overrides: SUPPRESSED (NOETHERVIM_NO_USER or vim.g.noethervim_no_user set)")
   end
 end
 
