@@ -49,7 +49,7 @@ M.MacroRec = {
 -- to signal work in progress; we render an animated spinner while the
 -- counter is positive on any visible buffer. The timer is demand-driven:
 -- it only runs while something is actually busy.
-local busy_frames = { "◐", "◓", "◑", "◒" }
+local busy_frames = { "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏" }
 local busy_frame = 1
 local busy_timer = nil
 
@@ -73,7 +73,7 @@ end
 local function start_busy()
   if busy_timer then return end
   busy_timer = vim.uv.new_timer()
-  busy_timer:start(100, 100, vim.schedule_wrap(function()
+  busy_timer:start(80, 80, vim.schedule_wrap(function()
     if any_win_busy() then
       busy_frame = busy_frame % #busy_frames + 1
       vim.cmd.redrawstatus()
