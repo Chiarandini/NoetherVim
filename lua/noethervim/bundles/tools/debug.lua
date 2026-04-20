@@ -93,6 +93,7 @@ return {
 				vim.notify("Cleared Breakpoints", 2, { title = "Debugger", icon = require("noethervim.util.icons").debug })
 			end, desc = "DAP: Clear Breakpoints" },
 			{ "<leader>dR", function() require("dap").run_to_cursor()                              end, desc = "DAP: Run to Cursor" },
+			{ "<leader>dj", function() require("dap").focus_frame()                                end, desc = "DAP: Jump to Current Frame" },
 			{ "<leader>dr", "<cmd>DapVirtualTextForceRefresh<cr>",                                     desc = "DAP: Refresh Virtual Text" },
 			{ "<leader>di", function() require("dap.ui.widgets").hover()                           end, desc = "DAP: Information" },
 			{ "<leader>de", function() require("dapui").eval()                                     end, mode = { "n", "v" }, desc = "DAP: Evaluate" },
