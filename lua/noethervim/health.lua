@@ -103,8 +103,10 @@ function M.check()
     else
       h.error("cc not found — needed to compile the latex treesitter parser (:TSInstall latex)")
     end
-    local parser_path = vim.fn.stdpath("data") .. "/lazy/nvim-treesitter/parser/latex.so"
-    if vim.uv.fs_stat(parser_path) then
+    -- nvim-treesitter's main branch installs parsers to stdpath("data")/site/parser/,
+    -- the master branch to lazy/nvim-treesitter/parser/. Use rtp lookup so the
+    -- check works regardless of branch / install layout.
+    if #vim.api.nvim_get_runtime_file("parser/latex.so", false) > 0 then
       h.ok("latex treesitter parser installed")
     else
       h.warn("latex treesitter parser not installed — run :TSInstall latex")
