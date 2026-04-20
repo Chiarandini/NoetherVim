@@ -756,6 +756,19 @@ defaults naturally: >lua
     uses this hook to recolour the spinner while a request is in
     flight; see |smart-actions|.
 
+                                          *noethervim-statusline-error-boundary*
+Error recovery ~
+
+If any statusline component raises an error, the bar degrades to a
+`statusline recovering...` marker instead of letting the traceback
+replace the entire statusline. The full error is written to
+|:messages| for diagnosis. After a cooldown, the bar auto-retries;
+if the underlying state has cleared, normal rendering resumes.
+
+Override the cooldown with `vim.g.heirline_recovery_ms` (default
+`1000`). The same protection applies to the tabline, winbar, and
+statuscolumn.
+
 ------------------------------------------------------------------------------
 9.3 TABLINE                                              *noethervim-tabline*
 

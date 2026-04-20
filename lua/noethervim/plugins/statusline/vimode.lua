@@ -25,9 +25,15 @@ local SearchResults = {
       return -- don't do regex, it breaks down
     end
 
-    local search_count = vim.fn.searchcount({ recompute = 1, maxcount = -1 })
+    -- searchcount compiles @/ as a regex; invalid patterns (e.g. "S**") raise
+    -- E871 and similar. Swallow them so the statusline stays quiet.
+    local ok, search_count = pcall(vim.fn.searchcount, { recompute = 1, maxcount = -1 })
+    if not ok then
+      return
+    end
     local active = false
-    if vim.v.hlsearch and vim.v.hlsearch == 1 and search_count.total > 0 then
+    if vim.v.hlsearch and vim.v.hlsearch == 1
+        and search_count and search_count.total and search_count.total > 0 then
       active = true
     end
     if not active then

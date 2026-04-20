@@ -201,11 +201,58 @@ return {
 
       -- ── Setup ────────────────────────────────────────────────
 
-      require("heirline").setup({
+      local heirline = require("heirline")
+      heirline.setup({
         statusline = StatusLines,
         -- winbar = winbar.Dropbar,
         tabline = tabline.TabPages,
       })
+
+      -- Error boundary: a crash inside any component propagates up through
+      -- heirline's _eval and would otherwise surface as a full-screen
+      -- traceback that replaces the statusline. Wrap the eval entry points
+      -- in pcall so we degrade to a marker instead of exploding, write
+      -- the error to |:messages| (throttled to avoid feedback loops), and
+      -- enter a per-eval cooldown before auto-retrying so transient bad
+      -- state has time to settle. Override the delay via
+      -- `vim.g.heirline_recovery_ms` (default 1000).
+      local last_err, last_err_time = nil, 0
+      local cooldown_until = {}
+      local function report_heirline_error(err)
+        local now = (vim.uv or vim.loop).now()
+        if err == last_err and (now - last_err_time) < 5000 then return end
+        last_err, last_err_time = err, now
+        -- Write to |:messages| so the trace is recoverable. We can't
+        -- use |:silent| (it suppresses the history write) and we can't
+        -- use ErrorMsg highlight (it triggers the hit-enter prompt).
+        -- Plain echomsg only briefly flashes at the cmdline and gets
+        -- painted over by the next redraw. Newlines are flattened
+        -- because echomsg can't handle literal multi-line strings.
+        vim.schedule(function()
+          local msg = ("heirline: %s"):format(tostring(err)):gsub("\n", " | ")
+          pcall(vim.cmd, "echomsg " .. vim.fn.string(msg))
+        end)
+      end
+      for _, name in ipairs({ "eval_statusline", "eval_winbar", "eval_tabline", "eval_statuscolumn" }) do
+        local orig = heirline[name]
+        if type(orig) == "function" then
+          heirline[name] = function(...)
+            local now = (vim.uv or vim.loop).now()
+            if (cooldown_until[name] or 0) > now then
+              return "%#ErrorMsg# statusline recovering... %*"
+            end
+            local ok, result = pcall(orig, ...)
+            if ok then return result end
+            report_heirline_error(result)
+            local delay = tonumber(vim.g.heirline_recovery_ms) or 1000
+            cooldown_until[name] = now + delay
+            -- Kick off a redraw past the cooldown so the retry happens
+            -- even if no other event triggers one.
+            vim.defer_fn(function() pcall(vim.cmd.redrawstatus) end, delay + 50)
+            return "%#ErrorMsg# statusline recovering... %*"
+          end
+        end
+      end
 
       -- Re-derive palette when the colorscheme changes at runtime.
       -- Runs synchronously so colors are updated before the next render.
