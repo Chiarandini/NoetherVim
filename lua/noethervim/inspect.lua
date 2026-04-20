@@ -70,7 +70,7 @@ end
 -- layout (bundles/<category>/<name>.lua) is the authoritative source for
 -- which bundles exist and which category they belong to; this table just
 -- adds the prose for the picker.  Adding a bundle without an entry here
--- falls back to "(no description)" — see docs/bundle-development.md.
+-- falls back to "(no description)" — see dev-docs/bundle-development.md.
 
 local bundle_descriptions = {
   -- languages

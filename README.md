@@ -9,6 +9,12 @@ The distro is opinionated, but anything can be overridden through `lua/user/` wi
 > [!NOTE]
 > NoetherVim is in **alpha**. The core is stable for daily use, but what counts as a "default" vs. an "overridable" option is still being refined. These choices grew out of my Neovim use and represent my best idea of good, agnostic defaults. If you think there are better choices, [open an issue](https://github.com/Chiarandini/NoetherVim/issues) and we can address it there.
 
+> [!TIP]
+> **New to Neovim-as-a-distribution, or coming in primarily for LaTeX / Typst work?**
+> See the [onboarding guide for mathematicians](docs/onboarding/mathematicians.md),
+> a walkthrough of the install, the math bundles, snippets, citations, and how to
+> extend the setup.
+
 ## Why another distribution?
 
 Existing Neovim distributions introduce their own abstraction layers: framework APIs,
@@ -20,6 +26,11 @@ NoetherVim takes a different approach: plugin specs are standard lazy.nvim, opti
 `vim.o`, keymaps are `vim.keymap.set()`, and so forth. Overriding a default means writing
 the same Lua you would write in a vanilla Neovim config, and the distro just makes sure
 your file loads after its own.
+
+Neovim 0.12 ships a built-in package manager (`vim.pack`), but NoetherVim stays on
+lazy.nvim because the override model (deep-merged `opts`, auto-imported bundle
+directories, lazy-loading via `event`/`keys`/`cmd`/`ft`) depends on its spec system -
+`vim.pack` is a plain installer and doesn't provide that layer.
 
 The same principle applies to keybindings. Keymaps build on Vim's own prefix conventions
 rather than funneling everything through `<Leader>` subgroups: `<C-w>` for anything
