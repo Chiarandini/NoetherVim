@@ -9,11 +9,6 @@ The distro is opinionated, but anything can be overridden through `lua/user/` wi
 > [!NOTE]
 > NoetherVim is in **alpha**. The core is stable for daily use, but what counts as a "default" vs. an "overridable" option is still being refined. These choices grew out of my Neovim use and represent my best idea of good, agnostic defaults. If you think there are better choices, [open an issue](https://github.com/Chiarandini/NoetherVim/issues) and we can address it there.
 
-> [!TIP]
-> **New to Neovim-as-a-distribution, or coming in primarily for LaTeX / Typst work?**
-> See the [onboarding guide for mathematicians](docs/onboarding/mathematicians.md),
-> a walkthrough of the install, the math bundles, snippets, citations, and how to
-> extend the setup.
 
 ## Why another distribution?
 
@@ -164,6 +159,13 @@ Once you're running, you can bring over your personal settings:
 - **Plugins** - add lazy.nvim specs to `lua/user/plugins/` (see [Configuration](#configuration))
 - **Options/keymaps/autocmds** - most of these already have NoetherVim equivalents; check what the distro sets before re-adding
 - **LSP configs** - NoetherVim configures servers through `lua/noethervim/lsp/`; if you had custom server settings, look there first
+
+
+> [!TIP]
+> **New to Neovim-as-a-distribution, or coming in primarily for LaTeX / Typst work?**
+> See the [onboarding guide for mathematicians](docs/onboarding/mathematicians.md),
+> a walkthrough of the install, the math bundles, snippets, citations, and how to
+> extend the setup.
 
 ## Configuration
 
