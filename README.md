@@ -30,7 +30,7 @@ Features use Neovim's built-in APIs directly (`vim.lsp.config()`, `vim.diagnosti
 `vim.fn.setqflist()`) and where Neovim 0.12 ships good defaults, the distro leaves them
 alone.
 
-Also, after using vim/nvim for ~10 years, my nvim dotfiles have grown to be 5000+ lines of
+Also, after using vim/nvim for ~10 years, my nvim dotfiles have grown to be ~10000 lines of
 code. So this is partly a fun project to convert the core functionality of my personal
 setup into a distribution.
 

@@ -18,11 +18,10 @@ return {
     version = "*",
     ft = "markdown",
     dependencies = { "nvim-lua/plenary.nvim" },
-    opts = {
-      obsidian_vault = "~/obsidian",
-    },
-    config = function(_, opts)
-      local vault = opts.obsidian_vault or "~/obsidian/"
+    config = function()
+      local ok_cfg, user_cfg = pcall(require, "user.config")
+      local vault = (ok_cfg and type(user_cfg) == "table" and user_cfg.obsidian_vault)
+        or "~/obsidian/"
 
       require("obsidian").setup({
         legacy_commands = false,
