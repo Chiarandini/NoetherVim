@@ -53,7 +53,7 @@ opt.ignorecase = true
 opt.infercase  = true
 opt.incsearch  = true
 opt.smartcase  = true
-opt.hlsearch   = false   -- off by default; toggle with [oh
+opt.hlsearch   = true    -- <Esc> clears; [oh/]oh toggles persistently
 
 -- Indentation
 opt.tabstop    = 4

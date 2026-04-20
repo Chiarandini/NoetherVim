@@ -21,7 +21,7 @@
 -- vim.o.scrolloff = 8   -- default: 4
 
 -- ── Search ───────────────────────────────────────────────────────────────────
--- vim.o.hlsearch = true -- default: false (toggle with [oh / ]oh)
+-- vim.o.hlsearch = false -- default: true (<Esc> clears; [oh/]oh toggles)
 
 -- ── Navigation ───────────────────────────────────────────────────────────────
 -- vim.o.autochdir = true  -- default: false
