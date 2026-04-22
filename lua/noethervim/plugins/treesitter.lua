@@ -108,6 +108,38 @@ return {
 			configs.setup(opts)
 		end -- configs.setup
 
+		-- On nvim-treesitter's `main` branch the `configs` module above is
+		-- absent, so `opts.highlight.enable` never takes effect. Start the
+		-- highlighter explicitly via FileType, honouring `highlight.disable`.
+		if opts.highlight and opts.highlight.enable then
+			local disabled = {}
+			for _, lang in ipairs(opts.highlight.disable or {}) do
+				disabled[lang] = true
+			end
+
+			local function start_ts(bufnr)
+				if not vim.api.nvim_buf_is_valid(bufnr) then return end
+				local ft = vim.bo[bufnr].filetype
+				if not ft or ft == "" then return end
+				local lang = vim.treesitter.language.get_lang(ft) or ft
+				if disabled[lang] or disabled[ft] then return end
+				pcall(vim.treesitter.start, bufnr, lang)
+			end
+
+			vim.api.nvim_create_autocmd("FileType", {
+				group = vim.api.nvim_create_augroup("noethervim_ts_highlight", { clear = true }),
+				callback = function(args) start_ts(args.buf) end,
+			})
+
+			-- treesitter is lazy-loaded on BufReadPost, so the buffer that
+			-- triggered loading already missed FileType — attach to it now.
+			for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+				if vim.api.nvim_buf_is_loaded(bufnr) then
+					start_ts(bufnr)
+				end
+			end
+		end
+
 		-- ensure_installed / auto_install: nvim-treesitter's new API no
 		-- longer processes these via setup(), so we handle them directly.
 		-- All parsers require the tree-sitter CLI (nvim-treesitter now
