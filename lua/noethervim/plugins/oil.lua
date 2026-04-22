@@ -9,7 +9,8 @@
 --   gS          Create symlink in current directory
 --   g.          Toggle hidden files
 --   g\          Toggle trash
---   C           Copy file to system clipboard
+--   Y           Normal: copy file under cursor to system clipboard
+--               Visual: yank selected entries (paste in another oil buffer to copy)
 --   yp / yd / yn   Yank full path / dir / filename to unnamed register
 --   Yp / Yd / Yn   Same, but straight to the system clipboard (+)
 
@@ -35,6 +36,37 @@ local function yank_entry(reg, mods)
 		vim.fn.setreg(reg, path)
 		if reg == "+" then vim.notify("Copied: " .. path) end
 	end
+end
+
+-- Yank the selected oil-buffer lines (linewise) so they can be pasted into
+-- another oil buffer to copy the files. Skip "../" (id 0) and unsaved new
+-- lines (no id) so a stray paste can't try to create ".." or empty entries.
+local function yank_selection()
+	local oil = require("oil")
+	if not oil.get_current_dir() then return end
+	local s, e = vim.fn.line("v"), vim.fn.line(".")
+	if s > e then s, e = e, s end
+
+	local lines = vim.api.nvim_buf_get_lines(0, s - 1, e, false)
+	local kept = {}
+	for i, line in ipairs(lines) do
+		local entry = oil.get_entry_on_line(0, s + i - 1)
+		if entry and entry.id and entry.id ~= 0 then
+			table.insert(kept, line)
+		end
+	end
+
+	vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
+
+	if #kept == 0 then
+		vim.notify("Oil: no copiable entries in selection", vim.log.levels.WARN)
+		return
+	end
+	vim.fn.setreg(vim.v.register, table.concat(kept, "\n"), "V")
+	local skipped = #lines - #kept
+	local msg = string.format("Yanked %d entr%s", #kept, #kept == 1 and "y" or "ies")
+	if skipped > 0 then msg = msg .. string.format(" (skipped %d)", skipped) end
+	vim.notify(msg)
 end
 
 return {
@@ -75,7 +107,6 @@ return {
 			watch_for_changes = false,
 			keymaps = {
 				["g?"] = { "actions.show_help", mode = "n" },
-				["C"] = { "actions.copy_to_system_clipboard", mode = "n" },
 				["<CR>"] = "actions.select",
 				["<C-s>"] = { "actions.select", opts = { vertical = true } },
 				["<C-h>"] = {},
@@ -211,6 +242,17 @@ return {
 				["Yp"] = { desc = "yank full path (+clip)",   mode = "n", callback = yank_entry("+", nil)  },
 				["Yd"] = { desc = "yank parent dir (+clip)",  mode = "n", callback = yank_entry("+", ":h") },
 				["Yn"] = { desc = "yank name (+clip)",        mode = "n", callback = yank_entry("+", ":t") },
+				["Y"]  = {
+					desc = "copy (clipboard in normal, oil-yank in visual)",
+					mode = { "n", "x" },
+					callback = function()
+						if vim.fn.mode():match("^[vV\22]") then
+							yank_selection()
+						else
+							require("oil.clipboard").copy_to_system_clipboard()
+						end
+					end,
+				},
 				["gS"] = {
 					desc = "Create symlink in current directory",
 					callback = function()

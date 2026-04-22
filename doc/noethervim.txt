@@ -681,7 +681,9 @@ These keymaps activate only in their respective filetype.
     `gS`                Create symlink in current directory
     `g.`                Toggle hidden files
     `g\`                Toggle trash
-    `C`                 Copy file to system clipboard
+    `Y` (normal)        Copy file under cursor to system clipboard
+    `Y` (visual)        Yank selected entries; paste in another Oil buffer
+                        to copy them (skips "../" and unsaved lines)
     `yp` `yd` `yn`      Yank full path / parent dir / name to unnamed reg
     `Yp` `Yd` `Yn`      Same, but to the system clipboard ("+)
 
