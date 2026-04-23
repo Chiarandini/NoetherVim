@@ -385,18 +385,34 @@ let g:vimtex_compiler_latexmk_engines = {
     },
   },
 
-  -- ── telescope-latex-references ───────────────────────────────────────────
+  -- ── snacks-latex-labels (picker) + telescope-latex-references (commands) ──
+  -- Primary UX is snacks.picker. telescope-latex-references still ships the
+  -- `:LatexLabelsUpdate` / `:LatexLabelsInspect` / `:LatexLabelsWipeAll`
+  -- user commands (registered inside its load_extension callback), and the
+  -- `telescope._extensions.latex_labels.{cache,utils,scanner}` modules that
+  -- both pickers share. It stays installed for those reasons; only the
+  -- keymap and picker UI moved to snacks.
   {
-    "Chiarandini/telescope-latex-references",
+    "Chiarandini/snacks-latex-labels.nvim",
     dependencies = {
-      "nvim-telescope/telescope.nvim",
-      "nvim-lua/plenary.nvim",
-	  "Chiarandini/latex-nav-core.nvim",
+      "folke/snacks.nvim",
+      "Chiarandini/latex-nav-core.nvim",
+      {
+        "Chiarandini/telescope-latex-references",
+        dependencies = {
+          "nvim-telescope/telescope.nvim",
+          "nvim-lua/plenary.nvim",
+        },
+      },
     },
     ft     = { "tex", "latex" },
     config = function()
-      require("telescope").load_extension("latex_labels")
-      vim.keymap.set("n", "<localleader>w",    "<cmd>Telescope latex_labels<cr>",  { buf = 0, desc = "latex labels" })
+      require("snacks_latex_labels").setup({})
+      -- Register :LatexLabels* user commands (see header comment).
+      pcall(function()
+        require("telescope").load_extension("latex_labels")
+      end)
+      vim.keymap.set("n", "<localleader>w",    "<cmd>SnacksLatexLabels<cr>",       { buf = 0, desc = "latex labels" })
       vim.keymap.set("n", "<localleader>vul", "<cmd>LatexLabelsUpdate<cr>",       { buf = 0, desc = "update latex labels" })
       vim.keymap.set("n", "<localleader>vuh", "<cmd>CachedHeadingsUpdate<cr>",    { buf = 0, desc = "update headings cache" })
 

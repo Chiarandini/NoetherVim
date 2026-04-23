@@ -18,15 +18,20 @@ return {
 			"Chiarandini/latex-nav-core.nvim",
 			-- telescope-cached-headings.nvim provides the cache / parser /
 			-- utils modules under `telescope._extensions.cached_headings.*`
-			-- that snacks-cached-headings requires. We keep it here (even
-			-- without loading telescope itself) so the modules are on the
-			-- runtime path when snacks_cached_headings is called.
+			-- and registers :CachedHeadingsUpdate / :CachedHeadingsWipeAll.
 			{
 				"Chiarandini/telescope-cached-headings.nvim",
 				dependencies = { "nvim-lua/plenary.nvim" },
 			},
+			-- Telescope itself is required to trigger the extension's
+			-- `load_extension` callback, which is where the user commands
+			-- above get registered. Transitional: when those commands are
+			-- ported out of the telescope extension (see
+			-- dev-docs/telescope-removal-plan.md phase 4 cleanup), this
+			-- dep can be dropped.
+			"nvim-telescope/telescope.nvim",
 		},
-		cmd  = "SnacksCachedHeadings",
+		cmd  = { "SnacksCachedHeadings", "CachedHeadingsUpdate", "CachedHeadingsWipeAll" },
 		keys = {
 			{ SearchLeader .. "t", "<cmd>SnacksCachedHeadings<cr>", desc = "headings" },
 		},
@@ -38,5 +43,13 @@ return {
 			recursive_limit = 3,
 			auto_update     = true,
 		},
+		config = function(_, opts)
+			require("snacks_cached_headings").setup(opts)
+			-- Register the :CachedHeadings* user commands. telescope is
+			-- loaded for this purpose only; the picker itself uses snacks.
+			pcall(function()
+				require("telescope").load_extension("cached_headings")
+			end)
+		end,
 	},
 }
