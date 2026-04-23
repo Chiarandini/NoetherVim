@@ -1,20 +1,16 @@
 -- NoetherVim plugin: Cached Headings (snacks)
 --
 -- Headings picker for tex / markdown / org files. Uses Snacks.picker as the
--- UI and shares the on-disk cache with Chiarandini/telescope-cached-headings
--- (the telescope plugin still ships the cache/parser/utils modules).
--- telescope.nvim is no longer required — the `:CachedHeadings*` user
--- commands are registered inline here using the shared cache/parser directly.
+-- UI; cache/parser/latex helpers all come from latex-nav-core. The
+-- telescope-cached-headings plugin is no longer a dependency. The
+-- `:CachedHeadings*` user commands are registered inline here.
 
 local SearchLeader = require("noethervim.util").search_leader
 
 local function register_cached_headings_commands(config)
-	-- Regenerate the cache for the current buffer using the parser that ships
-	-- inside telescope-cached-headings.nvim. That module does not depend on
-	-- telescope at require-time.
 	local function update_cache_for_buf(bufnr)
-		local cache    = require("telescope._extensions.cached_headings.cache")
-		local parser   = require("telescope._extensions.cached_headings.parser")
+		local cache    = require("latex_nav_core.cached_headings.cache")
+		local parser   = require("latex_nav_core.cached_headings.parser")
 		local filepath = vim.api.nvim_buf_get_name(bufnr)
 		local filetype = vim.bo[bufnr].filetype
 		if filepath == "" then
@@ -58,7 +54,7 @@ local function register_cached_headings_commands(config)
 	end, { desc = "Regenerate cached-headings cache for current file" })
 
 	vim.api.nvim_create_user_command("CachedHeadingsWipeAll", function()
-		local cache = require("telescope._extensions.cached_headings.cache")
+		local cache = require("latex_nav_core.cached_headings.cache")
 		local count, err = cache.wipe_all_caches(config.cache_strategy or "global")
 		if err then
 			vim.notify("[cached_headings] " .. err, vim.log.levels.WARN)
@@ -89,13 +85,6 @@ return {
 		dependencies = {
 			"folke/snacks.nvim",
 			"Chiarandini/latex-nav-core.nvim",
-			-- telescope-cached-headings.nvim ships the cache / parser / utils
-			-- modules used by this picker; its top-level extension file pulls
-			-- in telescope, but the submodules we actually call do not.
-			{
-				"Chiarandini/telescope-cached-headings.nvim",
-				dependencies = { "nvim-lua/plenary.nvim" },
-			},
 		},
 		cmd  = { "SnacksCachedHeadings", "CachedHeadingsUpdate", "CachedHeadingsWipeAll" },
 		keys = {

@@ -375,22 +375,14 @@ let g:vimtex_compiler_latexmk_engines = {
   },
 
   -- ── snacks-latex-labels ───────────────────────────────────────────────────
-  -- Primary UX is snacks.picker. telescope-latex-references stays installed
-  -- because its `telescope._extensions.latex_labels.{cache,scanner}` modules
-  -- ship plugin-specific business logic (label-cache format and project
-  -- scanner) that both pickers share — those submodules do NOT require
-  -- telescope at runtime. Shared latex helpers (root detection, smart-jump
-  -- verification) come from `latex_nav_core.latex`.
-  -- The `:LatexLabels*` user commands are registered inline below.
+  -- All business logic (label cache, project scanner, latex helpers) lives
+  -- in latex-nav-core — telescope-latex-references is no longer a dependency.
+  -- `:LatexLabels*` user commands are registered inline below.
   {
     "Chiarandini/snacks-latex-labels.nvim",
     dependencies = {
       "folke/snacks.nvim",
       "Chiarandini/latex-nav-core.nvim",
-      {
-        "Chiarandini/telescope-latex-references",
-        dependencies = { "nvim-lua/plenary.nvim" },
-      },
     },
     ft   = { "tex", "latex" },
     cmd  = { "LatexLabelsUpdate", "LatexLabelsInspect", "LatexLabelsWipeAll" },
@@ -425,8 +417,8 @@ let g:vimtex_compiler_latexmk_engines = {
       -- scanner / utils modules do not require telescope, so we can call
       -- them directly without loading telescope.
       local function update_cache()
-        local cache   = require("telescope._extensions.latex_labels.cache")
-        local scanner = require("telescope._extensions.latex_labels.scanner")
+        local cache   = require("latex_nav_core.latex_labels.cache")
+        local scanner = require("latex_nav_core.latex_labels.scanner")
         local utils   = require("latex_nav_core.latex")
         local root = utils.get_root_file()
         if not root then
@@ -451,7 +443,7 @@ let g:vimtex_compiler_latexmk_engines = {
         { desc = "Regenerate latex-labels cache for current project" })
 
       vim.api.nvim_create_user_command("LatexLabelsInspect", function()
-        local cache = require("telescope._extensions.latex_labels.cache")
+        local cache = require("latex_nav_core.latex_labels.cache")
         local utils = require("latex_nav_core.latex")
         local root = utils.get_root_file()
         if not root then
@@ -470,7 +462,7 @@ let g:vimtex_compiler_latexmk_engines = {
       end, { desc = "Open the latex-labels cache file in a read-only split" })
 
       vim.api.nvim_create_user_command("LatexLabelsWipeAll", function()
-        local cache = require("telescope._extensions.latex_labels.cache")
+        local cache = require("latex_nav_core.latex_labels.cache")
         local count, err = cache.wipe_all_caches(opts.cache_strategy)
         if err then
           vim.notify("[latex_labels] " .. err, vim.log.levels.WARN)
@@ -530,7 +522,7 @@ let g:vimtex_compiler_latexmk_engines = {
           local label = label_at_cursor()
           if not label then vim.lsp.buf.definition(); return end
 
-          local cache = require("telescope._extensions.latex_labels.cache")
+          local cache = require("latex_nav_core.latex_labels.cache")
           local utils = require("latex_nav_core.latex")
 
           -- 1. Search the current project's cache first.
