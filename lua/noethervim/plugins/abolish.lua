@@ -42,6 +42,5 @@
 
 return {
 	"tpope/vim-abolish",
-	ft = {'tex'},
 	event = "VeryLazy",
 }

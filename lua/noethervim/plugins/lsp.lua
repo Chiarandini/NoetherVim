@@ -152,6 +152,7 @@ return {
 			{ "williamboman/mason-lspconfig.nvim" },
 			{
 				"hedyhli/outline.nvim",
+				cmd = { "Outline", "OutlineOpen" },
 				opts = {
 					outline_window = { auto_close = true },
 					preview_window = { auto_preview = true },
