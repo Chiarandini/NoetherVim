@@ -4,7 +4,8 @@
 -- Provides:
 --   • nvim-dap + nvim-dap-ui (multi-panel sidebar), virtual text,
 --     language adapters (Python, Neovim Lua, JS/TS via vscode-js-debug, Go)
---   • telescope-dap:   SearchLeader+D* pickers for commands/breakpoints/variables/frames
+--   • inline snacks pickers: SearchLeader+D* for commands/breakpoints/variables/frames
+--     (replaces telescope-dap, see dev-docs/telescope-removal-plan.md §4 phase 3.3)
 --
 -- Related bundles (enable separately):
 --   • test.lua:        neotest test runner
@@ -14,6 +15,126 @@
 -- Per-project adapter setup (add to ~/.config/<appname>/lua/user/plugins/):
 --   require('dap-python').setup('/path/to/python3')
 local SearchLeader = require("noethervim.util").search_leader
+
+-- ─── DAP snacks pickers ────────────────────────────────────────────────────
+-- Five thin pickers that read from dap state and feed Snacks.picker.
+-- Behavioural parity with telescope-dap, minus its treesitter-based variable
+-- location enrichment (not critical; restore if requested).
+
+local dap_pickers = {}
+
+---List every function exposed by the `dap` module and run the one selected.
+dap_pickers.commands = function()
+	local dap = require("dap")
+	local items = {}
+	for k, v in pairs(dap) do
+		if type(v) == "function" then
+			table.insert(items, { text = k, _name = k })
+		end
+	end
+	require("snacks").picker({
+		title   = "DAP Commands",
+		items   = items,
+		format  = function(item) return { { item._name } } end,
+		confirm = function(picker, item)
+			picker:close()
+			if item then dap[item._name]() end
+		end,
+	})
+end
+
+---List every dap configuration; dap.run() the one selected.
+dap_pickers.configurations = function()
+	local dap   = require("dap")
+	local items = {}
+	for _, configs in pairs(dap.configurations or {}) do
+		for _, config in ipairs(configs) do
+			table.insert(items, {
+				text    = config.type .. ": " .. config.name,
+				preview = { text = vim.inspect(config), ft = "lua" },
+				_config = config,
+			})
+		end
+	end
+	if #items == 0 then
+		vim.notify("[dap] no configurations loaded", vim.log.levels.INFO)
+		return
+	end
+	require("snacks").picker({
+		title   = "DAP Configurations",
+		items   = items,
+		format  = function(item) return { { item.text } } end,
+		preview = "preview",
+		confirm = function(picker, item)
+			picker:close()
+			if not item then return end
+			if item._config.request == "custom" then
+				vim.cmd(item._config.command)
+			else
+				dap.run(item._config)
+			end
+		end,
+	})
+end
+
+---Populate the quickfix list with breakpoints and open it in Snacks.
+dap_pickers.list_breakpoints = function()
+	require("dap").list_breakpoints(false)
+	require("snacks").picker.qflist({ title = "DAP Breakpoints" })
+end
+
+---List variables in the current frame's scopes.
+dap_pickers.variables = function()
+	local session = require("dap").session()
+	local frame   = session and session.current_frame
+	if not frame then
+		vim.notify("[dap] no active frame", vim.log.levels.INFO)
+		return
+	end
+	local items = {}
+	for _, scope in pairs(frame.scopes or {}) do
+		for _, v in pairs(scope.variables or {}) do
+			if v.type ~= "" and v.value ~= "" then
+				local line = string.format("%s(%s) = %s", v.name, v.type,
+					(v.value or ""):gsub("\n", " "))
+				table.insert(items, { text = line, _var = v })
+			end
+		end
+	end
+	require("snacks").picker({
+		title   = "DAP Variables",
+		items   = items,
+		format  = function(item) return { { item.text } } end,
+	})
+end
+
+---List the current call stack; jump to the selected frame.
+dap_pickers.frames = function()
+	local session = require("dap").session()
+	if not session or not session.stopped_thread_id then
+		vim.notify("[dap] cannot move frame — no stopped thread", vim.log.levels.INFO)
+		return
+	end
+	local frames = session.threads[session.stopped_thread_id].frames
+	local items  = {}
+	for _, fr in ipairs(frames) do
+		table.insert(items, {
+			text = fr.name,
+			file = fr.source and fr.source.path or nil,
+			pos  = { fr.line or 1, fr.column or 0 },
+			_frame = fr,
+		})
+	end
+	require("snacks").picker({
+		title   = "DAP Frames",
+		items   = items,
+		format  = function(item) return { { item.text } } end,
+		confirm = function(picker, item)
+			picker:close()
+			if item then session:_frame_set(item._frame) end
+		end,
+	})
+end
 
 return {
 
@@ -172,20 +293,16 @@ return {
 		end,
 	},
 
-	-- ── telescope-dap ─────────────────────────────────────────────────────────
+	-- ── Snacks pickers over DAP state (keymaps only; see dap_pickers above) ──
 	{
-		"nvim-telescope/telescope-dap.nvim",
-		dependencies = { "nvim-telescope/telescope.nvim", "mfussenegger/nvim-dap" },
-		opts = {},
-		config = function(_, opts)
-			require("telescope").load_extension("dap")
-		end,
+		"mfussenegger/nvim-dap",
+		dependencies = { "folke/snacks.nvim" },
 		keys = {
-			{ SearchLeader .. "Dc", function() require("telescope").extensions.dap.commands()         end, desc = "[d]ebug [c]ommands" },
-			{ SearchLeader .. "DC", function() require("telescope").extensions.dap.configurations()   end, desc = "[d]ebug [C]onfigurations" },
-			{ SearchLeader .. "Db", function() require("telescope").extensions.dap.list_breakpoints() end, desc = "[d]ebug [b]reakpoints" },
-			{ SearchLeader .. "Dv", function() require("telescope").extensions.dap.variables()        end, desc = "[d]ebug [v]ariables" },
-			{ SearchLeader .. "Df", function() require("telescope").extensions.dap.frames()           end, desc = "[d]ebug [f]rames" },
+			{ SearchLeader .. "Dc", function() dap_pickers.commands()         end, desc = "[d]ebug [c]ommands" },
+			{ SearchLeader .. "DC", function() dap_pickers.configurations()   end, desc = "[d]ebug [C]onfigurations" },
+			{ SearchLeader .. "Db", function() dap_pickers.list_breakpoints() end, desc = "[d]ebug [b]reakpoints" },
+			{ SearchLeader .. "Dv", function() dap_pickers.variables()        end, desc = "[d]ebug [v]ariables" },
+			{ SearchLeader .. "Df", function() dap_pickers.frames()           end, desc = "[d]ebug [f]rames" },
 		},
 	},
 
