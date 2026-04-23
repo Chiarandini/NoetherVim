@@ -14,8 +14,6 @@ local function get_open_command()
   end
 end
 
-local SearchLeader = require("noethervim.util").search_leader
-
 return {
 	{
 		"nvim-telescope/telescope.nvim",
@@ -23,7 +21,9 @@ return {
 		dependencies = {
 			{ "nvim-lua/plenary.nvim" },
 			{ "nvim-lua/popup.nvim" },
-			{ "Chiarandini/telescope-cached-headings.nvim", dependencies = { "nvim-lua/plenary.nvim" } },
+			-- Note: Chiarandini/telescope-cached-headings.nvim is now pulled
+			-- in by lua/noethervim/plugins/cached-headings.lua (the snacks
+			-- picker shares that plugin's cache/parser/utils modules).
 		},
 		cmd = "Telescope",
 
@@ -46,12 +46,8 @@ return {
 				colorscheme = { enable_preview = true },
 			},
 			extensions = {
-				cached_headings = {
-					scan_includes   = true,
-					include_starred = true,
-					recursive_limit = 3,
-					auto_update     = true,
-				},
+				-- cached_headings opts have moved to
+				-- lua/noethervim/plugins/cached-headings.lua (snacks backend).
 				-- latex_labels config consumed by telescope-latex-references
 				-- when the latex bundle is enabled.
 				latex_labels = {
@@ -225,13 +221,6 @@ return {
 
 			-- ── Setup & extensions ───────────────────────────────────────
 			telescope.setup(opts)
-
-			telescope.load_extension("cached_headings")
 		end,
-
-		keys = {
-			-- jump between document [h]eadings (any filetype)
-			{ SearchLeader .. "t",       "<cmd>Telescope cached_headings<cr>",                      desc = "headings" },
-		},
 	},
 }
