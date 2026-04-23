@@ -7,6 +7,8 @@
 --   gV          Pick destination and open dual-pane float (q closes both)
 --   gX          Open directory in system file browser
 --   gS          Create symlink in current directory
+--   gz          Zip entry under cursor (normal) or selected entries (visual)
+--   gZ          Unzip .zip entry (normal) or selected .zip entries (visual)
 --   g.          Toggle hidden files
 --   g\          Toggle trash
 --   Y           Normal: copy file under cursor to system clipboard
@@ -67,6 +69,179 @@ local function yank_selection()
 	local msg = string.format("Yanked %d entr%s", #kept, #kept == 1 and "y" or "ies")
 	if skipped > 0 then msg = msg .. string.format(" (skipped %d)", skipped) end
 	vim.notify(msg)
+end
+
+-- Collect entry basenames from the current oil buffer. In visual mode, returns
+-- every selected entry (skipping "../" and unsaved lines); in normal mode,
+-- returns just the entry under the cursor. Returns (dir, names).
+local function collect_entries()
+	local oil = require("oil")
+	local dir = oil.get_current_dir()
+	if not dir then return nil, {} end
+	local names = {}
+	if vim.fn.mode():match("^[vV\22]") then
+		local s, e = vim.fn.line("v"), vim.fn.line(".")
+		if s > e then s, e = e, s end
+		for line = s, e do
+			local entry = oil.get_entry_on_line(0, line)
+			if entry and entry.id and entry.id ~= 0 then
+				table.insert(names, entry.name)
+			end
+		end
+		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
+	else
+		local entry = oil.get_cursor_entry()
+		if entry and entry.id and entry.id ~= 0 then
+			table.insert(names, entry.name)
+		end
+	end
+	return dir, names
+end
+
+-- Zip entries under cursor / in visual selection to a .zip in the current oil
+-- directory. Uses `zip -r` on macOS/Linux and PowerShell's Compress-Archive on
+-- Windows; both are stock on their respective platforms.
+local function zip_entries()
+	local dir, names = collect_entries()
+	if not dir then return end
+	if #names == 0 then
+		vim.notify("Oil: nothing to zip", vim.log.levels.WARN)
+		return
+	end
+
+	local is_windows = vim.fn.has("win32") == 1
+	local tool = is_windows and "powershell" or "zip"
+	if vim.fn.executable(tool) == 0 then
+		vim.notify(
+			string.format("Oil: '%s' not found in PATH — cannot create zip", tool),
+			vim.log.levels.ERROR
+		)
+		return
+	end
+
+	-- Defer prompt so the queued <Esc> (visual-mode exit) processes first.
+	vim.schedule(function()
+		local base = #names == 1 and names[1]:gsub("/$", "") or "archive"
+		local archive = vim.fn.input({ prompt = "Archive name: ", default = base .. ".zip", cancelreturn = "" })
+		if archive == "" then return end
+		if not archive:lower():match("%.zip$") then archive = archive .. ".zip" end
+
+		local cmd
+		if is_windows then
+			local quoted = {}
+			for _, n in ipairs(names) do
+				table.insert(quoted, "'" .. n:gsub("'", "''") .. "'")
+			end
+			local ps = string.format(
+				"Compress-Archive -Path %s -DestinationPath '%s' -Force",
+				table.concat(quoted, ","),
+				archive:gsub("'", "''")
+			)
+			cmd = { "powershell", "-NoProfile", "-NonInteractive", "-Command", ps }
+		else
+			cmd = { "zip", "-rq", archive }
+			for _, n in ipairs(names) do table.insert(cmd, n) end
+		end
+
+		vim.fn.jobstart(cmd, {
+			cwd = dir,
+			on_exit = function(_, code)
+				vim.schedule(function()
+					if code == 0 then
+						vim.notify(string.format(
+							"Zipped %d entr%s → %s",
+							#names, #names == 1 and "y" or "ies", archive
+						))
+						require("oil.actions").refresh.callback()
+					else
+						vim.notify("Oil: zip failed (exit " .. code .. ")", vim.log.levels.ERROR)
+					end
+				end)
+			end,
+		})
+	end)
+end
+
+-- Unzip selected .zip entries into a destination directory. Uses `unzip -oq`
+-- on macOS/Linux and PowerShell's Expand-Archive on Windows; both overwrite
+-- existing files silently. Non-zip entries in the selection are skipped.
+local function unzip_entries()
+	local dir, all_names = collect_entries()
+	if not dir then return end
+
+	local zips, skipped = {}, 0
+	for _, n in ipairs(all_names) do
+		if n:lower():match("%.zip$") then
+			table.insert(zips, n)
+		else
+			skipped = skipped + 1
+		end
+	end
+
+	if #zips == 0 then
+		vim.notify("Oil: no .zip entries to extract", vim.log.levels.WARN)
+		return
+	end
+
+	local is_windows = vim.fn.has("win32") == 1
+	local tool = is_windows and "powershell" or "unzip"
+	if vim.fn.executable(tool) == 0 then
+		vim.notify(
+			string.format("Oil: '%s' not found in PATH — cannot extract zip", tool),
+			vim.log.levels.ERROR
+		)
+		return
+	end
+
+	-- Defer prompt so the queued <Esc> (visual-mode exit) processes first.
+	vim.schedule(function()
+		local dest = vim.fn.input({ prompt = "Extract to: ", default = ".", completion = "dir", cancelreturn = "" })
+		if dest == "" then return end
+
+		local pending, failed = #zips, 0
+		local function finish()
+			pending = pending - 1
+			if pending > 0 then return end
+			vim.schedule(function()
+				if failed == 0 then
+					local msg = string.format(
+						"Extracted %d archive%s → %s",
+						#zips, #zips == 1 and "" or "s", dest
+					)
+					if skipped > 0 then msg = msg .. string.format(" (skipped %d non-zip)", skipped) end
+					vim.notify(msg)
+				else
+					vim.notify(
+						string.format("Oil: %d of %d extractions failed", failed, #zips),
+						vim.log.levels.ERROR
+					)
+				end
+				require("oil.actions").refresh.callback()
+			end)
+		end
+
+		for _, zip in ipairs(zips) do
+			local cmd
+			if is_windows then
+				cmd = {
+					"powershell", "-NoProfile", "-NonInteractive", "-Command",
+					string.format(
+						"Expand-Archive -Path '%s' -DestinationPath '%s' -Force",
+						zip:gsub("'", "''"), dest:gsub("'", "''")
+					),
+				}
+			else
+				cmd = { "unzip", "-oq", zip, "-d", dest }
+			end
+			vim.fn.jobstart(cmd, {
+				cwd = dir,
+				on_exit = function(_, code)
+					if code ~= 0 then failed = failed + 1 end
+					finish()
+				end,
+			})
+		end
+	end)
 end
 
 return {
@@ -252,6 +427,16 @@ return {
 							require("oil.clipboard").copy_to_system_clipboard()
 						end
 					end,
+				},
+				["gz"] = {
+					desc = "zip entry (normal) or selection (visual)",
+					mode = { "n", "x" },
+					callback = zip_entries,
+				},
+				["gZ"] = {
+					desc = "unzip .zip entry (normal) or selection (visual)",
+					mode = { "n", "x" },
+					callback = unzip_entries,
 				},
 				["gS"] = {
 					desc = "Create symlink in current directory",

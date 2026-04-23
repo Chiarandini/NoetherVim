@@ -679,6 +679,10 @@ These keymaps activate only in their respective filetype.
     `gd`                Toggle detail view (permissions, size, mtime)
     `gX`                Open directory in system file browser
     `gS`                Create symlink in current directory
+    `gz`                Zip entry under cursor (normal) or selection (visual)
+                        Uses `zip` on macOS/Linux, `Compress-Archive` on Windows
+    `gZ`                Unzip .zip entry (normal) or selection (visual)
+                        Uses `unzip` on macOS/Linux, `Expand-Archive` on Windows
     `g.`                Toggle hidden files
     `g\`                Toggle trash
     `Y` (normal)        Copy file under cursor to system clipboard
