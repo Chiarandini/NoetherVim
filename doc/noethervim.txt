@@ -136,7 +136,7 @@ the above runs.
     |-- lsp/                 LSP server config overrides
     |   `-- lua_ls.lua       e.g., override lua_ls workspace settings
     |-- plugins/             Personal plugins and distro opts overrides
-    |   `-- telescope.lua    e.g., override telescope opts
+    |   `-- snacks.lua       e.g., override snacks.nvim opts
     `-- overrides/           Imperative after-hooks (last resort)
         `-- *.lua
 <
@@ -481,7 +481,7 @@ Compare your user overrides against NoetherVim defaults.
                     module opens the upstream file (readonly) and user
                     override in a side-by-side vertical split.
                     Also accepts a direct argument:
-                    `:NoetherVim diff telescope`
+                    `:NoetherVim diff snacks`
 
 ==============================================================================
 8. TOGGLING                                                *noethervim-toggle*
@@ -978,10 +978,12 @@ A: NoetherVim uses nvim-lint alongside conform.nvim. Most linting is
       opts = { linters_by_ft = { sh = { "shellcheck" }, yaml = { "yamllint" } } } }
 <
 
-Q: How do I change a telescope keymap?~
-A: Telescope keymaps that reference `telescope.actions` live in the
-   `config` function, not in `opts`. Override them in `user/keymaps.lua`
-   or by specifying `keys` in your override spec.
+Q: How do I change a picker keymap?~
+A: NoetherVim uses snacks.picker as the core UI. Picker keymaps live in
+   bundles (e.g. `bundles/languages/latex.lua`) or core plugin files
+   (e.g. `plugins/cached-headings.lua`). Override them in
+   `user/keymaps.lua` (to reassign) or by specifying `keys` in your
+   plugin override spec (to add).
 
 Q: Why does my override have no effect?~
 A: Check `:NoetherVim status` to verify your files are loaded. Check
