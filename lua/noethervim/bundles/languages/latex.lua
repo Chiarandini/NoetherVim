@@ -374,13 +374,12 @@ let g:vimtex_compiler_latexmk_engines = {
     },
   },
 
-  -- ── snacks-latex-labels (picker) + telescope-latex-references (commands) ──
-  -- Primary UX is snacks.picker. telescope-latex-references still ships the
-  -- `:LatexLabelsUpdate` / `:LatexLabelsInspect` / `:LatexLabelsWipeAll`
-  -- user commands (registered inside its load_extension callback), and the
-  -- `telescope._extensions.latex_labels.{cache,utils,scanner}` modules that
-  -- both pickers share. It stays installed for those reasons; only the
-  -- keymap and picker UI moved to snacks.
+  -- ── snacks-latex-labels ───────────────────────────────────────────────────
+  -- Primary UX is snacks.picker. telescope-latex-references stays installed
+  -- because its `telescope._extensions.latex_labels.{cache,utils,scanner}`
+  -- submodules ship the business logic both pickers share — those submodules
+  -- do NOT require telescope at runtime. The `:LatexLabels*` user commands
+  -- are registered inline below so telescope itself is never loaded.
   {
     "Chiarandini/snacks-latex-labels.nvim",
     dependencies = {
@@ -388,22 +387,109 @@ let g:vimtex_compiler_latexmk_engines = {
       "Chiarandini/latex-nav-core.nvim",
       {
         "Chiarandini/telescope-latex-references",
-        dependencies = {
-          "nvim-telescope/telescope.nvim",
-          "nvim-lua/plenary.nvim",
-        },
+        dependencies = { "nvim-lua/plenary.nvim" },
       },
     },
-    ft     = { "tex", "latex" },
-    config = function()
-      require("snacks_latex_labels").setup({})
-      -- Register :LatexLabels* user commands (see header comment).
-      pcall(function()
-        require("telescope").load_extension("latex_labels")
-      end)
-      vim.keymap.set("n", "<localleader>w",    "<cmd>SnacksLatexLabels<cr>",       { buf = 0, desc = "latex labels" })
-      vim.keymap.set("n", "<localleader>vul", "<cmd>LatexLabelsUpdate<cr>",       { buf = 0, desc = "update latex labels" })
-      vim.keymap.set("n", "<localleader>vuh", "<cmd>CachedHeadingsUpdate<cr>",    { buf = 0, desc = "update headings cache" })
+    ft   = { "tex", "latex" },
+    cmd  = { "LatexLabelsUpdate", "LatexLabelsInspect", "LatexLabelsWipeAll" },
+    opts = {
+      cache_strategy    = "global",
+      recursive         = true,
+      auto_update       = true,
+      notify_on_update  = true,
+      enable_smart_jump = true,
+      smart_jump_window = 200,
+      root_file         = "",
+      subfile_toggle_key = "<C-g>",
+      transformations = {
+        thm = "th:", prop = "pr:", defn = "df:", lem = "lm:",
+        cor = "co:", example = "ex:", exercise = "x:", titledBox = "box:",
+      },
+      copy_transform = {
+        ["df:"] = "\\cref{%s}", ["lm:"] = "\\cref{%s}",
+        ["th:"] = "\\cref{%s}", ["co:"] = "\\cref{%s}",
+        ["pr:"] = "\\cref{%s}", ["box:"] = "\\cref{%s}",
+        ["ex:"] = "example~\\ref{%s}", ["eq:"] = "equation~\\eqref{%s}",
+      },
+      patterns = {
+        { pattern = "\\begin{(%w+)}{(.-)}{(.-)}", type = "environment" },
+        { pattern = "\\label{(.-)}", type = "standard" },
+      },
+    },
+    config = function(_, opts)
+      require("snacks_latex_labels").setup(opts)
+
+      -- Register :LatexLabels* user commands inline. The underlying cache /
+      -- scanner / utils modules do not require telescope, so we can call
+      -- them directly without loading telescope.
+      local function update_cache()
+        local cache   = require("telescope._extensions.latex_labels.cache")
+        local scanner = require("telescope._extensions.latex_labels.scanner")
+        local utils   = require("telescope._extensions.latex_labels.utils")
+        local root = utils.get_root_file()
+        if not root then
+          vim.notify("[latex_labels] No file associated with current buffer.", vim.log.levels.WARN)
+          return
+        end
+        local entries = scanner.scan_project(root, opts)
+        local cache_path = cache.get_cache_path(root, opts.cache_strategy)
+        local ok, err = cache.write_cache(cache_path, entries)
+        if ok then
+          if opts.notify_on_update ~= false then
+            vim.notify(string.format("[latex_labels] Cache updated (%d labels).", #entries),
+              vim.log.levels.INFO)
+          end
+        else
+          vim.notify("[latex_labels] Failed to write cache: " .. (err or "unknown"),
+            vim.log.levels.ERROR)
+        end
+      end
+
+      vim.api.nvim_create_user_command("LatexLabelsUpdate", update_cache,
+        { desc = "Regenerate latex-labels cache for current project" })
+
+      vim.api.nvim_create_user_command("LatexLabelsInspect", function()
+        local cache = require("telescope._extensions.latex_labels.cache")
+        local utils = require("telescope._extensions.latex_labels.utils")
+        local root = utils.get_root_file()
+        if not root then
+          vim.notify("[latex_labels] No file associated with current buffer.", vim.log.levels.WARN)
+          return
+        end
+        local cache_path = cache.get_cache_path(root, opts.cache_strategy)
+        if vim.fn.filereadable(cache_path) == 0 then
+          vim.notify("[latex_labels] No cache found. Run :LatexLabelsUpdate to generate it.",
+            vim.log.levels.WARN)
+          return
+        end
+        vim.cmd("split " .. vim.fn.fnameescape(cache_path))
+        vim.bo.readonly = true
+        vim.bo.modifiable = false
+      end, { desc = "Open the latex-labels cache file in a read-only split" })
+
+      vim.api.nvim_create_user_command("LatexLabelsWipeAll", function()
+        local cache = require("telescope._extensions.latex_labels.cache")
+        local count, err = cache.wipe_all_caches(opts.cache_strategy)
+        if err then
+          vim.notify("[latex_labels] " .. err, vim.log.levels.WARN)
+        else
+          vim.notify(string.format("[latex_labels] Wiped %d cache file(s).", count),
+            vim.log.levels.INFO)
+        end
+      end, { desc = "Delete all latex-labels cache files" })
+
+      if opts.auto_update then
+        vim.api.nvim_create_autocmd("BufWritePost", {
+          group   = vim.api.nvim_create_augroup("LatexLabelsAutoUpdate", { clear = true }),
+          pattern = "*.tex",
+          desc    = "latex-labels: auto-regenerate cache on save",
+          callback = update_cache,
+        })
+      end
+
+      vim.keymap.set("n", "<localleader>w",   "<cmd>SnacksLatexLabels<cr>",    { buf = 0, desc = "latex labels" })
+      vim.keymap.set("n", "<localleader>vul", "<cmd>LatexLabelsUpdate<cr>",    { buf = 0, desc = "update latex labels" })
+      vim.keymap.set("n", "<localleader>vuh", "<cmd>CachedHeadingsUpdate<cr>", { buf = 0, desc = "update headings cache" })
 
       -- ── gd: goto label definition ────────────────────────────────────────
       -- Extracts the label under the cursor (e.g. "th:bezoutIdentity" from

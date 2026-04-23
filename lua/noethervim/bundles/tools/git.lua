@@ -7,7 +7,7 @@
 --   • Fugit2:         TUI git client  (<c-w>F)
 --   • diffview.nvim:  diff/history viewer  (<c-w>[d / <c-w>]d)
 --   • git-conflict:   conflict markers with resolution actions
---   • gitignore.nvim: generate .gitignore via Telescope  (:Gitignore)
+--   • gitignore.nvim: generate .gitignore via snacks picker  (:Gitignore)
 
 return {
 

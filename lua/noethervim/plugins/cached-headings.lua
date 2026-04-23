@@ -2,13 +2,86 @@
 --
 -- Headings picker for tex / markdown / org files. Uses Snacks.picker as the
 -- UI and shares the on-disk cache with Chiarandini/telescope-cached-headings
--- so both pickers stay in sync when telescope is present.
---
--- Override any value in opts via a user plugin spec:
---   { "Chiarandini/snacks-cached-headings.nvim",
---     opts = { auto_update = false } }
+-- (the telescope plugin still ships the cache/parser/utils modules).
+-- telescope.nvim is no longer required — the `:CachedHeadings*` user
+-- commands are registered inline here using the shared cache/parser directly.
 
 local SearchLeader = require("noethervim.util").search_leader
+
+local function register_cached_headings_commands(config)
+	-- Regenerate the cache for the current buffer using the parser that ships
+	-- inside telescope-cached-headings.nvim. That module does not depend on
+	-- telescope at require-time.
+	local function update_cache_for_buf(bufnr)
+		local cache    = require("telescope._extensions.cached_headings.cache")
+		local parser   = require("telescope._extensions.cached_headings.parser")
+		local filepath = vim.api.nvim_buf_get_name(bufnr)
+		local filetype = vim.bo[bufnr].filetype
+		if filepath == "" then
+			vim.notify("[cached_headings] No file associated with current buffer.", vim.log.levels.WARN)
+			return
+		end
+		local allowed = false
+		for _, ft in ipairs(config.allowed_filetypes or { "tex", "markdown", "org" }) do
+			if ft == filetype then allowed = true; break end
+		end
+		if not allowed then
+			vim.notify(
+				string.format("[cached_headings] Filetype '%s' is not supported.", filetype),
+				vim.log.levels.WARN
+			)
+			return
+		end
+		local entries, deps = parser.scan_file(filepath, filetype, {
+			include_starred        = config.include_starred,
+			scan_includes          = config.scan_includes,
+			recursive_limit        = config.recursive_limit,
+			ignore_include_pattern = config.ignore_include_pattern,
+		})
+		local cache_path = cache.get_cache_path(filepath, config.cache_strategy or "global")
+		local ok, err    = cache.write_cache(cache_path, entries, deps)
+		if ok then
+			if config.notify_on_update ~= false then
+				vim.notify(
+					string.format("[cached_headings] Cache updated (%d headings).", #entries),
+					vim.log.levels.INFO
+				)
+			end
+		else
+			vim.notify("[cached_headings] Failed to write cache: " .. (err or "unknown"),
+				vim.log.levels.ERROR)
+		end
+	end
+
+	vim.api.nvim_create_user_command("CachedHeadingsUpdate", function()
+		update_cache_for_buf(vim.api.nvim_get_current_buf())
+	end, { desc = "Regenerate cached-headings cache for current file" })
+
+	vim.api.nvim_create_user_command("CachedHeadingsWipeAll", function()
+		local cache = require("telescope._extensions.cached_headings.cache")
+		local count, err = cache.wipe_all_caches(config.cache_strategy or "global")
+		if err then
+			vim.notify("[cached_headings] " .. err, vim.log.levels.WARN)
+		else
+			vim.notify(string.format("[cached_headings] Wiped %d cache file(s).", count),
+				vim.log.levels.INFO)
+		end
+	end, { desc = "Delete all cached-headings cache files" })
+
+	if config.auto_update then
+		vim.api.nvim_create_autocmd("BufWritePost", {
+			group   = vim.api.nvim_create_augroup("CachedHeadingsAutoUpdate", { clear = true }),
+			pattern = "*",
+			desc    = "cached-headings: auto-regenerate cache on save",
+			callback = function(ev)
+				local ft = vim.bo[ev.buf].filetype
+				for _, f in ipairs(config.allowed_filetypes or { "tex", "markdown", "org" }) do
+					if ft == f then update_cache_for_buf(ev.buf); break end
+				end
+			end,
+		})
+	end
+end
 
 return {
 	{
@@ -16,40 +89,30 @@ return {
 		dependencies = {
 			"folke/snacks.nvim",
 			"Chiarandini/latex-nav-core.nvim",
-			-- telescope-cached-headings.nvim provides the cache / parser /
-			-- utils modules under `telescope._extensions.cached_headings.*`
-			-- and registers :CachedHeadingsUpdate / :CachedHeadingsWipeAll.
+			-- telescope-cached-headings.nvim ships the cache / parser / utils
+			-- modules used by this picker; its top-level extension file pulls
+			-- in telescope, but the submodules we actually call do not.
 			{
 				"Chiarandini/telescope-cached-headings.nvim",
 				dependencies = { "nvim-lua/plenary.nvim" },
 			},
-			-- Telescope itself is required to trigger the extension's
-			-- `load_extension` callback, which is where the user commands
-			-- above get registered. Transitional: when those commands are
-			-- ported out of the telescope extension (see
-			-- dev-docs/telescope-removal-plan.md phase 4 cleanup), this
-			-- dep can be dropped.
-			"nvim-telescope/telescope.nvim",
 		},
 		cmd  = { "SnacksCachedHeadings", "CachedHeadingsUpdate", "CachedHeadingsWipeAll" },
 		keys = {
 			{ SearchLeader .. "t", "<cmd>SnacksCachedHeadings<cr>", desc = "headings" },
 		},
 		opts = {
-			-- Match telescope-cached-headings defaults so users get
-			-- identical behaviour between the two pickers.
 			scan_includes   = true,
 			include_starred = true,
 			recursive_limit = 3,
 			auto_update     = true,
+			allowed_filetypes = { "tex", "markdown", "org" },
+			cache_strategy    = "global",
+			notify_on_update  = true,
 		},
 		config = function(_, opts)
 			require("snacks_cached_headings").setup(opts)
-			-- Register the :CachedHeadings* user commands. telescope is
-			-- loaded for this purpose only; the picker itself uses snacks.
-			pcall(function()
-				require("telescope").load_extension("cached_headings")
-			end)
+			register_cached_headings_commands(opts)
 		end,
 	},
 }

@@ -240,11 +240,11 @@ Common highlight groups to tweak: ~
 Create files in `lua/user/plugins/`. Each file returns a lazy.nvim spec
 table. To override an existing plugin, use the EXACT same repository
 string — lazy.nvim deep-merges `opts` tables automatically: >lua
-    -- lua/user/plugins/telescope.lua
+    -- lua/user/plugins/snacks.lua
     return {
-      { "nvim-telescope/telescope.nvim",
+      { "folke/snacks.nvim",
         opts = {
-          defaults = { layout_strategy = "vertical" },
+          picker = { layout = { preset = "vertical" } },
         },
       },
     }
@@ -253,9 +253,9 @@ You only need to specify the fields you want to change. Core defaults
 fill in everything else.
 
 To add extra keymaps to an existing plugin: >lua
-    { "nvim-telescope/telescope.nvim",
+    { "folke/snacks.nvim",
       keys = {
-        { "<space>fg", "<cmd>Telescope live_grep<cr>", desc = "live grep" },
+        { "<space>fg", function() Snacks.picker.grep() end, desc = "live grep" },
       },
     }
 <

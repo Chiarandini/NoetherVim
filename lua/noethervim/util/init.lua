@@ -94,9 +94,9 @@ function M.keymap_sources()
 
   for _, filepath in ipairs(files) do
     -- Track brace depth to skip `dependencies = { ... }` blocks.
-    -- A repo like trouble.nvim appears as a dependency in
-    -- telescope.lua; without skipping, telescope.lua would claim
-    -- trouble.nvim's handler keys.
+    -- e.g. plenary.nvim may appear as a dependency of several plugin specs;
+    -- without skipping, the first spec encountered would claim plenary's
+    -- handler keys.
     local deps_depth = nil
     local depth = 0
     for _, line in ipairs(vim.fn.readfile(filepath)) do

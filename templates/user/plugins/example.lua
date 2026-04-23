@@ -18,13 +18,13 @@
 -- lazy.nvim deep-merges opts tables automatically - you only need
 -- to specify the keys you want to change.
 --
--- Override telescope defaults:
---   { "nvim-telescope/telescope.nvim",
---     opts = { defaults = { layout_strategy = "vertical" } } }
+-- Override snacks picker defaults:
+--   { "folke/snacks.nvim",
+--     opts = { picker = { layout = { preset = "vertical" } } } }
 --
 -- Add extra keymaps to an existing plugin:
---   { "nvim-telescope/telescope.nvim",
---     keys = { { "<space>fg", "<cmd>Telescope live_grep<cr>", desc = "live grep" } } }
+--   { "folke/snacks.nvim",
+--     keys = { { "<space>fg", function() Snacks.picker.grep() end, desc = "live grep" } } }
 --
 -- Override blink.cmp completion settings:
 --   { "saghen/blink.cmp",
@@ -58,7 +58,7 @@
 -- ── Disabling a plugin ──────────────────────────────────────────────────────
 --
 -- Prevent a plugin from loading with cond = false (or enabled = false):
---   { "jmbuhr/telescope-zotero.nvim", cond = false }
+--   { "Chiarandini/snacks-zotero.nvim", cond = false }
 --
 -- Both work: lazy.nvim resolves these on the merged plugin (last-write-wins),
 -- and user fragments are always last.  `cond = false` keeps the plugin in
@@ -66,8 +66,8 @@
 -- entirely.
 --
 -- Replace a broken plugin with your own fork:
---   { "jmbuhr/telescope-zotero.nvim", cond = false },
---   { "yourname/telescope-zotero.nvim", dev = true },
+--   { "Chiarandini/snacks-zotero.nvim", cond = false },
+--   { "yourname/snacks-zotero.nvim", dev = true },
 --
 -- To fully remove a bundle's plugins, just comment out the import in init.lua.
 --

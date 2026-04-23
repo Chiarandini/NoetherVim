@@ -132,10 +132,11 @@ return {
 		},
 	},
 
-	{
-		"Zeioth/compiler.nvim",
-		cmd          = { "CompilerOpen", "CompilerToggleResults", "CompilerRedo" },
-		dependencies = { "stevearc/overseer.nvim", "nvim-telescope/telescope.nvim" },
-		opts         = {},
-	},
+	-- compiler.nvim: removed 2026-04-23. Hard-requires telescope for its
+	-- `:CompilerOpen` UI (no vim.ui.select / snacks fallback). Kept out of
+	-- the bundle so the task-runner bundle can run telescope-free. Users who
+	-- rely on `:CompilerOpen` can add it to `user/plugins/` alongside
+	-- telescope — example in templates/user/plugins/. overseer.nvim above
+	-- still provides `:OverseerRun` / `:OverseerToggle` / `<leader>rf` etc.,
+	-- which covers the common task-running use cases.
 }

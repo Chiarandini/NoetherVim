@@ -197,10 +197,10 @@ return {
 To override an existing plugin's settings, use the same repository string - lazy.nvim deep-merges `opts` automatically:
 
 ```lua
--- ~/.config/nvim/lua/user/plugins/telescope.lua
+-- ~/.config/nvim/lua/user/plugins/snacks.lua
 return {
-    { "nvim-telescope/telescope.nvim",
-      opts = { defaults = { layout_strategy = "vertical" } },
+    { "folke/snacks.nvim",
+      opts = { picker = { layout = { preset = "vertical" } } },
     },
 }
 ```
