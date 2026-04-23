@@ -4,10 +4,9 @@
 -- Provides:
 --   • vimtex:                    LaTeX compilation, PDF viewing, inverse search
 --   • img-clip.nvim:             drag-and-drop / clipboard image paste (<localleader>P)
---   • telescope-bibtex:          BibTeX citation picker (<c-s-c> in insert mode)
---   • telescope-media-files:     image/PDF preview in Telescope
+--   • snacks-bibtex:             BibTeX citation picker (<c-s-c> in insert mode)
 --   • noethervim-tex:            LuaSnip snippets, blink.cmp sources, textobject keymaps
---   • telescope-latex-references: label/heading jump (SearchLeader+w, <localleader>vul/vuh)
+--   • snacks-latex-labels:       label/heading jump (<localleader>w, <localleader>vul/vuh)
 --   yP keymap:                  copy compiled PDF to clipboard
 --   [P / ]P:                   toggle PDF size in statusline
 --   theorem highlighting:       treesitter-based theorem label coloring
@@ -283,29 +282,12 @@ let g:vimtex_compiler_latexmk_engines = {
     end,
   },
 
-  -- ── telescope-media-files ─────────────────────────────────────────────────
-  -- Browse and preview images/PDFs in a Telescope picker.
-  -- Requires: rg (ripgrep) for find_cmd; ueberzug on Linux for image preview.
-  {
-    "nvim-telescope/telescope-media-files.nvim",
-    dependencies = {
-      "nvim-telescope/telescope.nvim",
-      "nvim-lua/popup.nvim",
-      "nvim-lua/plenary.nvim",
-    },
-    keys = {
-      { SearchLeader .. "fM", "<cmd>Telescope media_files<cr>", desc = "[f]ind [M]edia" },
-    },
-    opts = {
-      media_files = {
-        filetypes = { "pdf", "png", "webp", "jpg", "jpeg" },
-        find_cmd  = "rg",
-      },
-    },
-    config = function(_, opts)
-      require("telescope").load_extension("media_files")
-    end,
-  },
+  -- telescope-media-files: dropped 2026-04-23 (see
+  -- dev-docs/telescope-removal-plan.md §3.2). Snacks.picker has first-class
+  -- image preview; the media-files extension's niche (PDF preview via
+  -- ueberzug) is not widely used by the target audience and the plugin's
+  -- Linux-only dependency chain makes it awkward on macOS. Reinstate via
+  -- user/plugins/ if needed.
 
   -- ── noethervim-tex ────────────────────────────────────────────────────────
   {
