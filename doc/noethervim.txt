@@ -686,8 +686,8 @@ These keymaps activate only in their respective filetype.
     `g.`                Toggle hidden files
     `g\`                Toggle trash
     `Y` (normal)        Copy file under cursor to system clipboard
-    `Y` (visual)        Yank selected entries; paste in another Oil buffer
-                        to copy them (skips "../" and unsaved lines)
+    `Y` (visual)        Copy selected files to system clipboard
+                        (skips "../" and unsaved lines)
     `yp` `yd` `yn`      Yank full path / parent dir / name to unnamed reg
     `Yp` `Yd` `Yn`      Same, but to the system clipboard ("+)
 

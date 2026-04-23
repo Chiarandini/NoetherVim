@@ -11,8 +11,9 @@
 --   gZ          Unzip .zip entry (normal) or selected .zip entries (visual)
 --   g.          Toggle hidden files
 --   g\          Toggle trash
---   Y           Normal: copy file under cursor to system clipboard
---               Visual: yank selected entries (paste in another oil buffer to copy)
+--   Y           Copy file(s) to the system clipboard. Normal yanks the
+--               entry under the cursor; visual yanks every selected entry,
+--               skipping "../" and unsaved lines.
 --   yp / yd / yn   Yank full path / dir / filename to unnamed register
 --   Yp / Yd / Yn   Same, but straight to the system clipboard (+)
 
@@ -40,35 +41,63 @@ local function yank_entry(reg, mods)
 	end
 end
 
--- Yank the selected oil-buffer lines (linewise) so they can be pasted into
--- another oil buffer to copy the files. Skip "../" (id 0) and unsaved new
--- lines (no id) so a stray paste can't try to create ".." or empty entries.
-local function yank_selection()
+-- Copy the visual-selection entries to the macOS system clipboard as proper
+-- Finder file references. Oil's upstream copy_to_system_clipboard refuses
+-- multi-file visual mode on macOS because its AppleScript hardcodes
+-- `first item of args`; even if we bypass that with writeObjects: over
+-- NSURLs, Finder's Cmd+V only pastes the first item because it reads
+-- public.file-url from pasteboardItem 0 and stops. Declaring
+-- NSFilenamesPboardType as the primary flavor and setting it to a path-list
+-- property list routes Finder down the multi-file paste branch. Linux uses
+-- Oil's upstream (xclip/wl-copy with text/uri-list) instead.
+local mac_clipboard_jxa = [[
+function run(argv) {
+  ObjC.import("AppKit");
+  var pb = $.NSPasteboard.generalPasteboard;
+  pb.clearContents;
+  pb.declareTypesOwner($.NSArray.arrayWithObject("NSFilenamesPboardType"), $.nil);
+  var paths = $.NSMutableArray.alloc.init;
+  for (var i = 0; i < argv.length; i++) {
+    paths.addObject(argv[i]);
+  }
+  pb.setPropertyListForType(paths, "NSFilenamesPboardType");
+}
+]]
+
+local function mac_copy_visual_selection()
 	local oil = require("oil")
-	if not oil.get_current_dir() then return end
+	local dir = oil.get_current_dir()
+	if not dir then return end
+
+	local paths = {}
 	local s, e = vim.fn.line("v"), vim.fn.line(".")
 	if s > e then s, e = e, s end
-
-	local lines = vim.api.nvim_buf_get_lines(0, s - 1, e, false)
-	local kept = {}
-	for i, line in ipairs(lines) do
-		local entry = oil.get_entry_on_line(0, s + i - 1)
+	for lnum = s, e do
+		local entry = oil.get_entry_on_line(0, lnum)
 		if entry and entry.id and entry.id ~= 0 then
-			table.insert(kept, line)
+			table.insert(paths, dir .. entry.name)
 		end
 	end
-
 	vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
 
-	if #kept == 0 then
-		vim.notify("Oil: no copiable entries in selection", vim.log.levels.WARN)
+	if #paths == 0 then
+		vim.notify("Oil: no files to copy", vim.log.levels.WARN)
 		return
 	end
-	vim.fn.setreg(vim.v.register, table.concat(kept, "\n"), "V")
-	local skipped = #lines - #kept
-	local msg = string.format("Yanked %d entr%s", #kept, #kept == 1 and "y" or "ies")
-	if skipped > 0 then msg = msg .. string.format(" (skipped %d)", skipped) end
-	vim.notify(msg)
+
+	local cmd = { "osascript", "-l", "JavaScript", "-e", mac_clipboard_jxa }
+	for _, p in ipairs(paths) do table.insert(cmd, p) end
+
+	vim.system(cmd, { text = true }, function(out)
+		vim.schedule(function()
+			if out.code ~= 0 then
+				vim.notify("Clipboard copy failed: " .. (out.stderr or ""), vim.log.levels.ERROR)
+			else
+				vim.notify(string.format("Copied %d file%s to clipboard",
+					#paths, #paths == 1 and "" or "s"))
+			end
+		end)
+	end)
 end
 
 -- Collect entry basenames from the current oil buffer. In visual mode, returns
@@ -418,11 +447,12 @@ return {
 				["Yd"] = { desc = "yank parent dir (+clip)",  mode = "n", callback = yank_entry("+", ":h") },
 				["Yn"] = { desc = "yank name (+clip)",        mode = "n", callback = yank_entry("+", ":t") },
 				["Y"]  = {
-					desc = "copy (clipboard in normal, oil-yank in visual)",
+					desc = "copy file(s) to system clipboard",
 					mode = { "n", "x" },
 					callback = function()
-						if vim.fn.mode():match("^[vV\22]") then
-							yank_selection()
+						local is_visual = vim.fn.mode():match("^[vV\22]")
+						if is_visual and vim.fn.has("macunix") == 1 then
+							mac_copy_visual_selection()
 						else
 							require("oil.clipboard").copy_to_system_clipboard()
 						end
