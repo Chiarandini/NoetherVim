@@ -344,7 +344,6 @@ Available bundles (grouped by category): ~
                      `S` behavior remains accessible via `:%s/`.
     `projects`       Project switcher via snacks.picker.
     `editing-extras` Argument marking (argmark) + decorative comment boxes.
-    `neoclip`        Clipboard history via Telescope.
 
     writing/ ~
     `markdown`       render-markdown, markdown-preview, tables, math,

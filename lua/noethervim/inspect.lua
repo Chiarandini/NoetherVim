@@ -97,7 +97,6 @@ local bundle_descriptions = {
   flash           = "enhanced f/t and / motions with labels",
   projects        = "project switcher via snacks.picker",
   ["editing-extras"] = "argmark + decorative comment boxes",
-  neoclip         = "persistent clipboard history",
   -- writing
   markdown        = "render, preview, tables, math, image paste",
   obsidian        = "Obsidian vault integration (pair with markdown bundle)",

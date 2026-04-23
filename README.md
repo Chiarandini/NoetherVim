@@ -255,7 +255,6 @@ Bundles are optional feature groups. Enable them in `init.lua` (see [Enabling bu
 | `flash` | Enhanced `f`/`t` and `/` motions with labels |
 | `projects` | Project switcher via snacks.picker |
 | `editing-extras` | Argument marking (argmark) + decorative ASCII comment boxes |
-| `neoclip` | Persistent clipboard history via Telescope |
 | **Writing & notes** | |
 | `markdown` | render-markdown, preview, tables, math, image paste |
 | `obsidian` | Obsidian vault integration (pair with markdown bundle) |
