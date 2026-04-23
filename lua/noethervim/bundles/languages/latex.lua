@@ -259,20 +259,27 @@ let g:vimtex_compiler_latexmk_engines = {
     },
   },
 
-  -- ── telescope-bibtex ──────────────────────────────────────────────────────
-  -- BibTeX citation picker — insert mode <c-s-c> opens cursor-floating picker.
-  -- Extension config (search_keys, citation_format, etc.) lives in telescope.lua.
+  -- ── snacks-bibtex ─────────────────────────────────────────────────────────
+  -- BibTeX citation picker on snacks.picker. Replaces telescope-bibtex
+  -- (see dev-docs/telescope-removal-plan.md §4 phase 3.2). Same <c-s-c>
+  -- keymap; context-aware .bib discovery scans the current buffer's
+  -- bibliography directives before falling back to the cwd.
   {
-    "nvim-telescope/telescope-bibtex.nvim",
-    dependencies = { "nvim-telescope/telescope.nvim" },
-    ft   = { "tex", "latex", "markdown" },
+    "Chiarandini/snacks-bibtex.nvim",
+    dependencies = { "folke/snacks.nvim" },
+    ft   = { "tex", "plaintex", "latex", "markdown", "quarto", "typst", "org", "rmd" },
     keys = {
-      { "<c-s-c>", "<cmd>Telescope bibtex theme=cursor<cr>",
+      { "<c-s-c>", "<cmd>SnacksBibtex<cr>",
         mode = "i", desc = "citation from bibtex" },
     },
-    opts = {},
+    opts = {
+      search_keys       = { "author", "year", "title" },
+      citation_format   = "{{author}} ({{year}}), {{title}}.",
+      context           = true,
+      context_fallback  = true,
+    },
     config = function(_, opts)
-      require("telescope").load_extension("bibtex")
+      require("snacks_bibtex").setup(opts)
     end,
   },
 

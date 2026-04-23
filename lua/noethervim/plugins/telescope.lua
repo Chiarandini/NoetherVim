@@ -73,20 +73,8 @@ return {
 						{ pattern = "\\label{(.-)}", type = "standard" },
 					},
 				},
-				-- bibtex config consumed by telescope-bibtex (latex bundle).
-				bibtex = {
-					depth                  = 1,
-					custom_formats         = {},
-					format                 = "",
-					global_files           = {},
-					search_keys            = { "author", "year", "title" },
-					citation_format        = "{{author}} ({{year}}), {{title}}.",
-					citation_trim_firstname = true,
-					citation_max_auth      = 2,
-					context                = true,
-					context_fallback       = true,
-					wrap                   = false,
-				},
+				-- bibtex opts have moved to the snacks-bibtex spec in
+				-- bundles/languages/latex.lua. telescope-bibtex is gone.
 				},
 		},
 
