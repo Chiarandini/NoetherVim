@@ -30,7 +30,7 @@ return {
         },
         completion = { nvim_cmp = false, blink = true, create_new = true },
         picker = {
-          name = "telescope.nvim",
+          name = "snacks.pick",
           note_mappings  = { new = "<c-n>", insert_link = "<C-l>" },
           tag_mappings   = { tag_note = "<C-x>", insert_tag = "<C-l>" },
         },
