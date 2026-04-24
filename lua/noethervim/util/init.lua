@@ -18,6 +18,54 @@ function M.str_replace(s, substring, replacement, n)
   return (s:gsub(substring:gsub("%p", "%%%0"), replacement:gsub("%%", "%%%%"), n))
 end
 
+--- Buffer every `vim.notify` call until VimEnter, then replay the queue
+--- through whatever notifier is in place by then (typically
+--- `snacks.notifier`, which renders toasts asynchronously).
+---
+--- Call this once, immediately before `require("lazy").setup({...})`, so
+--- that notifications lazy emits while resolving the spec -- most
+--- importantly the `No specs found for module "..."` error fired for a
+--- stale bundle reference in init.lua -- do not land on the cmdline as
+--- ErrorMsg, which would otherwise trigger the hit-enter prompt on top
+--- of the dashboard. The messages still arrive; they arrive as toasts.
+---
+--- Non-destructive on restore: snacks.notifier installs itself by
+--- reassigning `vim.notify` during its `config()` (which runs during
+--- `lazy.setup`, i.e. between `buffer_notify()` and VimEnter). If we
+--- unconditionally restored `vim.notify` on VimEnter, we would
+--- clobber snacks and every later notification (e.g. :Lazy update
+--- toasts) would fall back to Neovim's default cmdline notify. Only
+--- restore when our wrapper is still the active `vim.notify`; if
+--- someone else has taken over, leave them in place -- our wrapper
+--- is already an orphan and the replacement is exactly who we want to
+--- replay the queue through.
+---
+--- Idempotent: repeated calls do nothing after the first.
+function M.buffer_notify()
+  if M._notify_buffered then return end
+  M._notify_buffered = true
+  local orig = vim.notify
+  local pending = {}
+  local wrapper
+  wrapper = function(msg, level, opts)
+    pending[#pending + 1] = { msg, level, opts }
+  end
+  vim.notify = wrapper
+  vim.api.nvim_create_autocmd("VimEnter", {
+    once = true,
+    callback = function()
+      if vim.notify == wrapper then
+        vim.notify = orig
+      end
+      vim.schedule(function()
+        for _, n in ipairs(pending) do
+          vim.notify(n[1], n[2], n[3])
+        end
+      end)
+    end,
+  })
+end
+
 --- Enumerate all bundle files under `bundles_dir`.
 --- Walks the category-subdirectory layout: bundles/<category>/<name>.lua.
 --- Returns a list of { path, name, category } entries, sorted by

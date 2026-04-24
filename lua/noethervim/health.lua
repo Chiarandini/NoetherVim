@@ -242,6 +242,34 @@ function M.check()
     h.info("No bundles enabled")
   end
 
+  -- ── Spec errors ──────────────────────────────────────────────────────
+  -- lazy.core.config.spec.notifs collects every ERROR/WARN emitted while
+  -- resolving the spec. The stock init.lua.example installs
+  -- `util.buffer_notify()` before lazy.setup so these surface as snacks
+  -- toasts after VimEnter instead of the cmdline ErrorMsg that would
+  -- otherwise fire the hit-enter prompt on the dashboard. Toasts are
+  -- transient, so mirror the same list here -- stale imports stay
+  -- visible in :checkhealth long after the toast has scrolled away.
+  h.start("Spec errors")
+  local ok_lazy_cfg, lazy_cfg = pcall(require, "lazy.core.config")
+  if not ok_lazy_cfg or not lazy_cfg.spec then
+    h.info("Skipped (lazy.nvim not initialised)")
+  else
+    local errors = {}
+    for _, n in ipairs(lazy_cfg.spec.notifs or {}) do
+      if n.level == vim.log.levels.ERROR then
+        errors[#errors + 1] = n.msg
+      end
+    end
+    if #errors == 0 then
+      h.ok("No spec errors")
+    else
+      for _, msg in ipairs(errors) do h.error(msg) end
+      h.info("Most common cause: a bundle imported in init.lua was "
+        .. "removed or renamed upstream. Remove the stale import.")
+    end
+  end
+
   -- ── Override conflicts ───────────────────────────────────────────────
   -- Diff the keymap snapshots captured by init.lua around user.keymaps load
   -- to surface every core mapping the user redefined. Informational only --

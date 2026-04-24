@@ -413,6 +413,16 @@ uncommenting the corresponding `import` line in your `init.lua`: >lua
     { import = "noethervim.bundles.languages.latex" },
     { import = "noethervim.bundles.tools.debug" },
 <
+                                            *noethervim-stale-imports*
+If an enabled bundle has been removed or renamed upstream, lazy.nvim
+emits a `No specs found for module "..."` error during spec resolution.
+The stock `init.lua.example` bootstrap calls
+`require("noethervim.util").buffer_notify()` immediately before
+`lazy.setup(...)` so these errors surface as `snacks.notifier` toasts
+after VimEnter rather than landing on the cmdline as ErrorMsg -- which
+would otherwise fire the hit-enter prompt on top of the dashboard.
+`:checkhealth noethervim` mirrors the same errors under "Spec errors"
+so they remain visible after the toast has scrolled away.
 Available bundles (grouped by category): ~
 
     languages/ ~

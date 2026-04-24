@@ -1,4 +1,4 @@
--- noethervim-template-version: 1
+-- noethervim-template-version: 2
 -- NoetherVim user config template.
 -- Copy this file to ~/.config/nvim/init.lua
 --
@@ -48,6 +48,13 @@ if not vim.uv.fs_stat(noethervimpath) then
 	})
 end
 vim.opt.rtp:prepend(noethervimpath)
+
+-- Route lazy.nvim's startup notifications through `vim.notify` after
+-- VimEnter so a stale bundle import in the spec below -- or any other
+-- error lazy emits while resolving the spec -- surfaces as a snacks
+-- toast instead of an ErrorMsg on the cmdline (which fires the
+-- hit-enter prompt on top of the dashboard).
+require("noethervim.util").buffer_notify()
 
 -- ── 3. Start NoetherVim ────────────────────────────────────────────────────
 
