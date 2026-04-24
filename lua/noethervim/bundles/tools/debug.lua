@@ -77,10 +77,75 @@ dap_pickers.configurations = function()
 	})
 end
 
----Populate the quickfix list with breakpoints and open it in Snacks.
+---List all breakpoints; jump to the selected one, or <C-d> to delete it.
 dap_pickers.list_breakpoints = function()
-	require("dap").list_breakpoints(false)
-	require("snacks").picker.qflist({ title = "DAP Breakpoints" })
+	local breakpoints = require("dap.breakpoints")
+	local items = {}
+	for bufnr, buf_bps in pairs(breakpoints.get()) do
+		local path = vim.api.nvim_buf_get_name(bufnr)
+		local rel  = vim.fn.fnamemodify(path, ":.")
+		for _, bp in ipairs(buf_bps) do
+			local ok, lines = pcall(vim.api.nvim_buf_get_lines, bufnr, bp.line - 1, bp.line, false)
+			local line = (ok and lines[1]) or ""
+			table.insert(items, {
+				text   = string.format("%s:%d %s", rel, bp.line, line),
+				file   = path,
+				pos    = { bp.line, 0 },
+				_bufnr = bufnr,
+				_lnum  = bp.line,
+				_label = string.format("%s:%d", rel, bp.line),
+				_line  = vim.trim(line),
+				_cond  = bp.condition,
+				_log   = bp.logMessage,
+			})
+		end
+	end
+	if #items == 0 then
+		vim.notify("[dap] no breakpoints", vim.log.levels.INFO)
+		return
+	end
+	require("snacks").picker({
+		title   = "DAP Breakpoints",
+		items   = items,
+		preview = "file",
+		format  = function(item)
+			local ret = {}
+			ret[#ret + 1] = { item._label, "SnacksPickerFile" }
+			if item._cond then
+				ret[#ret + 1] = { " [cond: ", "Comment" }
+				ret[#ret + 1] = { item._cond, "DiagnosticWarn" }
+				ret[#ret + 1] = { "]", "Comment" }
+			end
+			if item._log then
+				ret[#ret + 1] = { " [log: ", "Comment" }
+				ret[#ret + 1] = { item._log, "DiagnosticHint" }
+				ret[#ret + 1] = { "]", "Comment" }
+			end
+			if item._line ~= "" then
+				ret[#ret + 1] = { "  " .. item._line, "Comment" }
+			end
+			return ret
+		end,
+		actions = {
+			dap_delete_breakpoint = function(picker)
+				local item = picker:current()
+				if not item then return end
+				breakpoints.remove(item._bufnr, item._lnum)
+				-- Match dap.toggle_breakpoint: push the buffer's remaining breakpoints
+				-- to any live sessions so the adapter stays in sync.
+				local remaining = breakpoints.get(item._bufnr)
+				for _, s in pairs(require("dap").sessions()) do
+					s:set_breakpoints(remaining)
+				end
+				picker:close()
+				vim.schedule(dap_pickers.list_breakpoints)
+			end,
+		},
+		win = {
+			input = { keys = { ["<C-d>"] = { "dap_delete_breakpoint", mode = { "i", "n" }, desc = "delete breakpoint" } } },
+			list  = { keys = { ["<C-d>"] = { "dap_delete_breakpoint", desc = "delete breakpoint" } } },
+		},
+	})
 end
 
 ---List variables in the current frame's scopes.
