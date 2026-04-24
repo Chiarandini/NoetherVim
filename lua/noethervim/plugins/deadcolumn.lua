@@ -1,12 +1,11 @@
 -- NoetherVim plugin: Dead Column Guide
--- Fading colorcolumn guide at textwidth.
--- Toggle with [oG / ]oG  (see toggles.lua).
+-- Fading colorcolumn guide at textwidth. Disabled by default; opt in with [oG.
 -- State persisted to stdpath("state")/noethervim_deadcolumn.
 local state_file = vim.fn.stdpath("state") .. "/noethervim_deadcolumn"
 
 local function is_disabled()
-	if vim.fn.filereadable(state_file) == 0 then return false end
-	return vim.fn.readfile(state_file, "", 1)[1] == "0"
+	if vim.fn.filereadable(state_file) == 0 then return true end
+	return vim.fn.readfile(state_file, "", 1)[1] ~= "1"
 end
 
 return {

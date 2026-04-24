@@ -677,7 +677,8 @@ Prefixes: ~
                       L(SP)  b(ackground)  c(ursorline)  l(ist)  t(extwidth)
                       i(gnorecase)  I(lluminate)  T(reeSitter)
                       D(irty whitespace/tidy)  G(uide column/deadcolumn)
-                      G persists across sessions (stored in stdpath("state")).
+                      G is off by default; toggle persists across sessions
+                      (stored in stdpath("state")).
                       `[oC`/`]oC` toggle blink.cmp completion on/off
                                                         *noethervim-Z*
     `Z`                 Buffer operations
