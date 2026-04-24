@@ -246,11 +246,15 @@ vim.keymap.set("v", "<up>",   ":m '<-2<CR>gv=gv", { desc = "move block up" })
 -- Substitutes: <C-q> (literal-insert in most terminals), <C-r>+, or
 -- the cmdline where <C-v>{char} is unshadowed (useful with :verbose).
 
--- Composable operators (operator-pending in normal, acts on selection in visual)
+-- Composable operators (operator-pending in normal, acts on selection in visual).
+-- Normal-mode p/P get the plain `"*p`/`"*P`; visual-mode p/P use a different
+-- sequence (immediately below) that preserves both registers, so the
+-- {n,v} table on those lines would otherwise be a write that we then
+-- immediately overwrite.
 vim.keymap.set({ "n", "v" }, "<leader>y", '"*y', { desc = "yank to clipboard" })
-vim.keymap.set({ "n", "v" }, "<leader>p", '"*p', { desc = "paste from clipboard" })
-vim.keymap.set({ "n", "v" }, "<leader>P", '"*P', { desc = "paste before from clipboard" })
-vim.keymap.set("n", "<leader>Y", '"*yy', { desc = "yank line to clipboard" })
+vim.keymap.set("n",          "<leader>p", '"*p', { desc = "paste from clipboard" })
+vim.keymap.set("n",          "<leader>P", '"*P', { desc = "paste before from clipboard" })
+vim.keymap.set("n",          "<leader>Y", '"*yy', { desc = "yank line to clipboard" })
 
 -- Visual paste variants: keep BOTH the unnamed register and clipboard pristine
 vim.keymap.set("v", "<leader>p", '"_d"*P', { desc = "paste clipboard (keep registers)" })
