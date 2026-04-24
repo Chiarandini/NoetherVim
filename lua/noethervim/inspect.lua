@@ -383,6 +383,70 @@ local function locate_in_buffer(lhs)
   return 0
 end
 
+--- Last-resort project-wide scan: enumerate every `.lua` file under
+--- the distro source tree and under `lua/user/`, and return files that
+--- contain a canon-matched quoted form of `lhs`. The scan is bounded
+--- (project is small) and cached per invocation.
+---
+--- Used as the final fallback in `jump_to_keymap` when registry,
+--- opts.source, and callback introspection all come up empty -- e.g.
+--- `keys = { "<leader>j", ... }` entries in a user spec whose plugin
+--- name isn't currently discoverable via `keymap_sources()`.
+local _project_files_cache
+local function project_files()
+  if _project_files_cache then return _project_files_cache end
+  local files = {}
+  local function walk(dir)
+    if not dir then return end
+    local handle = vim.uv.fs_scandir(dir)
+    if not handle then return end
+    while true do
+      local name, ftype = vim.uv.fs_scandir_next(handle)
+      if not name then break end
+      local p = dir .. "/" .. name
+      if ftype == "directory" then
+        walk(p)
+      elseif (ftype == "file" or ftype == "link") and name:match("%.lua$") then
+        files[#files + 1] = p
+      end
+    end
+  end
+  local init = vim.api.nvim_get_runtime_file("lua/noethervim/init.lua", false)[1]
+  local distro_root = vim.g.noethervim_dev and vim.fn.expand(vim.g.noethervim_dev)
+    or (init and vim.fn.fnamemodify(init, ":h:h:h"))
+  -- Walk user first so user overrides outrank distro-default matches when
+  -- both define the same keymap (overrides are the more useful landing).
+  walk(vim.fn.stdpath("config") .. "/lua/user")
+  if distro_root then walk(distro_root .. "/lua/noethervim") end
+  _project_files_cache = files
+  return files
+end
+
+local function scan_project_for(lhs)
+  local registry = require("noethervim.util.keymap_registry")
+  local forms = registry.source_forms(lhs)
+  local canon_forms = {}
+  for _, f in ipairs(forms) do canon_forms[#canon_forms + 1] = registry.canon(f) end
+  for _, path in ipairs(project_files()) do
+    local ok, lines = pcall(vim.fn.readfile, path)
+    if ok then
+      for _, line in ipairs(lines) do
+        if not line:match("^%s*%-%-") then
+          local cline = registry.canon(line)
+          for _, cf in ipairs(canon_forms) do
+            if cf ~= ""
+               and (cline:find('"' .. cf .. '"', 1, true)
+                    or cline:find("'" .. cf .. "'", 1, true)) then
+              return path
+            end
+          end
+        end
+      end
+    end
+  end
+  return nil
+end
+
 -- ── Shared: jump to keymap source definition ────────────────────
 -- Used by diff_keymaps (confirm handler) and the guide (<CR>).
 
@@ -441,6 +505,14 @@ function M.jump_to_keymap(mode, lhs, opts)
         end
       end
     end
+  end
+
+  -- Final fallback: project-wide text scan. Catches lazy `keys = {...}`
+  -- entries in spec files whose plugin name we couldn't resolve and
+  -- rhs-only keymaps with no callback to introspect.
+  local scanned = scan_project_for(lhs)
+  if scanned then
+    candidates[#candidates + 1] = { file = scanned, hint = "project scan" }
   end
 
   -- Try each candidate. Registry hits win outright; for the others we
