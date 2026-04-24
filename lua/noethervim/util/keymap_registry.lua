@@ -47,11 +47,15 @@ local function resolve_lhs(lhs)
 end
 
 --- Canonicalise a string by upper-casing letters between `<` and `>`.
---- The inner class excludes both `<` and `>` so that `"<t", "<cmd>"` is
---- parsed as two separate notation attempts (one unclosed, one closed)
---- rather than swallowing the gap between them into a single group.
+--- The inner class excludes `<`, `>`, and newlines so that:
+---   * `"<t", "<cmd>"` is parsed as two separate notation attempts (one
+---     unclosed, one closed), not a single span;
+---   * a stray `<` (e.g. Lua `<` comparison) does NOT swallow content
+---     across line boundaries until the next `>` somewhere later in the
+---     file, which would falsely uppercase whole regions when canon is
+---     run over a concatenated buffer.
 local function canon(s)
-  return (s:gsub("<([^<>]*)>", function(inner) return "<" .. inner:upper() .. ">" end))
+  return (s:gsub("<([^<>\n]*)>", function(inner) return "<" .. inner:upper() .. ">" end))
 end
 
 --- File-content cache used during stack-climbing to detect helper frames.

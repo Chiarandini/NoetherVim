@@ -387,43 +387,115 @@ local function locate_in_buffer(lhs)
   return 0
 end
 
---- Last-resort project-wide scan: enumerate every `.lua` file under
---- the distro source tree and under `lua/user/`, and return files that
---- contain a canon-matched quoted form of `lhs`. The scan is bounded
---- (project is small) and cached per invocation.
+--- Last-resort project-wide scan. Returns two ordered lists, lazily
+--- populated and cached:
+---
+---   1. `project_files()`  -- distro + user trees only. The "owned"
+---      surface; tried first so user/distro source always wins.
+---   2. `plugin_files()`   -- third-party plugin sources under
+---      `~/.local/share/<APPNAME>/lazy/*/lua/`. Tried last for keymaps
+---      defined inside plugins themselves (e.g. `<Plug>` mappings,
+---      nvim-surround's `cs`/`cr`/`ds`, vim-abolish, etc.). Ignored
+---      `vim.fn.stdpath('data')` is appname-aware so dev configs
+---      (`nvdn`) and the shipped config see distinct lazy roots.
 ---
 --- Used as the final fallback in `jump_to_keymap` when registry,
---- opts.source, and callback introspection all come up empty -- e.g.
---- `keys = { "<leader>j", ... }` entries in a user spec whose plugin
---- name isn't currently discoverable via `keymap_sources()`.
-local _project_files_cache
+--- opts.source, and callback introspection all come up empty.
+local _project_files_cache, _plugin_files_cache
+
+local function _walk(dir, files)
+  if not dir then return end
+  local handle = vim.uv.fs_scandir(dir)
+  if not handle then return end
+  while true do
+    local name, ftype = vim.uv.fs_scandir_next(handle)
+    if not name then break end
+    local p = dir .. "/" .. name
+    if ftype == "directory" then
+      _walk(p, files)
+    elseif (ftype == "file" or ftype == "link")
+       and (name:match("%.lua$") or name:match("%.vim$")) then
+      files[#files + 1] = p
+    end
+  end
+end
+
 local function project_files()
   if _project_files_cache then return _project_files_cache end
   local files = {}
-  local function walk(dir)
-    if not dir then return end
-    local handle = vim.uv.fs_scandir(dir)
-    if not handle then return end
-    while true do
-      local name, ftype = vim.uv.fs_scandir_next(handle)
-      if not name then break end
-      local p = dir .. "/" .. name
-      if ftype == "directory" then
-        walk(p)
-      elseif (ftype == "file" or ftype == "link") and name:match("%.lua$") then
-        files[#files + 1] = p
-      end
-    end
-  end
   local init = vim.api.nvim_get_runtime_file("lua/noethervim/init.lua", false)[1]
   local distro_root = vim.g.noethervim_dev and vim.fn.expand(vim.g.noethervim_dev)
     or (init and vim.fn.fnamemodify(init, ":h:h:h"))
   -- Walk user first so user overrides outrank distro-default matches when
   -- both define the same keymap (overrides are the more useful landing).
-  walk(vim.fn.stdpath("config") .. "/lua/user")
-  if distro_root then walk(distro_root .. "/lua/noethervim") end
+  _walk(vim.fn.stdpath("config") .. "/lua/user", files)
+  if distro_root then _walk(distro_root .. "/lua/noethervim", files) end
   _project_files_cache = files
   return files
+end
+
+local function plugin_files()
+  if _plugin_files_cache then return _plugin_files_cache end
+  local files = {}
+  local lazy_root = vim.fn.stdpath("data") .. "/lazy"
+  if vim.uv.fs_stat(lazy_root) then
+    local handle = vim.uv.fs_scandir(lazy_root)
+    if handle then
+      while true do
+        local name, ftype = vim.uv.fs_scandir_next(handle)
+        if not name then break end
+        if ftype == "directory" then
+          -- Restrict to lua/, plugin/, autoload/, ftplugin/ -- the
+          -- subdirs Vim/Lua keymaps are written in. Avoids scanning
+          -- vendored deps, doc/, test/, etc.
+          for _, sub in ipairs({ "lua", "plugin", "autoload", "ftplugin", "after" }) do
+            _walk(lazy_root .. "/" .. name .. "/" .. sub, files)
+          end
+        end
+      end
+    end
+  end
+  _plugin_files_cache = files
+  return files
+end
+
+--- File-content cache for the project scan. Source files are read-only
+--- within a session, so a single read per file pays for every jump
+--- that needs to consult it. We additionally cache the canon-normalised
+--- whole-file text to skip per-line canon work on each subsequent jump.
+local _file_lines_cache = {}
+local _file_canon_cache = {}
+local function _file_lines(path)
+  local c = _file_lines_cache[path]
+  if c == nil then
+    local ok, lines = pcall(vim.fn.readfile, path)
+    c = (ok and lines) or false
+    _file_lines_cache[path] = c
+  end
+  return c or nil
+end
+
+local function _file_canon_text(path)
+  local c = _file_canon_cache[path]
+  if c ~= nil then return c or nil end
+  local lines = _file_lines(path)
+  if not lines then
+    _file_canon_cache[path] = false
+    return nil
+  end
+  local registry = require("noethervim.util.keymap_registry")
+  -- Strip Lua/vim single-line comments before joining; otherwise a
+  -- comment like `-- map "<leader>x" to ...` would produce a hit.
+  local is_vim = path:match("%.vim$") ~= nil
+  local kept = {}
+  for _, line in ipairs(lines) do
+    local is_comment = line:match("^%s*%-%-")
+                    or (is_vim and line:match('^%s*"'))
+    kept[#kept + 1] = is_comment and "" or line
+  end
+  c = registry.canon(table.concat(kept, "\n"))
+  _file_canon_cache[path] = c
+  return c
 end
 
 local function scan_project_for(lhs)
@@ -444,43 +516,56 @@ local function scan_project_for(lhs)
         or line:find("[%s^]map%s*%(")
   end
 
-  -- Pass 1: quoted form anywhere non-comment.
-  for _, path in ipairs(project_files()) do
-    local ok, lines = pcall(vim.fn.readfile, path)
-    if ok then
-      for _, line in ipairs(lines) do
-        if not line:match("^%s*%-%-") then
-          local cline = registry.canon(line)
-          for _, cf in ipairs(canon_forms) do
-            if cf ~= ""
-               and (cline:find('"' .. cf .. '"', 1, true)
-                    or cline:find("'" .. cf .. "'", 1, true)) then
-              return path
+  --- Pre-build the search needles -- quoted forms and bare-multi-char.
+  --- Quoted needles are reliable everywhere; bare needles still need a
+  --- per-line context check (handled in pass 2).
+  local quoted_needles, bare_needles = {}, {}
+  for idx, cf in ipairs(canon_forms) do
+    if cf ~= "" then
+      quoted_needles[#quoted_needles + 1] = '"' .. cf .. '"'
+      quoted_needles[#quoted_needles + 1] = "'" .. cf .. "'"
+      if #forms[idx] > 2 then
+        bare_needles[#bare_needles + 1] = cf
+      end
+    end
+  end
+
+  --- Try a single file. Pass 1 walks the whole-file canon text for any
+  --- quoted needle (cheap substring scan, no per-line canon). Pass 2
+  --- only runs when pass 1 misses and the lhs is bare-friendly: it
+  --- iterates lines and checks for a strong keymap-defining context.
+  local function try(path)
+    local text = _file_canon_text(path)
+    if not text then return nil end
+    for _, n in ipairs(quoted_needles) do
+      if text:find(n, 1, true) then return path end
+    end
+    if #bare_needles > 0 then
+      local lines = _file_lines(path)
+      if lines then
+        for _, line in ipairs(lines) do
+          if is_strong(line) then
+            local cline = registry.canon(line)
+            for _, n in ipairs(bare_needles) do
+              if cline:find(n, 1, true) then return path end
             end
           end
         end
       end
     end
+    return nil
   end
 
-  -- Pass 2: bare match in strong context (catches vimscript `:nmap`
-  -- style lines and other unquoted keymap definitions).
+  -- Project (distro + user) first; only fall through to third-party
+  -- plugin sources for keymaps we cannot find in the owned tree.
   for _, path in ipairs(project_files()) do
-    local ok, lines = pcall(vim.fn.readfile, path)
-    if ok then
-      for _, line in ipairs(lines) do
-        if not line:match("^%s*%-%-") and is_strong(line) then
-          local cline = registry.canon(line)
-          for idx, cf in ipairs(canon_forms) do
-            if #forms[idx] > 2 and cf ~= "" and cline:find(cf, 1, true) then
-              return path
-            end
-          end
-        end
-      end
-    end
+    local hit = try(path)
+    if hit then return hit end
   end
-
+  for _, path in ipairs(plugin_files()) do
+    local hit = try(path)
+    if hit then return hit end
+  end
   return nil
 end
 
