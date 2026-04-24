@@ -108,7 +108,6 @@ require("lazy").setup({
 		-- { import = "noethervim.bundles.writing.markdown" },    -- render, preview, tables, math, image paste
 		-- { import = "noethervim.bundles.writing.obsidian" },    -- Obsidian vault (also enable markdown bundle)
 		-- { import = "noethervim.bundles.writing.neorg" },       -- .norg wiki / note-taking
-		-- { import = "noethervim.bundles.writing.translation" }, -- in-editor translation
 
 		-- terminal/
 		-- { import = "noethervim.bundles.terminal.better-term" }, -- named terminal windows

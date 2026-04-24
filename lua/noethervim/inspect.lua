@@ -101,7 +101,6 @@ local bundle_descriptions = {
   markdown        = "render, preview, tables, math, image paste",
   obsidian        = "Obsidian vault integration (pair with markdown bundle)",
   neorg           = ".norg wiki / note-taking",
-  translation     = "in-editor translation (Google, Yandex)",
   -- terminal
   ["better-term"] = "named/numbered terminal windows",
   tmux            = "automatic tmux window naming",

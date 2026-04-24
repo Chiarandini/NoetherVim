@@ -99,7 +99,6 @@ local M = {
 	format    = "󰉼",
 	undo      = "",
 	replace   = "",
-	translate = "󱅰",
 	spotify   = "",
 	zenMode   = "",
 
