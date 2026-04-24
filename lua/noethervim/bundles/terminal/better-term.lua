@@ -2,12 +2,12 @@
 -- Enable with: { import = "noethervim.bundles.terminal.better-term" }
 --
 -- Provides:
---   betterTerm.nvim  — named, numbered terminal windows
---   floaterm         — floating terminal (nvzone/floaterm, note: still beta)
+--   betterTerm.nvim  -- named, numbered terminal windows
+--   floaterm         -- floating terminal (nvzone/floaterm, note: still beta)
 --
 -- Key bindings:
---   <c-w><c-t>     — open/toggle primary terminal  (normal + terminal mode)
---   <localleader>t — select a terminal by number    (normal + terminal mode)
+--   <c-w><c-t>     -- open/toggle primary terminal  (normal + terminal mode)
+--   <localleader>t -- select a terminal by number    (normal + terminal mode)
 
 return {
 	{

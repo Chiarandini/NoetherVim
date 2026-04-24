@@ -4,10 +4,10 @@
 -- Fast per-project file marks (harpoon2).
 --
 -- Key bindings:
---   <c-w><c-h>  — toggle harpoon quick-menu
---   <leader>ha  — add current file
---   <c-s-n>     — next mark
---   <c-s-p>     — previous mark
+--   <c-w><c-h>  -- toggle harpoon quick-menu
+--   <leader>ha  -- add current file
+--   <c-s-n>     -- next mark
+--   <c-s-p>     -- previous mark
 --
 -- Direct mark jumps (1-4) are intentionally unbound in the distro because
 -- <C-number> is not reliably delivered by all terminal emulators. Add in

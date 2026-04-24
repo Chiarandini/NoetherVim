@@ -2,11 +2,11 @@
 -- Enable with: { import = "noethervim.bundles.tools.refactoring" }
 --
 -- Provides ThePrimeagen/refactoring.nvim for automated refactoring operations.
---   <leader>Re  — extract function        (visual)
---   <leader>Rf  — extract to file         (visual)
---   <leader>Rv  — extract variable        (visual)
---   <leader>Ri  — inline variable         (normal + visual)
---   <leader>Rb  — extract block           (normal)
+--   <leader>Re  -- extract function        (visual)
+--   <leader>Rf  -- extract to file         (visual)
+--   <leader>Rv  -- extract variable        (visual)
+--   <leader>Ri  -- inline variable         (normal + visual)
+--   <leader>Rb  -- extract block           (normal)
 
 return {
 	{

@@ -1,7 +1,7 @@
 -- NoetherVim bundle: Tableaux
 -- Enable with: { import = "noethervim.bundles.ui.tableaux" }
 --
--- Provides: noethervim-tableaux — a collection of 31 mathematical dashboard
+-- Provides: noethervim-tableaux -- a collection of 31 mathematical dashboard
 -- scenes ("tableaux") for snacks.nvim. Animated number-theoretic processes
 -- (Sieve of Eratosthenes, Collatz, π convergents), live dynamical systems
 -- (Conway's Game of Life, Lorenz attractor), topological objects (Königsberg
@@ -14,7 +14,7 @@
 --   :TableauNext       cycle forward
 --   :TableauPrev       cycle backward
 --   :TableauWeather    force-refresh weather cache
---   :Dash, :DashNext, :DashPrev — backwards-compat aliases.
+--   :Dash, :DashNext, :DashPrev -- backwards-compat aliases.
 --
 -- Default keymaps (disable with `keymaps = false`):
 --   <space>ud    pick a tableau

@@ -37,7 +37,7 @@ function M.check()
     h.ok(string.format("Neovim %d.%d.%d", v.major, v.minor, v.patch))
   else
     h.error(string.format(
-      "Neovim %d.%d.%d — NoetherVim requires >= 0.12",
+      "Neovim %d.%d.%d -- NoetherVim requires >= 0.12",
       v.major, v.minor, v.patch
     ))
   end
@@ -64,7 +64,7 @@ function M.check()
     check_exe("pdflatex", false)
 
     -- PDF viewer detection. macOS apps live in /Applications and are not
-    -- on PATH, so executable() always fails for them — must fs_stat the
+    -- on PATH, so executable() always fails for them -- must fs_stat the
     -- .app bundle directly.
     if vim.fn.has("mac") == 1 then
       local mac_apps = { "Skim.app", "Preview.app" }
@@ -75,7 +75,7 @@ function M.check()
       if found then
         h.ok("PDF viewer (" .. found .. ")")
       else
-        h.warn("no PDF viewer found in /Applications — tried: " .. table.concat(mac_apps, ", "))
+        h.warn("no PDF viewer found in /Applications -- tried: " .. table.concat(mac_apps, ", "))
       end
     else
       local viewers
@@ -91,7 +91,7 @@ function M.check()
       if found then
         h.ok("PDF viewer (" .. found .. ")")
       else
-        h.warn("no PDF viewer found — tried: " .. table.concat(viewers, ", "))
+        h.warn("no PDF viewer found -- tried: " .. table.concat(viewers, ", "))
       end
     end
 
@@ -99,9 +99,9 @@ function M.check()
     -- tree-sitter generate, but NoetherVim overrides that so only a C compiler
     -- is needed. Check that cc is available and the parser is installed.
     if vim.fn.executable("cc") == 1 then
-      h.ok("cc (C compiler — required for :TSInstall latex)")
+      h.ok("cc (C compiler -- required for :TSInstall latex)")
     else
-      h.error("cc not found — needed to compile the latex treesitter parser (:TSInstall latex)")
+      h.error("cc not found -- needed to compile the latex treesitter parser (:TSInstall latex)")
     end
     -- nvim-treesitter's main branch installs parsers to stdpath("data")/site/parser/,
     -- the master branch to lazy/nvim-treesitter/parser/. Use rtp lookup so the
@@ -109,7 +109,7 @@ function M.check()
     if #vim.api.nvim_get_runtime_file("parser/latex.so", false) > 0 then
       h.ok("latex treesitter parser installed")
     else
-      h.warn("latex treesitter parser not installed — run :TSInstall latex")
+      h.warn("latex treesitter parser not installed -- run :TSInstall latex")
     end
   end
 
@@ -147,7 +147,7 @@ function M.check()
   -- user-template instance, so it intentionally has no version marker.
   h.start("Template version")
   if vim.g.noethervim_dev then
-    h.info("Skipped (vim.g.noethervim_dev set — not a user-template install)")
+    h.info("Skipped (vim.g.noethervim_dev set -- not a user-template install)")
   else
   local user_init = vim.fn.stdpath("config") .. "/init.lua"
   local upstream_init = vim.api.nvim_get_runtime_file("init.lua.example", false)[1]
@@ -166,7 +166,7 @@ function M.check()
   local upstream_version = read_template_version(upstream_init)
 
   if not upstream_version then
-    -- Upstream has no marker — version 1 (pre-release).
+    -- Upstream has no marker -- version 1 (pre-release).
     -- Any user template (with or without a marker) is current.
     h.ok("Template version: current")
   elseif not user_version then
@@ -201,12 +201,12 @@ function M.check()
   if vim.uv.fs_stat(user_plugins) then
     h.ok("User plugins dir present")
   else
-    h.info("No user plugins dir (optional) — add plugins to " .. user_plugins)
+    h.info("No user plugins dir (optional) -- add plugins to " .. user_plugins)
   end
 
   local ok_cfg, user_cfg = pcall(require, "user.config")
   if ok_cfg and type(user_cfg) ~= "table" then
-    h.warn("lua/user/config.lua must return a table (got " .. type(user_cfg) .. ") — see templates/user/config.example.lua")
+    h.warn("lua/user/config.lua must return a table (got " .. type(user_cfg) .. ") -- see templates/user/config.example.lua")
   end
 
   local obsidian_vault = (function()
@@ -227,7 +227,7 @@ function M.check()
   local search_leader = require("noethervim.util").search_leader
   h.ok("mapsearchleader: " .. search_leader)
   if search_leader == "" then
-    h.warn("mapsearchleader is empty — search keymaps will collide with normal-mode keys")
+    h.warn("mapsearchleader is empty -- search keymaps will collide with normal-mode keys")
   end
 
   -- ── Bundles ──────────────────────────────────────────────────────────
@@ -244,13 +244,13 @@ function M.check()
 
   -- ── Override conflicts ───────────────────────────────────────────────
   -- Diff the keymap snapshots captured by init.lua around user.keymaps load
-  -- to surface every core mapping the user redefined. Informational only —
+  -- to surface every core mapping the user redefined. Informational only --
   -- redefining a core mapping is a supported pattern, not an error.
   h.start("Override conflicts")
   if not nv._user_loaded then
     h.info("Skipped (user overrides disabled)")
   elseif not (nv._snapshots and nv._snapshots.keymaps_before and nv._snapshots.keymaps_after) then
-    h.info("Snapshots unavailable — keymap diff cannot be computed")
+    h.info("Snapshots unavailable -- keymap diff cannot be computed")
   else
     local before = nv._snapshots.keymaps_before
     local after  = nv._snapshots.keymaps_after
@@ -291,9 +291,9 @@ function M.check()
     h.warn("No LSP configs found in lua/noethervim/lsp/")
   end
   if pcall(require, "mason") then
-    h.ok("mason.nvim loaded — run :Mason to inspect installation status")
+    h.ok("mason.nvim loaded -- run :Mason to inspect installation status")
   else
-    h.info("mason.nvim not loaded — install LSP binaries manually or via :Mason")
+    h.info("mason.nvim not loaded -- install LSP binaries manually or via :Mason")
   end
 
   -- ── Feature flags ────────────────────────────────────────────────────
@@ -304,7 +304,7 @@ function M.check()
   if vim.api.nvim__redraw then
     h.ok("nvim__redraw API present (statusline busy-spinner updates smoothly)")
   else
-    h.warn("nvim__redraw missing — busy-spinner falls back to redrawstatus")
+    h.warn("nvim__redraw missing -- busy-spinner falls back to redrawstatus")
   end
   if vim.g.noethervim_dashboard == false then
     h.info("Dashboard: disabled (vim.g.noethervim_dashboard = false)")

@@ -1,6 +1,6 @@
 -- NoetherVim plugin: Trouble Diagnostics
 -- Multi-file diagnostic panel.  Toggle: <C-w>Q
--- Navigate: ]q / [q (context-aware — Trouble when open, quickfix otherwise)
+-- Navigate: ]q / [q (context-aware -- Trouble when open, quickfix otherwise)
 
 return {
 	"folke/trouble.nvim",

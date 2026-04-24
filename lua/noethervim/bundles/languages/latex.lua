@@ -12,7 +12,7 @@
 --   theorem highlighting:       treesitter-based theorem label coloring
 --   For Zotero citations, enable the separate latex-zotero bundle.
 --
--- PDF viewer: NOT set by the distro — set vim.g.vimtex_view_method in lua/user/options.lua:
+-- PDF viewer: NOT set by the distro -- set vim.g.vimtex_view_method in lua/user/options.lua:
 --   vim.g.vimtex_view_method = 'skim'   -- or 'zathura', 'sioyek', etc.
 
 
@@ -60,7 +60,7 @@ return {
 
   -- ── treesitter: latex parser + theorem highlighting ───────────────────────
   -- Uses opts (merged by lazy) and init (runs before load, just registers
-  -- an autocmd).  NEVER define `config` here — lazy overwrites the core
+  -- an autocmd).  NEVER define `config` here -- lazy overwrites the core
   -- treesitter config function, breaking ensure_installed / auto_install.
   {
     "nvim-treesitter/nvim-treesitter",
@@ -100,12 +100,12 @@ return {
   },
 
   -- ── vimtex ────────────────────────────────────────────────────────────────
-  -- lazy = false: required for inverse search — vimtex must be loaded at startup
+  -- lazy = false: required for inverse search -- vimtex must be loaded at startup
   -- so that headless nvim can respond to InverseSearch from the PDF viewer.
   {
     "lervag/vimtex",
     lazy = false,
-    -- LaTeX globals — must be set before vimtex loads.
+    -- LaTeX globals -- must be set before vimtex loads.
     init = function()
       vim.g.tex_conceal = "abdgm"
       vim.g.tex_flavor  = "latex"
@@ -182,7 +182,7 @@ let g:vimtex_compiler_latexmk_engines = {
         callback = function(ev)
           local o = function(desc) return { silent = true, buffer = ev.buf, desc = desc } end
 
-          -- :PDF — open compiled PDF
+          -- :PDF -- open compiled PDF
           vim.api.nvim_buf_create_user_command(ev.buf, "PDF", function()
             local pdf = vim.fn.expand("%:t:r") .. ".pdf"
             if vim.fn.has("macunix") == 1 then
@@ -204,7 +204,7 @@ let g:vimtex_compiler_latexmk_engines = {
 
   -- ── img-clip.nvim ─────────────────────────────────────────────────────────
   -- Drag-and-drop or clipboard image paste into LaTeX and Markdown.
-  -- The markdown bundle also declares this plugin for ft=markdown — lazy merges both.
+  -- The markdown bundle also declares this plugin for ft=markdown -- lazy merges both.
   {
     "HakonHarnes/img-clip.nvim",
     ft   = { "tex", "markdown" },
@@ -333,7 +333,7 @@ let g:vimtex_compiler_latexmk_engines = {
   },
 
   -- ── Oil: open .tex file in current dir (gt) ─────────────────────────────
-  -- LaTeX-specific Oil keymap — opens the .tex file in the current Oil
+  -- LaTeX-specific Oil keymap -- opens the .tex file in the current Oil
   -- directory, or shows a picker if there are multiple.
   {
     "stevearc/oil.nvim",
@@ -376,7 +376,7 @@ let g:vimtex_compiler_latexmk_engines = {
 
   -- ── snacks-latex-labels ───────────────────────────────────────────────────
   -- All business logic (label cache, project scanner, latex helpers) lives
-  -- in latex-nav-core — telescope-latex-references is no longer a dependency.
+  -- in latex-nav-core -- telescope-latex-references is no longer a dependency.
   -- `:LatexLabels*` user commands are registered inline below.
   {
     "Chiarandini/snacks-latex-labels.nvim",
@@ -536,7 +536,7 @@ let g:vimtex_compiler_latexmk_engines = {
             end
           end
 
-          -- 2. Label not in current project — search all other cached files.
+          -- 2. Label not in current project -- search all other cached files.
           --    Covers cross-file references once those files have been indexed.
           local cache_dir = vim.fn.stdpath("data") .. "/cached_labels"
           local all_files = vim.fn.glob(cache_dir .. "/*.labels", false, true)
@@ -552,8 +552,8 @@ let g:vimtex_compiler_latexmk_engines = {
             end
           end
 
-          -- 3. Nowhere to jump — label not yet written or indexed.
-          vim.notify("[gd] '" .. label .. "' not found in any cache — run :LatexLabelsUpdate", vim.log.levels.WARN)
+          -- 3. Nowhere to jump -- label not yet written or indexed.
+          vim.notify("[gd] '" .. label .. "' not found in any cache -- run :LatexLabelsUpdate", vim.log.levels.WARN)
         end, { buffer = bufnr, desc = "goto label definition (LaTeX)" })
       end
 

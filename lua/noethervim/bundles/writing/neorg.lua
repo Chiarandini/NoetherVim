@@ -5,10 +5,10 @@
 -- Default workspace: ~/neorg/  (override in lua/user/plugins/)
 --
 -- Key bindings (SearchLeader defaults to <Space>, see vim.g.mapsearchleader):
---   SearchLeader+ww  — open Neorg wiki index
---   SearchLeader+wt  — open wiki in new tab
---   SearchLeader+wv  — open wiki in vertical split
---   SearchLeader+wr  — close all Neorg buffers
+--   SearchLeader+ww  -- open Neorg wiki index
+--   SearchLeader+wt  -- open wiki in new tab
+--   SearchLeader+wv  -- open wiki in vertical split
+--   SearchLeader+wr  -- close all Neorg buffers
 local SearchLeader = require("noethervim.util").search_leader
 
 return {

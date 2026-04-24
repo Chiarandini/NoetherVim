@@ -82,7 +82,7 @@ toggle("oD",
   end,
   "tidy whitespace (Dirty)")
 
--- Deadcolumn fading guide — [oG enable, ]oG disable.
+-- Deadcolumn fading guide -- [oG enable, ]oG disable.
 -- State persisted to stdpath("state")/noethervim_deadcolumn;
 -- deadcolumn.lua reads this on startup to skip setup() when disabled.
 local dc_state_file = vim.fn.stdpath("state") .. "/noethervim_deadcolumn"

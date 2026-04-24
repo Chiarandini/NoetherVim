@@ -54,7 +54,7 @@ return {
 				markdown        = { "prettierd" },
 				sh              = { "shfmt" },
 			},
-			-- No format_on_save — use <Leader>ff for explicit formatting.
+			-- No format_on_save -- use <Leader>ff for explicit formatting.
 		},
 		config = function(_, opts)
 			require("conform").setup(opts)
@@ -162,7 +162,7 @@ return {
 		},
 
 		-- ── Overridable data ─────────────────────────────────────────
-		-- Note: ensure_installed is an array — overriding it REPLACES
+		-- Note: ensure_installed is an array -- overriding it REPLACES
 		-- the entire list (lazy.nvim does not merge arrays).
 		opts = {
 			ensure_installed = {
@@ -253,7 +253,7 @@ return {
 					vim.keymap.set('n', 'gD',  vim.lsp.buf.declaration,     km_opts('[g]o to [D]eclaration'))
 					vim.keymap.set('n', 'gt',  vim.lsp.buf.type_definition, km_opts('[g]o to [t]ype definition'))
 					vim.keymap.set('n', 'gi',  vim.lsp.buf.implementation,  km_opts('[g]o to [i]mplementation'))
-					-- gr/grr/grn: Neovim 0.12 defaults (references, rename) — don't override
+					-- gr/grr/grn: Neovim 0.12 defaults (references, rename) -- don't override
 					vim.keymap.set('n', 'gR',  '<cmd>Glance references<cr>', km_opts('[G]lance [R]eferences (float)'))
 					vim.keymap.set('n', 'gw',  function() vim.lsp.buf.workspace_symbol('') end, km_opts('[g]et [w]orkspace symbols'))
 					vim.keymap.set('n', 'gs',  function() vim.lsp.buf.signature_help({ border = 'rounded' }) end, km_opts('[g]et [s]ignature'))
@@ -265,7 +265,7 @@ return {
 					vim.keymap.set('n', '[d', function()
 						vim.diagnostic.jump({ count = -1, on_jump = function() vim.diagnostic.open_float({ border = 'rounded' }) end })
 					end, km_opts('prev [d]iagnostic'))
-					-- gra/grn: Neovim 0.12 defaults (code action, rename) — don't override
+					-- gra/grn: Neovim 0.12 defaults (code action, rename) -- don't override
 					vim.keymap.set('n',      '<F1>', vim.lsp.buf.code_action,  km_opts('code action'))
 					vim.keymap.set('n',      '<F4>', vim.lsp.buf.code_action,  km_opts('code action'))
 					vim.keymap.set('x',      '<F1>', vim.lsp.buf.code_action,  km_opts('range code action'))

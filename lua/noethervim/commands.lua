@@ -1,7 +1,7 @@
 -- NoetherVim user-facing commands and their associated keymaps
 
 -- ──────────────────────────────────────────────────────────────
---  Reset  — close all buffers and show a clean dashboard
+--  Reset  -- close all buffers and show a clean dashboard
 -- ──────────────────────────────────────────────────────────────
 
 vim.api.nvim_create_user_command("Reset", function(opts)
@@ -29,7 +29,7 @@ end, {
 })
 
 -- ──────────────────────────────────────────────────────────────
---  DiffOrig  — diff the current buffer against its on-disk version
+--  DiffOrig  -- diff the current buffer against its on-disk version
 -- ──────────────────────────────────────────────────────────────
 
 vim.api.nvim_create_user_command("DiffOrig", function()
@@ -46,7 +46,7 @@ vim.api.nvim_create_user_command("DiffOrig", function()
 end, { desc = "diff buffer against on-disk file" })
 
 -- ──────────────────────────────────────────────────────────────
---  Redir  — redirect :command / !shell output to scratch buffer
+--  Redir  -- redirect :command / !shell output to scratch buffer
 -- ──────────────────────────────────────────────────────────────
 
 vim.api.nvim_create_user_command("Redir", function(opts)
@@ -69,7 +69,7 @@ vim.api.nvim_create_user_command("Redir", function(opts)
 end, { nargs = 1, desc = "redirect command output to scratch buffer" })
 
 -- ──────────────────────────────────────────────────────────────
---  switch_case  — toggle camelCase ↔ snake_case under cursor
+--  switch_case  -- toggle camelCase ↔ snake_case under cursor
 -- ──────────────────────────────────────────────────────────────
 
 local function switch_case()
@@ -91,7 +91,7 @@ end
 vim.keymap.set("n", "<leader>s", switch_case, { desc = "toggle camelCase/snake_case" })
 
 -- ──────────────────────────────────────────────────────────────
---  show_modified_buffers  — list unsaved buffers in quickfix
+--  show_modified_buffers  -- list unsaved buffers in quickfix
 -- ──────────────────────────────────────────────────────────────
 
 local function show_modified_buffers()
@@ -127,4 +127,4 @@ vim.keymap.set("n", "<c-w>u", show_modified_buffers, { noremap = true, silent = 
 
 require("noethervim.util.web_search")
 
--- string:replace was removed — use require("noethervim.util").str_replace() instead.
+-- string:replace was removed -- use require("noethervim.util").str_replace() instead.

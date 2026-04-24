@@ -2,11 +2,11 @@
 -- Enable with: { import = "noethervim.bundles.ui.colorscheme" }
 --
 -- Provides:
---   - 10 popular colorschemes (installed but lazy — zero startup cost)
+--   - 10 popular colorschemes (installed but lazy -- zero startup cost)
 --   - Persistence: SearchLeader+C picks persist across restarts
 --   - Highlight tweaks: user overrides survive colorscheme switches
 --
--- All schemes are lazy=true — only the active one loads. Disk cost is
+-- All schemes are lazy=true -- only the active one loads. Disk cost is
 -- minimal (~2MB total); startup cost is zero.
 --
 -- Tweaking highlights: in lua/user/highlights.lua, use:

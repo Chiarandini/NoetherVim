@@ -1,7 +1,7 @@
 -- NoetherVim bundle: Go
 -- Enable with: { import = "noethervim.bundles.languages.go" }
 --
--- Provides go.nvim — Go development beyond plain gopls.
+-- Provides go.nvim -- Go development beyond plain gopls.
 --   Test generation, struct tags, interface implementation,
 --   code lens, fill struct, and more.
 --

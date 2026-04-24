@@ -1,11 +1,11 @@
 -- NoetherVim bundle: Rust
 -- Enable with: { import = "noethervim.bundles.languages.rust" }
 --
--- Provides rustaceanvim — enhanced Rust development beyond plain rust-analyzer.
+-- Provides rustaceanvim -- enhanced Rust development beyond plain rust-analyzer.
 --   Macro expansion, runnables/debuggables, crate graph, hover actions,
 --   structural search-replace, join lines, and more.
 --
--- rustaceanvim manages its own LSP client — no lspconfig setup needed
+-- rustaceanvim manages its own LSP client -- no lspconfig setup needed
 -- for rust-analyzer. Just ensure rust-analyzer is installed.
 --
 -- Override settings in user/plugins/:

@@ -57,7 +57,7 @@ vim.opt.listchars = {
 --   j  remove comment leader when joining lines
 --   n  recognize numbered lists (uses formatlistpat)
 -- `t` (auto-wrap text) is deliberately omitted globally so code files
--- don't get broken mid-line while typing — formatters handle it.
+-- don't get broken mid-line while typing -- formatters handle it.
 opt.formatoptions  = "croq1jn"
 
 -- Diff

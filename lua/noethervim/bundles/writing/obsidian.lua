@@ -1,7 +1,7 @@
 -- NoetherVim bundle: Obsidian
 -- Enable with: { import = "noethervim.bundles.writing.obsidian" }
 --
--- Provides: obsidian.nvim — Obsidian vault integration.
+-- Provides: obsidian.nvim -- Obsidian vault integration.
 -- Recommended: also enable the markdown bundle for rendering, preview,
 --              tables, math, and image paste.
 --

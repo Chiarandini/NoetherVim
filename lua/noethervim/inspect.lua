@@ -70,14 +70,14 @@ end
 -- layout (bundles/<category>/<name>.lua) is the authoritative source for
 -- which bundles exist and which category they belong to; this table just
 -- adds the prose for the picker.  Adding a bundle without an entry here
--- falls back to "(no description)" — see dev-docs/bundle-development.md.
+-- falls back to "(no description)" -- see dev-docs/bundle-development.md.
 
 local bundle_descriptions = {
   -- languages
-  rust            = "rustaceanvim — macro expansion, runnables, crate graph",
-  go              = "go.nvim — test gen, struct tags, interface impl",
-  java            = "nvim-jdtls — proper Java LSP support",
-  python          = "venv-selector — virtual environment switching",
+  rust            = "rustaceanvim -- macro expansion, runnables, crate graph",
+  go              = "go.nvim -- test gen, struct tags, interface impl",
+  java            = "nvim-jdtls -- proper Java LSP support",
+  python          = "venv-selector -- virtual environment switching",
   latex           = "VimTeX + noethervim-tex (snippets, textobjects)",
   ["latex-zotero"] = "Zotero citation picker",
   ["web-dev"]     = "template-string auto-conversion + color preview",
@@ -110,7 +110,7 @@ local bundle_descriptions = {
   ["eye-candy"]   = "animations, scrollbar, block display",
   minimap         = "sidebar minimap with git/diagnostic markers",
   helpview        = "rendered :help pages",
-  tableaux        = "noethervim-tableaux — animated mathematical dashboard scenes",
+  tableaux        = "noethervim-tableaux -- animated mathematical dashboard scenes",
   -- practice
   training        = "vim-be-good, speedtyper, typr",
   ["dev-tools"]   = "StartupTime benchmarking, Luapad scratchpad",
@@ -259,7 +259,7 @@ end
 -- ── Keymap source helpers ────────────────────────────────────────
 
 -- Characters that are special in Vim's magic-mode regex and need
--- escaping.  Notably, ( ) { } + are NOT special in magic mode —
+-- escaping.  Notably, ( ) { } + are NOT special in magic mode --
 -- escaping them would turn them INTO regex operators (\(, \+, etc.).
 local VIM_ESCAPE_CHARS = "/\\[].*^$~"
 
@@ -302,7 +302,7 @@ local function keymap_search_patterns(lhs)
   local pats = {}
 
   -- ── 1. Leader-specific ────────────────────────────────────────
-  -- <Leader>tail — matches `"<leader>tail"` or `'<leader>tail'`
+  -- <Leader>tail -- matches `"<leader>tail"` or `'<leader>tail'`
   if starts_with_leader then
     local tail = vim.fn.escape(lhs:sub(#leader + 1), VIM_ESCAPE_CHARS)
     pats[#pats + 1] = [[\c<Leader>]] .. tail .. Q
@@ -319,7 +319,7 @@ local function keymap_search_patterns(lhs)
   -- SearchLeader concatenation: SearchLeader .. "tail"
   -- For single-char tails, the generic `.. "x"` pattern matches noise
   -- like `dir .. "/"` or `mkdir(_, "p")`.  Match the literal variable
-  -- name `SearchLeader` instead — it's consistent across all distro specs.
+  -- name `SearchLeader` instead -- it's consistent across all distro specs.
   -- For multi-char tails, the generic `.. "tail"` is specific enough.
   if starts_with_sl then
     local tail_raw = lhs:sub(#resolved_sl + 1)
@@ -372,7 +372,7 @@ local function keymap_search_patterns(lhs)
 
   -- ── 4. keytrans notation ────────────────────────────────────────
   -- The API resolves special keys (e.g. <Space> → literal space).
-  -- User spec files often write `"<space>h"` — keytrans converts the
+  -- User spec files often write `"<space>h"` -- keytrans converts the
   -- resolved lhs back to notation form so we can match it.
   local lhs_notation = vim.fn.keytrans(lhs)
   if lhs_notation ~= lhs then
@@ -443,7 +443,7 @@ local function keymap_file_needles(lhs)
     end
   end
   -- keytrans notation: API resolves <Space> to literal space, etc.
-  -- User files write "<space>h" — keytrans gives us "<Space>h".
+  -- User files write "<space>h" -- keytrans gives us "<Space>h".
   local lhs_notation = vim.fn.keytrans(lhs)
   if lhs_notation ~= lhs then
     needles[#needles + 1] = lhs_notation
@@ -642,7 +642,7 @@ function M.diff_keymaps()
 
   -- Baseline: keymaps that existed before NoetherVim core loaded.
   -- Keymaps present in baseline, unchanged by core AND user, and not
-  -- from any lazy spec are Neovim defaults — skip them.
+  -- from any lazy spec are Neovim defaults -- skip them.
   local baseline = snap.keymaps_baseline or {}
 
   -- Collect all keys from both snapshots
@@ -1125,14 +1125,14 @@ function M.diff_file(module_name)
     return
   end
 
-  -- Picker mode — browse all diffable modules
+  -- Picker mode -- browse all diffable modules
   local root = effective_root()
   if not root then return vim.notify("NoetherVim: cannot locate source directory", vim.log.levels.ERROR) end
   local udir = user_dir()
   local icons = require("noethervim.util.icons")
 
   local diff_cat_order = { Core = 1, Plugin = 2, Bundle = 3, LSP = 4 }
-  -- Flat-scan groups (bundles are handled separately — they live under
+  -- Flat-scan groups (bundles are handled separately -- they live under
   -- category subdirectories, not directly in bundles/).
   local groups = {
     { cat = "Core",   dir = root .. "/lua/noethervim",         user_dirs = { udir } },
@@ -1224,7 +1224,7 @@ function M.diff_file(module_name)
       if item.has_override then
         ret[#ret + 1] = { "override", "DiagnosticWarn" }
       else
-        ret[#ret + 1] = { "—", "Comment" }
+        ret[#ret + 1] = { "--", "Comment" }
       end
       return ret
     end,
@@ -1289,7 +1289,7 @@ local function map_to_user_path(bufpath)
   local plugin = rel:match("^lua/noethervim/plugins/(.+%.lua)$")
   if plugin then return udir .. "plugins/" .. plugin, "plugin" end
   -- lua/noethervim/bundles/<category>/<name>.lua → user/plugins/<name>.lua
-  -- User overrides target the bundle by its bare name — the category
+  -- User overrides target the bundle by its bare name -- the category
   -- subdirectory is purely organizational in the distro.
   local bundle = rel:match("^lua/noethervim/bundles/[^/]+/([^/]+%.lua)$")
   if bundle then return udir .. "plugins/" .. bundle, "bundle" end
@@ -1328,7 +1328,7 @@ local function seed_content(rel_path, category)
     lines[#lines + 1] = "-- Imperative override (runs after all other setup)."
     lines[#lines + 1] = "-- See :help noethervim-user-overrides"
   elseif category == "ftplugin" then
-    lines[#lines + 1] = "-- Filetype settings — runs after the distribution ftplugin."
+    lines[#lines + 1] = "-- Filetype settings -- runs after the distribution ftplugin."
   end
   lines[#lines + 1] = ""
   return table.concat(lines, "\n")

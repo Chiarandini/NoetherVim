@@ -27,7 +27,7 @@
 --
 --     Combined with automatic case handling, a single :Abolish line
 --     can correct dozens of misspelling and case combinations at once.
---     Add your own in lua/user/plugins/ — see templates/user/plugins/example.lua.
+--     Add your own in lua/user/plugins/ -- see templates/user/plugins/example.lua.
 --
 --   Coercion operators (cr<key>):
 --     crs  →  snake_case

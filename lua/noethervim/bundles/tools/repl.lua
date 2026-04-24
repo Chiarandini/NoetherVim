@@ -1,7 +1,7 @@
 -- NoetherVim bundle: REPL
 -- Enable with: { import = "noethervim.bundles.tools.repl" }
 --
--- Provides iron.nvim — interactive REPL for any language.
+-- Provides iron.nvim -- interactive REPL for any language.
 --   <leader>rs   start REPL
 --   <leader>rr   restart REPL
 --   <leader>rF   focus REPL           (capital F; <leader>rf is reserved for run-file)

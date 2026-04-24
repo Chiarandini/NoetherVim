@@ -132,7 +132,7 @@ return {
 			})
 
 			-- treesitter is lazy-loaded on BufReadPost, so the buffer that
-			-- triggered loading already missed FileType — attach to it now.
+			-- triggered loading already missed FileType -- attach to it now.
 			for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
 				if vim.api.nvim_buf_is_loaded(bufnr) then
 					start_ts(bufnr)
@@ -149,7 +149,7 @@ return {
 
 		if not has_ts_cli then
 			vim.notify(
-				"tree-sitter CLI not found — parser auto-install is disabled.\n"
+				"tree-sitter CLI not found -- parser auto-install is disabled.\n"
 				.. "Install it (e.g. `brew install tree-sitter`) then restart Neovim.",
 				vim.log.levels.WARN
 			)

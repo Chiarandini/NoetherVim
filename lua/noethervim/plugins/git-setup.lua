@@ -2,7 +2,7 @@
 --  ╔══════════════════════════════════════════════════════════╗
 --  ║                        Git setup                         ║
 --  ╚══════════════════════════════════════════════════════════╝
--- Core: gitsigns only — hunk navigation ([h/]h) and staging are distro conventions.
+-- Core: gitsigns only -- hunk navigation ([h/]h) and staging are distro conventions.
 -- fugitive and flog live in noethervim.bundles.tools.git.
 --
 -- Override via: { "lewis6991/gitsigns.nvim", opts = { ... } }

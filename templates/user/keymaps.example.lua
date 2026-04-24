@@ -1,6 +1,6 @@
 -- Personal keymap overrides for NoetherVim.
 -- Copy this file to lua/user/keymaps.lua and uncomment/add the lines you want.
--- lua/user/keymaps.lua is gitignored — it never ships with the distribution.
+-- lua/user/keymaps.lua is gitignored -- it never ships with the distribution.
 --
 -- This file runs after noethervim/keymaps.lua AND noethervim/toggles.lua,
 -- so any keymap you set here overwrites the distro default.

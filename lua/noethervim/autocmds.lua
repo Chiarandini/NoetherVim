@@ -167,7 +167,7 @@ end)
 -- spell + conceallevel=2; list chars are hidden.  Code buffers get
 -- whitespace visibility (list chars).  Structured-text (json, yaml,
 -- toml) and special buffers (help, qf, oil, terminal, dashboard, ...)
--- are left alone — their own ftplugins / buffer settings take over.
+-- are left alone -- their own ftplugins / buffer settings take over.
 --
 -- FileType autocmds fire AFTER ftplugin files, so these profiles win
 -- over any same-named setting in ftplugin/*.lua.  To specialize a

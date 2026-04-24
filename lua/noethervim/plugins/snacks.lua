@@ -276,7 +276,7 @@ return {
 			},
 			-- <c-o> on any file in any picker opens Oil in that file's parent dir.
 			-- If a floating Oil window is already open, navigates it there instead of
-			-- opening a new buffer — keeps the float as the "active" Oil pane.
+			-- opening a new buffer -- keeps the float as the "active" Oil pane.
 			actions = {
 				open_oil_dir = function(picker)
 					local item = picker:current()
@@ -479,15 +479,15 @@ return {
 		{ SearchLeader .. "cL", function() Snacks.picker.lazy({ title = "Lazy Plugins" }) end,                                                             desc = "[L]azy plugins" },
 		{ SearchLeader .. "cu", function()
 			local dir = vim.fn.stdpath("config") .. "/lua/user/"
-			if not vim.uv.fs_stat(dir) then return vim.notify("No user config yet — create lua/user/ in your config dir", vim.log.levels.WARN) end
+			if not vim.uv.fs_stat(dir) then return vim.notify("No user config yet -- create lua/user/ in your config dir", vim.log.levels.WARN) end
 			Snacks.picker.files({ cwd = dir, title = "User Settings" })
 		end, desc = "[u]ser settings" },
 		{ SearchLeader .. "cc", function()
 			local dir = vim.fn.stdpath("config") .. "/lua/"
-			if not vim.uv.fs_stat(dir) then return vim.notify("No lua/ dir yet — see :help noethervim-user-config", vim.log.levels.WARN) end
+			if not vim.uv.fs_stat(dir) then return vim.notify("No lua/ dir yet -- see :help noethervim-user-config", vim.log.levels.WARN) end
 			Snacks.picker.files({ cwd = dir, title = "User Lua Files" })
 		end, desc = "[c]onfig lua" },
-		-- document / project navigation keymaps are personal — add yours in lua/user/plugins/
+		-- document / project navigation keymaps are personal -- add yours in lua/user/plugins/
 	},
 	config = function(_, opts)
 		require("snacks").setup(opts)

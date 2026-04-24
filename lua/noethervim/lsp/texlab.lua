@@ -10,16 +10,16 @@ vim.lsp.config('texlab', {
 				additionalArgs = { "-n1", "-n3", "-n24" },
 			},
 			build = {
-				-- VimTeX owns compilation — disable texlab's build-on-save
+				-- VimTeX owns compilation -- disable texlab's build-on-save
 				onSave = false,
 				forwardSearchAfter = false,
 			},
 			diagnostics = {
-				-- "Undefined reference": all false positives in this setup —
+				-- "Undefined reference": all false positives in this setup --
 				--   custom env labels (th:/pr:/df:/co:/ex:) are resolved via the .aux file after compilation,
 				--   and cross-file chapter refs (cha:) live in other documents texlab cannot reach.
 				-- "Unused label": labels defined by custom envs are rarely \ref'd inline.
-				-- NOTE: texlab's message is the literal string only — no label name appended.
+				-- NOTE: texlab's message is the literal string only -- no label name appended.
 				ignoredPatterns = {
 					"Unused label",
 					"Undefined reference",

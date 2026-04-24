@@ -8,7 +8,7 @@ return {
 		"levouh/tint.nvim",
 		event = "VeryLazy",
 		keys = {
-			-- tint toggle is [o<c-t> / ]o<c-t> — defined in noethervim/toggles.lua
+			-- tint toggle is [o<c-t> / ]o<c-t> -- defined in noethervim/toggles.lua
 		},
 		opts = {
 			tint = -5,                                      -- Darken colors, use a positive value to brighten

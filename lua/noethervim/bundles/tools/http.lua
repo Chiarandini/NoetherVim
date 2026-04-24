@@ -1,7 +1,7 @@
 -- NoetherVim bundle: HTTP Client
 -- Enable with: { import = "noethervim.bundles.tools.http" }
 --
--- Provides kulala.nvim — an in-editor HTTP/REST client.
+-- Provides kulala.nvim -- an in-editor HTTP/REST client.
 --   Supports HTTP, gRPC, GraphQL, WebSocket, and streaming.
 --   Compatible with JetBrains HTTP Client syntax.
 --

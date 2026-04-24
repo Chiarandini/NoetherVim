@@ -2,10 +2,10 @@
 -- Enable with: { import = "noethervim.bundles.navigation.flash" }
 --
 -- Augments /? search and f/t/F/T motions with labeled jump targets.
---   S          — jump to label  (normal mode)
---   r          — remote flash   (operator-pending)
---   R          — treesitter search  (operator-pending, visual)
---   <c-s>      — toggle flash in command mode
+--   S          -- jump to label  (normal mode)
+--   r          -- remote flash   (operator-pending)
+--   R          -- treesitter search  (operator-pending, visual)
+--   <c-s>      -- toggle flash in command mode
 
 return {
 	{

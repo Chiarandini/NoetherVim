@@ -1,7 +1,7 @@
 -- NoetherVim bundle: Java
 -- Enable with: { import = "noethervim.bundles.languages.java" }
 --
--- Provides nvim-jdtls — proper Java LSP support.
+-- Provides nvim-jdtls -- proper Java LSP support.
 -- Java's language server (jdtls) requires special initialization that
 -- plain lspconfig cannot handle (workspace management, jar paths, etc.).
 --

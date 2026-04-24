@@ -1,8 +1,8 @@
 -- NoetherVim bundle: Test Runner
 -- Enable with: { import = "noethervim.bundles.tools.test" }
 --
--- Provides neotest — a test runner framework.
--- No adapters are configured by default — add them in user plugins:
+-- Provides neotest -- a test runner framework.
+-- No adapters are configured by default -- add them in user plugins:
 --
 --   return {
 --     "nvim-neotest/neotest",

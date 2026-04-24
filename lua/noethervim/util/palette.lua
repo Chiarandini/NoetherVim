@@ -6,7 +6,7 @@
 -- colorscheme the palette is derived from standard highlight groups so the
 -- statusline matches the active theme.
 --
--- User overrides (via opts.statusline.colors) are NOT applied here — the
+-- User overrides (via opts.statusline.colors) are NOT applied here -- the
 -- caller merges them on top with vim.tbl_extend("force", ...).
 
 local M = {}
@@ -141,7 +141,7 @@ end
 
 -- ── Gruvbox preset ───────────────────────────────────────────────
 
---- Hand-tuned palette for gruvbox — preserves the exact current statusline.
+--- Hand-tuned palette for gruvbox -- preserves the exact current statusline.
 local function gruvbox_palette()
   local gruvbox_bg, gruvbox_text
   local ok, gruvbox = pcall(require, "gruvbox")

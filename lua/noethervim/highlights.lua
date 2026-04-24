@@ -81,7 +81,7 @@ local function apply_blink_highlights()
   set(0, "BlinkCmpDocBorder",              { link = "FloatBorder" })
   set(0, "BlinkCmpSignatureHelpBorder",    { link = "FloatBorder" })
 
-  -- Matched characters: muted blue, bold — visible but not distracting.
+  -- Matched characters: muted blue, bold -- visible but not distracting.
   set(0, "BlinkCmpLabelMatch", { fg = get_hl_fg("Identifier") or "#83a598", bold = true })
 
   -- Semantic kind coloring: link each LSP kind to the highlight group

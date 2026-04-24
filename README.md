@@ -224,7 +224,7 @@ NoetherVim loads user override files after each core module. Create any of these
 | `autocmds.lua` | Autocommands |
 | `highlights.lua` | Highlight groups (runs after colorscheme) |
 | `lsp/<server>.lua` | Per-server LSP settings |
-| `config.lua` | Bundle data table — vault paths, feature flags (`:help noethervim-user-config-data`) |
+| `config.lua` | Bundle data table -- vault paths, feature flags (`:help noethervim-user-config-data`) |
 
 Template files are provided in `templates/user/` in the installed distro - copy the ones you want and uncomment the relevant lines.
 
@@ -274,7 +274,7 @@ Bundles are optional feature groups. Enable them in `init.lua` (see [Enabling bu
 | `eye-candy` | Animations (drop.nvim, cellular-automaton), scrollbar, block display |
 | `minimap` | Sidebar minimap with git/diagnostic markers |
 | `helpview` | Rendered `:help` pages |
-| `tableaux` | noethervim-tableaux — animated mathematical dashboard scenes |
+| `tableaux` | noethervim-tableaux -- animated mathematical dashboard scenes |
 | **Practice & utilities** | |
 | `training` | Vim motion and typing practice (vim-be-good, speedtyper, typr) |
 | `dev-tools` | Startup profiling (`:StartupTime`), Lua scratchpad (`:Luapad`) |
@@ -287,7 +287,7 @@ Bundles are optional feature groups. Enable them in `init.lua` (see [Enabling bu
 
 | Prefix | Purpose |
 |---|---|
-| `<Space>` (configurable) | Fuzzy navigation and search — set `vim.g.mapsearchleader` to change |
+| `<Space>` (configurable) | Fuzzy navigation and search -- set `vim.g.mapsearchleader` to change |
 | `<Leader>` (`\`) | Global actions (format, open tools) |
 | `<LocalLeader>` (`,`) | Filetype-specific actions (compile LaTeX, run script) |
 | `<C-w>` | All window navigation and manipulation |

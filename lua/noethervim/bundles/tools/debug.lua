@@ -236,7 +236,7 @@ end
 dap_pickers.frames = function()
 	local session = require("dap").session()
 	if not session or not session.stopped_thread_id then
-		vim.notify("[dap] cannot move frame — no stopped thread", vim.log.levels.INFO)
+		vim.notify("[dap] cannot move frame -- no stopped thread", vim.log.levels.INFO)
 		return
 	end
 	local frames = session.threads[session.stopped_thread_id].frames

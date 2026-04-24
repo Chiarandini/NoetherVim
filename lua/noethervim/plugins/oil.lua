@@ -1,7 +1,7 @@
 -- NoetherVim plugin: Oil file explorer
 -- Open with: <C-w><C-o> (float) or :Oil (replace buffer)
 --
--- Custom keymaps (in addition to Oil defaults — press g? inside Oil):
+-- Custom keymaps (in addition to Oil defaults -- press g? inside Oil):
 --   gd          Toggle detail view (permissions, size, mtime)
 --   gf          Fuzzy find in current directory
 --   gV          Pick destination and open dual-pane float (q closes both)
@@ -23,7 +23,7 @@ local detail = false
 -- (e.g. ":h", ":t"), or nil for the full path. `reg` is the target register
 -- ("+" for system clipboard, "" for unnamed).
 -- We apply fnamemodify to the raw path first, then append a trailing "/" for
--- directories only when showing the full path — otherwise `:h` returns the
+-- directories only when showing the full path -- otherwise `:h` returns the
 -- directory itself instead of its parent, and `:t` returns an empty string.
 local function yank_entry(reg, mods)
 	return function()
@@ -142,7 +142,7 @@ local function zip_entries()
 	local tool = is_windows and "powershell" or "zip"
 	if vim.fn.executable(tool) == 0 then
 		vim.notify(
-			string.format("Oil: '%s' not found in PATH — cannot create zip", tool),
+			string.format("Oil: '%s' not found in PATH -- cannot create zip", tool),
 			vim.log.levels.ERROR
 		)
 		return
@@ -216,7 +216,7 @@ local function unzip_entries()
 	local tool = is_windows and "powershell" or "unzip"
 	if vim.fn.executable(tool) == 0 then
 		vim.notify(
-			string.format("Oil: '%s' not found in PATH — cannot extract zip", tool),
+			string.format("Oil: '%s' not found in PATH -- cannot extract zip", tool),
 			vim.log.levels.ERROR
 		)
 		return

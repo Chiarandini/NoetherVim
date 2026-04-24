@@ -21,7 +21,7 @@ vim.keymap.set("i", "<C-s>",   "<nop>",      { desc = "disabled" })
 vim.keymap.set("i", "<C-=>",   "<C-r>=",     { desc = "expression register" })
 
 -- ──────────────────────────────────────────────────────────────
---  Normal mode — general
+--  Normal mode -- general
 -- ──────────────────────────────────────────────────────────────
 
 -- Hybrid j/k: visual-line for small hops (natural under wrap), logical +
@@ -66,7 +66,7 @@ vim.keymap.set("n", ";", ":", { desc = "command-line" })
 vim.keymap.set("n", "<c-g>", "g<c-g>", { desc = "file info" })
 
 -- ──────────────────────────────────────────────────────────────
---  Normal mode — window / tab management  (<C-w> namespace)
+--  Normal mode -- window / tab management  (<C-w> namespace)
 -- ──────────────────────────────────────────────────────────────
 
 -- <c-h/j/k/l>: shorthand for <c-w>h/j/k/l window navigation
@@ -98,7 +98,7 @@ vim.keymap.set("n", "<down>",  "<cmd>resize -2<cr>",          { desc = "shorter"
 vim.keymap.set("n", "<left>",  "<cmd>vertical resize +2<cr>", { desc = "wider" })
 vim.keymap.set("n", "<right>", "<cmd>vertical resize -2<cr>", { desc = "narrower" })
 
--- Quick splits (unnamed scratch buffers — save with :w <name> if needed)
+-- Quick splits (unnamed scratch buffers -- save with :w <name> if needed)
 local function split_scratch(cmd)
   vim.cmd(cmd)
   vim.cmd("enew")
@@ -110,7 +110,7 @@ vim.keymap.set("n", "+", "<cmd>tabe<cr>",                      { desc = "new tab
 vim.keymap.set("n", "_", function() split_scratch("sp") end,  { desc = "horizontal split scratch" })
 
 -- ──────────────────────────────────────────────────────────────
---  Normal mode — buffer management  (Z prefix)
+--  Normal mode -- buffer management  (Z prefix)
 -- ──────────────────────────────────────────────────────────────
 
 vim.keymap.set("n", "ZA", "<cmd>qa<cr>",         { desc = "quit all" })
@@ -129,7 +129,7 @@ vim.keymap.set("n", "ZD", function()
 end, { desc = "delete scratch buffers" })
 
 -- ──────────────────────────────────────────────────────────────
---  Normal mode — cursor / search utilities
+--  Normal mode -- cursor / search utilities
 -- ──────────────────────────────────────────────────────────────
 
 -- Highlight all instances of word under cursor (count + jump to next occurrence)
@@ -138,7 +138,7 @@ vim.keymap.set("n", "-",
   "w?<CR>:%s///gn<CR>:call setpos('.', save_cursor)<CR>",
   { silent = true, desc = "highlight word under cursor" })
 
--- Path/file utilities (cp, cm, gp) removed from core — they shadow Vim's
+-- Path/file utilities (cp, cm, gp) removed from core -- they shadow Vim's
 -- c+p / c+m / g+p operator sequences.  See templates/user/keymaps.example.lua
 -- or add them to your lua/user/keymaps.lua
 
@@ -165,7 +165,7 @@ do
 end
 
 -- ──────────────────────────────────────────────────────────────
---  Normal mode — disable overlapping ghost keys
+--  Normal mode -- disable overlapping ghost keys
 -- ──────────────────────────────────────────────────────────────
 
 -- Prevent ys/yS from interfering with ySS/yss
@@ -289,7 +289,7 @@ vim.keymap.set("c", "<m-bs>",  "<c-w>",                    { desc = "delete word
 vim.keymap.set("c", "<c-o>",   "<c-b>Redir <c-e>",         { desc = "redirect output to buffer" })
 
 -- ──────────────────────────────────────────────────────────────
---  All modes — <Esc> cleanup
+--  All modes -- <Esc> cleanup
 -- ──────────────────────────────────────────────────────────────
 
 vim.keymap.set({ "n", "v" }, "<Esc>", function()  -- clear highlights, dismiss notifications

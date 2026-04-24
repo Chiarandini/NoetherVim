@@ -8,7 +8,7 @@
 --
 -- Provider resolution (auto-detected):
 --   1. `claude` CLI on $PATH (reuses your Claude Code auth)
---   2. Anthropic API — ANTHROPIC_API_KEY in env or lua/secrets.lua
+--   2. Anthropic API -- ANTHROPIC_API_KEY in env or lua/secrets.lua
 --
 -- Override via user/plugins/ to force a provider or change default scope:
 --   { "Chiarandini/smart-actions.nvim", opts = {
@@ -24,8 +24,8 @@
 -- See :help smart-actions for the full surface (categories, context,
 -- extension points, known limitations).
 
--- Register the busy-slot takeover at spec-import time — not inside
--- `config` — so a user override of `config` in user/plugins/ does not
+-- Register the busy-slot takeover at spec-import time -- not inside
+-- `config` -- so a user override of `config` in user/plugins/ does not
 -- bypass it. The override function itself guards against smart_actions
 -- not being loaded yet.
 pcall(function()

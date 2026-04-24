@@ -8,16 +8,16 @@
 --   cp /path/to/NoetherVim/init.lua.example ~/.config/nvim/init.lua
 --   nvim
 --
--- Personal overrides go in lua/user/ — see :help noethervim-user-config.
+-- Personal overrides go in lua/user/ -- see :help noethervim-user-config.
 -- To debug without your overrides:  NOETHERVIM_NO_USER=1 nvim
 
 
 
--- ── 1. Leaders — must come before lazy.nvim loads ──────────────────────────
+-- ── 1. Leaders -- must come before lazy.nvim loads ──────────────────────────
 -- Plugins register keymaps at spec-load time using these globals.
 
-vim.g.mapleader         = "\\"       -- <Leader>  — global actions
-vim.g.maplocalleader    = ","        -- <LocalLeader> — filetype actions
+vim.g.mapleader         = "\\"       -- <Leader>  -- global actions
+vim.g.maplocalleader    = ","        -- <LocalLeader> -- filetype actions
 vim.g.mapsearchleader = "<space>"    -- search/navigation prefix (default: <Space>)
 
 -- Opt-out of the Snacks dashboard shown on empty-arg startup.
@@ -101,6 +101,7 @@ require("lazy").setup({
 		-- navigation/
 		-- { import = "noethervim.bundles.navigation.harpoon" },        -- fast per-project file marks
 		-- { import = "noethervim.bundles.navigation.flash" },          -- enhanced f/t and / motions
+		--   lighter alternative: drop yorickpeterse/nvim-jump into user/plugins/
 		-- { import = "noethervim.bundles.navigation.projects" },       -- project switcher (snacks.picker)
 		-- { import = "noethervim.bundles.navigation.editing-extras" }, -- argmark + comment boxes
 
@@ -119,7 +120,7 @@ require("lazy").setup({
 		-- { import = "noethervim.bundles.ui.eye-candy" },   -- animations, scrollbar, block display
 		-- { import = "noethervim.bundles.ui.minimap" },     -- sidebar minimap
 		-- { import = "noethervim.bundles.ui.helpview" },    -- rendered :help pages
-		-- { import = "noethervim.bundles.ui.tableaux" },    -- noethervim-tableaux — animated math dashboard scenes
+		-- { import = "noethervim.bundles.ui.tableaux" },    -- noethervim-tableaux -- animated math dashboard scenes
 
 		-- practice/
 		-- { import = "noethervim.bundles.practice.training" },     -- vim-be-good, speedtyper, typr

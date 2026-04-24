@@ -26,7 +26,7 @@ return {
 			end,
 
 			-- ── Keymaps ────────────────────────────────────────────────────────
-			-- Tab/S-Tab jump snippet nodes only (no menu navigation — use C-n/p).
+			-- Tab/S-Tab jump snippet nodes only (no menu navigation -- use C-n/p).
 			-- Override individual keys via user/plugins/ opts merging.
 			-- See :help noethervim-completion-custom for examples.
 			keymap = {

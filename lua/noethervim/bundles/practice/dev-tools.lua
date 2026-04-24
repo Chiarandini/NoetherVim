@@ -2,8 +2,8 @@
 -- Enable with: { import = "noethervim.bundles.practice.dev-tools" }
 --
 -- Provides:
---   :StartupTime     — benchmark startup (averaged over 10 runs)
---   :Luapad          — interactive Lua scratchpad buffer
+--   :StartupTime     -- benchmark startup (averaged over 10 runs)
+--   :Luapad          -- interactive Lua scratchpad buffer
 
 return {
 	{

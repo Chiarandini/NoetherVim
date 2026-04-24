@@ -8,8 +8,8 @@ local _busy_overrides = {}
 
 --- Configure statusline overrides.
 --- @param opts table
----   colors      table  — merged into the colors table (vim.tbl_extend "force")
----   extra_right table  — list of heirline component specs appended to the
+---   colors      table  -- merged into the colors table (vim.tbl_extend "force")
+---   extra_right table  -- list of heirline component specs appended to the
 ---                        right side of the main statusline (after GitBlock)
 function M.configure(opts)
   _opts = opts or {}
@@ -31,11 +31,11 @@ end
 --- so user config naturally trumps bundles that load earlier).
 ---
 --- fn() -> nil | { icon?, label?, hl?, on_click? }
----   icon     — string shown before the label; defaults to the animated
+---   icon     -- string shown before the label; defaults to the animated
 ---              braille spinner frame
----   label    — short string shown after the icon (e.g. "ai")
----   hl       — heirline highlight spec (e.g. { fg = "#c678dd", bold = true })
----   on_click — function invoked on mouse click
+---   label    -- short string shown after the icon (e.g. "ai")
+---   hl       -- heirline highlight spec (e.g. { fg = "#c678dd", bold = true })
+---   on_click -- function invoked on mouse click
 ---
 --- The animated spinner ticks while something is driving vim.bo.busy > 0;
 --- overrides wanting animation should increment busy on the relevant buf.

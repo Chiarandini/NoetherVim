@@ -5,9 +5,9 @@
 -- Auto-enabled by default when this bundle is loaded.
 --
 -- Key bindings:
---   <c-w>m      — toggle minimap globally
---   <leader>mwt — toggle for current window
---   <leader>mbt — toggle for current buffer
+--   <c-w>m      -- toggle minimap globally
+--   <leader>mwt -- toggle for current window
+--   <leader>mbt -- toggle for current buffer
 
 return {
 	{

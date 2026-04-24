@@ -58,7 +58,7 @@ config = function(_, opts)
 imap <silent><expr> <c-q> luasnip#choice_active() ? '<Plug>luasnip-next-choice' : '<c-q>'
 smap <silent><expr> <c-q> luasnip#choice_active() ? '<Plug>luasnip-next-choice' : '<c-q>'
 	]])
-	-- jk expand/jump: personal preference — add to lua/user/ if desired.
+	-- jk expand/jump: personal preference -- add to lua/user/ if desired.
 
 	vim.keymap.set('n', '<leader>u', require('luasnip').unlink_current, { desc = 'unlink current snippet' })
 	vim.keymap.set('i', '<c-u>', function()

@@ -1,7 +1,7 @@
 -- NoetherVim bundle: Training
 -- Enable with: { import = "noethervim.bundles.practice.training" }
 --
--- Vim/typing practice games — all lazy-loaded by command.
+-- Vim/typing practice games -- all lazy-loaded by command.
 --   :VimBeGood         vim-be-good  (motion practice)
 --   :Speedtyper        speedtyper.nvim  (typing speed)
 --   :Typr / :TyprStats typr  (typing practice)
