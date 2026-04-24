@@ -7,6 +7,21 @@
 local function wk_picker(data)
 	local View = require("which-key.view")
 
+	--- Walk ancestors between item and root, collecting group descriptions
+	--- so fuzzy search can match on breadcrumb context (e.g. "git hunk").
+	local function breadcrumb(item_node, root_node)
+		local parts = {}
+		local n = item_node and item_node.parent
+		while n and n ~= root_node do
+			local d = rawget(n, "mapping") and n.mapping.desc or nil
+			if d and d ~= "" then
+				table.insert(parts, 1, d)
+			end
+			n = n.parent
+		end
+		return table.concat(parts, " ")
+	end
+
 	local function pick(items, node)
 		local title = (node.desc and node.desc ~= "") and node.desc or node.keys or "Which Key"
 
@@ -15,10 +30,12 @@ local function wk_picker(data)
 			items = (function()
 				local ret = {}
 				for _, item in ipairs(items) do
+					local trail = breadcrumb(item.node, node)
 					ret[#ret + 1] = {
-						text = item.raw_key .. " " .. (item.desc or ""),
+						text = table.concat({ trail, item.raw_key, item.desc or "" }, " "),
 						formatted_key = item.key,
 						desc = item.desc or "",
+						breadcrumb = trail,
 						icon = item.icon or "",
 						icon_hl = item.icon_hl,
 						is_group = item.group or false,
@@ -35,6 +52,9 @@ local function wk_picker(data)
 				end
 				ret[#ret + 1] = { string.format("%-8s", item.formatted_key), "WhichKey" }
 				ret[#ret + 1] = { item.desc, item.is_group and "WhichKeyGroup" or "WhichKeyDesc" }
+				if item.breadcrumb ~= "" then
+					ret[#ret + 1] = { "  " .. item.breadcrumb, "WhichKeySeparator" }
+				end
 				return ret
 			end,
 
