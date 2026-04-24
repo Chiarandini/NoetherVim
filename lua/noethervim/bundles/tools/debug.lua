@@ -108,6 +108,65 @@ dap_pickers.variables = function()
 	})
 end
 
+-- ─── Callstack line highlighting ──────────────────────────────────────────
+-- Dim every line on the current stack that isn't the active frame, so the
+-- call chain is visible in-buffer. Redrawn on stop and on frame switches
+-- (after.scopes fires on any frame change); cleared on continue/exit.
+
+local callstack_ns     = vim.api.nvim_create_namespace("noethervim_dap_callstack")
+local callstack_frames = {}
+
+local function callstack_clear_all()
+	for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+		if vim.api.nvim_buf_is_loaded(bufnr) then
+			vim.api.nvim_buf_clear_namespace(bufnr, callstack_ns, 0, -1)
+		end
+	end
+end
+
+local function callstack_current_id()
+	local s = require("dap").session()
+	return s and s.current_frame and s.current_frame.id or nil
+end
+
+local function callstack_draw_in_buf(bufnr, path)
+	vim.api.nvim_buf_clear_namespace(bufnr, callstack_ns, 0, -1)
+	local current_id = callstack_current_id()
+	for _, fr in ipairs(callstack_frames) do
+		local fr_path = fr.source and fr.source.path
+		if fr_path == path and fr.line and fr.id ~= current_id then
+			pcall(vim.api.nvim_buf_set_extmark, bufnr, callstack_ns, fr.line - 1, 0, {
+				line_hl_group = "DapCallStackFrame",
+				priority      = 10,
+			})
+		end
+	end
+end
+
+local function callstack_redraw()
+	callstack_clear_all()
+	local by_path = {}
+	for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+		if vim.api.nvim_buf_is_loaded(bufnr) then
+			local name = vim.api.nvim_buf_get_name(bufnr)
+			if name ~= "" then by_path[name] = bufnr end
+		end
+	end
+	local current_id = callstack_current_id()
+	for _, fr in ipairs(callstack_frames) do
+		local fr_path = fr.source and fr.source.path
+		if fr_path and fr.line and fr.id ~= current_id then
+			local bufnr = by_path[fr_path]
+			if bufnr then
+				pcall(vim.api.nvim_buf_set_extmark, bufnr, callstack_ns, fr.line - 1, 0, {
+					line_hl_group = "DapCallStackFrame",
+					priority      = 10,
+				})
+			end
+		end
+	end
+end
+
 ---List the current call stack; jump to the selected frame.
 dap_pickers.frames = function()
 	local session = require("dap").session()
@@ -234,16 +293,36 @@ return {
 			local dapui = require("dapui")
 			local ic    = require("noethervim.util.icons")
 
-			-- Define a highlight for the line the debugger is currently stopped on.
-			-- Linked to Visual so it tracks the active colorscheme, and re-applied on
-			-- ColorScheme events so theme switches don't blank it out.
-			local function apply_dap_stopped_line()
-				vim.api.nvim_set_hl(0, "DapStoppedLine", { link = "Visual", default = true })
+			-- Highlights for the active stopped line (Visual-bright) and for
+			-- ancestor callstack frames. The ancestor bg is derived by blending
+			-- Normal toward Visual so it sits between "ignore" and "active stop",
+			-- and stays distinct from CursorLine when the cursor lands on it.
+			-- Re-applied on ColorScheme so theme switches refresh the blend.
+			local function hl_bg(name)
+				local ok, hl = pcall(vim.api.nvim_get_hl, 0, { name = name, link = false })
+				if ok and hl and hl.bg then return hl.bg end
 			end
-			apply_dap_stopped_line()
+			local function blend(base, mix, alpha)
+				local r1, g1, b1 = math.floor(base / 65536) % 256, math.floor(base / 256) % 256, base % 256
+				local r2, g2, b2 = math.floor(mix  / 65536) % 256, math.floor(mix  / 256) % 256, mix  % 256
+				return string.format("#%02x%02x%02x",
+					math.floor(r1 + (r2 - r1) * alpha + 0.5),
+					math.floor(g1 + (g2 - g1) * alpha + 0.5),
+					math.floor(b1 + (b2 - b1) * alpha + 0.5))
+			end
+			local function apply_dap_highlights()
+				vim.api.nvim_set_hl(0, "DapStoppedLine", { link = "Visual", default = true })
+				local nbg, vbg = hl_bg("Normal"), hl_bg("Visual")
+				if nbg and vbg then
+					vim.api.nvim_set_hl(0, "DapCallStackFrame", { bg = blend(nbg, vbg, 0.30), default = true })
+				else
+					vim.api.nvim_set_hl(0, "DapCallStackFrame", { link = "CursorLine", default = true })
+				end
+			end
+			apply_dap_highlights()
 			vim.api.nvim_create_autocmd("ColorScheme", {
 				group    = vim.api.nvim_create_augroup("noethervim_dap_highlights", { clear = true }),
-				callback = apply_dap_stopped_line,
+				callback = apply_dap_highlights,
 			})
 
 			-- texthl uses DiagnosticSign* (not Diagnostic*) so colorscheme
@@ -269,6 +348,36 @@ return {
 			dap.listeners.after.event_initialized["dapui_config"] = function() dapui.open({}) end
 			dap.listeners.before.event_terminated["dapui_config"] = function() dapui.close({}) end
 			dap.listeners.before.event_exited["dapui_config"]     = function() dapui.close({}) end
+
+			-- Callstack ghost highlights: fetch the stack on stop, redraw on
+			-- frame switches (after.scopes fires whenever current_frame moves),
+			-- clear on continue/exit, and paint newly-opened files mid-session.
+			dap.listeners.after.event_stopped["noethervim_callstack"] = function(session, body)
+				local tid = (body and body.threadId) or session.stopped_thread_id
+				if not tid then return end
+				session:request("stackTrace", { threadId = tid }, function(err, resp)
+					if err or not resp then return end
+					callstack_frames = resp.stackFrames or {}
+					vim.schedule(callstack_redraw)
+				end)
+			end
+			dap.listeners.after.scopes["noethervim_callstack"] = function()
+				if #callstack_frames > 0 then vim.schedule(callstack_redraw) end
+			end
+			for _, ev in ipairs({ "event_continued", "event_terminated", "event_exited" }) do
+				dap.listeners.before[ev]["noethervim_callstack"] = function()
+					callstack_frames = {}
+					vim.schedule(callstack_clear_all)
+				end
+			end
+			vim.api.nvim_create_autocmd("BufReadPost", {
+				group    = vim.api.nvim_create_augroup("noethervim_dap_callstack_bufload", { clear = true }),
+				callback = function(args)
+					if #callstack_frames == 0 then return end
+					local path = vim.api.nvim_buf_get_name(args.buf)
+					if path ~= "" then callstack_draw_in_buf(args.buf, path) end
+				end,
+			})
 
 			dap.configurations = {
 				go = {
