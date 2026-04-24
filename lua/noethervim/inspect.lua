@@ -362,11 +362,15 @@ local function locate_in_buffer(lhs)
   end
 
   -- Pass 3: bare multi-char match in strong keymap-defining context.
+  -- Includes vimscript `:nmap`/`:map`-style lines so we can pinpoint
+  -- toggles.lua's `nmap [<Space> <Plug>(nv-blank-up)` registrations
+  -- where the lhs is unquoted.
   for i, line in ipairs(lines) do
     if not is_comment(line) then
       local strong = line:find("vim%.keymap%.set")
                   or line:find("vim%.api%.nvim_set_keymap")
                   or line:find("keys%s*=%s*{")
+                  or line:match("^%s*[vnxsoic]?n?o?r?e?map[!]?%s")
                   or line:find("[%s^]toggle%s*%(")
                   or line:find("[%s^]map%s*%(")
       if strong then
@@ -427,6 +431,20 @@ local function scan_project_for(lhs)
   local forms = registry.source_forms(lhs)
   local canon_forms = {}
   for _, f in ipairs(forms) do canon_forms[#canon_forms + 1] = registry.canon(f) end
+
+  --- Strong context = a line that obviously hosts a keymap registration.
+  --- Used for bare (unquoted) matches so we do not pick up the lhs as
+  --- a substring of a docstring or unrelated string.
+  local function is_strong(line)
+    return line:find("vim%.keymap%.set")
+        or line:find("vim%.api%.nvim_set_keymap")
+        or line:find("keys%s*=%s*{")
+        or line:match("^%s*[vnxsoic]?n?o?r?e?map[!]?%s")
+        or line:find("[%s^]toggle%s*%(")
+        or line:find("[%s^]map%s*%(")
+  end
+
+  -- Pass 1: quoted form anywhere non-comment.
   for _, path in ipairs(project_files()) do
     local ok, lines = pcall(vim.fn.readfile, path)
     if ok then
@@ -444,6 +462,25 @@ local function scan_project_for(lhs)
       end
     end
   end
+
+  -- Pass 2: bare match in strong context (catches vimscript `:nmap`
+  -- style lines and other unquoted keymap definitions).
+  for _, path in ipairs(project_files()) do
+    local ok, lines = pcall(vim.fn.readfile, path)
+    if ok then
+      for _, line in ipairs(lines) do
+        if not line:match("^%s*%-%-") and is_strong(line) then
+          local cline = registry.canon(line)
+          for idx, cf in ipairs(canon_forms) do
+            if #forms[idx] > 2 and cf ~= "" and cline:find(cf, 1, true) then
+              return path
+            end
+          end
+        end
+      end
+    end
+  end
+
   return nil
 end
 
