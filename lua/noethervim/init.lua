@@ -78,6 +78,13 @@ function M.setup(opts)
                     and not vim.g.noethervim_no_user
   M._user_loaded = load_user
 
+  -- Setup-time keymap source registry: wraps vim.keymap.set so every
+  -- imperative registration records file+line for the inspect picker and
+  -- the guide jumper. Uninstalled at the end of setup() so user-time
+  -- calls hit the stock function.
+  local keymap_registry = require("noethervim.util.keymap_registry")
+  keymap_registry.install()
+
   --- Attempt to load a user override module.  Silent no-op if the file
   --- doesn't exist.  Tracks successfully loaded modules for health/status.
   local function user(mod)
@@ -183,6 +190,12 @@ function M.setup(opts)
 
   -- ── Inspection & comparison commands ───────────────────────────
   require("noethervim.inspect").setup()
+
+  -- ── Release the keymap.set wrapper ─────────────────────────────
+  -- All setup-scope keymaps have now been registered. User-time
+  -- vim.keymap.set calls (ftplugin, post-load plugin configs,
+  -- interactive :lua) run against the stock function.
+  keymap_registry.uninstall()
 
   -- ── Helptags ───────────────────────────────────────────────────
   -- lazy.nvim generates helptags for plugins it manages, but in dev

@@ -140,13 +140,28 @@ function M.keymap_sources()
     files[#files + 1] = entry.path
   end
 
+  -- Build the set of plugin names lazy knows about. We scan spec files
+  -- for exactly these names (as quoted strings), which handles both the
+  -- common `"user/repo"` form and dev specs like `"KeyboardMode.nvim"`
+  -- that do not carry a slash.
+  local plugin_names = {}
+  local ok_cfg_pre, lazy_cfg_pre = pcall(require, "lazy.core.config")
+  if ok_cfg_pre and lazy_cfg_pre.plugins then
+    for name, _ in pairs(lazy_cfg_pre.plugins) do
+      plugin_names[name] = true
+    end
+  end
+
+  -- `plugin_files_all[name]` holds every spec file that mentions the
+  -- plugin, in scan order (distro first, then user plugins, then
+  -- bundles). The legacy `plugin_files[name]` keeps only the first hit
+  -- for backwards-compat; attribution below consults the full list to
+  -- pick the file that actually contains each specific lhs.
+  local plugin_files_all = {}
   for _, filepath in ipairs(files) do
-    -- Track brace depth to skip `dependencies = { ... }` blocks.
-    -- e.g. plenary.nvim may appear as a dependency of several plugin specs;
-    -- without skipping, the first spec encountered would claim plenary's
-    -- handler keys.
     local deps_depth = nil
     local depth = 0
+    local seen_in_file = {}
     for _, line in ipairs(vim.fn.readfile(filepath)) do
       if line:find("dependencies") and line:find("{") then
         deps_depth = depth
@@ -158,13 +173,54 @@ function M.keymap_sources()
         deps_depth = nil
       end
       if not deps_depth then
-        for repo in line:gmatch('"[%w_%-]+/([%w_%-%.]+)"') do
-          if not plugin_files[repo] then
-            plugin_files[repo] = filepath
+        -- Any quoted string on this line that matches a known plugin name.
+        for token in line:gmatch('"([^"]+)"') do
+          local tail = token:match("([^/]+)$") or token
+          local name = plugin_names[token] and token
+                    or plugin_names[tail] and tail
+          if name then
+            if not plugin_files[name] then plugin_files[name] = filepath end
+            if not seen_in_file[name] then
+              seen_in_file[name] = true
+              plugin_files_all[name] = plugin_files_all[name] or {}
+              plugin_files_all[name][#plugin_files_all[name] + 1] = filepath
+            end
           end
         end
       end
     end
+  end
+
+  -- File-content cache for attribution-by-lhs.
+  local _content = {}
+  local function content_of(path)
+    if _content[path] == nil then
+      local ok, lines = pcall(vim.fn.readfile, path)
+      _content[path] = ok and table.concat(lines, "\n") or ""
+    end
+    return _content[path]
+  end
+
+  local registry = require("noethervim.util.keymap_registry")
+
+  --- Pick the file from `candidates` that actually mentions a source
+  --- form of `lhs`; falls back to the first candidate if none match.
+  local function pick_file_for_lhs(candidates, lhs)
+    if not candidates or #candidates == 0 then return nil end
+    if #candidates == 1 then return candidates[1] end
+    local forms = registry.source_forms(lhs)
+    for _, file in ipairs(candidates) do
+      local c = registry.canon(content_of(file))
+      for _, f in ipairs(forms) do
+        local cf = registry.canon(f)
+        if cf ~= ""
+           and (c:find('"' .. cf .. '"', 1, true)
+                or c:find("'" .. cf .. "'", 1, true)) then
+          return file
+        end
+      end
+    end
+    return candidates[1]
   end
 
   -- Iterate over each plugin's own key handlers to get the defining
@@ -173,11 +229,11 @@ function M.keymap_sources()
   local ok_cfg, lazy_cfg = pcall(require, "lazy.core.config")
   if ok_cfg and lazy_cfg.plugins then
     for name, plugin in pairs(lazy_cfg.plugins) do
-      local file = plugin_files[name]
+      local candidates = plugin_files_all[name]
       local keys = plugin._ and plugin._.handlers and plugin._.handlers.keys
       if keys then
         for id in pairs(keys) do
-          -- Handler ids are resolved terminal codes.  Convert back to
+          -- Handler ids are resolved terminal codes. Convert back to
           -- the notation nvim_get_keymap uses (keytrans, but with
           -- literal space instead of <Space>).
           local base, mode_suffix = id:match("^(.+) %(([^,)]+)%)$")
@@ -188,9 +244,8 @@ function M.keymap_sources()
           local lhs = vim.fn.keytrans(base):gsub("<Space>", " ")
           local key = mode_suffix .. "|" .. lhs
           managed[key] = true
-          if file then
-            sources[key] = file
-          end
+          local file = pick_file_for_lhs(candidates, lhs)
+          if file then sources[key] = file end
         end
       end
     end
