@@ -155,6 +155,33 @@ so any value you set overwrites the distro default: >lua
     vim.o.scrolloff = 8         -- default: 4
     vim.o.autochdir = true      -- default: false
 <
+Notable non-default choices: ~
+
+  `swapfile` is OFF; `undofile` is ON.  NoetherVim favours persistent
+  undo over swap-based crash recovery; in the author's experience,
+  swap's "file changed on disk" prompts produced more false positives
+  than they prevented lost work.  Your mileage may differ — if you
+  want swap back (e.g. on flaky SSH / VM sessions), set
+  `vim.o.swapfile = true` in `user/options.lua`.
+
+  `autowrite` ON, `autowriteall` OFF, `autoread` ON.  Buffer-switch
+  commands (`:next`, `:make`, `<C-^>`, `:buffer`) auto-save unsaved
+  edits; reload commands (`:e`) do not — running `:e` on a modified
+  buffer errors with `E37: No write since last change`.
+
+  The `autowriteall=false` guard prevents a specific data-loss
+  scenario: if a buffer is modified while an external process also
+  edits the file on disk, `autowriteall=true` would silently write
+  the stale buffer first when you `:e` — overwriting the external
+  changes, then reloading the result — destroying the external edits
+  with no warning.  With `autowriteall=false`, `:e` errors instead,
+  forcing an explicit choice (`:e!` discards buffer edits; `:w!`
+  overwrites disk).  Treat `:e` as "load file into buffer," not
+  "reload regardless of state."
+
+  Flip with `vim.o.autowriteall = true` in `user/options.lua` if you
+  prefer the classic "save everything automatically" behaviour.
+
 See `noethervim/options.lua` for all defaults.
 
 ------------------------------------------------------------------------------
@@ -200,6 +227,40 @@ To override a core autocmd, clear its augroup first: >lua
     vim.api.nvim_create_augroup("noethervim_q_close", { clear = true })
     -- Then re-create with your preferred list
 <
+                                                 *noethervim-filetype-profiles*
+Filetype profiles (prose and code): ~
+
+NoetherVim applies two FileType autocmds that layer opinionated
+settings on top of the globals:
+
+    `noethervim_prose`  Matches: tex, markdown, norg, text, gitcommit,
+                      rst, typst.  Sets `wrap`, `linebreak`, `spell`,
+                      `conceallevel = 2`, appends `t` to `formatoptions`
+                      (auto-wrap at textwidth), and hides list chars.
+                      Also binds `<C-l>` in insert mode for spell-fix.
+    `noethervim_code`   Matches: every filetype NOT in the prose list,
+                      structured-text set (json, jsonc, yaml, toml),
+                      or special-buffer set (help, qf, oil, terminal,
+                      snacks_dashboard, lazy, mason, checkhealth,
+                      notify, Trouble, dap / dapui_*).  Sets `list` on
+                      so trailing whitespace and tabs are visible.
+                      `formatoptions` omits `t` globally, so typing past
+                      textwidth in code does NOT auto-break mid-line —
+                      formatters handle line length instead.
+
+FileType autocmds fire AFTER `ftplugin/*.lua`, so these profiles win
+over same-named ftplugin settings.  To specialize a filetype:
+
+  - To drop it from the code profile, add it to `non_code_filetypes`
+    via your own autocmd in `lua/user/autocmds.lua`.
+  - To override the whole profile, clear the augroup and re-create:
+>lua
+    vim.api.nvim_create_augroup("noethervim_prose", { clear = true })
+    -- then register your own FileType autocmd
+<
+The global `wrap` default is OFF; the prose profile re-enables it for
+prose filetypes.  Global `list` is OFF; the code profile re-enables it
+for code filetypes.  Listchars are styled in `noethervim/options.lua`.
 
 ------------------------------------------------------------------------------
 4.5 HIGHLIGHTS                                    *noethervim-user-highlights*
@@ -586,8 +647,8 @@ Prefixes: ~
                       Configurable via |g:mapsearchleader|.
                                                         *noethervim-leader*
     `<Leader>` (\)      Global actions
-                      f(ormat)  h(unk)  d(ebug)  R(EPL)  r(efactor)
-                      m(inimap)  b(ox)  a(i)  z(en)
+                      y/Y/p/P (clipboard)  f(ormat)  h(unk)  d(ebug)
+                      R(EPL)  r(efactor)  m(inimap)  b(ox)  a(i)  z(en)
                                                         *noethervim-localleader*
     `<LocalLeader>` (,) Filetype-specific actions
                       LaTeX: vimtex commands, image paste
@@ -636,21 +697,15 @@ Other notable keymaps: ~
     `;`               Command-line (replaces :)
     `n` / `N`         Consistent search direction
     `-`               Highlight word under cursor + count
-    `L`               Hover docs (LSP)
-
-    Note: `L` is mapped to fold-peek (via nvim-ufo), which falls back
-    to LSP hover when the cursor is not on a fold.  If you prefer the
-    traditional Vim `K` for hover, add to `lua/user/keymaps.lua`:
->lua
-    vim.keymap.set('n', 'K', function()
-      vim.lsp.buf.hover({ border = 'rounded', max_width = 80 })
-    end, { desc = 'hover docs' })
-<
+    `L`               Fold-peek (nvim-ufo); falls through to the default
+                      L motion (jump to last visible line) when not on
+                      a closed fold.  LSP hover lives on `K` (Neovim
+                      built-in when an LSP is attached).
     `<F2>`            Rename (with count, LSP)
 
     Visual: ~
-    `Y`               Yank to clipboard
-    `P`               Paste from clipboard
+    `Y`               Yank selection to clipboard
+    `P`               Paste clipboard (keep registers)
     `p`               Paste over (keep register)
     `il`              Inner-line text object
     `<Down>` / `<Up>` Move block
@@ -670,14 +725,15 @@ Shadowed defaults: ~
     These core keymaps replace standard Vim behavior. The original
     functionality is available through the alternatives listed.
 
-    `J`             Scroll down visual line
-                    (default: join lines — use `gJ` or visual `K`)
-    `K`             Scroll up visual line
-                    (default: keyword lookup — use `L` for LSP hover)
     `s`             Substitute without register
                     (default: same as `cl`)
     `S`             Global `:%s/` replace
                     (default: same as `cc`)
+    `;`             Command-line (replaces `:`)
+                    (default: repeat last f/F/t/T motion)
+    `n` / `N`       Always forward / always backward
+                    (default: next / prev in search direction — after
+                    `?pat`, default `n` goes up)
     `|`             Vertical split tmp
                     (default: go to screen column)
     `_`             Horizontal split tmp
@@ -687,6 +743,16 @@ Shadowed defaults: ~
     `<C-w><C-q>`    Open quickfix
                     (default: close window -- use `<C-w>q` or `:q`)
     `<C-w>Q`        Toggle Trouble diagnostics panel
+
+                                                    *noethervim-semicolon*
+    Note on `;`: this is a keystroke-economy pick, not a universal win.
+    If you lean on `f{char}` / `t{char}` motions with `;` / `,` to repeat
+    them, revert in `lua/user/keymaps.lua`:
+>lua
+    vim.keymap.set({ "n", "v" }, ";", ";", { desc = "repeat f/t motion" })
+<
+    If you don't reach for `;` / `,` repeat often, give the swap a week.
+    The cmdline becomes a one-key hop and the habit sticks fast.
 
 ------------------------------------------------------------------------------
 9.1 FILETYPE KEYMAPS                                   *noethervim-ftplugin*
@@ -1020,6 +1086,28 @@ A: NoetherVim uses nvim-lint alongside conform.nvim. Most linting is
       opts = { linters_by_ft = { sh = { "shellcheck" }, yaml = { "yamllint" } } } }
 <
 
+Q: How do I install a formatter or debugger?~
+A: Both are managed by Mason, the same as LSP servers. Use `:Mason`
+   to browse and install interactively. Formatters referenced by
+   conform are installed automatically:
+>lua
+    { "stevearc/conform.nvim",
+      opts = { formatters_by_ft = { sh = { "shfmt" } } } }
+<
+   For debuggers, enable the `debug` bundle and install the adapter
+   via `:Mason`.
+
+Q: Does NoetherVim format on save?~
+A: No — auto-formatting is deliberately off. Use `<Leader>ff` for
+   explicit formatting (conform.nvim with LSP fallback). To opt into
+   save-time formatting, override conform in `user/plugins/`:
+>lua
+    { "stevearc/conform.nvim",
+      opts = {
+        format_on_save = { timeout_ms = 500, lsp_format = "fallback" },
+      } }
+<
+
 Q: How do I change a picker keymap?~
 A: NoetherVim uses snacks.picker as the core UI. Picker keymaps live in
    bundles (e.g. `bundles/languages/latex.lua`) or core plugin files
@@ -1049,6 +1137,63 @@ A: Use `cond = false` (or `enabled = false`) in your `user/plugins/` spec:
 
    Alternatively, comment out the bundle's `import` line in your init.lua
    to disable the entire bundle.
+
+Q: Why doesn't `p` paste from my system clipboard?~
+A: By design.  NoetherVim keeps `y` and `p` bound to Vim's unnamed
+   register so transient edits (`ddp`, `xp`, `ciwp`) don't churn the
+   OS clipboard.  Reach for an explicit bridge when you want the
+   system clipboard:
+>
+    Normal, Visual    <leader>y / <leader>Y   yank (motion / line)
+                      <leader>p / <leader>P   paste (after / before)
+    Visual            Y / P                    shorthand yank / paste
+    Insert            <C-v>                    paste (see caveat)
+    Cmdline           <C-y>                    yank cmdline to clipboard
+                      <C-r>*                   insert clipboard (built-in)
+    Any mode          "*y  / "*p               unmapped register access
+<
+   To opt into the "everything through OS clipboard" default,
+   override in `lua/user/options.lua`:
+>lua
+    vim.o.clipboard = "unnamedplus"
+<
+   Caveat: insert `<C-v>` shadows Vim's "insert next char literally"
+   default.  Substitutes:
+     - `<C-q>` — literal-insert in most terminals
+     - `<C-r>+` — insert clipboard register literally
+     - cmdline `<C-v>{char}` is unshadowed; pairs well with `:verbose`
+       when introspecting keymaps that contain literal control
+       sequences
+
+Q: How do I change the default colorscheme?~
+A: Set `opts.colorscheme` on the NoetherVim spec in your `init.lua`:
+>lua
+    { "Chiarandini/NoetherVim", opts = { colorscheme = "tokyonight" } }
+<
+   When the `colorscheme` bundle is enabled, your SearchLeader+C pick
+   is persisted and takes priority over opts.colorscheme on subsequent
+   launches.  To reset the saved pick, delete
+   `stdpath("data") .. "/noethervim_colorscheme"`.
+
+Q: Why is spell check on in markdown / tex / gitcommit files?~
+A: Prose filetypes (tex, markdown, norg, text, gitcommit, rst, typst)
+   get a "prose profile" that enables wrap, linebreak, spell, and
+   `conceallevel = 2`.  See |noethervim-filetype-profiles| for the
+   full picture.  Toggle spell per buffer with `[os` / `]os`.  To
+   disable the profile entirely, clear the augroup in
+   `lua/user/autocmds.lua`:
+>lua
+    vim.api.nvim_create_augroup("noethervim_prose", { clear = true })
+<
+
+Q: How do I restore my last session?~
+A: Sessions auto-save per working directory via persistence.nvim.
+   From the dashboard, press `r`.  From anywhere else:
+>vim
+    :lua require("persistence").load({ last = true })
+<
+   Omit `{ last = true }` to load the session for the current CWD
+   instead of the most recent one.
 
 Q: I typed `:NeotherVim` and it worked?~
 A: Yes. Years of typing `neo-` will do that. The alias is there so you

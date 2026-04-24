@@ -28,14 +28,27 @@ opt.autoread     = true
 opt.swapfile     = false
 
 -- Text layout
-opt.textwidth     = 90
-opt.wrap          = true
+-- wrap is OFF globally; the prose profile (autocmds.lua) re-enables it
+-- for prose filetypes.  The breakindent / linebreak / showbreak settings
+-- only take effect when wrap is on, so they're harmless here and active
+-- in prose buffers.
+opt.textwidth     = 100
+opt.wrap          = false
 opt.breakindent   = true
 opt.linebreak     = true
 vim.opt.breakindentopt = "sbr,min:0,shift:1"
 vim.opt.showbreak  = "↳"
--- formatoptions flags:
---   t  auto-wrap text using textwidth
+
+-- listchars: makes `list = true` (set by the code profile in autocmds.lua)
+-- readable.  tab shows as arrow, trailing whitespace as middle dot.
+vim.opt.listchars = {
+  tab      = "→ ",
+  trail    = "·",
+  nbsp     = "␣",
+  extends  = "›",
+  precedes = "‹",
+}
+-- formatoptions flags (global; prose profile re-adds `t` for prose):
 --   c  auto-wrap comments using textwidth
 --   r  continue comment leader after <Enter>
 --   o  continue comment leader after o/O
@@ -43,7 +56,9 @@ vim.opt.showbreak  = "↳"
 --   1  don't break line after a one-letter word
 --   j  remove comment leader when joining lines
 --   n  recognize numbered lists (uses formatlistpat)
-opt.formatoptions  = "tcroq1jn"
+-- `t` (auto-wrap text) is deliberately omitted globally so code files
+-- don't get broken mid-line while typing — formatters handle it.
+opt.formatoptions  = "croq1jn"
 
 -- Diff
 vim.opt.diffopt:append("vertical")

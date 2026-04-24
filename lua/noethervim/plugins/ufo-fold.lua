@@ -1,9 +1,10 @@
 -- NoetherVim plugin: Enhanced Folding (UFO)
 -- Enhanced folding via nvim-ufo (LSP > treesitter > indent fallback).
--- L peeks folded lines or falls back to LSP hover.
+-- L peeks folded lines; when not on a fold, falls through to the default
+-- L motion (jump to last visible line).
 -- zr/zm open/close folds by kind; zR/zM open/close all.
 
-local function peekOrHover()
+local function peekOrDefault()
     local winid = require('ufo').peekFoldedLinesUnderCursor()
     if winid then
         local bufnr = vim.api.nvim_win_get_buf(winid)
@@ -12,7 +13,7 @@ local function peekOrHover()
             vim.keymap.set('n', k, '<CR>' .. k, {noremap = false, buf = bufnr})
         end
     else
-        vim.lsp.buf.hover()
+        vim.cmd("normal! L")   -- default L: jump to last visible line
     end
 end
 
@@ -25,7 +26,7 @@ return {
 			{'zm', function() require('ufo').closeFoldsWith() end},
 			{'zR', function() require('ufo').openAllFolds() end},
 			{'zM', function() require('ufo').closeAllFolds() end},
-			{'L', peekOrHover},
+			{'L', peekOrDefault},
 		},
 		dependencies = "kevinhwang91/promise-async",
 		event = "BufReadPost",

@@ -161,16 +161,60 @@ hl_event("HeirlinePDFModeOn",    function()
 end)
 
 -- ──────────────────────────────────────────────────────────────
---  Spelling for prose filetypes (enable spell + <C-l> quick-fix)
+--  Filetype profiles: prose and code
 -- ──────────────────────────────────────────────────────────────
+-- Prose buffers (tex, markdown, norg, ...) get wrap + linebreak +
+-- spell + conceallevel=2; list chars are hidden.  Code buffers get
+-- whitespace visibility (list chars).  Structured-text (json, yaml,
+-- toml) and special buffers (help, qf, oil, terminal, dashboard, ...)
+-- are left alone — their own ftplugins / buffer settings take over.
+--
+-- FileType autocmds fire AFTER ftplugin files, so these profiles win
+-- over any same-named setting in ftplugin/*.lua.  To specialize a
+-- filetype, either add it to `non_code_filetypes` below or clear the
+-- augroup from `lua/user/autocmds.lua` and re-create with your own.
+
+local prose_filetypes = {
+  tex = true, markdown = true, norg = true, text = true,
+  gitcommit = true, rst = true, typst = true,
+}
+
+local non_code_filetypes = {
+  -- structured-text: ambiguous, leave untouched
+  json = true, jsonc = true, yaml = true, toml = true,
+  -- non-editable / special buffers
+  help = true, qf = true, oil = true, terminal = true,
+  snacks_dashboard = true, lazy = true, mason = true,
+  checkhealth = true, notify = true, TelescopePrompt = true,
+  Trouble = true, trouble = true,
+  ["dap-repl"] = true, dapui_scopes = true, dapui_breakpoints = true,
+  dapui_stacks = true, dapui_watches = true, dapui_console = true,
+}
 
 vim.api.nvim_create_autocmd("FileType", {
   group    = vim.api.nvim_create_augroup("noethervim_prose", { clear = true }),
-  pattern  = { "tex", "markdown", "norg", "text", "gitcommit" },
+  pattern  = vim.tbl_keys(prose_filetypes),
   callback = function(ev)
-    vim.opt_local.spell = true
+    vim.opt_local.wrap         = true
+    vim.opt_local.linebreak    = true
+    vim.opt_local.list         = false
+    vim.opt_local.conceallevel = 2
+    vim.opt_local.spell        = true
+    vim.opt_local.formatoptions:append("t")  -- auto-wrap prose at textwidth
     vim.keymap.set("i", "<c-l>", "<c-g>u<Esc>[s1z=`]a<c-g>u",
       { buffer = ev.buf, silent = true, desc = "fix spelling" })
+  end,
+})
+
+vim.api.nvim_create_autocmd("FileType", {
+  group    = vim.api.nvim_create_augroup("noethervim_code", { clear = true }),
+  pattern  = "*",
+  callback = function(ev)
+    local ft = vim.bo[ev.buf].filetype
+    if ft == "" or prose_filetypes[ft] or non_code_filetypes[ft] then
+      return
+    end
+    vim.opt_local.list = true
   end,
 })
 

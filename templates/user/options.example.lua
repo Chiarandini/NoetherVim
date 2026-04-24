@@ -9,9 +9,9 @@
 -- See :help noethervim-user-options for documentation.
 
 -- ── Text layout ──────────────────────────────────────────────────────────────
--- vim.o.textwidth     = 100   -- default: 90
--- vim.o.wrap          = false -- default: true
--- vim.o.formatoptions = "tcq" -- default: "tcroq1jn"
+-- vim.o.textwidth     = 120   -- default: 100
+-- vim.o.wrap          = true  -- default: false (prose profile enables it)
+-- vim.o.formatoptions = "tcq" -- default: "croq1jn" (prose profile adds "t")
 
 -- ── Indentation ──────────────────────────────────────────────────────────────
 -- vim.o.tabstop    = 2  -- default: 4
@@ -27,6 +27,7 @@
 -- vim.o.autochdir = true  -- default: false
 
 -- ── UI ───────────────────────────────────────────────────────────────────────
--- conceallevel is set per-filetype in ftplugin/ (tex=2, markdown=2).
+-- conceallevel = 2 is set per-buffer by the prose profile in
+-- noethervim/autocmds.lua (tex, markdown, norg, rst, typst, ...).
 -- Override globally here if needed:
 -- vim.o.conceallevel = 0

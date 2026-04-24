@@ -24,17 +24,22 @@ vim.keymap.set("i", "<C-=>",   "<C-r>=",     { desc = "expression register" })
 --  Normal mode — general
 -- ──────────────────────────────────────────────────────────────
 
--- Use visual-line movement by default (natural for wrapped text)
-vim.keymap.set("n", "j", "gj", { desc = "visual-line down" })
-vim.keymap.set("n", "k", "gk", { desc = "visual-line up" })
-
--- Large jumps (>5 lines) push to the jumplist so <C-o>/<C-i> work
--- vim.keymap.set("n", "k", "(v:count > 5 ? \"m'\" . v:count : '') . 'gk'", { expr = true })
--- vim.keymap.set("n", "j", "(v:count > 5 ? \"m'\" . v:count : '') . 'gj'", { expr = true })
-
--- Scroll convenience: stay centred vertically
-vim.keymap.set("n", "J", "gj<c-e>", { desc = "scroll down visual line" })
-vim.keymap.set("n", "K", "gk<c-y>", { desc = "scroll up visual line" })
+-- Hybrid j/k: visual-line for small hops (natural under wrap), logical +
+-- jumplist mark for big hops (>5) so <C-o>/<C-i> recover the jump.
+local function vline_move(key)
+  local n = vim.v.count
+  if n > 5 then
+    return "m'" .. n .. key       -- set jump mark, then logical-line move
+  elseif n > 0 then
+    return n .. "g" .. key         -- counted visual-line move
+  else
+    return "g" .. key              -- single visual-line hop
+  end
+end
+vim.keymap.set("n", "j", function() return vline_move("j") end,
+  { expr = true, desc = "visual-line down (jumplist for >5)" })
+vim.keymap.set("n", "k", function() return vline_move("k") end,
+  { expr = true, desc = "visual-line up (jumplist for >5)" })
 
 -- Scroll view without moving cursor
 vim.keymap.set("n", "zv", "zz10<c-e>", { desc = "scroll view down" })
@@ -212,10 +217,6 @@ vim.keymap.set("v", "j", "gj", { desc = "visual-line down" })
 vim.keymap.set("v", "k", "gk", { desc = "visual-line up" })
 vim.keymap.set("v", ";", ":",    { desc = "command-line" })
 
--- Clipboard yank/paste in visual
-vim.keymap.set("v", "Y", '"*y',  { desc = "yank to clipboard" })
-vim.keymap.set("v", "P", '"*p',  { desc = "paste from clipboard" })
-
 -- Paste over selection without polluting unnamed register
 vim.keymap.set("v", "p", '"_dP', { desc = "paste over (keep register)" })
 
@@ -226,6 +227,38 @@ vim.keymap.set("o", "il", ":normal vil<CR>", { desc = "inner line" })
 -- Move block of text (respects indentation)
 vim.keymap.set("v", "<down>", ":m '>+1<CR>gv=gv", { desc = "move block down" })
 vim.keymap.set("v", "<up>",   ":m '<-2<CR>gv=gv", { desc = "move block up" })
+
+-- ──────────────────────────────────────────────────────────────
+--  Clipboard bridges  (unnamed register != system clipboard)
+-- ──────────────────────────────────────────────────────────────
+-- NoetherVim leaves the unnamed register alone so transient edits
+-- (ddp, xp, ciwp, ...) don't pollute the OS clipboard.  Reach for
+-- these explicit bridges when you want the system clipboard:
+--
+--   <leader>y / <leader>Y       yank (motion / line) to clipboard
+--   <leader>p / <leader>P       paste (after / before) from clipboard
+--   visual Y / P                shorthand yank / paste to clipboard
+--   insert <C-v>                paste clipboard (see caveat below)
+--   cmdline <C-y>               yank cmdline text to clipboard
+--   cmdline <C-r>*              insert clipboard (Vim built-in)
+--
+-- Insert <C-v> shadows Vim's "insert next char literally" default.
+-- Substitutes: <C-q> (literal-insert in most terminals), <C-r>+, or
+-- the cmdline where <C-v>{char} is unshadowed (useful with :verbose).
+
+-- Composable operators (operator-pending in normal, acts on selection in visual)
+vim.keymap.set({ "n", "v" }, "<leader>y", '"*y', { desc = "yank to clipboard" })
+vim.keymap.set({ "n", "v" }, "<leader>p", '"*p', { desc = "paste from clipboard" })
+vim.keymap.set({ "n", "v" }, "<leader>P", '"*P', { desc = "paste before from clipboard" })
+vim.keymap.set("n", "<leader>Y", '"*yy', { desc = "yank line to clipboard" })
+
+-- Visual paste variants: keep BOTH the unnamed register and clipboard pristine
+vim.keymap.set("v", "<leader>p", '"_d"*P', { desc = "paste clipboard (keep registers)" })
+vim.keymap.set("v", "<leader>P", '"_d"*P', { desc = "paste clipboard (keep registers)" })
+
+-- Visual quick shortcuts (post-selection)
+vim.keymap.set("v", "Y", '"*y',    { desc = "yank to clipboard" })
+vim.keymap.set("v", "P", '"_d"*P', { desc = "paste clipboard (keep registers)" })
 
 -- ──────────────────────────────────────────────────────────────
 --  Select mode
@@ -245,7 +278,12 @@ vim.keymap.set("s", "<c-a>", "<esc>`>a",  { desc = "jump past selection" })
 -- ──────────────────────────────────────────────────────────────
 
 vim.keymap.set("c", "<C-l>",   '<C-r>=expand("%:p:h")<CR>', { desc = "insert cwd" })
-vim.keymap.set("c", "<c-y>",   '<c-b>let @*="<c-e>"<cr>',  { desc = "yank cmdline to clipboard" })
+vim.keymap.set("c", "<c-y>", function()
+  local text = vim.fn.getcmdline()
+  vim.fn.setreg("*", text)
+  local preview = #text > 60 and (text:sub(1, 57) .. "...") or text
+  vim.notify(preview, vim.log.levels.INFO, { title = "yanked to clipboard" })
+end, { desc = "yank cmdline to clipboard" })
 vim.keymap.set("c", "<m-bs>",  "<c-w>",                    { desc = "delete word" })
 -- Redirect command output to a scratch buffer
 vim.keymap.set("c", "<c-o>",   "<c-b>Redir <c-e>",         { desc = "redirect output to buffer" })

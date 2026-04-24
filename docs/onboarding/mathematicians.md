@@ -346,7 +346,7 @@ Your personal configuration lives in `~/.config/nvim/lua/user/`:
 
 | File | What you put there |
 |---|---|
-| `options.lua` | `vim.o.wrap = true`, `vim.o.tabstop = 4`, and so on |
+| `options.lua` | `vim.o.textwidth = 120`, `vim.o.tabstop = 2`, and so on |
 | `keymaps.lua` | New keymaps or reassignments of distro ones |
 | `autocmds.lua` | Autocommands (`BufWritePre`, `FileType`, etc.) |
 | `highlights.lua` | `vim.api.nvim_set_hl(...)` calls, run after colorscheme |

@@ -1,8 +1,7 @@
 -- NoetherVim ftplugin: markdown
 -- Smart list continuation keymap.
--- spell + <C-l> spell-fix are set by the prose autocmd in autocmds.lua
-
-vim.opt_local.conceallevel = 2     -- render markdown formatting (links, bold, etc.)
+-- wrap / linebreak / spell / conceallevel / <C-l> spell-fix come from
+-- the prose profile in autocmds.lua.
 
 local function shift_enter()
   local row, col = unpack(vim.api.nvim_win_get_cursor(0))
