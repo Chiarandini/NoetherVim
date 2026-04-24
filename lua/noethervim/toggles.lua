@@ -121,7 +121,10 @@ toggle("oG",
   end,
   "deadcolumn (Guide)")
 
-toggle("oL", "<cmd>LspStart<cr>", "<cmd>LspStop<cr>", "lsp")
+-- :LspStart / :LspStop were removed on Nvim 0.12+ (superseded by built-in :Lsp).
+-- Bare :lsp enable resolves to all configs matching current buffer's filetype;
+-- bare :lsp disable resolves to all configs attached to current buffer.
+toggle("oL", "<cmd>lsp enable<cr>", "<cmd>lsp disable<cr>", "lsp")
 
 -- Blink.cmp completion on/off
 vim.g.blink_toggle = true
