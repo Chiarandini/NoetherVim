@@ -15,9 +15,10 @@ CONTENTS                                                  *noethervim-contents*
        4.3 Keymaps ......................... |noethervim-user-keymaps|
        4.4 Autocommands .................... |noethervim-user-autocmds|
        4.5 Highlights ...................... |noethervim-user-highlights|
-       4.6 Plugin overrides ................ |noethervim-user-plugins|
-       4.7 LSP server overrides ............ |noethervim-user-lsp|
-       4.8 Imperative overrides ............ |noethervim-user-overrides|
+       4.6 Bundle data table ............... |noethervim-user-config-data|
+       4.7 Plugin overrides ................ |noethervim-user-plugins|
+       4.8 LSP server overrides ............ |noethervim-user-lsp|
+       4.9 Imperative overrides ............ |noethervim-user-overrides|
     5. Bundles ............................. |noethervim-bundles|
     6. Inspection .......................... |noethervim-inspect|
     7. Comparison .......................... |noethervim-diff|
@@ -128,7 +129,7 @@ the above runs.
 
 >
     ~/.config/nvim/lua/user/
-    |-- config.lua           Data table (vault paths, feature flags)
+    |-- config.lua           Bundle data table  (|noethervim-user-config-data|)
     |-- options.lua          vim.o overrides
     |-- keymaps.lua          Keymap overrides and additions
     |-- autocmds.lua         Autocommand additions
@@ -235,7 +236,49 @@ Common highlight groups to tweak: ~
     `@string`          Treesitter strings
 
 ------------------------------------------------------------------------------
-4.6 PLUGIN OVERRIDES                                *noethervim-user-plugins*
+4.6 BUNDLE DATA TABLE                          *noethervim-user-config-data*
+
+Create `lua/user/config.lua`. It returns a single table of values that
+specific bundles read at runtime — vault paths, feature flags, and other
+identity-shaped settings that would be awkward to plumb through lazy.nvim's
+opts merging. Keys you do not set fall back to the bundle's default; the
+file is optional and missing keys are not an error.
+
+This file is intentionally narrow. It is NOT a general-purpose plugin
+override mechanism — that is |noethervim-user-plugins|. A key only earns a
+spot here if (a) the value is required for the bundle to function,
+(b) reaching the equivalent setting via opts merging would force the user
+to learn upstream plugin internals, and (c) the bundle's audience is
+broader than power users. Otherwise, override via `user/plugins/`. >lua
+    -- lua/user/config.lua
+    return {
+      obsidian_vault               = "~/Documents/MyVault/",
+      blink_conservative_filetypes = { "tex", "latex" },
+      blink_conservative_size_kb   = 500,
+      drop                         = false,
+    }
+<
+Current keys: ~
+    `obsidian_vault`                Path to your Obsidian vault. Read by
+                                  the `obsidian` bundle. Default:
+                                  `~/obsidian/`.
+    `blink_conservative_filetypes`  Filetypes where keyword-triggered
+                                  completion is suppressed. `<C-Space>`
+                                  and LSP trigger characters (e.g. `\`
+                                  in LaTeX) still work. Default:
+                                  `{ "tex", "latex" }`.
+    `blink_conservative_size_kb`    Files larger than this (in KB) also
+                                  get conservative mode, regardless of
+                                  filetype. Default: `500`.
+    `drop`                          Set to `false` to disable the
+                                  seasonal `drop.nvim` animations from
+                                  the `eye-candy` bundle. Default:
+                                  enabled.
+
+See `templates/user/config.example.lua` for the annotated template.
+
+------------------------------------------------------------------------------
+4.7 PLUGIN OVERRIDES                                *noethervim-user-plugins*
 
 Create files in `lua/user/plugins/`. Each file returns a lazy.nvim spec
 table. To override an existing plugin, use the EXACT same repository
@@ -272,7 +315,7 @@ resort.
 See `templates/user/plugins/example.lua` for more examples.
 
 ------------------------------------------------------------------------------
-4.7 LSP SERVER OVERRIDES                                *noethervim-user-lsp*
+4.8 LSP SERVER OVERRIDES                                *noethervim-user-lsp*
 
 Create files in `lua/user/lsp/`. Neovim's `vim.lsp.config()` deep-merges
 when called again for the same server: >lua
@@ -288,7 +331,7 @@ when called again for the same server: >lua
 <
 
 ------------------------------------------------------------------------------
-4.8 IMPERATIVE OVERRIDES                          *noethervim-user-overrides*
+4.9 IMPERATIVE OVERRIDES                          *noethervim-user-overrides*
 
 Create files in `lua/user/overrides/`. These run at the very end of
 `noethervim.setup()`, after everything else has loaded. Use this only
@@ -352,7 +395,6 @@ Available bundles (grouped by category): ~
                      Recommended: also enable the markdown bundle.
                      Configure vault path in lua/user/config.lua.
     `neorg`          .norg wiki / note-taking.
-    `translation`    In-editor translation (Google, Yandex).
 
     terminal/ ~
     `better-term`    Named terminal windows.
@@ -1010,7 +1052,8 @@ A: Use `cond = false` (or `enabled = false`) in your `user/plugins/` spec:
 
 Q: I typed `:NeotherVim` and it worked?~
 A: Yes. Years of typing `neo-` will do that. The alias is there so you
-   don't have to think about it. `:help neothervim` works too. I did consider
+   don't have to think about it. `:help neothervim` and
+   `:checkhealth neothervim` work too. I did consider
    naming the distribution `NeotherVim`, but this felt it would
    inadvertently induce the Mandela-effect forevermore on the
    reading of the name `Noether`.

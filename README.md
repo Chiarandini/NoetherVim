@@ -4,7 +4,7 @@ A Neovim distribution with a minimal abstraction layer. The name is after [Emmy 
 
 LaTeX, BibTeX, and VimTeX get the same level of support as LSP and treesitter. Everything else you'd expect is configured out of the box: completion (blink.cmp), DAP, diagnostics, formatters. Startup is fast by using lazy-loading.
 
-The distro is opinionated, but anything can be overridden through `lua/user/` without forking or editing distro files (see [Configuration](#configuration))
+The distro is opinionated, but anything and everything can be overridden through `lua/user/`; in fact the distro's architecture prioritizes easy overriding (see [Configuration](#configuration))
 
 > [!NOTE]
 > NoetherVim is in **alpha**. The core is stable for daily use, but what counts as a "default" vs. an "overridable" option is still being refined. These choices grew out of my Neovim use and represent my best idea of good, agnostic defaults. If you think there are better choices, [open an issue](https://github.com/Chiarandini/NoetherVim/issues) and we can address it there.
@@ -12,23 +12,19 @@ The distro is opinionated, but anything can be overridden through `lua/user/` wi
 
 ## Why another distribution?
 
-Existing Neovim distributions introduce their own abstraction layers: framework APIs,
+Many Existing Neovim distributions introduce their own abstraction layers: framework APIs,
 custom event systems, declarative config DSLs, etc. These are powerful, but they sit
 between you and Neovim; your configuration ends up targeting the distribution, not the
-editor.
+editor. I wanted an experience that is closer to Neovim's philosophy.
 
-NoetherVim takes a different approach: plugin specs are standard lazy.nvim, options are
+In NoetherVim, plugin specs are standard lazy.nvim, options are
 `vim.o`, keymaps are `vim.keymap.set()`, and so forth. Overriding a default means writing
 the same Lua you would write in a vanilla Neovim config, and the distro just makes sure
 your file loads after its own.
 
-Neovim 0.12 ships a built-in package manager (`vim.pack`), but NoetherVim stays on
-lazy.nvim because the override model (deep-merged `opts`, auto-imported bundle
-directories, lazy-loading via `event`/`keys`/`cmd`/`ft`) depends on its spec system -
-`vim.pack` is a plain installer and doesn't provide that layer.
-
 The same principle applies to keybindings. Keymaps build on Vim's own prefix conventions
-rather than funneling everything through `<Leader>` subgroups: `<C-w>` for anything
+rather than funneling everything through `<Leader>` subgroups (though you can choose to
+funnel everything through a single prefix): `<C-w>` for anything
 window-related (panels, terminal, undo tree), `[`/`]` for directional navigation,
 `[o`/`]o` for option toggles, `g` for goto and LSP actions. `<Leader>` and `<LocalLeader>`
 stay separate (global actions vs. filetype-specific), following `:help maplocalleader`.
@@ -36,9 +32,14 @@ Features use Neovim's built-in APIs directly (`vim.lsp.config()`, `vim.diagnosti
 `vim.fn.setqflist()`) and where Neovim 0.12 ships good defaults, the distro leaves them
 alone.
 
-Also, after using vim/nvim for ~10 years, my nvim dotfiles have grown to be ~10000 lines of
-code. So this is partly a fun project to convert the core functionality of my personal
-setup into a distribution.
+Neovim 0.12 ships a built-in package manager (`vim.pack`), but NoetherVim stays on
+lazy.nvim because the override model (deep-merged `opts`, auto-imported bundle
+directories, lazy-loading via `event`/`keys`/`cmd`/`ft`) depends on its spec system -
+`vim.pack` is a plain installer and doesn't provide that layer.
+
+There's also a personal reason to build this distro. After using vim/nvim for ~10 years,
+my nvim dotfiles have grown to be ~10k lines of code. So this is partly a fun project to
+convert the core functionality of my personal setup into a distribution.
 
 ## Requirements
 
@@ -112,13 +113,29 @@ On first launch, lazy.nvim bootstraps itself, pulls all plugins, and runs `noeth
 > ```
 > Your existing `~/.config/nvim/` stays untouched. Add `alias nv='NVIM_APPNAME=noethervim nvim'` to your shell profile for convenience.
 
+> [!TIP]
+> **New to Neovim-as-a-distribution, or coming in primarily for LaTeX / Typst work?**
+> See the [onboarding guide for mathematicians](docs/onboarding/mathematicians.md),
+> a walkthrough of the install, the math bundles, snippets, citations, and how to
+> extend the setup.
+
 ### Updating
 
 Run `:Lazy update` inside Neovim. This updates the distro and all plugins.
 
+### Migrating from an existing config
+
+Back up your current `~/.config/nvim/` before installing. NoetherVim replaces `init.lua`, so anything there will be overwritten.
+
+Once you're running, you can bring over your personal settings:
+- **Plugins** - add lazy.nvim specs to `lua/user/plugins/` (see [Configuration](#configuration))
+- **Options/keymaps/autocmds** - check what the distro defaults before re-adding (type
+  `:Noethervim diff keymaps` to checkout the distro's keymaps)
+- **LSP configs** - NoetherVim configures servers through `lua/noethervim/lsp/`; if you had custom server settings, look there first
+
 ### Uninstalling
 
-The following are important files/locations for a Neovim setup:
+Quick crash course: the following are important files/locations for any Neovim setup
 
 | Path | Contents |
 |---|---|
@@ -130,42 +147,31 @@ The following are important files/locations for a Neovim setup:
 
 Everything else under `~/.local/share/nvim/` and `~/.cache/nvim/` is installed or generated by the distro and can be regenerated by relaunching Neovim.
 
-**Reset the distribution, keep personal data.** Wipes installed plugins (lazy.nvim, NoetherVim, everything else), Mason-managed LSP servers and formatters, and all caches. Your `init.lua`, `lua/user/`, and editing state (history, undo, sessions) stay intact. Next launch re-bootstraps and reinstalls everything from scratch.
-
+**To reset the distribution and keep personal data run**
 ```bash
 rm -rf ~/.local/share/nvim ~/.cache/nvim
 ```
+This wipes installed plugins (lazy.nvim, NoetherVim, everything else), Mason-managed LSP servers and formatters, and all caches. Your `init.lua`, `lua/user/`, and editing state (history, undo, sessions) stay intact. Next launch re-bootstraps and reinstalls everything from scratch.
 
-**Reset the distribution and editing state.** Same as above but also drops shada, undo history, sessions, and views. Config is still preserved.
 
+**To reset the distribution and editing state**
 ```bash
 rm -rf ~/.local/share/nvim ~/.local/state/nvim ~/.cache/nvim
 ```
+Same as above but also drops shada, undo history, sessions, and views. Config is still preserved.
 
-**Full uninstall.** Removes the config, data, state, and cache directories. Restore your backup if you made one.
 
+**To fully uninstall**
 ```bash
 rm -rf ~/.config/nvim ~/.local/share/nvim ~/.local/state/nvim ~/.cache/nvim
 ```
+Removes the config, data, state, and cache directories. Restore your backup if you made one.
+
 
 > [!TIP]
 > If you installed with `NVIM_APPNAME=noethervim`, substitute `noethervim` for `nvim` in every path above.
 
-### Migrating from an existing config
 
-Back up your current `~/.config/nvim/` before installing. NoetherVim replaces `init.lua`, so anything there will be overwritten.
-
-Once you're running, you can bring over your personal settings:
-- **Plugins** - add lazy.nvim specs to `lua/user/plugins/` (see [Configuration](#configuration))
-- **Options/keymaps/autocmds** - most of these already have NoetherVim equivalents; check what the distro sets before re-adding
-- **LSP configs** - NoetherVim configures servers through `lua/noethervim/lsp/`; if you had custom server settings, look there first
-
-
-> [!TIP]
-> **New to Neovim-as-a-distribution, or coming in primarily for LaTeX / Typst work?**
-> See the [onboarding guide for mathematicians](docs/onboarding/mathematicians.md),
-> a walkthrough of the install, the math bundles, snippets, citations, and how to
-> extend the setup.
 
 ## Configuration
 
@@ -205,7 +211,7 @@ return {
 }
 ```
 
-See `templates/user/plugins/example.lua` in the installed distro for more patterns.
+See `templates/user/plugins/example.lua` in the installed distro for more patterns, or [`docs/user-config-examples.md`](docs/user-config-examples.md) for drop-in snippets (translation, ...).
 
 ### Overriding options, keymaps, and more
 
@@ -218,9 +224,9 @@ NoetherVim loads user override files after each core module. Create any of these
 | `autocmds.lua` | Autocommands |
 | `highlights.lua` | Highlight groups (runs after colorscheme) |
 | `lsp/<server>.lua` | Per-server LSP settings |
-| `config.lua` | Data table for bundles (vault paths, feature flags) |
+| `config.lua` | Bundle data table — vault paths, feature flags (`:help noethervim-user-config-data`) |
 
-Template files are provided in `templates/user/` in the installed distro - copy the ones you need and uncomment the relevant lines.
+Template files are provided in `templates/user/` in the installed distro - copy the ones you want and uncomment the relevant lines.
 
 For the full override system reference, see `:help noethervim-user-config`.
 
@@ -253,13 +259,12 @@ Bundles are optional feature groups. Enable them in `init.lua` (see [Enabling bu
 | **Navigation & editing** | |
 | `harpoon` | Per-project file marks (harpoon v2) |
 | `flash` | Enhanced `f`/`t` and `/` motions with labels |
-| `projects` | Project switcher via snacks.picker |
+| `projects` | Project switcher  |
 | `editing-extras` | Argument marking (argmark) + decorative ASCII comment boxes |
 | **Writing & notes** | |
 | `markdown` | render-markdown, preview, tables, math, image paste |
 | `obsidian` | Obsidian vault integration (pair with markdown bundle) |
 | `neorg` | `.norg` wiki and note-taking system |
-| `translation` | In-editor translation via pantran.nvim (Google/Yandex) |
 | **Terminal & environment** | |
 | `better-term` | Named/numbered terminal windows |
 | `tmux` | Automatic tmux window naming |
@@ -289,13 +294,11 @@ Bundles are optional feature groups. Enable them in `init.lua` (see [Enabling bu
 | `[` / `]` | Previous / next (diagnostics, hunks, buffers, …) |
 | `[o` / `]o` | Toggle options on / off (wrap, spell, …) |
 
-`q` closes non-editing windows (help, quickfix, Oil, notify, man, …) - this is a core distro convention.
+`q` closes non-editing windows (help, quickfix, Oil, notify, man, …)
 
-**Discovering keymaps:** press any prefix key and wait for which-key to show available actions. Use SearchLeader+fk (default: `<Space>fk`) to search all keymaps by description, or run `:NoetherVim diff keymaps` to see what you've changed.
+**Discovering distro keymaps:** press any prefix key and wait for which-key to show available actions. Use SearchLeader+fk (default: `<Space>ck`) to search all keymaps by description, or run `:NoetherVim diff keymaps` to see what you've changed.
 
 
-> [!NOTE]
-> If muscle memory makes you type `:NeotherVim`, that works too.
 ---
 
 ## Structure
@@ -312,7 +315,7 @@ lua/
 │   │   ├── languages/      ← rust, go, java, python, latex, …
 │   │   ├── tools/          ← debug, test, git, ai, database, …
 │   │   ├── navigation/     ← harpoon, flash, projects, …
-│   │   ├── writing/        ← markdown, obsidian, neorg, translation
+│   │   ├── writing/        ← markdown, obsidian, neorg
 │   │   ├── terminal/       ← better-term, tmux, remote-dev
 │   │   ├── ui/             ← colorscheme, eye-candy, minimap, tableaux, …
 │   │   └── practice/       ← training, dev-tools, presentation, hardtime
@@ -359,3 +362,6 @@ bundle details, and FAQ - run inside Neovim:
 ```
 
 Browse NoetherVim source with `:NoetherVim files`, bundles with `:NoetherVim bundles`, and installed plugins with `:NoetherVim plugins`. When viewing a source file, run `:NoetherVim override` (or SearchLeader+ce) to open the corresponding user override file in a split - the file is created if it doesn't exist.
+
+> [!NOTE]
+> If muscle memory makes you type `:NeotherVim`, that works too.

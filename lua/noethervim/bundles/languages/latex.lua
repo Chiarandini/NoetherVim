@@ -12,7 +12,7 @@
 --   theorem highlighting:       treesitter-based theorem label coloring
 --   For Zotero citations, enable the separate latex-zotero bundle.
 --
--- PDF viewer: NOT set by the distro — configure in lua/user/config.lua or a user plugin:
+-- PDF viewer: NOT set by the distro — set vim.g.vimtex_view_method in lua/user/options.lua:
 --   vim.g.vimtex_view_method = 'skim'   -- or 'zathura', 'sioyek', etc.
 
 
