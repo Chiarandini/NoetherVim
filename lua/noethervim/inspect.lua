@@ -384,9 +384,14 @@ local function locate_in_buffer(lhs, mode)
   pcall(vim.api.nvim_win_set_cursor, 0, { 1, 0 })
 
   local registry = require("noethervim.util.keymap_registry")
-  local forms = registry.source_forms(lhs)
-  local canon_forms = {}
-  for _, f in ipairs(forms) do canon_forms[#canon_forms + 1] = registry.canon(f) end
+  local primary_forms, tail_forms = registry.source_forms_split(lhs)
+  local primary_canon, tail_canon = {}, {}
+  for _, f in ipairs(primary_forms) do primary_canon[#primary_canon + 1] = registry.canon(f) end
+  for _, f in ipairs(tail_forms)    do tail_canon[#tail_canon + 1] = registry.canon(f) end
+  -- Combined view used by the bare-context (pass 3) loop.
+  local forms, canon_forms = {}, {}
+  for _, f in ipairs(primary_forms) do forms[#forms + 1] = f; canon_forms[#canon_forms + 1] = registry.canon(f) end
+  for _, f in ipairs(tail_forms)    do forms[#forms + 1] = f; canon_forms[#canon_forms + 1] = registry.canon(f) end
 
   local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
 
@@ -404,14 +409,26 @@ local function locate_in_buffer(lhs, mode)
   end
 
   -- Pass 1: quoted form in any non-comment, mode-compatible line.
+  -- Primary forms match anywhere; SL-tail forms (`"/"`, `"<Space>"`)
+  -- additionally require a SearchLeader concatenation context on the
+  -- line so they do not false-positive in unrelated string literals.
   for i, line in ipairs(lines) do
     if not is_comment(line) and line_mode_ok(line, mode, lhs) then
       local cline = registry.canon(line)
-      for _, cf in ipairs(canon_forms) do
+      for _, cf in ipairs(primary_canon) do
         if cf ~= ""
            and (cline:find('"' .. cf .. '"', 1, true)
                 or cline:find("'" .. cf .. "'", 1, true)) then
           return jump(i)
+        end
+      end
+      if registry.line_has_sl_context(line) then
+        for _, cf in ipairs(tail_canon) do
+          if cf ~= ""
+             and (cline:find('"' .. cf .. '"', 1, true)
+                  or cline:find("'" .. cf .. "'", 1, true)) then
+            return jump(i)
+          end
         end
       end
     end
@@ -572,9 +589,11 @@ end
 
 local function scan_project_for(lhs, mode)
   local registry = require("noethervim.util.keymap_registry")
-  local forms = registry.source_forms(lhs)
-  local canon_forms = {}
-  for _, f in ipairs(forms) do canon_forms[#canon_forms + 1] = registry.canon(f) end
+  local primary_forms, tail_forms = registry.source_forms_split(lhs)
+  -- Bare needles for pass-2 (multi-char only, strong context).
+  local forms, canon_forms = {}, {}
+  for _, f in ipairs(primary_forms) do forms[#forms + 1] = f; canon_forms[#canon_forms + 1] = registry.canon(f) end
+  for _, f in ipairs(tail_forms)    do forms[#forms + 1] = f; canon_forms[#canon_forms + 1] = registry.canon(f) end
 
   --- Strong context = a line that obviously hosts a keymap registration.
   --- Used for bare (unquoted) matches so we do not pick up the lhs as
@@ -588,17 +607,24 @@ local function scan_project_for(lhs, mode)
         or line:find("[%s^]map%s*%(")
   end
 
-  --- Pre-build the search needles -- quoted forms and bare-multi-char.
-  --- Quoted needles are reliable everywhere; bare needles still need a
-  --- per-line context check (handled in pass 2).
-  local quoted_needles, bare_needles = {}, {}
-  for idx, cf in ipairs(canon_forms) do
+  --- Pre-build search needles. Primary needles match anywhere; SL-tail
+  --- needles only match where the line also has a SearchLeader
+  --- concatenation. Bare needles (multi-char only) still need a strong
+  --- keymap-defining context.
+  local primary_needles, tail_needles, bare_needles = {}, {}, {}
+  for _, f in ipairs(primary_forms) do
+    local cf = registry.canon(f)
     if cf ~= "" then
-      quoted_needles[#quoted_needles + 1] = '"' .. cf .. '"'
-      quoted_needles[#quoted_needles + 1] = "'" .. cf .. "'"
-      if #forms[idx] > 2 then
-        bare_needles[#bare_needles + 1] = cf
-      end
+      primary_needles[#primary_needles + 1] = '"' .. cf .. '"'
+      primary_needles[#primary_needles + 1] = "'" .. cf .. "'"
+      if #f > 2 then bare_needles[#bare_needles + 1] = cf end
+    end
+  end
+  for _, f in ipairs(tail_forms) do
+    local cf = registry.canon(f)
+    if cf ~= "" then
+      tail_needles[#tail_needles + 1] = '"' .. cf .. '"'
+      tail_needles[#tail_needles + 1] = "'" .. cf .. "'"
     end
   end
 
@@ -614,12 +640,18 @@ local function scan_project_for(lhs, mode)
       return line:match("^%s*%-%-") ~= nil
           or (is_vim and line:match('^%s*"') ~= nil)
     end
-    -- Pass 1: quoted needles in any non-comment, mode-compatible line.
+    -- Pass 1: primary quoted needle anywhere; SL-tail needle only on
+    -- lines that also contain a SearchLeader concatenation.
     for _, line in ipairs(lines) do
       if not comment(line) and line_mode_ok(line, mode, lhs) then
         local cline = registry.canon(line)
-        for _, n in ipairs(quoted_needles) do
+        for _, n in ipairs(primary_needles) do
           if cline:find(n, 1, true) then return path end
+        end
+        if #tail_needles > 0 and registry.line_has_sl_context(line) then
+          for _, n in ipairs(tail_needles) do
+            if cline:find(n, 1, true) then return path end
+          end
         end
       end
     end
