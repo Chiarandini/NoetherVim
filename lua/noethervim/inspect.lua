@@ -297,6 +297,74 @@ local function callback_file(callback)
   return src
 end
 
+--- Mode synonyms used so source-attribution tolerates the asymmetric
+--- vim mode model: `:vmap` registers in both Visual and Select, `:xmap`
+--- only Visual, `:smap` only Select. So when looking for an
+--- API-reported `s`-mode keymap, a `vim.keymap.set("v", ...)` line is
+--- a valid source.
+local MODE_GROUPS = {
+  n = { "n" },
+  i = { "i" },
+  c = { "c" },
+  t = { "t" },
+  o = { "o" },
+  v = { "v", "x" },
+  x = { "v", "x" },
+  s = { "v", "s" },
+}
+local VIMSCRIPT_PREFIXES = {
+  n = { "nnoremap", "nmap" },
+  i = { "inoremap", "imap" },
+  v = { "vnoremap", "vmap", "xnoremap", "xmap" },
+  x = { "xnoremap", "xmap", "vnoremap", "vmap" },
+  s = { "snoremap", "smap", "vnoremap", "vmap" },
+  o = { "onoremap", "omap" },
+  c = { "cnoremap", "cmap" },
+  t = { "tnoremap", "tmap" },
+}
+
+--- Does `line` look compatible with `mode` (or be mode-agnostic)?
+--- A line is rejected only when it carries explicit conflicting mode
+--- evidence -- a vimscript prefix in another mode, a `vim.keymap.set`
+--- whose first arg names a different mode, or a `mode = "x"` field
+--- inside a lazy `{ "<lhs>", ..., mode = "x" }` entry.
+local function line_mode_ok(line, mode, lhs)
+  if not mode then return true end
+  -- `<Plug>` mappings are plugin-internal handles that frequently get
+  -- registered in unexpected mode combinations; trying to filter them
+  -- by mode produces false negatives. Skip the mode check entirely.
+  if lhs and lhs:find("<[Pp]lug>", 1, false) then return true end
+  for k, prefixes in pairs(VIMSCRIPT_PREFIXES) do
+    for _, p in ipairs(prefixes) do
+      if line:match("^%s*" .. p .. "%s") or line:match("^%s*" .. p .. "!%s") then
+        return MODE_GROUPS[mode] and vim.tbl_contains(MODE_GROUPS[mode], k)
+      end
+    end
+  end
+  local first = line:match("vim%.keymap%.set%s*%(%s*({[^}]+})")
+  if first then
+    local accept = MODE_GROUPS[mode] or { mode }
+    for _, m in ipairs(accept) do
+      if first:find('"' .. m .. '"', 1, true) or first:find("'" .. m .. "'", 1, true) then
+        return true
+      end
+    end
+    return false
+  end
+  first = line:match("vim%.keymap%.set%s*%(%s*[\"']([^\"']+)[\"']")
+  if first then
+    local accept = MODE_GROUPS[mode] or { mode }
+    return vim.tbl_contains(accept, first)
+  end
+  local mode_attr = line:match('mode%s*=%s*"([^"]+)"')
+                 or line:match("mode%s*=%s*'([^']+)'")
+  if mode_attr then
+    local accept = MODE_GROUPS[mode] or { mode }
+    return vim.tbl_contains(accept, mode_attr)
+  end
+  return true
+end
+
 --- Locate the defining line of `lhs` in the current buffer via a
 --- canon-aware text scan.
 ---
@@ -309,7 +377,10 @@ end
 --- bare multi-char matches in strong keymap-defining contexts. The
 --- cursor is parked on line 1 first for determinism.
 --- Returns the matched line number, or 0 on no match.
-local function locate_in_buffer(lhs)
+--- `mode` is optional: when provided, lines with conflicting mode
+--- evidence are skipped so an `n`-mode `<C-V>` does not land on the
+--- `i`-mode `<C-v>` definition in the same file.
+local function locate_in_buffer(lhs, mode)
   pcall(vim.api.nvim_win_set_cursor, 0, { 1, 0 })
 
   local registry = require("noethervim.util.keymap_registry")
@@ -332,9 +403,9 @@ local function locate_in_buffer(lhs)
     return line_no
   end
 
-  -- Pass 1: quoted form in any non-comment line.
+  -- Pass 1: quoted form in any non-comment, mode-compatible line.
   for i, line in ipairs(lines) do
-    if not is_comment(line) then
+    if not is_comment(line) and line_mode_ok(line, mode, lhs) then
       local cline = registry.canon(line)
       for _, cf in ipairs(canon_forms) do
         if cf ~= ""
@@ -364,9 +435,10 @@ local function locate_in_buffer(lhs)
   -- Pass 3: bare multi-char match in strong keymap-defining context.
   -- Includes vimscript `:nmap`/`:map`-style lines so we can pinpoint
   -- toggles.lua's `nmap [<Space> <Plug>(nv-blank-up)` registrations
-  -- where the lhs is unquoted.
+  -- where the lhs is unquoted. Mode-checked so an `i`-only `nnoremap`
+  -- block does not catch an `n`-mode lookup.
   for i, line in ipairs(lines) do
-    if not is_comment(line) then
+    if not is_comment(line) and line_mode_ok(line, mode, lhs) then
       local strong = line:find("vim%.keymap%.set")
                   or line:find("vim%.api%.nvim_set_keymap")
                   or line:find("keys%s*=%s*{")
@@ -498,7 +570,7 @@ local function _file_canon_text(path)
   return c
 end
 
-local function scan_project_for(lhs)
+local function scan_project_for(lhs, mode)
   local registry = require("noethervim.util.keymap_registry")
   local forms = registry.source_forms(lhs)
   local canon_forms = {}
@@ -530,25 +602,35 @@ local function scan_project_for(lhs)
     end
   end
 
-  --- Try a single file. Pass 1 walks the whole-file canon text for any
-  --- quoted needle (cheap substring scan, no per-line canon). Pass 2
-  --- only runs when pass 1 misses and the lhs is bare-friendly: it
-  --- iterates lines and checks for a strong keymap-defining context.
+  --- Try a single file. We walk lines so the mode filter and the
+  --- per-line context check can both apply. Lines with a clearly
+  --- conflicting mode (e.g. `vim.keymap.set("i", "<C-V>", ...)` when
+  --- searching for an `n`-mode keymap) are skipped.
   local function try(path)
-    local text = _file_canon_text(path)
-    if not text then return nil end
-    for _, n in ipairs(quoted_needles) do
-      if text:find(n, 1, true) then return path end
+    local lines = _file_lines(path)
+    if not lines then return nil end
+    local is_vim = path:match("%.vim$") ~= nil
+    local function comment(line)
+      return line:match("^%s*%-%-") ~= nil
+          or (is_vim and line:match('^%s*"') ~= nil)
     end
+    -- Pass 1: quoted needles in any non-comment, mode-compatible line.
+    for _, line in ipairs(lines) do
+      if not comment(line) and line_mode_ok(line, mode, lhs) then
+        local cline = registry.canon(line)
+        for _, n in ipairs(quoted_needles) do
+          if cline:find(n, 1, true) then return path end
+        end
+      end
+    end
+    -- Pass 2: bare multi-char needle in strong context (mode-checked).
     if #bare_needles > 0 then
-      local lines = _file_lines(path)
-      if lines then
-        for _, line in ipairs(lines) do
-          if is_strong(line) then
-            local cline = registry.canon(line)
-            for _, n in ipairs(bare_needles) do
-              if cline:find(n, 1, true) then return path end
-            end
+      for _, line in ipairs(lines) do
+        if not comment(line) and is_strong(line)
+           and line_mode_ok(line, mode, lhs) then
+          local cline = registry.canon(line)
+          for _, n in ipairs(bare_needles) do
+            if cline:find(n, 1, true) then return path end
           end
         end
       end
@@ -631,8 +713,9 @@ function M.jump_to_keymap(mode, lhs, opts)
 
   -- Final fallback: project-wide text scan. Catches lazy `keys = {...}`
   -- entries in spec files whose plugin name we couldn't resolve and
-  -- rhs-only keymaps with no callback to introspect.
-  local scanned = scan_project_for(lhs)
+  -- rhs-only keymaps with no callback to introspect. Mode-aware so an
+  -- `n`-mode `<C-V>` does not land on the `i`-mode definition.
+  local scanned = scan_project_for(lhs, mode)
   if scanned then
     candidates[#candidates + 1] = { file = scanned, hint = "project scan" }
   end
@@ -645,7 +728,7 @@ function M.jump_to_keymap(mode, lhs, opts)
       if open_file(c.file, c.line) then return end
     elseif open_file(c.file) then
       first_opened = first_opened or { file = c.file, hint = c.hint }
-      if locate_in_buffer(lhs) > 0 then return end
+      if locate_in_buffer(lhs, mode) > 0 then return end
     end
   end
 
@@ -742,20 +825,28 @@ function M.diff_keymaps()
     ::continue::
   end
 
-  -- Refine [CORE] → [USER] using the registry. If the last
-  -- `vim.keymap.set` that touched this key came from a file under
-  -- `lua/user/`, the user owns it. The old needle-scanning fallback is
-  -- unnecessary now: the registry records the authoritative callsite.
+  -- Refine [CORE] → [USER]: a key is user-owned if either the registry
+  -- (imperative `vim.keymap.set` callsite) or the lazy-handler
+  -- attribution (lazy `keys = {...}` spec file) places its definition
+  -- under `lua/user/`. The lazy path matters because user plugin specs
+  -- bypass the setup-time wrapper, so the registry alone misses them.
   local udir_norm = vim.fs.normalize(user_dir())
   local registry = require("noethervim.util.keymap_registry")
   for _, item in ipairs(items) do
     if item.tag == "[CORE]" then
+      local owner_file
       local entry = registry.lookup(item.mode, item.lhs)
       if entry and entry.file
          and vim.startswith(vim.fs.normalize(entry.file), udir_norm) then
+        owner_file = entry.file
+      elseif item.source
+         and vim.startswith(vim.fs.normalize(item.source), udir_norm) then
+        owner_file = item.source
+      end
+      if owner_file then
         item.tag  = "[USER]"
         item.text = "[USER]" .. item.text:sub(7)
-        item.source = entry.file
+        item.source = owner_file
       end
     end
   end
