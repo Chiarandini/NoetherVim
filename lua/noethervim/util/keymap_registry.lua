@@ -252,6 +252,16 @@ function M.source_forms(resolved_lhs)
   if notation ~= resolved_lhs then add(notation) end
   local resolved = vim.api.nvim_replace_termcodes(resolved_lhs, true, true, true)
   if resolved ~= resolved_lhs then add(resolved) end
+  -- Vimscript script-local namespace: `<SNR>42_(name)` is the API form,
+  -- but source files write `<sid>(name)` / `<SID>(name)` -- the script
+  -- number is assigned at runtime so it never appears as a literal. We
+  -- synthesise both spellings of the source form whenever the lhs has a
+  -- resolved SNR prefix.
+  local snr_tail = resolved_lhs:match("^<[Ss][Nn][Rr]>%d+_(.*)$")
+  if snr_tail then
+    add("<sid>" .. snr_tail)
+    add("<SID>" .. snr_tail)
+  end
   -- Bracket-strip (e.g. `[oa` → `oa`) is intentionally NOT added: the
   -- stripped form may be a legitimate distinct keymap. Callers that
   -- want toggle-helper matching should check `toggle(` context and
