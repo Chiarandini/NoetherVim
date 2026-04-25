@@ -281,9 +281,16 @@ function M.source_forms(resolved_lhs)
   end
   if #resolved_sl > 0 and resolved_lhs:sub(1, #resolved_sl) == resolved_sl then
     local tail = resolved_lhs:sub(#resolved_sl + 1)
-    add(tail)
     local tn = vim.fn.keytrans(tail)
-    if tn ~= tail then add(tn) end
+    if tn ~= tail then
+      -- Special-key tail: source canonically writes notation
+      -- (`SearchLeader .. "<space>"`). Skip the bare resolved form --
+      -- a quoted single space `" "` matches countless unrelated icon
+      -- strings and dashboard literals.
+      add(tn)
+    else
+      add(tail)
+    end
   end
 
   -- Synonym expansion.
