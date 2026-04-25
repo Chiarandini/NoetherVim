@@ -121,9 +121,12 @@ local function frame_has_literal(file, line, resolved_lhs)
   end
   if #resolved_sl > 0 and resolved_lhs:sub(1, #resolved_sl) == resolved_sl then
     local tail = resolved_lhs:sub(#resolved_sl + 1)
-    forms[#forms + 1] = tail
     local tn = vim.fn.keytrans(tail)
-    if tn ~= tail then forms[#forms + 1] = tn end
+    if tn ~= tail then
+      forms[#forms + 1] = tn
+    else
+      forms[#forms + 1] = tail
+    end
   end
   -- Expand key-notation synonyms over the forms collected so far.
   local syn = {}
