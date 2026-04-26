@@ -362,6 +362,19 @@ local function line_mode_ok(line, mode, lhs)
     local accept = MODE_GROUPS[mode] or { mode }
     return vim.tbl_contains(accept, mode_attr)
   end
+  -- Table-form lazy `mode = { "n", "v" }`. Accept iff at least one
+  -- listed mode is compatible with the lookup mode.
+  local mode_table = line:match("mode%s*=%s*({[^}]+})")
+  if mode_table then
+    local accept = MODE_GROUPS[mode] or { mode }
+    for entry in mode_table:gmatch('"([^"]+)"') do
+      if vim.tbl_contains(accept, entry) then return true end
+    end
+    for entry in mode_table:gmatch("'([^']+)'") do
+      if vim.tbl_contains(accept, entry) then return true end
+    end
+    return false
+  end
   return true
 end
 
@@ -377,12 +390,165 @@ end
 --- bare multi-char matches in strong keymap-defining contexts. The
 --- cursor is parked on line 1 first for determinism.
 --- Returns the matched line number, or 0 on no match.
+--- Reject quoted-string matches that look like keymap lhs syntactically
+--- but are actually something else. Two patterns covered:
+---
+---   1. Lua hash-key assignment `["X"] = ...` -- common in plugin
+---      config tables (`task-runner` and `snacks` use these to disable
+---      defaults or define plugin-internal mappings).
+---   2. The mode argument of `vim.keymap.set` -- when looking up an
+---      `n`-mode `v` keymap, the line `vim.keymap.set({"n","v"}, ...)`
+---      contains a quoted `"v"` that is the *mode*, not the lhs.
+---
+--- `match_pos` and `match_end` are 1-indexed and refer to the bounds of
+--- the matched quoted string (including the quote characters).
+local function should_reject_match(line, match_pos, match_end)
+  -- Lua hash-key: `[<match>] = ...`
+  if match_pos > 1 and line:sub(match_pos - 1, match_pos - 1) == "[" then
+    local rest = line:sub(match_end + 1)
+    if rest:match("^%s*%]%s*=") then return true end
+  end
+  -- Mode-arg of vim.keymap.set / nvim_set_keymap: walk forward from the
+  -- call's opening paren and check whether `match_pos` is still inside
+  -- the first argument (no top-level comma seen yet).
+  local prefix = line:sub(1, match_pos - 1)
+  local set_pos
+  for p in prefix:gmatch("()vim%.keymap%.set%s*%(") do set_pos = p end
+  if not set_pos then
+    for p in prefix:gmatch("()nvim_set_keymap%s*%(") do set_pos = p end
+  end
+  if set_pos then
+    local paren = line:find("%(", set_pos, false)
+    if paren then
+      local depth = 0
+      for i = paren + 1, match_pos - 1 do
+        local c = line:sub(i, i)
+        if c == "{" then depth = depth + 1
+        elseif c == "}" then depth = depth - 1
+        elseif c == "," and depth == 0 then
+          return false  -- past first arg, match is in lhs/rhs/opts
+        end
+      end
+      return true  -- still inside first arg = mode argument
+    end
+  end
+  -- Lazy keys mode-table: `{ "<lhs>", fn, mode = { "n", "v" }, ... }`.
+  -- The `"n"` and `"v"` here are the mode list, not the lhs. Detect by
+  -- finding `mode%s*=%s*{` before the match and checking that we are
+  -- still inside that brace.
+  local mode_pos
+  for p in prefix:gmatch("()mode%s*=%s*{") do mode_pos = p end
+  if mode_pos then
+    local brace = line:find("{", mode_pos, false)
+    if brace then
+      local depth = 1
+      for i = brace + 1, match_pos - 1 do
+        local c = line:sub(i, i)
+        if c == "{" then depth = depth + 1
+        elseif c == "}" then depth = depth - 1 end
+        if depth == 0 then return false end  -- exited the mode table
+      end
+      return true
+    end
+  end
+  return false
+end
+
+--- True iff `line` looks like a keymap registration -- a strong context
+--- where short single-/double-character lhs are safe to match. Short
+--- lhs (e.g. `<`, `>`, `T`, `v`) match countless unrelated quoted
+--- string literals and only become trustworthy in actual reg lines.
+--- `in_keys_block` (optional, computed by `compute_keys_blocks`) flags
+--- lines that sit inside a multi-line `keys = { ... }` lazy spec; the
+--- `keys = {` opener may be several lines above the entry being tested.
+local function line_is_strong_context(line, in_keys_block)
+  if in_keys_block then return true end
+  return line:find("vim%.keymap%.set") ~= nil
+      or line:find("vim%.api%.nvim_set_keymap") ~= nil
+      or line:find("vim%.api%.nvim_buf_set_keymap") ~= nil
+      or line:find("keys%s*=%s*{") ~= nil
+      or line:match("^%s*[vnxsoic]?n?o?r?e?map[!]?%s") ~= nil
+      or line:find("[%s^]toggle%s*%(") ~= nil
+      or line:find("[%s^]map%s*%(") ~= nil
+end
+
+--- Strip inline Lua comments (`-- ...`) from a line so brace-depth
+--- tracking and `keys = {` detection do not trip over commented-out
+--- snippets like `-- keys = { ... }` in docstrings.
+local function strip_lua_comment(line)
+  -- Conservative: cut from the first `--` that is not preceded by
+  -- another non-space char that suggests it is inside a string.
+  -- For our purposes, even the naive case-insensitive split suffices --
+  -- we do not need lexer-grade accuracy, just to skip docstrings.
+  local cut = line:find("%-%-")
+  if cut then return line:sub(1, cut - 1) end
+  return line
+end
+
+--- Pre-compute, for each line, whether it sits inside a multi-line
+--- `keys = { ... }` block. Brace-depth tracking, single pass.
+--- Comments are stripped before detection so `-- keys = { ... }` in a
+--- docstring does not (a) start a phantom keys block or (b) contribute
+--- to the brace depth. Returns an array `t` where `t[i]` is true iff
+--- line `i` is inside a real keys block.
+local function compute_keys_blocks(lines)
+  local in_keys = {}
+  local depth = 0
+  local keys_depth = nil
+  for i, line in ipairs(lines) do
+    local code = strip_lua_comment(line)
+    if code:find("keys%s*=%s*{") then
+      keys_depth = keys_depth or depth
+    end
+    in_keys[i] = keys_depth ~= nil
+    for c in code:gmatch("[{}]") do
+      depth = depth + (c == "{" and 1 or -1)
+    end
+    if keys_depth and depth <= keys_depth then
+      keys_depth = nil
+    end
+  end
+  return in_keys
+end
+
+--- Try every quoted-form match position in a canon-text line; return
+--- true on the first match that is not rejected by structural filters.
+--- For short lhs (≤2 chars) the line must additionally pass the strong
+--- keymap-context check, since short forms occur incidentally in many
+--- unrelated string literals.
+local function line_has_quoted_match(raw_line, canon_line, canon_forms, opts)
+  opts = opts or {}
+  local short = opts.short
+  if short and not line_is_strong_context(raw_line, opts.in_keys_block) then
+    return false
+  end
+  for _, cf in ipairs(canon_forms) do
+    if cf ~= "" then
+      for _, q in ipairs({ '"', "'" }) do
+        local needle = q .. cf .. q
+        local search = 1
+        while true do
+          local mstart, mend = canon_line:find(needle, search, true)
+          if not mstart then break end
+          if not should_reject_match(raw_line, mstart, mend) then
+            return true
+          end
+          search = mend + 1
+        end
+      end
+    end
+  end
+  return false
+end
+
 --- `mode` is optional: when provided, lines with conflicting mode
 --- evidence are skipped so an `n`-mode `<C-V>` does not land on the
 --- `i`-mode `<C-v>` definition in the same file.
-local function locate_in_buffer(lhs, mode)
-  pcall(vim.api.nvim_win_set_cursor, 0, { 1, 0 })
-
+--- Side-effect-free line search. Returns the 1-based line number where
+--- `lhs` appears to be defined in `lines`, or 0. Used both by the
+--- buffer-cursor `locate_in_buffer` and by the qf builder which needs
+--- a line for a file it doesn't open.
+local function find_lhs_line(lines, lhs, mode)
   local registry = require("noethervim.util.keymap_registry")
   local primary_forms, tail_forms = registry.source_forms_split(lhs)
   local primary_canon, tail_canon = {}, {}
@@ -393,8 +559,6 @@ local function locate_in_buffer(lhs, mode)
   for _, f in ipairs(primary_forms) do forms[#forms + 1] = f; canon_forms[#canon_forms + 1] = registry.canon(f) end
   for _, f in ipairs(tail_forms)    do forms[#forms + 1] = f; canon_forms[#canon_forms + 1] = registry.canon(f) end
 
-  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
-
   -- Lua single-line comment; vimscript `"` comment is intentionally NOT
   -- treated as a comment here because Lua lines frequently start with a
   -- quoted string (lazy spec `"<lhs>", ...`) that would be misclassified.
@@ -402,34 +566,24 @@ local function locate_in_buffer(lhs, mode)
     return line:match("^%s*%-%-") ~= nil
   end
 
-  local function jump(line_no)
-    pcall(vim.api.nvim_win_set_cursor, 0, { line_no, 0 })
-    vim.cmd("norm! zzzv")
-    return line_no
-  end
-
   -- Pass 1: quoted form in any non-comment, mode-compatible line.
-  -- Primary forms match anywhere; SL-tail forms (`"/"`, `"<Space>"`)
-  -- additionally require a SearchLeader concatenation context on the
-  -- line so they do not false-positive in unrelated string literals.
+  -- Primary forms match anywhere except in mode-arg / hash-key
+  -- positions; SL-tail forms (`"/"`, `"<Space>"`) additionally require
+  -- a SearchLeader concatenation context on the line. Short lhs
+  -- (≤2 chars) require strong keymap-defining context everywhere
+  -- (a multi-line `keys = { ... }` block counts as strong).
+  local short_lhs = #lhs <= 2
+  local in_keys = compute_keys_blocks(lines)
   for i, line in ipairs(lines) do
     if not is_comment(line) and line_mode_ok(line, mode, lhs) then
       local cline = registry.canon(line)
-      for _, cf in ipairs(primary_canon) do
-        if cf ~= ""
-           and (cline:find('"' .. cf .. '"', 1, true)
-                or cline:find("'" .. cf .. "'", 1, true)) then
-          return jump(i)
-        end
+      local opts = { short = short_lhs, in_keys_block = in_keys[i] }
+      if line_has_quoted_match(line, cline, primary_canon, opts) then
+        return i
       end
-      if registry.line_has_sl_context(line) then
-        for _, cf in ipairs(tail_canon) do
-          if cf ~= ""
-             and (cline:find('"' .. cf .. '"', 1, true)
-                  or cline:find("'" .. cf .. "'", 1, true)) then
-            return jump(i)
-          end
-        end
+      if #tail_canon > 0 and registry.line_has_sl_context(line)
+         and line_has_quoted_match(line, cline, tail_canon, opts) then
+        return i
       end
     end
   end
@@ -443,8 +597,23 @@ local function locate_in_buffer(lhs, mode)
         local cline = registry.canon(line)
         if cline:find('"' .. ctbase .. '"', 1, true)
            or cline:find("'" .. ctbase .. "'", 1, true) then
-          return jump(i)
+          return i
         end
+      end
+    end
+  end
+
+  -- Pass 2.5: 2-char bracket-prefixed bare match restricted to
+  -- vimscript :map-family lines, e.g. toggles.lua's `nmap [e
+  -- <Plug>(nv-move-up)` heredoc inside `vim.cmd[[...]]`. These lhs
+  -- (`[e`, `]e`, etc.) are too short for the multi-char bare pass but
+  -- the vimscript-prefix context is specific enough to be safe.
+  if #lhs == 2 and (lhs:sub(1,1) == "[" or lhs:sub(1,1) == "]") then
+    local cl = registry.canon(lhs)
+    for i, line in ipairs(lines) do
+      if not is_comment(line) and line_mode_ok(line, mode, lhs)
+         and line:match("^%s*[vnxsoic]?n?o?r?e?map[!]?%s") then
+        if registry.canon(line):find(cl, 1, true) then return i end
       end
     end
   end
@@ -466,7 +635,7 @@ local function locate_in_buffer(lhs, mode)
         local cline = registry.canon(line)
         for idx, cf in ipairs(canon_forms) do
           if #forms[idx] > 2 and cline:find(cf, 1, true) then
-            return jump(i)
+            return i
           end
         end
       end
@@ -474,6 +643,17 @@ local function locate_in_buffer(lhs, mode)
   end
 
   return 0
+end
+
+local function locate_in_buffer(lhs, mode)
+  pcall(vim.api.nvim_win_set_cursor, 0, { 1, 0 })
+  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+  local line_no = find_lhs_line(lines, lhs, mode)
+  if line_no > 0 then
+    pcall(vim.api.nvim_win_set_cursor, 0, { line_no, 0 })
+    vim.cmd("norm! zzzv")
+  end
+  return line_no
 end
 
 --- Last-resort project-wide scan. Returns two ordered lists, lazily
@@ -607,26 +787,24 @@ local function scan_project_for(lhs, mode)
         or line:find("[%s^]map%s*%(")
   end
 
-  --- Pre-build search needles. Primary needles match anywhere; SL-tail
-  --- needles only match where the line also has a SearchLeader
-  --- concatenation. Bare needles (multi-char only) still need a strong
-  --- keymap-defining context.
-  local primary_needles, tail_needles, bare_needles = {}, {}, {}
+  --- Pre-build canon-form lists. Primary forms match anywhere except
+  --- where structural filters reject (mode-arg, hash-key); SL-tail
+  --- forms additionally require a SearchLeader concatenation context.
+  --- Bare-multi-char fallback covers vimscript-map style lines where
+  --- the lhs is unquoted. Short lhs (≤2 chars) require strong context.
+  local primary_canon, tail_canon, bare_needles = {}, {}, {}
   for _, f in ipairs(primary_forms) do
     local cf = registry.canon(f)
     if cf ~= "" then
-      primary_needles[#primary_needles + 1] = '"' .. cf .. '"'
-      primary_needles[#primary_needles + 1] = "'" .. cf .. "'"
+      primary_canon[#primary_canon + 1] = cf
       if #f > 2 then bare_needles[#bare_needles + 1] = cf end
     end
   end
   for _, f in ipairs(tail_forms) do
     local cf = registry.canon(f)
-    if cf ~= "" then
-      tail_needles[#tail_needles + 1] = '"' .. cf .. '"'
-      tail_needles[#tail_needles + 1] = "'" .. cf .. "'"
-    end
+    if cf ~= "" then tail_canon[#tail_canon + 1] = cf end
   end
+  local short_lhs = #lhs <= 2
 
   --- Try a single file. We walk lines so the mode filter and the
   --- per-line context check can both apply. Lines with a clearly
@@ -640,23 +818,27 @@ local function scan_project_for(lhs, mode)
       return line:match("^%s*%-%-") ~= nil
           or (is_vim and line:match('^%s*"') ~= nil)
     end
-    -- Pass 1: primary quoted needle anywhere; SL-tail needle only on
-    -- lines that also contain a SearchLeader concatenation.
-    for _, line in ipairs(lines) do
+    local in_keys = compute_keys_blocks(lines)
+    -- Pass 1: primary quoted needle (rejection-filtered);
+    -- SL-tail needle only on SearchLeader concatenation lines.
+    for i, line in ipairs(lines) do
       if not comment(line) and line_mode_ok(line, mode, lhs) then
         local cline = registry.canon(line)
-        for _, n in ipairs(primary_needles) do
-          if cline:find(n, 1, true) then return path end
+        local opts = { short = short_lhs, in_keys_block = in_keys[i] }
+        if line_has_quoted_match(line, cline, primary_canon, opts) then
+          return path
         end
-        if #tail_needles > 0 and registry.line_has_sl_context(line) then
-          for _, n in ipairs(tail_needles) do
-            if cline:find(n, 1, true) then return path end
-          end
+        if #tail_canon > 0 and registry.line_has_sl_context(line)
+           and line_has_quoted_match(line, cline, tail_canon, opts) then
+          return path
         end
       end
     end
     -- Pass 2: bare multi-char needle in strong context (mode-checked).
-    if #bare_needles > 0 then
+    -- Bracket-prefixed 2-char forms (`[e`, `]e`, `[t`, ...) also accepted
+    -- when the line is a vimscript :nmap-style declaration -- catches
+    -- the toggles.lua `vim.cmd[[ nmap [e <Plug>(nv-move-up) ]]` heredoc.
+    if #bare_needles > 0 or true then
       for _, line in ipairs(lines) do
         if not comment(line) and is_strong(line)
            and line_mode_ok(line, mode, lhs) then
@@ -664,6 +846,17 @@ local function scan_project_for(lhs, mode)
           for _, n in ipairs(bare_needles) do
             if cline:find(n, 1, true) then return path end
           end
+        end
+      end
+    end
+    -- Pass 3: 2-char bracket-prefixed bare match restricted to vimscript
+    -- :map-family lines (e.g. `nmap [e <Plug>(nv-move-up)`).
+    if #lhs == 2 and (lhs:sub(1,1) == "[" or lhs:sub(1,1) == "]") then
+      local cl = registry.canon(lhs)
+      for _, line in ipairs(lines) do
+        if not comment(line) and line_mode_ok(line, mode, lhs)
+           and line:match("^%s*[vnxsoic]?n?o?r?e?map[!]?%s") then
+          if registry.canon(line):find(cl, 1, true) then return path end
         end
       end
     end
@@ -899,6 +1092,69 @@ function M.diff_keymaps()
     return a.lhs < b.lhs
   end)
 
+  -- Build a quickfix entry for one item using the same candidate
+  -- cascade as `M.jump_to_keymap`, but resolving file+line from cached
+  -- file content instead of opening the buffer. Returns nil if no
+  -- candidate file can be found.
+  local function resolve_qf_entry(item)
+    local registry = require("noethervim.util.keymap_registry")
+    local display_lhs = item.lhs:gsub(" ", "␣"):gsub("<lt>", "<")
+    local text = string.format("%-11s [%s] %-16s %s",
+                               item.tag, item.mode, display_lhs, item.desc or "")
+
+    local entry = registry.lookup(item.mode, item.lhs)
+    if entry and entry.file and entry.line then
+      return { filename = entry.file, lnum = entry.line, col = 1, text = text }
+    end
+
+    local candidates = {}
+    if entry and entry.file then candidates[#candidates + 1] = entry.file end
+    if item.source then candidates[#candidates + 1] = item.source end
+    for _, m in ipairs(item.mode == "n" and { "n" } or { item.mode, "n" }) do
+      for _, km in ipairs(vim.api.nvim_get_keymap(m)) do
+        if km.lhs == item.lhs then
+          local f = callback_file(km.callback)
+          if f then candidates[#candidates + 1] = f; break end
+        end
+      end
+    end
+    local scanned = scan_project_for(item.lhs, item.mode)
+    if scanned then candidates[#candidates + 1] = scanned end
+
+    for _, file in ipairs(candidates) do
+      local lines = _file_lines(file)
+      if lines then
+        local line_no = find_lhs_line(lines, item.lhs, item.mode)
+        if line_no > 0 then
+          return { filename = file, lnum = line_no, col = 1, text = text }
+        end
+      end
+    end
+
+    -- File found but line not pinpointed; still emit so user lands in
+    -- the right file. `]q` will at least take them somewhere meaningful.
+    if candidates[1] then
+      return { filename = candidates[1], lnum = 1, col = 1, text = text .. "  (line not pinpointed)" }
+    end
+    return nil
+  end
+
+  local function send_to_qf(picker)
+    local sel = picker:selected()
+    local picked = #sel > 0 and sel or picker:items()
+    picker:close()
+    local qf = {}
+    for _, item in ipairs(picked) do
+      local e = resolve_qf_entry(item)
+      if e then qf[#qf + 1] = e end
+    end
+    if #qf == 0 then
+      return vim.notify("NoetherVim: no keymap sources could be located", vim.log.levels.WARN)
+    end
+    vim.fn.setqflist({}, " ", { title = "NoetherVim Keymaps", items = qf })
+    vim.cmd("botright copen")
+  end
+
   Snacks.picker({
     title  = "NoetherVim Keymap Comparison",
     items  = items,
@@ -919,6 +1175,13 @@ function M.diff_keymaps()
       ret[#ret + 1] = { item.desc, "Comment" }
       return ret
     end,
+    actions = {
+      -- Override snacks' default qflist action (bound to <C-q>) to
+      -- resolve each keymap's file+line via the same candidate cascade
+      -- the picker's confirm uses, rather than the default which only
+      -- reads `item.file`/`item.pos` (these items have neither).
+      qflist = send_to_qf,
+    },
     confirm = function(picker, item)
       picker:close()
       -- jump_to_keymap consults the registry first, so USER/OVERRIDE
