@@ -174,22 +174,9 @@ end)
 -- filetype, either add it to `non_code_filetypes` below or clear the
 -- augroup from `lua/user/autocmds.lua` and re-create with your own.
 
-local prose_filetypes = {
-  tex = true, markdown = true, norg = true, text = true,
-  gitcommit = true, rst = true, typst = true,
-}
-
-local non_code_filetypes = {
-  -- structured-text: ambiguous, leave untouched
-  json = true, jsonc = true, yaml = true, toml = true,
-  -- non-editable / special buffers
-  help = true, qf = true, oil = true, terminal = true,
-  snacks_dashboard = true, lazy = true, mason = true,
-  checkhealth = true, notify = true, TelescopePrompt = true,
-  Trouble = true, trouble = true,
-  ["dap-repl"] = true, dapui_scopes = true, dapui_breakpoints = true,
-  dapui_stacks = true, dapui_watches = true, dapui_console = true,
-}
+local fts = require("noethervim.util.filetypes")
+local prose_filetypes = fts.prose
+local non_code_filetypes = fts.non_code
 
 vim.api.nvim_create_autocmd("FileType", {
   group    = vim.api.nvim_create_augroup("noethervim_prose", { clear = true }),

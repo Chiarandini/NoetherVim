@@ -126,6 +126,15 @@ toggle("oG",
 -- bare :lsp disable resolves to all configs attached to current buffer.
 toggle("oL", "<cmd>lsp enable<cr>", "<cmd>lsp disable<cr>", "lsp")
 
+-- Abolish auto-correct in code regions
+-- Default behavior: corrections fire only in prose buffers and inside
+-- comments / @spell regions of code buffers. [oA forces unconditional
+-- expansion in the current buffer; ]oA returns to context-gated.
+toggle("oA",
+  function() vim.b.noethervim_abolish_force = true end,
+  function() vim.b.noethervim_abolish_force = nil end,
+  "abolish auto-correct in code")
+
 -- Blink.cmp completion on/off
 vim.g.blink_toggle = true
 local function toggle_cmp(bool)

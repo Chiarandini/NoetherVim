@@ -1215,7 +1215,8 @@ A: Yes. Years of typing `neo-` will do that. The alias is there so you
    reading of the name `Noether`.
 
 Q: What is vim-abolish and how do I use it?~
-A: vim-abolish (tpope) provides three features:
+A: NoetherVim ships a fork of vim-abolish that adds context-aware
+   expansion. The fork exposes three features:
    1. `:Subvert` -- case-preserving find/replace (facility->building
       preserves Facility->Building, FACILITY->BUILDING)
    2. `:Abolish` -- smart auto-correct (:Abolish teh the corrects all
@@ -1223,6 +1224,14 @@ A: vim-abolish (tpope) provides three features:
    3. Coercion operators -- `crs` snake_case, `crm` MixedCase,
       `crc` camelCase, `cru` UPPER_CASE, `cr-` dash-case
    Add personal typo corrections in `lua/user/plugins/abolish.lua`.
+
+   Context gating: in code buffers, :Abolish corrections only fire when
+   the cursor is inside a comment or @spell-tagged region (typical
+   string content). Prose buffers (tex, markdown, ...) always expand.
+   Use `[oA` to force unconditional expansion in the current buffer
+   and `]oA` to return to context-gated. To opt a specific :Abolish
+   line out of gating entirely, pass `-expr=` explicitly:
+        :Abolish -expr= teh the    " always expands
 
 Q: Can I make my `leader` and `searchleader` the same?~
 A: Yes; simply map both to the same key in your `init.lua` file. You can map

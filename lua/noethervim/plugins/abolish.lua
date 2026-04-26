@@ -1,7 +1,16 @@
 -- NoetherVim plugin: Abolish
 -- Smart find-and-replace with case preservation.
 --
--- Abolish is an amazing but often-overlooked Vim plugin by tpope. It provides:
+-- Pinned to the Chiarandini/vim-abolish fork, which adds an -expr={fn}
+-- option (and corresponding g:abolish_default_expr) so Abolish-defined
+-- abbreviations can be gated by a predicate at expansion time. NoetherVim
+-- uses this to restrict typo correction to comments / @spell regions in
+-- code buffers while keeping unconditional expansion in prose.
+--
+-- The fork is upstream-compatible: with neither -expr= nor
+-- g:abolish_default_expr set, behaviour is identical to tpope/vim-abolish.
+--
+-- Abolish provides:
 --
 --   :Subvert/{pattern}/{replacement}/g
 --     Like :s but preserves the case shape of each match.
@@ -29,6 +38,13 @@
 --     can correct dozens of misspelling and case combinations at once.
 --     Add your own in lua/user/plugins/ -- see templates/user/plugins/example.lua.
 --
+--   Context gating (NoetherVim default):
+--     In code buffers, :Abolish expansions only fire when the cursor sits
+--     inside a comment or @spell-captured region. Use [oA / ]oA to force
+--     unconditional expansion in the current buffer. To opt a specific
+--     :Abolish line out of gating, pass -expr= explicitly:
+--       :Abolish -expr= teh the    " always expands
+--
 --   Coercion operators (cr<key>):
 --     crs  →  snake_case
 --     crm  →  MixedCase (PascalCase)
@@ -38,9 +54,22 @@
 --     cr.  →  dot.case
 --     cr<space> → space case
 --
--- Override via: { "tpope/vim-abolish", opts = { ... } }
+-- Override via: { "Chiarandini/vim-abolish", opts = { ... } }
 
-return {
-	"tpope/vim-abolish",
-	event = "VeryLazy",
-}
+local fork_local = vim.fn.expand("~/programming/vim-abolish")
+local source = vim.fn.isdirectory(fork_local) == 1
+  and { name = "vim-abolish", dir = fork_local }
+  or  { "Chiarandini/vim-abolish", commit = "e79c5b2" }
+
+return vim.tbl_extend("force", source, {
+  event = "VeryLazy",
+  init = function()
+    vim.g.abolish_default_expr = "NoetherAbolishSpell"
+    vim.cmd([[
+      function! NoetherAbolishSpell(typo, correction) abort
+        return luaeval('require("noethervim.abolish_ctx").in_spell_region()')
+              \ ? a:correction : a:typo
+      endfunction
+    ]])
+  end,
+})
