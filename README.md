@@ -255,6 +255,7 @@ Bundles are optional feature groups. Enable them in `init.lua` (see [Enabling bu
 | `http` | kulala.nvim HTTP/REST/gRPC/GraphQL client |
 | `git` | Fugitive, Flog, Fugit2 TUI, diffview, git-conflict, gitignore |
 | `ai` | CodeCompanion - Anthropic, OpenAI, Gemini, Ollama, and more |
+| `smart-actions` | AI-suggested code actions on `grA` (Claude Code / Anthropic) |
 | `refactoring` | Extract function, variable, block |
 | **Navigation & editing** | |
 | `harpoon` | Per-project file marks (harpoon v2) |
@@ -296,7 +297,7 @@ Bundles are optional feature groups. Enable them in `init.lua` (see [Enabling bu
 
 `q` closes non-editing windows (help, quickfix, Oil, notify, man, …)
 
-**Discovering distro keymaps:** press any prefix key and wait for which-key to show available actions. Use SearchLeader+fk (default: `<Space>ck`) to search all keymaps by description, or run `:NoetherVim diff keymaps` to see what you've changed.
+**Discovering distro keymaps:** press any prefix key and wait for which-key to show available actions. Use SearchLeader+ck (default: `<Space>ck`) or run `:NoetherVim diff keymaps` to search all keymaps in the distribution and your user files by description and to see which keymaps were over-written. To search for all keymappings active (including neovim defaults and those introduced by plugins), use SearchLeader+fk (default: `<Space>fk`).
 
 
 ---
