@@ -234,53 +234,17 @@ For the full override system reference, see `:help noethervim-user-config`.
 
 ## Bundles
 
-Bundles are optional feature groups. Enable them in `init.lua` (see [Enabling bundles](#enabling-bundles)).
+Bundles are optional feature groups, enabled in `init.lua` (see [Enabling bundles](#enabling-bundles)). The core is fully functional with none enabled. Full descriptions and per-bundle dependencies live in [`docs/bundles.md`](docs/bundles.md).
 
-| Bundle | Contents |
+| Category | Bundles |
 |---|---|
-| **Languages** | |
-| `rust` | rustaceanvim - macro expansion, runnables, crate graph, hover actions |
-| `go` | go.nvim - test generation, struct tags, interface impl, fill struct |
-| `java` | nvim-jdtls - proper Java LSP support (jdtls requires special setup) |
-| `python` | venv-selector.nvim - virtual environment switching |
-| `latex` | VimTeX, noethervim-tex (snippets, textobjects, math spell dictionary) |
-| `latex-zotero` | Zotero citation picker - needs Zotero |
-| `web-dev` | Template-string auto-conversion + inline color preview |
-| **Tools** | |
-| `debug` | nvim-dap + UI (Python, Lua, JS/TS, Go adapters) |
-| `test` | neotest test runner framework |
-| `repl` | iron.nvim interactive REPL |
-| `task-runner` | overseer.nvim task runner + compiler.nvim |
-| `database` | vim-dadbod + UI + SQL completion via blink.cmp |
-| `http` | kulala.nvim HTTP/REST/gRPC/GraphQL client |
-| `git` | Fugitive, Flog, Fugit2 TUI, diffview, git-conflict, gitignore |
-| `ai` | CodeCompanion - Anthropic, OpenAI, Gemini, Ollama, and more |
-| `smart-actions` | AI-suggested code actions on `grA` (Claude Code / Anthropic) |
-| `refactoring` | Extract function, variable, block |
-| **Navigation & editing** | |
-| `harpoon` | Per-project file marks (harpoon v2) |
-| `flash` | Enhanced `f`/`t` and `/` motions with labels |
-| `projects` | Project switcher |
-| `editing-extras` | Argument marking (argmark) + decorative ASCII comment boxes |
-| **Writing & notes** | |
-| `markdown` | render-markdown, preview, tables, math, image paste |
-| `obsidian` | Obsidian vault integration (pair with markdown bundle) |
-| `neorg` | `.norg` wiki and note-taking system |
-| **Terminal & environment** | |
-| `better-term` | Named/numbered terminal windows |
-| `tmux` | Automatic tmux window naming |
-| `remote-dev` | Edit files on remote machines over SSH (distant.nvim) |
-| **UI & appearance** | |
-| `colorscheme` | 10 popular themes, persistence, highlight tweaks |
-| `eye-candy` | Animations (drop.nvim, cellular-automaton), scrollbar, block display |
-| `minimap` | Sidebar minimap with git/diagnostic markers |
-| `helpview` | Rendered `:help` pages |
-| `tableaux` | noethervim-tableaux -- animated mathematical dashboard scenes |
-| **Practice & utilities** | |
-| `training` | Vim motion and typing practice (vim-be-good, speedtyper, typr) |
-| `dev-tools` | Startup profiling (`:StartupTime`), Lua scratchpad (`:Luapad`) |
-| `presentation` | Slide presentations (presenting.nvim) + keypress display (showkeys) |
-| `hardtime` | Motion habit trainer |
+| Programming languages | [`rust`](docs/bundles.md#programming-languages), [`go`](docs/bundles.md#programming-languages), [`java`](docs/bundles.md#programming-languages), [`python`](docs/bundles.md#programming-languages), [`latex`](docs/bundles.md#programming-languages), [`latex-zotero`](docs/bundles.md#programming-languages), [`web-dev`](docs/bundles.md#programming-languages) |
+| Tools | [`debug`](docs/bundles.md#tools), [`test`](docs/bundles.md#tools), [`repl`](docs/bundles.md#tools), [`task-runner`](docs/bundles.md#tools), [`database`](docs/bundles.md#tools), [`http`](docs/bundles.md#tools), [`git`](docs/bundles.md#tools), [`ai`](docs/bundles.md#tools), [`smart-actions`](docs/bundles.md#tools), [`refactoring`](docs/bundles.md#tools) |
+| Navigation & editing | [`harpoon`](docs/bundles.md#navigation--editing), [`flash`](docs/bundles.md#navigation--editing), [`projects`](docs/bundles.md#navigation--editing), [`editing-extras`](docs/bundles.md#navigation--editing) |
+| Writing & notes | [`markdown`](docs/bundles.md#writing--notes), [`obsidian`](docs/bundles.md#writing--notes), [`neorg`](docs/bundles.md#writing--notes) |
+| Terminal & environment | [`better-term`](docs/bundles.md#terminal--environment), [`tmux`](docs/bundles.md#terminal--environment), [`remote-dev`](docs/bundles.md#terminal--environment) |
+| UI & appearance | [`colorscheme`](docs/bundles.md#ui--appearance), [`eye-candy`](docs/bundles.md#ui--appearance), [`minimap`](docs/bundles.md#ui--appearance), [`helpview`](docs/bundles.md#ui--appearance), [`tableaux`](docs/bundles.md#ui--appearance) |
+| Practice & utilities | [`training`](docs/bundles.md#practice--utilities), [`dev-tools`](docs/bundles.md#practice--utilities), [`presentation`](docs/bundles.md#practice--utilities), [`hardtime`](docs/bundles.md#practice--utilities) |
 
 ---
 
