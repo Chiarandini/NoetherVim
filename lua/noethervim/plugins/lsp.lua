@@ -167,7 +167,7 @@ return {
 		opts = {
 			ensure_installed = {
 				'lua_ls', 'basedpyright', 'ruff', 'vimls',
-				'eslint', 'ts_ls', 'cssls', 'texlab',
+				'eslint', 'ts_ls', 'cssls', 'texlab', 'marksman',
 			},
 			diagnostic = {
 				virtual_text  = false,
