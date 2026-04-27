@@ -48,8 +48,4 @@ jobs:
         uses: mrcjkb/lua-typecheck-action@v0
         with:
           configpath: ".luarc.json"
-          # Only the public-API surfaces are annotated so far. Treat the
-          # run as advisory until we land Phase 1's broader annotation pass
-          # across the rest of the codebase.
           checklevel: Warning
-        continue-on-error: true

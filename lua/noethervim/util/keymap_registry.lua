@@ -86,7 +86,7 @@ local function read_line(file, n)
     c = (ok and lines) or false
     _line_cache[file] = c
   end
-  if c == false then return nil end
+  if type(c) ~= "table" then return nil end
   return c[n]
 end
 
@@ -244,15 +244,13 @@ end
 --- Expose the canonicalisation used internally, so consumers (e.g. the
 --- landing test oracle) can translate source-form lhs values into the
 --- exact keys `lookup`/`history` use.
----@param lhs string
----@return string
+---@type fun(lhs: string): string
 M.resolve_lhs = resolve_lhs
 
 --- Public helper exposing the notation canonicaliser. Returns a string
 --- where every `<...>` group has its contents upper-cased, so `<c-a>`
 --- and `<C-A>` compare equal.
----@param s string
----@return string
+---@type fun(s: string): string
 M.canon = canon
 
 --- Round-trip an lhs through replace_termcodes → keytrans to produce

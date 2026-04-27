@@ -112,12 +112,12 @@ end
 ---             even from dev/user-only plugins without a mapped spec file)
 --- Keymaps set directly via vim.keymap.set (not in a lazy spec) are absent.
 function M.keymap_sources()
-  local sources = {}
+  local sources, managed = {}, {}
 
   -- Build plugin_name -> spec file by scanning for repo strings
   local init = vim.api.nvim_get_runtime_file("lua/noethervim/init.lua", false)[1]
   local root = init and vim.fn.fnamemodify(init, ":h:h:h")
-  if not root then return sources end
+  if not root then return sources, managed end
 
   local plugin_files = {}
   local user_plugins = vim.fn.stdpath("config") .. "/lua/user/plugins"
@@ -225,7 +225,6 @@ function M.keymap_sources()
 
   -- Iterate over each plugin's own key handlers to get the defining
   -- plugin (not the handler plugin, which managed would give us).
-  local managed = {}
   local ok_cfg, lazy_cfg = pcall(require, "lazy.core.config")
   if ok_cfg and lazy_cfg.plugins then
     for name, plugin in pairs(lazy_cfg.plugins) do

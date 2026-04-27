@@ -63,6 +63,9 @@ return {
 	"folke/snacks.nvim",
 	priority = 1000,
 	lazy = false,
+	-- Type provided by snacks.nvim itself; visible to lazydev users, not to
+	-- standalone --check (snacks path is install-location-specific).
+	---@diagnostic disable-next-line: undefined-doc-name
 	---@type snacks.Config
 	opts = {
 		-- ── Dashboard ─────────────────────────────────────────────────

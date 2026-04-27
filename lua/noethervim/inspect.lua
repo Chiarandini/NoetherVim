@@ -3,6 +3,13 @@
 -- All commands live under the :NoetherVim namespace.
 -- See :help noethervim-inspect for documentation.
 
+-- Snacks ships its own LuaCATS classes (snacks.picker.Highlight, etc.) but
+-- they aren't visible to lua-language-server in standalone --check mode
+-- because the snacks plugin path is install-location-specific. IDE users
+-- with lazydev.nvim see the types normally; CI uses this disable to avoid
+-- the false-positive without giving up the annotation.
+---@diagnostic disable: undefined-doc-name
+
 local SearchLeader = require("noethervim.util").search_leader
 local Snacks = require("snacks")
 

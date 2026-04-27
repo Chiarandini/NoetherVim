@@ -2,6 +2,12 @@
 -- Persistence: saves/restores the active colorscheme across sessions.
 -- Tweaks: re-applies user highlight overrides when the colorscheme changes.
 
+-- vim.api.keyset.highlight is shipped in Neovim's runtime _meta directory,
+-- but standalone lua-language-server --check cannot reach a user-specific
+-- $VIMRUNTIME path through .luarc.json. IDE users with lazydev or
+-- runtime-injected library paths see the real type; CI uses this disable.
+---@diagnostic disable: undefined-doc-name
+
 local M = {}
 local _file = vim.fn.stdpath("data") .. "/noethervim_colorscheme"
 local _tweaks = {} ---@type table<string, vim.api.keyset.highlight>
