@@ -377,7 +377,9 @@ let g:vimtex_compiler_latexmk_engines = {
   -- ── snacks-latex-labels ───────────────────────────────────────────────────
   -- All business logic (label cache, project scanner, latex helpers) lives
   -- in latex-nav-core -- telescope-latex-references is no longer a dependency.
-  -- `:LatexLabels*` user commands are registered inline below.
+  -- The plugin owns its own user commands (`:SnacksLatexLabels`,
+  -- `:SnacksLatexLabelsExport`, `:LatexLabels {update|inspect|wipe}`); see the
+  -- upstream readme for the full surface.
   {
     "Chiarandini/snacks-latex-labels.nvim",
     dependencies = {
@@ -385,7 +387,7 @@ let g:vimtex_compiler_latexmk_engines = {
       "Chiarandini/latex-nav-core.nvim",
     },
     ft   = { "tex", "latex" },
-    cmd  = { "LatexLabelsUpdate", "LatexLabelsInspect", "LatexLabelsWipeAll" },
+    cmd  = { "LatexLabels", "SnacksLatexLabels", "SnacksLatexLabelsExport" },
     opts = {
       cache_strategy    = "global",
       recursive         = true,
@@ -413,77 +415,9 @@ let g:vimtex_compiler_latexmk_engines = {
     config = function(_, opts)
       require("snacks_latex_labels").setup(opts)
 
-      -- Register :LatexLabels* user commands inline. The underlying cache /
-      -- scanner / utils modules do not require telescope, so we can call
-      -- them directly without loading telescope.
-      local function update_cache()
-        local cache   = require("latex_nav_core.latex_labels.cache")
-        local scanner = require("latex_nav_core.latex_labels.scanner")
-        local utils   = require("latex_nav_core.latex")
-        local root = utils.get_root_file()
-        if not root then
-          vim.notify("[latex_labels] No file associated with current buffer.", vim.log.levels.WARN)
-          return
-        end
-        local entries = scanner.scan_project(root, opts)
-        local cache_path = cache.get_cache_path(root, opts.cache_strategy)
-        local ok, err = cache.write_cache(cache_path, entries)
-        if ok then
-          if opts.notify_on_update ~= false then
-            vim.notify(string.format("[latex_labels] Cache updated (%d labels).", #entries),
-              vim.log.levels.INFO)
-          end
-        else
-          vim.notify("[latex_labels] Failed to write cache: " .. (err or "unknown"),
-            vim.log.levels.ERROR)
-        end
-      end
-
-      vim.api.nvim_create_user_command("LatexLabelsUpdate", update_cache,
-        { desc = "Regenerate latex-labels cache for current project" })
-
-      vim.api.nvim_create_user_command("LatexLabelsInspect", function()
-        local cache = require("latex_nav_core.latex_labels.cache")
-        local utils = require("latex_nav_core.latex")
-        local root = utils.get_root_file()
-        if not root then
-          vim.notify("[latex_labels] No file associated with current buffer.", vim.log.levels.WARN)
-          return
-        end
-        local cache_path = cache.get_cache_path(root, opts.cache_strategy)
-        if vim.fn.filereadable(cache_path) == 0 then
-          vim.notify("[latex_labels] No cache found. Run :LatexLabelsUpdate to generate it.",
-            vim.log.levels.WARN)
-          return
-        end
-        vim.cmd("split " .. vim.fn.fnameescape(cache_path))
-        vim.bo.readonly = true
-        vim.bo.modifiable = false
-      end, { desc = "Open the latex-labels cache file in a read-only split" })
-
-      vim.api.nvim_create_user_command("LatexLabelsWipeAll", function()
-        local cache = require("latex_nav_core.latex_labels.cache")
-        local count, err = cache.wipe_all_caches(opts.cache_strategy)
-        if err then
-          vim.notify("[latex_labels] " .. err, vim.log.levels.WARN)
-        else
-          vim.notify(string.format("[latex_labels] Wiped %d cache file(s).", count),
-            vim.log.levels.INFO)
-        end
-      end, { desc = "Delete all latex-labels cache files" })
-
-      if opts.auto_update then
-        vim.api.nvim_create_autocmd("BufWritePost", {
-          group   = vim.api.nvim_create_augroup("LatexLabelsAutoUpdate", { clear = true }),
-          pattern = "*.tex",
-          desc    = "latex-labels: auto-regenerate cache on save",
-          callback = update_cache,
-        })
-      end
-
-      vim.keymap.set("n", "<localleader>w",   "<cmd>SnacksLatexLabels<cr>",    { buf = 0, desc = "latex labels" })
-      vim.keymap.set("n", "<localleader>vul", "<cmd>LatexLabelsUpdate<cr>",    { buf = 0, desc = "update latex labels" })
-      vim.keymap.set("n", "<localleader>vuh", "<cmd>CachedHeadingsUpdate<cr>", { buf = 0, desc = "update headings cache" })
+      vim.keymap.set("n", "<localleader>w",   "<cmd>SnacksLatexLabels<cr>",     { buf = 0, desc = "latex labels" })
+      vim.keymap.set("n", "<localleader>vul", "<cmd>LatexLabels update<cr>",    { buf = 0, desc = "update latex labels" })
+      vim.keymap.set("n", "<localleader>vuh", "<cmd>CachedHeadings update<cr>", { buf = 0, desc = "update headings cache" })
 
       -- ── gd: goto label definition ────────────────────────────────────────
       -- Extracts the label under the cursor (e.g. "th:bezoutIdentity" from
@@ -553,7 +487,7 @@ let g:vimtex_compiler_latexmk_engines = {
           end
 
           -- 3. Nowhere to jump -- label not yet written or indexed.
-          vim.notify("[gd] '" .. label .. "' not found in any cache -- run :LatexLabelsUpdate", vim.log.levels.WARN)
+          vim.notify("[gd] '" .. label .. "' not found in any cache -- run :LatexLabels update", vim.log.levels.WARN)
         end, { buffer = bufnr, desc = "goto label definition (LaTeX)" })
       end
 

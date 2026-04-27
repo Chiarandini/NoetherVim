@@ -1,5 +1,6 @@
 -- NoetherVim web search utilities
--- Commands: :Search, :SearchWith, :Wikipedia, :StackOverflow, :YouTube, :SetSearchEngine
+-- Command:  :Search [<engine>] <query>   (engines: see search_engines table)
+--           :Search set <engine>          (set the default engine)
 -- Lua API:  M.search_diagnostic_under_cursor(), M.search_selected_text(), M.open_plugin_repo()
 
 local M = {}
@@ -44,60 +45,91 @@ local function web_search(query, engine)
 end
 
 -- ──────────────────────────────────────────────────────────────
---  Commands
+--  :Search command (subcommand-dispatch)
 -- ──────────────────────────────────────────────────────────────
 
-local function engine_complete(_, line, _)
-  local args    = vim.split(line, "%s+")
-  local partial = #args == 2 and (args[2] or "") or ""
-  local matches = {}
-  for e in pairs(search_engines) do
-    if e:find(partial) == 1 then table.insert(matches, e) end
-  end
-  return matches
-end
-
-vim.api.nvim_create_user_command("Search", function(o)
-  local q = table.concat(o.fargs, " ")
-  vim.notify("Searching: " .. q, vim.log.levels.INFO, { title = "Web Search" })
-  web_search(q)
-end, { nargs = "+", desc = "search the web" })
-
-vim.api.nvim_create_user_command("Wikipedia", function(o)
-  local q = table.concat(o.fargs, " ")
-  vim.notify("Wikipedia: " .. q, vim.log.levels.INFO, { title = "Web Search" })
-  web_search(q, "wikipedia")
-end, { nargs = "+", desc = "search Wikipedia" })
-
-vim.api.nvim_create_user_command("StackOverflow", function(o)
-  local q = table.concat(o.fargs, " ")
-  web_search(q, "stackoverflow")
-end, { nargs = "+", desc = "search StackOverflow" })
-
-vim.api.nvim_create_user_command("YouTube", function(o)
-  local q = table.concat(o.fargs, " ")
-  web_search(q, "youtube")
-end, { nargs = "+", desc = "search YouTube" })
-
-vim.api.nvim_create_user_command("SearchWith", function(opts)
-  local engine = opts.fargs[1]
-  local q      = table.concat(vim.list_slice(opts.fargs, 2), " ")
-  if not search_engines[engine] then
-    vim.notify("Unknown engine: " .. engine, vim.log.levels.ERROR, { title = "Web Search" })
+--- :Search <query>...                 search with current default engine
+--- :Search <engine> <query>...        search with the named engine
+--- :Search set <engine>               change the default engine
+local function search_cmd(o)
+  local args = o.fargs
+  if #args == 0 then
+    vim.notify("Usage: :Search [<engine>|set] <query>", vim.log.levels.WARN,
+      { title = "Web Search" })
     return
   end
-  web_search(q, engine)
-end, { nargs = "+", desc = "search with specific engine", complete = engine_complete })
 
-vim.api.nvim_create_user_command("SetSearchEngine", function(o)
-  local engine = o.fargs[1]
-  if search_engines[engine] then
-    current_engine = engine
-    vim.notify("Engine: " .. engine, vim.log.levels.INFO, { title = "Search Engine" })
-  else
-    vim.notify("Unknown: " .. engine, vim.log.levels.ERROR, { title = "Search Engine" })
+  local first = args[1]
+
+  if first == "set" then
+    local engine = args[2]
+    if not engine then
+      vim.notify("Usage: :Search set <engine>", vim.log.levels.WARN,
+        { title = "Search Engine" })
+      return
+    end
+    if search_engines[engine] then
+      current_engine = engine
+      vim.notify("Engine: " .. engine, vim.log.levels.INFO, { title = "Search Engine" })
+    else
+      vim.notify("Unknown engine: " .. engine, vim.log.levels.ERROR,
+        { title = "Search Engine" })
+    end
+    return
   end
-end, { nargs = 1, desc = "set default search engine", complete = engine_complete })
+
+  if search_engines[first] then
+    local q = table.concat(vim.list_slice(args, 2), " ")
+    if q == "" then
+      vim.notify("Usage: :Search " .. first .. " <query>", vim.log.levels.WARN,
+        { title = "Web Search" })
+      return
+    end
+    vim.notify("Searching " .. first .. ": " .. q, vim.log.levels.INFO,
+      { title = "Web Search" })
+    web_search(q, first)
+    return
+  end
+
+  -- Default: treat the whole arg list as the query for the current engine.
+  local q = table.concat(args, " ")
+  vim.notify("Searching: " .. q, vim.log.levels.INFO, { title = "Web Search" })
+  web_search(q)
+end
+
+local function search_complete(_, line)
+  local args = vim.split(line, "%s+", { trimempty = true })
+  -- Completing the first arg: engine name OR "set".
+  if #args <= 2 then
+    local partial = args[2] or ""
+    local matches = {}
+    if ("set"):find(partial, 1, true) == 1 then
+      table.insert(matches, "set")
+    end
+    for e in pairs(search_engines) do
+      if e:find(partial, 1, true) == 1 then table.insert(matches, e) end
+    end
+    table.sort(matches)
+    return matches
+  end
+  -- `:Search set <engine>` -- complete engine name.
+  if args[2] == "set" and #args <= 3 then
+    local partial = args[3] or ""
+    local matches = {}
+    for e in pairs(search_engines) do
+      if e:find(partial, 1, true) == 1 then table.insert(matches, e) end
+    end
+    table.sort(matches)
+    return matches
+  end
+  return {}
+end
+
+vim.api.nvim_create_user_command("Search", search_cmd, {
+  nargs = "+",
+  complete = search_complete,
+  desc = "web search ([engine|set] query)",
+})
 
 -- ──────────────────────────────────────────────────────────────
 --  Lua API

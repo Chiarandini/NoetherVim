@@ -122,7 +122,7 @@ vim.keymap.set("n", "<c-w>u", show_modified_buffers, { noremap = true, silent = 
   desc = "show unsaved buffers in quickfix" })
 
 -- ──────────────────────────────────────────────────────────────
---  Web search commands (:Search, :SearchWith, :Wikipedia, etc.)
+--  Web search command (:Search [<engine>|set] <query>)
 -- ──────────────────────────────────────────────────────────────
 
 require("noethervim.util.web_search")

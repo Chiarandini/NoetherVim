@@ -1012,19 +1012,16 @@ straightforward. See the example in
 
 `:LspRename`                  LSP rename with instance count notification.
 
-Web search commands: ~                                *noethervim-web-search*
+Web search command: ~                                 *noethervim-web-search*
 
-`:Search` {query}             Search the web (default engine).
-`:SearchWith` {engine} {query}  Search using a specific engine.
-`:Wikipedia` {query}          Search Wikipedia.
-`:StackOverflow` {query}      Search StackOverflow.
-`:YouTube` {query}            Search YouTube.
-`:SetSearchEngine` {engine}   Set default search engine.
+`:Search` {query}             Search the web with the current default engine.
+`:Search` {engine} {query}    Search the web with a specific engine.
+`:Search set` {engine}        Set the default search engine for this session.
 
 Available engines: brave (default), duckduckgo, google, ecosia,
 github, startpage, reddit, stackoverflow, wikipedia, youtube.
 
-Tab-completion is available for engine names.
+Tab-completion is available for engine names and the `set` subcommand.
 
 ==============================================================================
 11. COMPLETION                                        *noethervim-completion*
