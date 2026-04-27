@@ -6,6 +6,7 @@ LaTeX, BibTeX, and VimTeX get the same level of support as LSP and treesitter. E
 
 The distro is opinionated, but anything and everything can be overridden through `lua/user/`; in fact the distro's architecture prioritizes easy overriding (see [Configuration](#configuration))
 
+
 > [!NOTE]
 > NoetherVim is in **alpha**. The core is stable for daily use, but what counts as a "default" vs. an "overridable" option is still being refined. These choices grew out of my Neovim use and represent my best idea of good, agnostic defaults. If you think there are better choices, [open an issue](https://github.com/Chiarandini/NoetherVim/issues) and we can address it there.
 >
@@ -14,34 +15,49 @@ The distro is opinionated, but anything and everything can be overridden through
 
 ## Why another distribution?
 
-Many existing Neovim distributions introduce their own abstraction layers: framework APIs,
-custom event systems, declarative config DSLs, etc. These are powerful, but they sit
-between you and Neovim; your configuration ends up targeting the distribution, not the
-editor. I wanted an experience that is closer to Neovim's philosophy.
+There are many stable and mature Neovim distribution currently available: [LazyVim](https://www.lazyvim.org/),
+[AstroNvim](https://docs.astronvim.com/), [NvChad](https://nvchad.com/), and
+[LunarVim](https://www.lunarvim.org/) are all actively maintained, and
+[kickstart.nvim](https://github.com/nvim-lua/kickstart.nvim) is the standard
+launch-pad. **If you want distribution without strong
+preferences about keymaps or workflows and follows most of the same philosophy of Noethervim,
+LazyVim is probably the right pick.** It shares the same "use Neovim primitives, no DSL" principle
+and has the biggest community.
 
-In NoetherVim, plugin specs are standard lazy.nvim, options are
-`vim.o`, keymaps are `vim.keymap.set()`, and so forth. Overriding a default means writing
-the same Lua you would write in a vanilla Neovim config, and the distro just makes sure
-your file loads after its own.
+NoetherVim exists for the cases where I wanted a different set of opinions:
 
-The same principle applies to keybindings. Keymaps build on Vim's own prefix conventions
-rather than funneling everything through `<Leader>` subgroups (though you can choose to
-funnel everything through a single prefix): `<C-w>` for anything
-window-related (panels, terminal, undo tree), `[`/`]` for directional navigation,
-`[o`/`]o` for option toggles, `g` for goto and LSP actions. `<Leader>` and `<LocalLeader>`
-stay separate (global actions vs. filetype-specific), following `:help maplocalleader`.
-Features use Neovim's built-in APIs directly (`vim.lsp.config()`, `vim.diagnostic`,
-`vim.fn.setqflist()`) and where Neovim 0.12 ships good defaults, the distro leaves them
-alone.
+**Keybindings follow Vim's native prefix conventions + one addition.** `<C-w>` for window
+manipulation, `[`/`]` for directional navigation, `[o`/`]o` for option toggles,
+`g` for goto / LSP actions. `<Leader>` and `<LocalLeader>` stay separated
+(global vs. filetype-specific, per `:help maplocalleader`). If you have
+Vim-flavoured muscle memory, this feels native. There is an additional prefix native to this
+distribution: a `<searchleader>` which defaults to `<Space>`, see [Keybinding
+Philosophy](#keybinding-philosophy)
 
-Neovim 0.12 ships a built-in package manager (`vim.pack`), but NoetherVim stays on
-lazy.nvim because the override model (deep-merged `opts`, auto-imported bundle
-directories, lazy-loading via `event`/`keys`/`cmd`/`ft`) depends on its spec system -
-`vim.pack` is a plain installer and doesn't provide that layer.
+**Inspection is built in.** `:NoetherVim diff keymaps` shows every distro
+keymap your config has overridden; `:NoetherVim diff options` does the same
+for options. "What does this distro actually change?" should be a one-command
+question, even after you layer your own config on top.
 
-There's also a personal reason to build this distro. After using vim/nvim for ~10 years,
-my nvim dotfiles have grown to be ~10k lines of code. So this is partly a fun project to
-convert the core functionality of my personal setup into a distribution.
+**LaTeX, BibTeX, and VimTeX are first-class**, The
+distro ships custom Snacks-based label and heading pickers, preamble snippets,
+and BibTeX/Zotero citation tooling. See the [onboarding guide for
+mathematicians](docs/onboarding/mathematicians.md).
+
+**Bundles cover non-coding workflows.** This is not as advanced as the latex bundle, but it
+integrates most common other uses of neovim, for example `writing/` (obsidian, neorg, markdown),
+`practice/` (training, hardtime, presentation), and `terminal/` (tmux,
+remote-dev) are first-class categories alongside `languages/` and `tools/`.
+
+Neovim 0.12 ships a built-in package manager (`vim.pack`), but NoetherVim
+stays on lazy.nvim because the override model (deep-merged `opts`,
+auto-imported bundle directories, lazy-loading via `event`/`keys`/`cmd`/`ft`)
+depends on its spec system; `vim.pack` is a plain installer and doesn't
+provide that layer (yet).
+
+I also have a personal reason to build this distro; after using vim/nvim for ~10 years, my nvim
+dotfiles have grown to be ~10k lines of code, so this is partly a fun project to convert my personal
+setup into a distribution.
 
 ## Requirements
 
