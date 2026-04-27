@@ -1,0 +1,33 @@
+{
+  "$schema": "https://raw.githubusercontent.com/sumneko/vscode-lua/master/setting/schema.json",
+  "runtime.version": "Lua 5.1",
+  "runtime.path": [
+    "?.lua",
+    "?/init.lua",
+    "lua/?.lua",
+    "lua/?/init.lua"
+  ],
+  "workspace.library": [
+    "$VIMRUNTIME/lua",
+    "${3rd}/luv/library"
+  ],
+  "workspace.checkThirdParty": false,
+  "workspace.ignoreDir": [
+    ".git",
+    "spell",
+    "preamble",
+    "LuaSnip",
+    "tests/results.txt"
+  ],
+  "diagnostics.globals": [
+    "vim",
+    "Snacks"
+  ],
+  "diagnostics.disable": [
+    "missing-fields",
+    "incomplete-signature-doc"
+  ],
+  "completion.callSnippet": "Replace",
+  "hint.enable": false,
+  "telemetry.enable": false
+}

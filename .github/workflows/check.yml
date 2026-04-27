@@ -1,0 +1,47 @@
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  syntax:
+    name: lua syntax
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install luac (lua5.1)
+        run: sudo apt-get update && sudo apt-get install -y lua5.1
+
+      - name: Parse-check every .lua file
+        run: |
+          set -euo pipefail
+          fail=0
+          while IFS= read -r -d '' f; do
+            if ! luac5.1 -p "$f" 2>err; then
+              echo "SYNTAX FAIL: $f"
+              cat err
+              fail=$((fail + 1))
+            fi
+          done < <(find lua -name '*.lua' -print0)
+          echo "Syntax errors: $fail"
+          exit "$fail"
+
+  typecheck:
+    name: lua-language-server
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run lua-language-server
+        uses: mrcjkb/lua-typecheck-action@v0
+        with:
+          configpath: ".luarc.json"
+          # Only the public-API surfaces are annotated so far. Treat the
+          # run as advisory until we land Phase 1's broader annotation pass
+          # across the rest of the codebase.
+          checklevel: Warning
+        continue-on-error: true

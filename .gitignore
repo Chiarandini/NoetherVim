@@ -3,6 +3,5 @@ tests/
 .DS_Store
 .cache
 .claude/
-**/.luarc.json
 dev-docs/
 CONTRIBUTING.md
