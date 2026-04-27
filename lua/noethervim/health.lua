@@ -136,7 +136,7 @@ function M.check()
     h.info("No user module overrides found (options, keymaps, etc.)")
   end
   if #nv._user_lsp > 0 then
-    h.ok("Loaded user LSP overrides: " .. table.concat(nv._user_lsp, ", "))
+    h.ok("Loaded user LSP files: " .. table.concat(nv._user_lsp, ", "))
   end
   if #nv._user_overrides > 0 then
     h.ok("Loaded user imperative overrides: " .. table.concat(nv._user_overrides, ", "))

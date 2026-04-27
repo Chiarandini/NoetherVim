@@ -16,8 +16,8 @@ CONTENTS                                                  *noethervim-contents*
        4.4 Autocommands .................... |noethervim-user-autocmds|
        4.5 Highlights ...................... |noethervim-user-highlights|
        4.6 Bundle data table ............... |noethervim-user-config-data|
-       4.7 Plugin overrides ................ |noethervim-user-plugins|
-       4.8 LSP server overrides ............ |noethervim-user-lsp|
+       4.7 Plugins ......................... |noethervim-user-plugins|
+       4.8 LSP servers ..................... |noethervim-user-lsp|
        4.9 Imperative overrides ............ |noethervim-user-overrides|
     5. Bundles ............................. |noethervim-bundles|
     6. Inspection .......................... |noethervim-inspect|
@@ -356,11 +356,23 @@ Current keys: ~
 See `templates/user/config.example.lua` for the annotated template.
 
 ------------------------------------------------------------------------------
-4.7 PLUGIN OVERRIDES                                *noethervim-user-plugins*
+4.7 PLUGINS                                         *noethervim-user-plugins*
 
 Create files in `lua/user/plugins/`. Each file returns a lazy.nvim spec
-table. To override an existing plugin, use the EXACT same repository
-string -- lazy.nvim deep-merges `opts` tables automatically: >lua
+table. This is where you both add new plugins and adjust the ones the
+distro already ships.
+
+To add a new plugin, write a normal lazy.nvim spec: >lua
+    -- lua/user/plugins/pantran.lua
+    return {
+      { "potamides/pantran.nvim",
+        cmd = "Pantran",
+        opts = { default_engine = "argos" },
+      },
+    }
+<
+To override a plugin the distro already loads, use the EXACT same
+repository string -- lazy.nvim deep-merges `opts` tables automatically: >lua
     -- lua/user/plugins/snacks.lua
     return {
       { "folke/snacks.nvim",
@@ -393,10 +405,23 @@ resort.
 See `templates/user/plugins/example.lua` for more examples.
 
 ------------------------------------------------------------------------------
-4.8 LSP SERVER OVERRIDES                                *noethervim-user-lsp*
+4.8 LSP SERVERS                                         *noethervim-user-lsp*
 
-Create files in `lua/user/lsp/`. Neovim's `vim.lsp.config()` deep-merges
-when called again for the same server: >lua
+Create files in `lua/user/lsp/`. This is where you both add new server
+configs and adjust the ones the distro already ships
+(see `lua/noethervim/lsp/` for the bundled list).
+
+To add a new server, call `vim.lsp.config()` and `vim.lsp.enable()`: >lua
+    -- lua/user/lsp/gleam.lua
+    vim.lsp.config("gleam", {
+      cmd = { "gleam", "lsp" },
+      filetypes = { "gleam" },
+      root_markers = { "gleam.toml", ".git" },
+    })
+    vim.lsp.enable("gleam")
+<
+To adjust a server the distro already configures, call `vim.lsp.config()`
+again with the same name -- Neovim deep-merges the tables: >lua
     -- lua/user/lsp/lua_ls.lua
     vim.lsp.config("lua_ls", {
       settings = {

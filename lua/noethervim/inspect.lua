@@ -244,7 +244,7 @@ function M.status()
     table.insert(lines, "Loaded modules: " .. table.concat(nv._user_modules, ", "))
   end
   if #nv._user_lsp > 0 then
-    table.insert(lines, "Loaded LSP overrides: " .. table.concat(nv._user_lsp, ", "))
+    table.insert(lines, "Loaded user LSP files: " .. table.concat(nv._user_lsp, ", "))
   end
   if #nv._user_overrides > 0 then
     table.insert(lines, "Loaded overrides: " .. table.concat(nv._user_overrides, ", "))
