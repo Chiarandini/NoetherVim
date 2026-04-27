@@ -28,10 +28,10 @@ opt.autoread     = true
 opt.swapfile     = false
 
 -- Text layout
--- wrap is OFF globally; the prose profile (autocmds.lua) re-enables it
--- for prose filetypes.  The breakindent / linebreak / showbreak settings
+-- wrap is OFF globally; the writing profile (autocmds.lua) re-enables it
+-- for writing filetypes.  The breakindent / linebreak / showbreak settings
 -- only take effect when wrap is on, so they're harmless here and active
--- in prose buffers.
+-- in writing buffers.
 opt.textwidth     = 100
 opt.wrap          = false
 opt.breakindent   = true
@@ -48,7 +48,7 @@ vim.opt.listchars = {
   extends  = "›",
   precedes = "‹",
 }
--- formatoptions flags (global; prose profile re-adds `t` for prose):
+-- formatoptions flags (global; writing profile re-adds `t` for writing):
 --   c  auto-wrap comments using textwidth
 --   r  continue comment leader after <Enter>
 --   o  continue comment leader after o/O

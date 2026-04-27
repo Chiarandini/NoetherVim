@@ -161,33 +161,34 @@ hl_event("HeirlinePDFModeOn",    function()
 end)
 
 -- ──────────────────────────────────────────────────────────────
---  Filetype profiles: prose and code
+--  Filetype profiles: writing and code
 -- ──────────────────────────────────────────────────────────────
--- Prose buffers (tex, markdown, norg, ...) get wrap + linebreak +
+-- Writing buffers (tex, markdown, gitcommit, ...) get wrap + linebreak +
 -- spell + conceallevel=2; list chars are hidden.  Code buffers get
 -- whitespace visibility (list chars).  Structured-text (json, yaml,
 -- toml) and special buffers (help, qf, oil, terminal, dashboard, ...)
 -- are left alone -- their own ftplugins / buffer settings take over.
 --
 -- FileType autocmds fire AFTER ftplugin files, so these profiles win
--- over any same-named setting in ftplugin/*.lua.  To specialize a
--- filetype, either add it to `non_code_filetypes` below or clear the
--- augroup from `lua/user/autocmds.lua` and re-create with your own.
+-- over any same-named setting in ftplugin/*.lua.  To extend the lists
+-- (e.g. treat vimwiki as writing), set writing_filetypes /
+-- non_code_filetypes in lua/user/config.lua -- see
+-- :help noethervim-user-config-data.
 
 local fts = require("noethervim.util.filetypes")
-local prose_filetypes = fts.prose
+local writing_filetypes = fts.writing
 local non_code_filetypes = fts.non_code
 
 vim.api.nvim_create_autocmd("FileType", {
-  group    = vim.api.nvim_create_augroup("noethervim_prose", { clear = true }),
-  pattern  = vim.tbl_keys(prose_filetypes),
+  group    = vim.api.nvim_create_augroup("noethervim_writing", { clear = true }),
+  pattern  = vim.tbl_keys(writing_filetypes),
   callback = function(ev)
     vim.opt_local.wrap         = true
     vim.opt_local.linebreak    = true
     vim.opt_local.list         = false
     vim.opt_local.conceallevel = 2
     vim.opt_local.spell        = true
-    vim.opt_local.formatoptions:append("t")  -- auto-wrap prose at textwidth
+    vim.opt_local.formatoptions:append("t")  -- auto-wrap at textwidth
     vim.keymap.set("i", "<c-l>", "<c-g>u<Esc>[s1z=`]a<c-g>u",
       { buffer = ev.buf, silent = true, desc = "fix spelling" })
   end,
@@ -198,7 +199,7 @@ vim.api.nvim_create_autocmd("FileType", {
   pattern  = "*",
   callback = function(ev)
     local ft = vim.bo[ev.buf].filetype
-    if ft == "" or prose_filetypes[ft] or non_code_filetypes[ft] then
+    if ft == "" or writing_filetypes[ft] or non_code_filetypes[ft] then
       return
     end
     vim.opt_local.list = true

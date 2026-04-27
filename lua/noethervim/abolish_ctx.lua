@@ -8,7 +8,7 @@ function M.in_spell_region(bufnr)
   if vim.b[bufnr].noethervim_abolish_force then return true end
 
   local ft = vim.bo[bufnr].filetype
-  if fts.prose[ft] then return true end
+  if fts.writing[ft] then return true end
   if fts.non_code[ft] then return false end
 
   local pos = vim.api.nvim_win_get_cursor(0)

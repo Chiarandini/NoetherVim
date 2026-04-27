@@ -1,7 +1,7 @@
 -- NoetherVim ftplugin: markdown
 -- Smart list continuation keymap.
 -- wrap / linebreak / spell / conceallevel / <C-l> spell-fix come from
--- the prose profile in autocmds.lua.
+-- the writing profile in autocmds.lua.
 
 local function shift_enter()
   local row, col = unpack(vim.api.nvim_win_get_cursor(0))

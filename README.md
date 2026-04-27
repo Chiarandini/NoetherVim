@@ -224,7 +224,7 @@ NoetherVim loads user override files after each core module. Create any of these
 | `autocmds.lua` | Autocommands |
 | `highlights.lua` | Highlight groups (runs after colorscheme) |
 | `lsp/<server>.lua` | Per-server LSP settings |
-| `config.lua` | Bundle data table -- vault paths, feature flags (`:help noethervim-user-config-data`) |
+| `config.lua` | Config data table -- vault paths, feature flags, filetype lists (`:help noethervim-user-config-data`) |
 
 Template files are provided in `templates/user/` in the installed distro - copy the ones you want and uncomment the relevant lines.
 
@@ -302,7 +302,7 @@ lua/
     ├── autocmds.lua        ← autocommand additions
     ├── highlights.lua      ← highlight overrides (after colorscheme)
     ├── lsp/                ← per-server LSP overrides
-    └── config.lua          ← data table for bundles
+    └── config.lua          ← data table (vault paths, filetype lists, flags)
 ```
 
 ---

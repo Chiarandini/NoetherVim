@@ -129,7 +129,7 @@ the above runs.
 
 >
     ~/.config/nvim/lua/user/
-    |-- config.lua           Bundle data table  (|noethervim-user-config-data|)
+    |-- config.lua           Config data table  (|noethervim-user-config-data|)
     |-- options.lua          vim.o overrides
     |-- keymaps.lua          Keymap overrides and additions
     |-- autocmds.lua         Autocommand additions
@@ -228,39 +228,39 @@ To override a core autocmd, clear its augroup first: >lua
     -- Then re-create with your preferred list
 <
                                                  *noethervim-filetype-profiles*
-Filetype profiles (prose and code): ~
+Filetype profiles (writing and code): ~
 
 NoetherVim applies two FileType autocmds that layer opinionated
 settings on top of the globals:
 
-    `noethervim_prose`  Matches: tex, markdown, norg, text, gitcommit,
-                      rst, typst.  Sets `wrap`, `linebreak`, `spell`,
-                      `conceallevel = 2`, appends `t` to `formatoptions`
-                      (auto-wrap at textwidth), and hides list chars.
-                      Also binds `<C-l>` in insert mode for spell-fix.
-    `noethervim_code`   Matches: every filetype NOT in the prose list,
-                      structured-text set (json, jsonc, yaml, toml),
-                      or special-buffer set (help, qf, oil, terminal,
-                      snacks_dashboard, lazy, mason, checkhealth,
-                      notify, Trouble, dap / dapui_*).  Sets `list` on
-                      so trailing whitespace and tabs are visible.
-                      `formatoptions` omits `t` globally, so typing past
-                      textwidth in code does NOT auto-break mid-line --
-                      formatters handle line length instead.
+    `noethervim_writing`  Matches: tex, markdown, norg, text, gitcommit,
+                        rst, typst.  Sets `wrap`, `linebreak`, `spell`,
+                        `conceallevel = 2`, appends `t` to `formatoptions`
+                        (auto-wrap at textwidth), and hides list chars.
+                        Also binds `<C-l>` in insert mode for spell-fix.
+    `noethervim_code`     Matches: every filetype NOT in the writing list,
+                        structured-text set (json, jsonc, yaml, toml),
+                        or special-buffer set (help, qf, oil, terminal,
+                        snacks_dashboard, lazy, mason, checkhealth,
+                        notify, Trouble, dap / dapui_*).  Sets `list` on
+                        so trailing whitespace and tabs are visible.
+                        `formatoptions` omits `t` globally, so typing past
+                        textwidth in code does NOT auto-break mid-line --
+                        formatters handle line length instead.
 
 FileType autocmds fire AFTER `ftplugin/*.lua`, so these profiles win
-over same-named ftplugin settings.  To specialize a filetype:
+over same-named ftplugin settings.  To extend the lists (e.g. treat
+`vimwiki` as writing, or skip the code profile for a custom filetype),
+set `writing_filetypes` / `non_code_filetypes` in `lua/user/config.lua`
+-- see |noethervim-user-config-data|.
 
-  - To drop it from the code profile, add it to `non_code_filetypes`
-    via your own autocmd in `lua/user/autocmds.lua`.
-  - To override the whole profile, clear the augroup and re-create:
->lua
-    vim.api.nvim_create_augroup("noethervim_prose", { clear = true })
+To override the whole profile, clear the augroup and re-create: >lua
+    vim.api.nvim_create_augroup("noethervim_writing", { clear = true })
     -- then register your own FileType autocmd
 <
-The global `wrap` default is OFF; the prose profile re-enables it for
-prose filetypes.  Global `list` is OFF; the code profile re-enables it
-for code filetypes.  Listchars are styled in `noethervim/options.lua`.
+The global `wrap` default is OFF; the writing profile re-enables it
+for writing filetypes.  Global `list` is OFF; the code profile re-enables
+it for code filetypes.  Listchars are styled in `noethervim/options.lua`.
 
 ------------------------------------------------------------------------------
 4.5 HIGHLIGHTS                                    *noethervim-user-highlights*
@@ -297,26 +297,30 @@ Common highlight groups to tweak: ~
     `@string`          Treesitter strings
 
 ------------------------------------------------------------------------------
-4.6 BUNDLE DATA TABLE                          *noethervim-user-config-data*
+4.6 CONFIG DATA TABLE                          *noethervim-user-config-data*
 
 Create `lua/user/config.lua`. It returns a single table of values that
-specific bundles read at runtime -- vault paths, feature flags, and other
-identity-shaped settings that would be awkward to plumb through lazy.nvim's
-opts merging. Keys you do not set fall back to the bundle's default; the
-file is optional and missing keys are not an error.
+core modules and bundles read at runtime -- vault paths, feature flags,
+filetype lists, and other identity-shaped settings that would be awkward
+to plumb through lazy.nvim's opts merging. Keys you do not set fall back
+to the distro default; the file is optional and missing keys are not an
+error.
 
 This file is intentionally narrow. It is NOT a general-purpose plugin
-override mechanism -- that is |noethervim-user-plugins|. A key only earns a
-spot here if (a) the value is required for the bundle to function,
-(b) reaching the equivalent setting via opts merging would force the user
-to learn upstream plugin internals, and (c) the bundle's audience is
-broader than power users. Otherwise, override via `user/plugins/`. >lua
+override mechanism -- that is |noethervim-user-plugins|. A key only earns
+a spot here if (a) the value is required for the consuming code to behave
+correctly for the user, (b) reaching the equivalent setting via opts
+merging would force the user to learn upstream plugin internals or fork
+core code, and (c) the audience is broader than power users. Otherwise,
+override via `user/plugins/` or `user/autocmds.lua`. >lua
     -- lua/user/config.lua
     return {
       obsidian_vault               = "~/Documents/MyVault/",
       blink_conservative_filetypes = { "tex", "latex" },
       blink_conservative_size_kb   = 500,
       drop                         = false,
+      writing_filetypes            = { "vimwiki", "quarto" },
+      non_code_filetypes           = { "csv" },
     }
 <
 Current keys: ~
@@ -335,6 +339,17 @@ Current keys: ~
                                   seasonal `drop.nvim` animations from
                                   the `eye-candy` bundle. Default:
                                   enabled.
+    `writing_filetypes`             Extra filetypes added to the writing
+                                  profile (wrap, linebreak, spell,
+                                  conceallevel=2, formatoptions+t).
+                                  Additive: defaults stay in place.
+                                  See |noethervim-filetype-profiles|.
+                                  Default: `{}`.
+    `non_code_filetypes`            Extra filetypes that skip both the
+                                  writing and code profiles -- their own
+                                  ftplugin / buffer settings take over.
+                                  Additive: defaults stay in place.
+                                  Default: `{}`.
 
 See `templates/user/config.example.lua` for the annotated template.
 
@@ -1187,14 +1202,14 @@ A: Set `opts.colorscheme` on the NoetherVim spec in your `init.lua`:
    `stdpath("data") .. "/noethervim_colorscheme"`.
 
 Q: Why is spell check on in markdown / tex / gitcommit files?~
-A: Prose filetypes (tex, markdown, norg, text, gitcommit, rst, typst)
-   get a "prose profile" that enables wrap, linebreak, spell, and
+A: Writing filetypes (tex, markdown, norg, text, gitcommit, rst, typst)
+   get a "writing profile" that enables wrap, linebreak, spell, and
    `conceallevel = 2`.  See |noethervim-filetype-profiles| for the
    full picture.  Toggle spell per buffer with `[os` / `]os`.  To
    disable the profile entirely, clear the augroup in
    `lua/user/autocmds.lua`:
 >lua
-    vim.api.nvim_create_augroup("noethervim_prose", { clear = true })
+    vim.api.nvim_create_augroup("noethervim_writing", { clear = true })
 <
 
 Q: How do I restore my last session?~

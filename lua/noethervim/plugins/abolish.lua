@@ -5,7 +5,7 @@
 -- option (and corresponding g:abolish_default_expr) so Abolish-defined
 -- abbreviations can be gated by a predicate at expansion time. NoetherVim
 -- uses this to restrict typo correction to comments / @spell regions in
--- code buffers while keeping unconditional expansion in prose.
+-- code buffers while keeping unconditional expansion in writing buffers.
 --
 -- The fork is upstream-compatible: with neither -expr= nor
 -- g:abolish_default_expr set, behaviour is identical to tpope/vim-abolish.

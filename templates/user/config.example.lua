@@ -23,4 +23,14 @@ return {
     -- Set drop = false to disable seasonal drop.nvim animations (default: enabled).
     -- drop = false,
 
+    -- ── Filetype profiles ─────────────────────────────────────────────────────
+    -- Extra filetypes to treat as writing (wrap, linebreak, spell, conceallevel=2,
+    -- formatoptions+t).  Defaults: tex, markdown, norg, text, gitcommit, rst, typst.
+    -- writing_filetypes = { "vimwiki", "quarto" },
+
+    -- Extra filetypes that skip BOTH the writing and code profiles -- their own
+    -- ftplugin / buffer settings take over (e.g. listchars stay off).  Defaults
+    -- include json, yaml, toml, help, qf, oil, terminal, dashboard, dap-ui, etc.
+    -- non_code_filetypes = { "csv" },
+
 }

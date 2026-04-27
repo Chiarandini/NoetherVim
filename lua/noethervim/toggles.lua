@@ -127,7 +127,7 @@ toggle("oG",
 toggle("oL", "<cmd>lsp enable<cr>", "<cmd>lsp disable<cr>", "lsp")
 
 -- Abolish auto-correct in code regions
--- Default behavior: corrections fire only in prose buffers and inside
+-- Default behavior: corrections fire only in writing buffers and inside
 -- comments / @spell regions of code buffers. [oA forces unconditional
 -- expansion in the current buffer; ]oA returns to context-gated.
 toggle("oA",
