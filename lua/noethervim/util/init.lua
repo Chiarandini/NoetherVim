@@ -106,11 +106,19 @@ end
 --- Map resolved keymap lhs values to the spec file that defines them.
 --- Combines lazy.nvim's key handler data (key_id -> plugin_name) with a
 --- scan of NoetherVim spec files (plugin_name -> file path).
---- Returns two tables:
----   sources:  { ["mode|resolved_lhs"] = "/path/to/plugins/snacks.lua", ... }
----   managed:  { ["mode|resolved_lhs"] = true, ... } (ALL lazy handler keys,
----             even from dev/user-only plugins without a mapped spec file)
---- Keymaps set directly via vim.keymap.set (not in a lazy spec) are absent.
+---
+--- Both tables are keyed by `<mode>|<resolved_lhs>` (e.g. `"n|<Space>fb"`).
+--- Keymaps set directly via vim.keymap.set (not in a lazy spec) are absent
+--- from both tables; those are tracked by util.keymap_registry instead.
+---
+---@return table<string, string> sources
+---     Mapping from `<mode>|<resolved_lhs>` to absolute path of the spec
+---     file that registered the key.
+---@return table<string, true> managed
+---     Set of `<mode>|<resolved_lhs>` for ALL lazy handler keys, including
+---     dev/user-only plugins without a mapped spec file. Membership without
+---     a corresponding `sources` entry means "lazy registered this but we
+---     can't attribute it to a file."
 function M.keymap_sources()
   local sources, managed = {}, {}
 

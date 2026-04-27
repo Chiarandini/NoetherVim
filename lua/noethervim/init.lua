@@ -38,6 +38,7 @@ local TRACKED_OPTIONS = {
 }
 
 --- Capture current values of all tracked options.
+---@return table<string, any>
 local function snapshot_options()
   local snap = {}
   for _, name in ipairs(TRACKED_OPTIONS) do
@@ -46,7 +47,15 @@ local function snapshot_options()
   return snap
 end
 
+---@class noethervim.KeymapSnapshot
+---@field mode string
+---@field lhs string
+---@field rhs string
+---@field desc string
+---@field callback? function
+
 --- Capture all keymaps across all modes, keyed by "mode|lhs".
+---@return table<string, noethervim.KeymapSnapshot>
 local function snapshot_keymaps()
   local snap = {}
   for _, mode in ipairs({ "n", "i", "v", "x", "s", "o", "c", "t" }) do

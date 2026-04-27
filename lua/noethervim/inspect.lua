@@ -737,10 +737,8 @@ end
 
 --- File-content cache for the project scan. Source files are read-only
 --- within a session, so a single read per file pays for every jump
---- that needs to consult it. We additionally cache the canon-normalised
---- whole-file text to skip per-line canon work on each subsequent jump.
+--- that needs to consult it.
 local _file_lines_cache = {}
-local _file_canon_cache = {}
 local function _file_lines(path)
   local c = _file_lines_cache[path]
   if c == nil then
@@ -749,29 +747,6 @@ local function _file_lines(path)
     _file_lines_cache[path] = c
   end
   return c or nil
-end
-
-local function _file_canon_text(path)
-  local c = _file_canon_cache[path]
-  if c ~= nil then return c or nil end
-  local lines = _file_lines(path)
-  if not lines then
-    _file_canon_cache[path] = false
-    return nil
-  end
-  local registry = require("noethervim.util.keymap_registry")
-  -- Strip Lua/vim single-line comments before joining; otherwise a
-  -- comment like `-- map "<leader>x" to ...` would produce a hit.
-  local is_vim = path:match("%.vim$") ~= nil
-  local kept = {}
-  for _, line in ipairs(lines) do
-    local is_comment = line:match("^%s*%-%-")
-                    or (is_vim and line:match('^%s*"'))
-    kept[#kept + 1] = is_comment and "" or line
-  end
-  c = registry.canon(table.concat(kept, "\n"))
-  _file_canon_cache[path] = c
-  return c
 end
 
 local function scan_project_for(lhs, mode)
@@ -886,13 +861,18 @@ end
 -- ── Shared: jump to keymap source definition ────────────────────
 -- Used by diff_keymaps (confirm handler) and the guide (<CR>).
 
+---@class noethervim.inspect.JumpOpts
+---@field source? string  Lazy handler source hint (path to the spec file
+---                       that registered the keymap), used as a fallback
+---                       when keymap_registry can't resolve the call site.
+
 --- Jump to the source definition of a keymap.
 --- Opens the file containing the definition (readonly in non-dev mode)
 --- and positions the cursor on the defining line.
 ---
---- @param mode string   Keymap mode ("n", "i", "v", etc.)
---- @param lhs  string   Resolved keymap lhs (from nvim_get_keymap)
---- @param opts? table   { source = string? }  Optional lazy handler source hint.
+---@param mode string   Keymap mode ("n", "i", "v", etc.)
+---@param lhs  string   Resolved keymap lhs (from nvim_get_keymap)
+---@param opts? noethervim.inspect.JumpOpts
 function M.jump_to_keymap(mode, lhs, opts)
   opts = opts or {}
   local readonly_default = not vim.g.noethervim_dev
@@ -1102,9 +1082,8 @@ function M.diff_keymaps()
   -- Build a quickfix entry for one item using the same candidate
   -- cascade as `M.jump_to_keymap`, but resolving file+line from cached
   -- file content instead of opening the buffer. Returns nil if no
-  -- candidate file can be found.
+  -- candidate file can be found. Closes over the outer-scope `registry`.
   local function resolve_qf_entry(item)
-    local registry = require("noethervim.util.keymap_registry")
     local display_lhs = item.lhs:gsub(" ", "␣"):gsub("<lt>", "<")
     local text = string.format("%-11s [%s] %-16s %s",
                                item.tag, item.mode, display_lhs, item.desc or "")
@@ -1439,6 +1418,11 @@ local function open_diff_split(module_name)
   end
 end
 
+--- Open a side-by-side diff of a NoetherVim core module against the user's
+--- override for the same module. With no argument, presents a Snacks picker
+--- of every module that has (or could have) an override.
+---
+---@param module_name? string  Bare module name (e.g. "telescope", "snacks").
 function M.diff_file(module_name)
   -- Direct open when called with a specific module name
   if module_name and module_name ~= "" then
@@ -1570,6 +1554,12 @@ end
 
 -- ── Diff dispatcher ──────────────────────────────────────────────
 
+--- Subcommand dispatcher for `:NoetherVim diff`.
+---
+---@param what? "keymaps"|"options"|string
+---     `"keymaps"` opens the keymap diff picker, `"options"` opens the
+---     option diff picker; any other string is treated as a module name
+---     and forwarded to `diff_file()`.
 function M.diff(what)
   if what == "keymaps" then
     M.diff_keymaps()
