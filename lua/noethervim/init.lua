@@ -85,6 +85,15 @@ M._user_overrides = {}
 function M.setup(opts)
   opts = opts or {}
 
+  -- Validate opts at the boundary. Bad values become a vim.notify warning
+  -- rather than a hard crash; setup continues with whatever salvageable
+  -- fields remain. The same surfaces appear in :checkhealth via util.config.
+  local cfg = require("noethervim.util.config")
+  local opts_errors = cfg.validate_setup_opts(opts)
+  for _, err in ipairs(opts_errors) do
+    vim.notify("noethervim.setup: " .. err, vim.log.levels.WARN)
+  end
+
   -- Determine whether to load user overrides.
   local load_user = not vim.env.NOETHERVIM_NO_USER
                     and not vim.g.noethervim_no_user

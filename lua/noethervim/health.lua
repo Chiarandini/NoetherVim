@@ -207,6 +207,17 @@ function M.check()
   local ok_cfg, user_cfg = pcall(require, "user.config")
   if ok_cfg and type(user_cfg) ~= "table" then
     h.warn("lua/user/config.lua must return a table (got " .. type(user_cfg) .. ") -- see templates/user/config.example.lua")
+  elseif ok_cfg and type(user_cfg) == "table" then
+    local cfg_validator = require("noethervim.util.config")
+    local errors, unknowns = cfg_validator.validate_user_config(user_cfg)
+    for _, err in ipairs(errors) do h.warn(err) end
+    if #unknowns > 0 then
+      h.info("Unknown user.config keys (typo? or stale after distro update): "
+        .. table.concat(unknowns, ", "))
+    end
+    if #errors == 0 and #unknowns == 0 then
+      h.ok("user.config: schema valid")
+    end
   end
 
   local obsidian_vault = (function()
