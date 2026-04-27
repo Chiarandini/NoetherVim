@@ -1,17 +1,34 @@
 --- Setup-time registry of keymap registration sites.
 ---
---- During `noethervim.setup()` we wrap `vim.keymap.set` so every call
---- records the file and line of the callsite, keyed by mode|resolved_lhs.
---- The wrapper is installed once and removed before `setup()` returns --
---- nothing persists into user-time. Users writing `vim.keymap.set` at
---- runtime (ftplugin, post-load plugin configs, interactive :lua) hit the
---- stock function.
+--- WHY THIS EXISTS
+--- `vim.api.nvim_get_keymap()` tells us a keymap exists, but not where it
+--- was registered. The :NoetherVim diff-keymaps picker and the guide
+--- jump-to-source handler need the second piece: file + line. There is no
+--- public Neovim API for that. We get it by transient instrumentation.
 ---
---- Consumers (the :NoetherVim diff keymaps picker, the guide jump
---- handler) look up entries via `lookup(mode, resolved_lhs)`, which
---- returns an authoritative { file, line } when available. Lazy-managed
---- `keys = {...}` specs bypass the wrapper and are attributed through
---- `util.keymap_sources()` instead.
+--- HOW IT WORKS
+--- During `noethervim.setup()` we replace `vim.keymap.set` with a wrapper
+--- that records the callsite (via `debug.getinfo`) keyed by
+--- mode|resolved_lhs, then forwards to the stock implementation. The
+--- wrapper is installed once at the start of setup() and uninstalled
+--- before setup() returns -- nothing persists into user-time. Users
+--- writing `vim.keymap.set` at runtime (ftplugin, post-load plugin
+--- configs, interactive :lua) hit the stock function with no wrapping.
+---
+--- WHAT IT DOESN'T COVER
+--- Lazy-managed `keys = {...}` specs do not go through `vim.keymap.set`
+--- (lazy.nvim sets the keymap directly), so they bypass this wrapper.
+--- Those keymaps are attributed through `util.keymap_sources()` instead,
+--- which scans plugin spec files and consults lazy's resolved handler
+--- table.
+---
+--- ARCHITECTURAL NOTE
+--- This is the most "magical" piece in the codebase. It is justified
+--- because (a) the wrapper is narrowly scoped to setup() only, (b) it
+--- self-uninstalls, and (c) the alternative (forcing every core file to
+--- call a NoetherVim wrapper API) would violate the "explicit over
+--- magic" principle far more visibly than a transient debug hook does.
+--- See dev-docs/architecture.md §1 for the principle list.
 
 local M = {}
 

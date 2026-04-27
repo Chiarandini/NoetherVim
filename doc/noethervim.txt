@@ -395,8 +395,32 @@ To add extra keymaps to an existing plugin: >lua
 lazy.nvim unions `keys`, `cmd`, `event`, and `ft` tables from all specs
 for the same plugin.
 
-NOTE: `opts` arrays (like `ensure_installed`) are REPLACED, not merged.
-If you override an array, include the full list you want.
+Array-valued opts: ~                    *noethervim-user-plugins-arrays*
+
+`vim.tbl_deep_extend` (the function lazy.nvim uses to merge `opts`) does
+NOT extend sequential arrays -- it REPLACES them. Keys like
+`ensure_installed` (Mason / treesitter), `formatters_by_ft.<ft>` (conform),
+and `linters_by_ft.<ft>` (nvim-lint) all behave this way.
+
+Two patterns to extend an array key without replacing it: >lua
+
+    -- Pattern 1 -- list the full set you want.
+    -- Simple, but you must track upstream additions yourself.
+    { "neovim/nvim-lspconfig",
+      opts = { ensure_installed = { "lua_ls", "basedpyright", "gopls" } } }
+
+    -- Pattern 2 -- opts as a function, mutating in place.
+    -- Picks up upstream additions automatically; preferred when the
+    -- upstream list is long or distro-maintained.
+    { "neovim/nvim-lspconfig",
+      opts = function(_, opts)
+        opts.ensure_installed = opts.ensure_installed or {}
+        table.insert(opts.ensure_installed, "gopls")
+      end }
+<
+Pattern 2 receives the resolved upstream `opts` table as the second
+argument. Mutating it (rather than returning a new table) is what makes
+the extension stick -- lazy.nvim uses the table you mutate.
 
 NOTE: if you specify `config = function()` in your override spec, it
 REPLACES the upstream config function entirely. Only do this as a last
@@ -1126,6 +1150,9 @@ A: Create `lua/user/lsp/<server>.lua` with `vim.lsp.config()` and
     { "neovim/nvim-lspconfig",
       opts = { ensure_installed = { "lua_ls", "basedpyright", ..., "gopls" } } }
 <
+   `ensure_installed` is an array, so the table-form override REPLACES
+   the distro list -- include every server you want loaded. To extend
+   the distro list instead, see |noethervim-user-plugins-arrays|.
 
 Q: How do I add a linter?~
 A: NoetherVim uses nvim-lint alongside conform.nvim. Most linting is
@@ -1135,6 +1162,8 @@ A: NoetherVim uses nvim-lint alongside conform.nvim. Most linting is
     { "mfussenegger/nvim-lint",
       opts = { linters_by_ft = { sh = { "shellcheck" }, yaml = { "yamllint" } } } }
 <
+   `linters_by_ft.<ft>` is also an array; same caveat applies. See
+   |noethervim-user-plugins-arrays|.
 
 Q: How do I install a formatter or debugger?~
 A: Both are managed by Mason, the same as LSP servers. Use `:Mason`

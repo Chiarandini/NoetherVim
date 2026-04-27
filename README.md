@@ -8,6 +8,8 @@ The distro is opinionated, but anything and everything can be overridden through
 
 > [!NOTE]
 > NoetherVim is in **alpha**. The core is stable for daily use, but what counts as a "default" vs. an "overridable" option is still being refined. These choices grew out of my Neovim use and represent my best idea of good, agnostic defaults. If you think there are better choices, [open an issue](https://github.com/Chiarandini/NoetherVim/issues) and we can address it there.
+>
+> **Breaking changes during alpha do not ship with deprecation shims.** Renames, command consolidations, and option-key changes land directly; the changelog and commit messages call them out. Deprecation notices (`vim.deprecate`) and a SemVer compatibility window begin at the first non-alpha release.
 
 
 ## Why another distribution?
