@@ -13,15 +13,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install luac (lua5.1)
-        run: sudo apt-get update && sudo apt-get install -y lua5.1
+      - name: Install LuaJIT
+        # Match the runtime Neovim actually uses (and our .luarc.json target).
+        # Plain lua5.1 rejects LuaJIT extensions like `goto continue` that the
+        # codebase relies on; lua5.4 would parse most code but introduces its
+        # own syntax (e.g. <const>) that drifts from runtime.
+        run: sudo apt-get update && sudo apt-get install -y luajit
 
       - name: Parse-check every .lua file
+        # `luajit -b in out` saves bytecode (default raw type) -- writing to
+        # /dev/null discards the output but still runs lex+parse+codegen, so
+        # any syntax error fails non-zero. This matches the parser Neovim
+        # actually uses to load these files at runtime.
         run: |
           set -euo pipefail
           fail=0
           while IFS= read -r -d '' f; do
-            if ! luac5.1 -p "$f" 2>err; then
+            if ! luajit -b "$f" /dev/null 2>err; then
               echo "SYNTAX FAIL: $f"
               cat err
               fail=$((fail + 1))
