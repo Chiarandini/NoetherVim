@@ -25,7 +25,8 @@ return {
 
     -- ── Filetype profiles ─────────────────────────────────────────────────────
     -- Extra filetypes to treat as writing (wrap, linebreak, spell, conceallevel=2,
-    -- formatoptions+t).  Defaults: tex, markdown, norg, text, gitcommit, rst, typst.
+    -- formatoptions+t).  Defaults: tex, markdown, norg, text, gitcommit, gitsendemail,
+    -- mail, rst, typst.
     -- writing_filetypes = { "vimwiki", "quarto" },
 
     -- Extra filetypes that skip BOTH the writing and code profiles -- their own

@@ -234,15 +234,17 @@ NoetherVim applies two FileType autocmds that layer opinionated
 settings on top of the globals:
 
     `noethervim_writing`  Matches: tex, markdown, norg, text, gitcommit,
-                        rst, typst.  Sets `wrap`, `linebreak`, `spell`,
-                        `conceallevel = 2`, appends `t` to `formatoptions`
-                        (auto-wrap at textwidth), and hides list chars.
-                        Also binds `<C-l>` in insert mode for spell-fix.
+                        gitsendemail, mail, rst, typst.  Sets `wrap`,
+                        `linebreak`, `spell`, `conceallevel = 2`, appends
+                        `t` to `formatoptions` (auto-wrap at textwidth),
+                        and hides list chars.  Also binds `<C-l>` in
+                        insert mode for spell-fix.
     `noethervim_code`     Matches: every filetype NOT in the writing list,
                         structured-text set (json, jsonc, yaml, toml),
-                        or special-buffer set (help, qf, oil, terminal,
-                        snacks_dashboard, lazy, mason, checkhealth,
-                        notify, Trouble, dap / dapui_*).  Sets `list` on
+                        or special-buffer set (help, man, lspinfo, query,
+                        qf, oil, terminal, snacks_*, lazy, mason,
+                        checkhealth, notify, Trouble, dap / dap-float /
+                        dapui_*).  Sets `list` on
                         so trailing whitespace and tabs are visible.
                         `formatoptions` omits `t` globally, so typing past
                         textwidth in code does NOT auto-break mid-line --
