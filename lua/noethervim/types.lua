@@ -1,0 +1,70 @@
+--- LuaCATS type declarations for NoetherVim's public API.
+---
+--- This file has no runtime effect -- it exists so that `lua-language-server`
+--- (via `.luarc.json` or `lazydev.nvim`) can offer completion and type
+--- diagnostics on the two surfaces users touch:
+---
+---   1. `opts` passed to `require("noethervim").setup(opts)` from init.lua
+---   2. The data table returned from `lua/user/config.lua`
+---
+--- Internal types live next to the modules that use them, with `---@private`
+--- annotations on internal helpers.
+---
+--- Stability: alpha. See dev-docs/architecture.md §1.1 for the deprecation
+--- policy. Field renames before the first non-alpha release land directly,
+--- without `vim.deprecate` shims.
+
+---@class noethervim.Config
+---
+--- The opts table accepted by `require("noethervim").setup(opts)`. Forwarded
+--- automatically by lazy.nvim's `config = function(_, opts) ... end` shim
+--- written in `init.lua.example`.
+---
+---@field colorscheme? string
+---     Default colorscheme name, applied during setup() unless the
+---     colorscheme bundle has persisted a user pick.
+---@field colorscheme_persistence? boolean
+---     If true, restore the last picked colorscheme on startup.
+---     Has no effect unless the colorscheme bundle is enabled.
+---@field statusline? noethervim.StatuslineOpts
+---     Heirline-based statusline overrides.
+
+---@class noethervim.StatuslineOpts
+---
+--- Statusline override surface. Forwarded to `noethervim.statusline.configure()`
+--- before heirline initializes.
+---
+---@field colors? table<string, string>
+---     Heirline color-table overrides. Keys match heirline's color names
+---     (e.g. `mode_n`, `mode_i`, `git_added`); values are hex strings.
+---@field extra_right? table[]
+---     Extra heirline component specs appended to the right side of the
+---     main statusline, after the git block.
+
+---@class noethervim.UserConfig
+---
+--- The data table returned from `lua/user/config.lua`. Read by core modules
+--- and bundles for identity-shaped values that would be awkward to plumb
+--- through lazy.nvim's `opts` merging (see :help noethervim-user-config-data).
+---
+--- Every field is optional. Missing keys fall back to distro defaults.
+---
+---@field obsidian_vault? string
+---     Absolute or `~`-prefixed path to your Obsidian vault. Required by the
+---     `obsidian` bundle; the bundle no-ops without it.
+---@field blink_conservative_filetypes? string[]
+---     Filetypes where blink.cmp's keyword-trigger is suppressed. C-Space
+---     and LSP trigger characters still work. Default: `{ "tex", "latex" }`.
+---@field blink_conservative_size_kb? integer
+---     File size (in KB) above which conservative completion mode kicks in
+---     regardless of filetype. Default: 500.
+---@field drop? boolean
+---     If false, disable seasonal drop.nvim animations. Default: true.
+---@field writing_filetypes? string[]
+---     Extra filetypes to treat as writing (wrap, linebreak, spell, conceal,
+---     formatoptions+t). Extends the distro defaults.
+---@field non_code_filetypes? string[]
+---     Extra filetypes that skip BOTH writing and code profiles. Extends
+---     the distro defaults.
+
+return {}

@@ -15,6 +15,7 @@ local M = {}
 -- Before/after snapshots of options and keymaps, used by the
 -- comparison pickers in noethervim.inspect.
 
+---@private
 M._snapshots = {}
 
 --- Options set by noethervim/options.lua that we track for diffing.
@@ -64,12 +65,23 @@ end
 
 -- ── Setup ────────────────────────────────────────────────────────
 
---- Which user modules were actually found and loaded (for health/status).
+--- Which user modules were actually found and loaded.
+--- Read by `:checkhealth noethervim`; not part of the public API.
+---@private
 M._user_loaded = false
+---@private
 M._user_modules   = {}
+---@private
 M._user_lsp       = {}
+---@private
 M._user_overrides = {}
 
+--- Initialize NoetherVim. Called by `init.lua.example` as the lazy.nvim
+--- `config = function(_, opts) require("noethervim").setup(opts) end` shim.
+---
+--- See |noethervim-user-config| for the user-override system this orchestrates.
+---
+---@param opts? noethervim.Config
 function M.setup(opts)
   opts = opts or {}
 

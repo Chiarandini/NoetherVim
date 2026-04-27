@@ -6,11 +6,11 @@ local M = {}
 local _opts = {}
 local _busy_overrides = {}
 
---- Configure statusline overrides.
---- @param opts table
----   colors      table  -- merged into the colors table (vim.tbl_extend "force")
----   extra_right table  -- list of heirline component specs appended to the
----                        right side of the main statusline (after GitBlock)
+--- Configure statusline overrides. Called once during `noethervim.setup()`
+--- when `opts.statusline` is non-nil; the recorded values are read at
+--- statusline-render time by the heirline component functions.
+---
+---@param opts noethervim.StatuslineOpts
 function M.configure(opts)
   _opts = opts or {}
 end
