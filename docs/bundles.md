@@ -43,6 +43,7 @@ Some bundles have external dependencies:
 | `flash` | Enhanced `f`/`t` and `/` motions with labels |
 | `projects` | Project switcher |
 | `editing-extras` | Argument marking (argmark) + decorative ASCII comment boxes |
+| `yanky` | Yank ring -- cycle through paste history with `<C-p>`/`<C-n>` after a paste |
 
 ## Writing & notes
 

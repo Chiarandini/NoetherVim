@@ -548,6 +548,9 @@ Available bundles (grouped by category): ~
                      `S` behavior remains accessible via `:%s/`.
     `projects`       Project switcher via snacks.picker.
     `editing-extras` Argument marking (argmark) + decorative comment boxes.
+    `yanky`          Yank ring -- cycle through paste history with
+                     `<C-p>`/`<C-n>` after a paste; SearchLeader+y opens
+                     a fuzzy picker over the full history.
 
     writing/ ~
     `markdown`       render-markdown, markdown-preview, tables, math,

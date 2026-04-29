@@ -104,6 +104,7 @@ local bundle_descriptions = {
   flash           = "enhanced f/t and / motions with labels",
   projects        = "project switcher via snacks.picker",
   ["editing-extras"] = "argmark + decorative comment boxes",
+  yanky           = "yank ring -- cycle through paste history (<C-p>/<C-n>)",
   -- writing
   markdown        = "render, preview, tables, math, image paste",
   obsidian        = "Obsidian vault integration (pair with markdown bundle)",

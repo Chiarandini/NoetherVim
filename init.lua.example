@@ -112,6 +112,7 @@ require("lazy").setup({
 		--   lighter alternative: drop yorickpeterse/nvim-jump into user/plugins/
 		-- { import = "noethervim.bundles.navigation.projects" },       -- project switcher (snacks.picker)
 		-- { import = "noethervim.bundles.navigation.editing-extras" }, -- argmark + comment boxes
+		-- { import = "noethervim.bundles.navigation.yanky" },          -- yank ring (<C-p>/<C-n> after paste)
 
 		-- writing/
 		-- { import = "noethervim.bundles.writing.markdown" },    -- render, preview, tables, math, image paste

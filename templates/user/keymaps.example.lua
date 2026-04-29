@@ -35,3 +35,10 @@
 -- vim.keymap.set("n", "<Leader>cd",
 --   function() vim.cmd.cd(vim.fn.expand("%:p:h")) end,
 --   { desc = "cd to buffer dir" })
+
+-- ── Override a bundle's keymap ───────────────────────────────────────────────
+-- Bundle keymaps work the same way -- set the same lhs and yours wins.
+-- Example: if you enable the `yanky` bundle but find <C-p>/<C-n> awkward
+-- (they collide with cursor-line muscle memory), remap the cycle keys:
+-- vim.keymap.set("n", "<M-p>", "<Plug>(YankyPreviousEntry)", { desc = "prev yank" })
+-- vim.keymap.set("n", "<M-n>", "<Plug>(YankyNextEntry)",     { desc = "next yank" })
