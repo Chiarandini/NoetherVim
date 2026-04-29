@@ -3,6 +3,7 @@
 --
 -- Provides:
 --   • vimtex:                    LaTeX compilation, PDF viewing, inverse search
+--   • texlab:                    LaTeX LSP (Mason-installed only when this bundle is enabled)
 --   • img-clip.nvim:             drag-and-drop / clipboard image paste (<localleader>P)
 --   • snacks-bibtex:             BibTeX citation picker (<c-s-c> in insert mode)
 --   • noethervim-tex:            LuaSnip snippets, blink.cmp sources, textobject keymaps
@@ -57,6 +58,16 @@ end
 local SearchLeader = require("noethervim.util").search_leader
 
 return {
+
+  -- ── texlab LSP (Mason install scoped to this bundle) ──────────────────────
+  -- Per-server config lives in lua/noethervim/lsp/texlab.lua; that file is a
+  -- no-op when the binary isn't installed, so it can stay always-loaded.
+  { "neovim/nvim-lspconfig",
+    opts = function(_, opts)
+      opts.ensure_installed = opts.ensure_installed or {}
+      vim.list_extend(opts.ensure_installed, { "texlab" })
+    end,
+  },
 
   -- ── treesitter: latex parser + theorem highlighting ───────────────────────
   -- Uses opts (merged by lazy) and init (runs before load, just registers

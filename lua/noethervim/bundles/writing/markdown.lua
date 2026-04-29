@@ -7,6 +7,8 @@
 --   markdown-table-mode.nvim smart table editing
 --   mdmath.nvim              render math in markdown buffers
 --   img-clip.nvim            paste images from clipboard (<localleader>P)
+--   marksman LSP             markdown link/heading completion (Mason-installed
+--                            only when this bundle is enabled)
 --
 -- img-clip.nvim: if the latex bundle is also enabled, its full img-clip spec
 -- (tex + markdown) takes precedence via lazy.nvim merge. If only the markdown
@@ -14,6 +16,16 @@
 -- loads for markdown buffers.
 
 return {
+
+  -- ── marksman LSP (Mason install scoped to this bundle) ────────────────────
+  -- Per-server config lives in lua/noethervim/lsp/marksman.lua; that file is
+  -- a no-op when the binary isn't installed, so it can stay always-loaded.
+  { "neovim/nvim-lspconfig",
+    opts = function(_, opts)
+      opts.ensure_installed = opts.ensure_installed or {}
+      vim.list_extend(opts.ensure_installed, { "marksman" })
+    end,
+  },
 
   -- ── img-clip.nvim (markdown image paste) ──────────────────────────────────
   -- Minimal declaration so img-clip loads for markdown even without the latex bundle.
