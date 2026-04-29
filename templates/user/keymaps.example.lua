@@ -17,12 +17,21 @@
 -- See :help noethervim-user-keymaps for documentation.
 
 -- ── Override a core keymap ───────────────────────────────────────────────────
--- NoetherVim maps ; to : (command-line).  Revert to default:
+-- NoetherVim maps `;` to `:` (command-line).  Revert to Vim's default
+-- (repeat last `f` / `t` / `F` / `T` motion):
 -- vim.keymap.set("n", ";", ";")
 
 -- ── Remove a core keymap ─────────────────────────────────────────────────────
--- vim.keymap.del("n", "<C-a>")
+-- NoetherVim maps `<C-a>` in insert mode to "select all".  Restore
+-- Vim's default (insert previously inserted text):
+-- vim.keymap.del("i", "<C-a>")
 
 -- ── Add personal keymaps ─────────────────────────────────────────────────────
--- vim.keymap.set("n", "<space>ev", "<cmd>e $MYVIMRC<cr>", { desc = "edit vimrc" })
--- vim.keymap.set("n", "<space>ez", "<cmd>e ~/.zshrc<cr>",  { desc = "edit zshrc" })
+-- Use <Leader> for global actions, <LocalLeader> for filetype-specific
+-- ones, and SearchLeader (default <Space>) for fuzzy navigation only.
+-- (NoetherVim already maps <Leader>i to open init.lua.)
+--
+-- vim.keymap.set("n", "<Leader>ez", "<cmd>e ~/.zshrc<cr>", { desc = "edit zshrc" })
+-- vim.keymap.set("n", "<Leader>cd",
+--   function() vim.cmd.cd(vim.fn.expand("%:p:h")) end,
+--   { desc = "cd to buffer dir" })
