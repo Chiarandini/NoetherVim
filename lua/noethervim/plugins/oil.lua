@@ -4,6 +4,7 @@
 -- Custom keymaps (in addition to Oil defaults -- press g? inside Oil):
 --   gd          Toggle detail view (permissions, size, mtime)
 --   gf          Fuzzy find in current directory
+--   gG          Live grep in current directory
 --   gV          Pick destination and open dual-pane float (q closes both)
 --   gX          Open directory in system file browser
 --   gS          Create symlink in current directory
@@ -364,6 +365,27 @@ return {
 							title = vim.fn.fnamemodify(dir, ":~")
 						end
 						require("snacks").picker.files({
+							cwd = dir,
+							title = title,
+							hidden = require("oil.config").view_options.show_hidden,
+							ignored = true,
+						})
+					end,
+				},
+				["gG"] = {
+					desc = "live grep in current dir",
+					callback = function()
+						local dir = require("oil").get_current_dir()
+						if not dir then return end
+						local title
+						local git_root = vim.fn.systemlist("git -C " .. vim.fn.shellescape(dir) .. " rev-parse --show-toplevel")[1]
+						if git_root and not git_root:match("^fatal") then
+							title = dir:sub(#git_root + 2) -- strip root + trailing /
+							if title == "" then title = "." end
+						else
+							title = vim.fn.fnamemodify(dir, ":~")
+						end
+						require("snacks").picker.grep({
 							cwd = dir,
 							title = title,
 							hidden = require("oil.config").view_options.show_hidden,

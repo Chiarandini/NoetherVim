@@ -899,6 +899,7 @@ These keymaps activate only in their respective filetype.
     oil (file explorer, `<C-w><C-o>` or `:Oil`): ~
     `g?`                Show all Oil keymaps (including defaults)
     `gf`                Fuzzy find files in current directory
+    `gG`                Live grep in current directory
     `gV`                Pick destination, open dual-pane float (q closes both)
     `gd`                Toggle detail view (permissions, size, mtime)
     `gX`                Open directory in system file browser
