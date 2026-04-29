@@ -250,6 +250,68 @@ function M.bundles()
   })
 end
 
+function M.templates()
+  local root = effective_root()
+  if not root then return vim.notify("NoetherVim: cannot locate source directory", vim.log.levels.ERROR) end
+
+  local templates = require("noethervim.util.templates")
+  local items = templates.list(root)
+  if #items == 0 then
+    return vim.notify("NoetherVim: no templates found under templates/", vim.log.levels.WARN)
+  end
+
+  local picker_items = {}
+  for _, t in ipairs(items) do
+    picker_items[#picker_items + 1] = {
+      text     = t.rel .. " " .. t.desc .. (t.exists and " exists" or ""),
+      file     = t.src,
+      rel      = t.rel,
+      src      = t.src,
+      dest     = t.dest,
+      exists   = t.exists,
+      desc     = t.desc,
+    }
+  end
+
+  Snacks.picker({
+    title   = "NoetherVim Templates  [<C-y>] stamp into lua/user/",
+    items   = picker_items,
+    preview = "file",
+    confirm = confirm_readonly,
+    format  = function(item)
+      local ret = {} ---@type snacks.picker.Highlight[]
+      if item.exists then
+        ret[#ret + 1] = { "[exists] ", "DiagnosticHint" }
+      else
+        ret[#ret + 1] = { "[new]    ", "DiagnosticOk" }
+      end
+      ret[#ret + 1] = { string.format("%-32s", item.rel) }
+      ret[#ret + 1] = { item.desc, "Comment" }
+      return ret
+    end,
+    actions = {
+      stamp_template = function(picker)
+        local item = picker:current()
+        if not item or not item.src or not item.dest then return end
+        picker:close()
+        require("noethervim.util.templates").stamp(item.src, item.dest)
+      end,
+    },
+    win = {
+      input = {
+        keys = {
+          ["<C-y>"] = { "stamp_template", mode = { "i", "n" }, desc = "stamp template into lua/user/" },
+        },
+      },
+      list = {
+        keys = {
+          ["<C-y>"] = { "stamp_template", desc = "stamp template into lua/user/" },
+        },
+      },
+    },
+  })
+end
+
 function M.plugins()
   local plugin_dir = vim.fn.stdpath("data") .. "/lazy"
   if vim.fn.isdirectory(plugin_dir) == 0 then
@@ -1713,15 +1775,16 @@ end
 -- ── Command dispatcher ───────────────────────────────────────────
 
 local subcommands = {
-  files    = M.files,
-  grep     = M.grep,
-  user     = M.user,
-  plugins  = M.plugins,
-  bundles  = M.bundles,
-  status   = M.status,
-  diff     = function(args) M.diff(args) end,
-  override = M.override,
-  guide    = function() require("noethervim.guide").open() end,
+  files     = M.files,
+  grep      = M.grep,
+  user      = M.user,
+  plugins   = M.plugins,
+  bundles   = M.bundles,
+  templates = M.templates,
+  status    = M.status,
+  diff      = function(args) M.diff(args) end,
+  override  = M.override,
+  guide     = function() require("noethervim.guide").open() end,
   debug    = function(args)
     if args == "keymaps" then M.debug_keymaps()
     else vim.notify("NoetherVim: debug targets: keymaps", vim.log.levels.INFO) end
@@ -1810,6 +1873,7 @@ function M.setup()
   vim.keymap.set("n", SearchLeader .. "cnn", M.files,        { desc = "[n]oetherVim source" })
   vim.keymap.set("n", SearchLeader .. "cng", M.grep,         { desc = "[n]oetherVim [g]rep" })
   vim.keymap.set("n", SearchLeader .. "cb", M.bundles,       { desc = "[b]undles" })
+  vim.keymap.set("n", SearchLeader .. "ct", M.templates,     { desc = "[t]emplates" })
   vim.keymap.set("n", SearchLeader .. "ck", M.diff_keymaps, { desc = "diff [k]eymaps" })
   vim.keymap.set("n", SearchLeader .. "co", M.diff_options, { desc = "diff [o]ptions" })
 

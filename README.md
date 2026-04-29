@@ -247,7 +247,7 @@ NoetherVim loads user override files after each core module. Create any of these
 | `lsp/<server>.lua` | Per-server LSP settings |
 | `config.lua` | Config data table -- vault paths, feature flags, filetype lists (`:help noethervim-user-config-data`) |
 
-Template files are provided in `templates/user/` in the installed distro - copy the ones you want and uncomment the relevant lines.
+Template files are provided in `templates/user/` in the installed distro - copy the ones you want and uncomment the relevant lines. The fastest way to grab one is `:NoetherVim templates` (or SearchLeader+ct): pick a template and press `<C-y>` to stamp it into `lua/user/`, with a diff prompt before any file is written.
 
 For the full override system reference, see `:help noethervim-user-config`.
 

@@ -628,12 +628,30 @@ accidental edits to the distribution.
     SearchLeader+cng  `:NoetherVim grep`       Live grep NoetherVim source
     SearchLeader+cu   (snacks)                 Browse user config files
     SearchLeader+cb   `:NoetherVim bundles`    Browse bundle source files
+    SearchLeader+ct   `:NoetherVim templates`  Stamp user-config templates
     SearchLeader+ce   `:NoetherVim override`   Edit/create user override
     SearchLeader+cL   (snacks)                 Lazy plugin list
     SearchLeader+?    `:NoetherVim guide`      Keymap namespace reference
     `<Leader>i`     (inspect)                Open init.lua for editing
 
 Run `:NoetherVim status` to see which user override files are active.
+
+                                                       *noethervim-templates*
+Templates: ~
+
+    SearchLeader+ct   `:NoetherVim templates`
+
+Stamp the bundled `templates/user/*.example.lua` files into your config
+as `lua/user/<name>.lua`.  The picker shows each template with `[new]` or
+`[exists]` status; press `<C-y>` on a row to write it.  A floating diff
+window shows the exact change before any file is created or overwritten,
+with [y]es / [n]o confirmation -- the stamper never writes silently.
+
+`<CR>` opens the source template (read-only) so you can read it without
+copying anything.
+
+If the destination directory does not exist (e.g. `lua/user/plugins/`),
+it is created on accept.
 
                                                          *noethervim-guide*
 Keymap namespace guide: ~

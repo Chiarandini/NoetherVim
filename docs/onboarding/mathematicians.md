@@ -121,6 +121,9 @@ knowing day one:
   status. Answers "what else could I turn on?" Press `<C-y>` on a
   bundle to enable it (edits `init.lua` behind a diff prompt), or
   `<C-x>` to disable.
+- `:NoetherVim templates`: picker of the bundled user-config
+  templates (`options`, `keymaps`, `autocmds`, …). Press `<C-y>` to
+  stamp one into `lua/user/`, with a diff prompt before any write.
 - `:NoetherVim plugins`: picker of every installed plugin. Good for
   reading a plugin's source when `:help` isn't enough.
 - `:NoetherVim files`: picker of NoetherVim's own source files.
