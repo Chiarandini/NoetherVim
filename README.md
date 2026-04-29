@@ -98,6 +98,7 @@ Some bundles have their own dependencies:
 - `latex` needs `latexmk` and a TeX distribution
 - `debug` needs Python 3 with `debugpy` for Python debugging
 - `ai` needs an API key (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, etc.)
+- `octo` needs the [`gh` CLI](https://cli.github.com/) and `gh auth login`
 
 ## Installation
 
@@ -260,7 +261,7 @@ Bundles are optional feature groups, enabled in `init.lua` (see [Enabling bundle
 | Category | Bundles |
 |---|---|
 | Programming languages | [`rust`](docs/bundles.md#programming-languages), [`go`](docs/bundles.md#programming-languages), [`java`](docs/bundles.md#programming-languages), [`python`](docs/bundles.md#programming-languages), [`latex`](docs/bundles.md#programming-languages), [`latex-zotero`](docs/bundles.md#programming-languages), [`web-dev`](docs/bundles.md#programming-languages) |
-| Tools | [`debug`](docs/bundles.md#tools), [`test`](docs/bundles.md#tools), [`repl`](docs/bundles.md#tools), [`task-runner`](docs/bundles.md#tools), [`database`](docs/bundles.md#tools), [`http`](docs/bundles.md#tools), [`git`](docs/bundles.md#tools), [`ai`](docs/bundles.md#tools), [`smart-actions`](docs/bundles.md#tools), [`refactoring`](docs/bundles.md#tools), [`nvim-dev`](docs/bundles.md#tools) |
+| Tools | [`debug`](docs/bundles.md#tools), [`test`](docs/bundles.md#tools), [`repl`](docs/bundles.md#tools), [`task-runner`](docs/bundles.md#tools), [`database`](docs/bundles.md#tools), [`http`](docs/bundles.md#tools), [`git`](docs/bundles.md#tools), [`ai`](docs/bundles.md#tools), [`smart-actions`](docs/bundles.md#tools), [`refactoring`](docs/bundles.md#tools), [`octo`](docs/bundles.md#tools), [`nvim-dev`](docs/bundles.md#tools) |
 | Navigation & editing | [`harpoon`](docs/bundles.md#navigation--editing), [`flash`](docs/bundles.md#navigation--editing), [`projects`](docs/bundles.md#navigation--editing), [`editing-extras`](docs/bundles.md#navigation--editing), [`yanky`](docs/bundles.md#navigation--editing) |
 | Writing & notes | [`markdown`](docs/bundles.md#writing--notes), [`obsidian`](docs/bundles.md#writing--notes), [`neorg`](docs/bundles.md#writing--notes) |
 | Terminal & environment | [`better-term`](docs/bundles.md#terminal--environment), [`tmux`](docs/bundles.md#terminal--environment), [`remote-dev`](docs/bundles.md#terminal--environment) |

@@ -537,6 +537,9 @@ Available bundles (grouped by category): ~
                      Requires: API key env var for cloud providers.
     `smart-actions`  AI code actions on grA (Claude Code / Anthropic).
     `refactoring`    Extract function/variable/block.
+    `octo`           GitHub PRs / issues / reviews via the `gh` CLI.
+                     `<C-w>O` opens the PR list.  Requires `gh` (and
+                     a one-time `gh auth login`).
     `nvim-dev`       Neovim config development: :StartupTime, :Luapad,
                      vimls LSP for legacy .vim files.
 

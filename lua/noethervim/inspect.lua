@@ -99,6 +99,7 @@ local bundle_descriptions = {
   ai              = "CodeCompanion (Anthropic, OpenAI, Gemini, Ollama)",
   ["smart-actions"] = "AI-suggested code actions on grA (Claude Code / Anthropic)",
   refactoring     = "extract function/variable/block",
+  octo            = "GitHub PRs/issues/reviews via gh CLI (<C-w>O)",
   -- navigation
   harpoon         = "fast per-project file marks",
   flash           = "enhanced f/t and / motions with labels",

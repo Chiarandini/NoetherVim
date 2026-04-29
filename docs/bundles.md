@@ -33,6 +33,7 @@ Some bundles have external dependencies:
 | `ai` | CodeCompanion - Anthropic, OpenAI, Gemini, Ollama, and more |
 | `smart-actions` | AI-suggested code actions on `grA` (Claude Code / Anthropic) |
 | `refactoring` | Extract function, variable, block |
+| `octo` | GitHub PRs / issues / reviews via `gh` CLI (`<C-w>O` for PR list) |
 | `nvim-dev` | Neovim config development: `:StartupTime`, `:Luapad`, vimls LSP for `.vim` files |
 
 ## Navigation & editing
