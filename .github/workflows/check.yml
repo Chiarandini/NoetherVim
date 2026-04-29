@@ -11,7 +11,7 @@ jobs:
     name: lua syntax
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install LuaJIT
         # Match the runtime Neovim actually uses (and our .luarc.json target).
@@ -42,7 +42,7 @@ jobs:
     name: lua-language-server
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Run lua-language-server
         uses: mrcjkb/lua-typecheck-action@v0
