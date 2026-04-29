@@ -149,7 +149,8 @@ require("lazy").setup({
 
 	},
 
-	-- lazy-lock.json lives in your config dir (the default).
+	-- lazy-lock.json stores the version-number of each plugin.
+	-- It lives in your config dir (the default).
 	-- :Lazy update pins versions there; :Lazy restore reverts to them.
 
 	install  = { colorscheme = { "gruvbox", "habamax" } },

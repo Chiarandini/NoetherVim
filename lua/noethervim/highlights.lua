@@ -66,6 +66,29 @@ vim.api.nvim_create_autocmd("ColorScheme", {
 })
 
 -- ──────────────────────────────────────────────────────────────
+--  Gruvbox heading-stripe softening
+--  render-markdown.nvim links RenderMarkdownH{1..6}Bg to the Diff*
+--  groups by default. Gruvbox's diff bgs are intentionally loud (so
+--  real diffs pop), which makes the heading row stripe overpowering
+--  in normal mode. Re-paint the bg groups to gruvbox's bg2; bg1 is
+--  already taken by CursorLine / ColorColumn / RenderMarkdownCodeInline
+--  so reusing it makes the heading stripe blend with inline code.
+--  bg2 is one tone deeper, still earthy, and visibly distinct.
+-- ──────────────────────────────────────────────────────────────
+local function apply_gruvbox_heading_hls()
+  if not (vim.g.colors_name or ""):match("^gruvbox") then return end
+  for i = 1, 6 do
+    vim.api.nvim_set_hl(0, "RenderMarkdownH" .. i .. "Bg", { bg = "#504945" })
+  end
+end
+apply_gruvbox_heading_hls()
+
+vim.api.nvim_create_autocmd("ColorScheme", {
+  group    = vim.api.nvim_create_augroup("noethervim_gruvbox_heading_hls", { clear = true }),
+  callback = apply_gruvbox_heading_hls,
+})
+
+-- ──────────────────────────────────────────────────────────────
 --  Blink.cmp completion highlights
 --  Derive all colors from the active colorscheme so the completion
 --  menu adapts to any theme.  Re-applied on ColorScheme changes.
