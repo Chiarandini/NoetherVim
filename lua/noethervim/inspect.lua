@@ -191,6 +191,7 @@ function M.bundles()
       cat_order = cat_order[entry.category] or 99,
       cat_text = "[" .. label .. "]",
       bundle_name = entry.name,
+      category = entry.category,
       desc = desc,
       enabled = is_enabled,
     })
@@ -202,7 +203,7 @@ function M.bundles()
   end)
 
   Snacks.picker({
-    title   = "NoetherVim Bundles",
+    title   = "NoetherVim Bundles  [<C-y>] enable  [<C-x>] disable",
     items   = items,
     preview = "file",
     confirm = confirm_readonly,
@@ -218,6 +219,34 @@ function M.bundles()
       ret[#ret + 1] = { item.desc, "Comment" }
       return ret
     end,
+    actions = {
+      enable_bundle = function(picker)
+        local item = picker:current()
+        if not item or not item.bundle_name or not item.category then return end
+        picker:close()
+        require("noethervim.util.bundle_toggle").enable(item.category, item.bundle_name)
+      end,
+      disable_bundle = function(picker)
+        local item = picker:current()
+        if not item or not item.bundle_name or not item.category then return end
+        picker:close()
+        require("noethervim.util.bundle_toggle").disable(item.category, item.bundle_name)
+      end,
+    },
+    win = {
+      input = {
+        keys = {
+          ["<C-y>"] = { "enable_bundle",  mode = { "i", "n" }, desc = "enable bundle"  },
+          ["<C-x>"] = { "disable_bundle", mode = { "i", "n" }, desc = "disable bundle" },
+        },
+      },
+      list = {
+        keys = {
+          ["<C-y>"] = { "enable_bundle",  desc = "enable bundle"  },
+          ["<C-x>"] = { "disable_bundle", desc = "disable bundle" },
+        },
+      },
+    },
   })
 end
 

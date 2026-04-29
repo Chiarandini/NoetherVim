@@ -118,7 +118,9 @@ replaces memorizing the manual.
 knowing day one:
 
 - `:NoetherVim bundles`: picker of every bundle with enable/disable
-  status. Answers "what else could I turn on?"
+  status. Answers "what else could I turn on?" Press `<C-y>` on a
+  bundle to enable it (edits `init.lua` behind a diff prompt), or
+  `<C-x>` to disable.
 - `:NoetherVim plugins`: picker of every installed plugin. Good for
   reading a plugin's source when `:help` isn't enough.
 - `:NoetherVim files`: picker of NoetherVim's own source files.

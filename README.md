@@ -206,6 +206,9 @@ Open `~/.config/nvim/init.lua` and uncomment the bundles you want in the `spec` 
 
 All bundles are opt-in - the core is fully functional with none enabled. See [Bundles](#bundles) for the full list.
 
+> [!TIP]
+> Don't want to edit `init.lua` by hand? Open `:NoetherVim bundles` (or SearchLeader+cb), highlight a bundle, and press `<C-y>` to enable or `<C-x>` to disable. A diff prompt shows the exact change before anything is written.
+
 ### Adding your own plugins
 
 Drop plugin specs in `~/.config/nvim/lua/user/plugins/`. Any `.lua` file there is auto-imported by lazy.nvim:

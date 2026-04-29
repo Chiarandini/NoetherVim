@@ -479,6 +479,28 @@ uncommenting the corresponding `import` line in your `init.lua`: >lua
     { import = "noethervim.bundles.languages.latex" },
     { import = "noethervim.bundles.tools.debug" },
 <
+                                            *noethervim-bundle-toggle*
+You can also toggle bundles from the picker without editing `init.lua`
+by hand.  Open `:NoetherVim bundles` (or SearchLeader+cb) and:
+
+    <C-y>     Enable bundle.  Tries to uncomment its `import` line in
+              `init.lua`; if the line is missing, proposes inserting a
+              new one at the end of the `spec = { ... }` table.  A
+              floating diff window shows the exact change before any
+              file is written, with [y]es / [n]o confirmation.
+    <C-x>     Disable bundle.  Re-comments the active `import` line,
+              again behind a diff prompt.
+    <CR>      Open the bundle source file (unchanged).
+
+If `init.lua` has been restructured beyond recognition (multi-file
+specs, no detectable `spec = {` block), <C-y> falls back to copying the
+import line to the `+` and `"` registers and notifies you to paste it
+manually.  No file write is ever silent -- every modification goes
+through the diff prompt.
+
+After accepting a change, restart Neovim to load the bundle (or use
+`:Lazy reload` if you know what you are doing).
+
                                             *noethervim-stale-imports*
 If an enabled bundle has been removed or renamed upstream, lazy.nvim
 emits a `No specs found for module "..."` error during spec resolution.
