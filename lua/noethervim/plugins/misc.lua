@@ -50,7 +50,7 @@ return {
 			},
 			ignore = {
 				buftype  = { "quickfix" },
-				filetype = { "NvimTree", "neo-tree", "undotree", "gundo", "mundo" },
+				filetype = { "NvimTree", "neo-tree", "nvim-undotree", "gundo", "mundo" },
 			},
 			animation = {
 				enable   = true,

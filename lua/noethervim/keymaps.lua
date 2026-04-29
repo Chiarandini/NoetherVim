@@ -78,6 +78,15 @@ vim.keymap.set("n", "<c-l>", "<c-w>l", { desc = "window right" })
 vim.keymap.set("n", "<c-w><a-h>", "<cmd>tabm -<cr>", { desc = "move tab left" })
 vim.keymap.set("n", "<c-w><a-l>", "<cmd>tabm +<cr>", { desc = "move tab right" })
 vim.keymap.set("n", "<c-w><c-q>", "<cmd>copen<cr>",  { desc = "open quickfix" })
+-- Undo tree: native nvim.undotree (Neovim 0.12+).  packadd is idempotent,
+-- so calling it on every keypress is fine; first call loads the plugin,
+-- the rest are no-ops.  CursorMoved in the tree window applies that
+-- undo state to the source buffer, giving a live preview of the file's
+-- content at each state.
+vim.keymap.set("n", "<c-w><c-u>", function()
+  vim.cmd("packadd nvim.undotree")
+  vim.cmd("Undotree")
+end, { desc = "toggle undo tree" })
 
 -- Toggle quickfix window (SearchLeader+q)
 local SearchLeader = require("noethervim.util").search_leader

@@ -14,6 +14,7 @@ local q_close_ft = {
   "DressingInput", "sagarename",
   "bib", "cmp_menu", "query",
   "typr", "snacks_notif", "snacks_terminal",
+  "nvim-undotree",
 }
 
 vim.api.nvim_create_autocmd("FileType", {
