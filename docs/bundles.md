@@ -33,6 +33,7 @@ Some bundles have external dependencies:
 | `ai` | CodeCompanion - Anthropic, OpenAI, Gemini, Ollama, and more |
 | `smart-actions` | AI-suggested code actions on `grA` (Claude Code / Anthropic) |
 | `refactoring` | Extract function, variable, block |
+| `nvim-dev` | Neovim config development: `:StartupTime`, `:Luapad`, vimls LSP for `.vim` files |
 
 ## Navigation & editing
 
@@ -74,6 +75,5 @@ Some bundles have external dependencies:
 | Bundle | Contents |
 |---|---|
 | `training` | Vim motion and typing practice (vim-be-good, speedtyper, typr) |
-| `dev-tools` | Startup profiling (`:StartupTime`), Lua scratchpad (`:Luapad`) |
 | `presentation` | Slide presentations (presenting.nvim) + keypress display (showkeys) |
 | `hardtime` | Motion habit trainer |

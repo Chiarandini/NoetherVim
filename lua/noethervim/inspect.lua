@@ -120,7 +120,7 @@ local bundle_descriptions = {
   tableaux        = "noethervim-tableaux -- animated mathematical dashboard scenes",
   -- practice
   training        = "vim-be-good, speedtyper, typr",
-  ["dev-tools"]   = "StartupTime benchmarking, Luapad scratchpad",
+  ["nvim-dev"]    = "StartupTime, Luapad, vimls -- Neovim config development",
   presentation    = "presenting.nvim + showkeys",
   hardtime        = "motion habit trainer",
 }

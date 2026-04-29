@@ -166,7 +166,7 @@ return {
 		-- the entire list (lazy.nvim does not merge arrays).
 		opts = {
 			ensure_installed = {
-				'lua_ls', 'basedpyright', 'ruff', 'vimls',
+				'lua_ls', 'basedpyright', 'ruff',
 			},
 			diagnostic = {
 				virtual_text  = false,

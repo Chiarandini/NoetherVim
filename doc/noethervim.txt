@@ -537,6 +537,8 @@ Available bundles (grouped by category): ~
                      Requires: API key env var for cloud providers.
     `smart-actions`  AI code actions on grA (Claude Code / Anthropic).
     `refactoring`    Extract function/variable/block.
+    `nvim-dev`       Neovim config development: :StartupTime, :Luapad,
+                     vimls LSP for legacy .vim files.
 
     navigation/ ~
     `harpoon`        Fast per-project file marks.
@@ -581,7 +583,6 @@ Available bundles (grouped by category): ~
     practice/ ~
     `training`       Vim motion and typing practice (vim-be-good,
                      speedtyper, typr).
-    `dev-tools`      StartupTime benchmarking, Luapad Lua scratchpad.
     `presentation`   Slide presentations (presenting.nvim) + showkeys.
     `hardtime`       Motion habit trainer.
 

@@ -104,6 +104,7 @@ require("lazy").setup({
 		-- { import = "noethervim.bundles.tools.ai" },            -- CodeCompanion (needs ANTHROPIC_API_KEY)
 		-- { import = "noethervim.bundles.tools.smart-actions" }, -- AI code actions on grA (Claude Code / Anthropic)
 		-- { import = "noethervim.bundles.tools.refactoring" },   -- extract function/variable/block
+		-- { import = "noethervim.bundles.tools.nvim-dev" },     -- StartupTime, Luapad, vimls (config-dev)
 
 		-- navigation/
 		-- { import = "noethervim.bundles.navigation.harpoon" },        -- fast per-project file marks
@@ -131,7 +132,6 @@ require("lazy").setup({
 
 		-- practice/
 		-- { import = "noethervim.bundles.practice.training" },     -- vim-be-good, speedtyper, typr
-		-- { import = "noethervim.bundles.practice.dev-tools" },    -- StartupTime, Luapad
 		-- { import = "noethervim.bundles.practice.presentation" }, -- presenting.nvim + showkeys
 		-- { import = "noethervim.bundles.practice.hardtime" },     -- motion habit trainer
 
