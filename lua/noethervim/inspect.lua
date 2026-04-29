@@ -1348,7 +1348,7 @@ end
 ---   LAZY  — attributed via lazy.nvim handler metadata (spec file)
 ---   CB    — inferred from the callback function's defining file
 ---   ----  — no source available; jump would notify and do nothing
---- Run with :NoetherVim debug keymaps
+--- Run with :NoetherVim debug-keymaps
 function M.debug_keymaps()
   local snap = snapshots()
   if not snap.keymaps_before or not snap.keymaps_after then
@@ -1774,25 +1774,47 @@ end
 
 -- ── Command dispatcher ───────────────────────────────────────────
 
+-- One-liner per subcommand.  Surfaced in the no-arg help printout.
+local subcommand_descriptions = {
+  files             = "Browse NoetherVim source files",
+  grep              = "Live grep over NoetherVim source",
+  user              = "Browse files in lua/user/",
+  plugins           = "Browse installed plugins",
+  bundles           = "Bundle picker (<C-y> enable, <C-x> disable)",
+  templates         = "Stamp user-config templates into lua/user/ (<C-y>)",
+  ["keymap-guide"]  = "Keymap namespace reference buffer",
+  status            = "Show which user override files are loaded",
+  diff              = "Compare overrides vs distro defaults (keymaps / options / file)",
+  override          = "Open the user override file matching the current buffer",
+  ["debug-keymaps"] = "Trace where each keymap was registered",
+}
+
 local subcommands = {
-  files     = M.files,
-  grep      = M.grep,
-  user      = M.user,
-  plugins   = M.plugins,
-  bundles   = M.bundles,
-  templates = M.templates,
-  status    = M.status,
-  diff      = function(args) M.diff(args) end,
-  override  = M.override,
-  guide     = function() require("noethervim.guide").open() end,
-  debug    = function(args)
-    if args == "keymaps" then M.debug_keymaps()
-    else vim.notify("NoetherVim: debug targets: keymaps", vim.log.levels.INFO) end
-  end,
+  files             = M.files,
+  grep              = M.grep,
+  user              = M.user,
+  plugins           = M.plugins,
+  bundles           = M.bundles,
+  templates         = M.templates,
+  ["keymap-guide"]  = function() require("noethervim.guide").open() end,
+  status            = M.status,
+  diff              = function(args) M.diff(args) end,
+  override          = M.override,
+  ["debug-keymaps"] = function() M.debug_keymaps() end,
 }
 
 local subcommand_names = vim.tbl_keys(subcommands)
 table.sort(subcommand_names)
+
+local function print_help()
+  local lines = { "NoetherVim subcommands:", "" }
+  for _, name in ipairs(subcommand_names) do
+    lines[#lines + 1] = string.format("  %-15s  %s", name, subcommand_descriptions[name] or "")
+  end
+  lines[#lines + 1] = ""
+  lines[#lines + 1] = "Tab-complete after `:NoetherVim ` to pick one."
+  vim.notify(table.concat(lines, "\n"), vim.log.levels.INFO, { title = "NoetherVim" })
+end
 
 function M.setup()
   -- ── :NoetherVim command ──────────────────────────────────────
@@ -1800,8 +1822,7 @@ function M.setup()
     local args = vim.split(opts.args, "%s+", { trimempty = true })
     local cmd  = args[1]
     if not cmd then
-      -- No subcommand: show the source file picker as default
-      M.files()
+      print_help()
       return
     end
     local fn = subcommands[cmd]
@@ -1851,12 +1872,6 @@ function M.setup()
         return vim.tbl_filter(function(s)
           return s:find(args[3] or "", 1, true) == 1
         end, targets)
-      end
-      -- Complete debug targets
-      if args[2] == "debug" and #args <= 3 then
-        return vim.tbl_filter(function(s)
-          return s:find(args[3] or "", 1, true) == 1
-        end, { "keymaps" })
       end
       return {}
     end,

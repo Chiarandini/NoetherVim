@@ -631,7 +631,7 @@ accidental edits to the distribution.
     SearchLeader+ct   `:NoetherVim templates`  Stamp user-config templates
     SearchLeader+ce   `:NoetherVim override`   Edit/create user override
     SearchLeader+cL   (snacks)                 Lazy plugin list
-    SearchLeader+?    `:NoetherVim guide`      Keymap namespace reference
+    SearchLeader+?    `:NoetherVim keymap-guide`  Keymap namespace reference
     `<Leader>i`     (inspect)                Open init.lua for editing
 
 Run `:NoetherVim status` to see which user override files are active.
@@ -656,7 +656,7 @@ it is created on accept.
                                                          *noethervim-guide*
 Keymap namespace guide: ~
 
-    SearchLeader+?    `:NoetherVim guide`
+    SearchLeader+?    `:NoetherVim keymap-guide`
 
 Opens a reference buffer showing all active keymaps organized by
 NoetherVim's namespace philosophy:
@@ -1043,6 +1043,8 @@ straightforward. See the example in
 
 `:NoetherVim` [subcommand]    Inspection and comparison commands.
                               See |noethervim-inspect| and |noethervim-diff|.
+                              Run with no subcommand to print the full
+                              subcommand list with descriptions.
 
 `:NoetherVim override`        Open the user override file corresponding to
                               the current buffer's NoetherVim source file.

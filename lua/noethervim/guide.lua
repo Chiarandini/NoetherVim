@@ -1,6 +1,6 @@
 -- NoetherVim keymap namespace guide.
 -- Interactive reference buffer showing all keymaps organized by namespace.
--- Opened via :NoetherVim guide or SearchLeader+?
+-- Opened via :NoetherVim keymap-guide or SearchLeader+?
 -- See :help noethervim-guide
 
 local M = {}
