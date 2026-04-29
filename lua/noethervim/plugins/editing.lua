@@ -49,7 +49,13 @@ return {
 	{
 		'mcauley-penney/visual-whitespace.nvim',
 		config = true,
-		keys = { 'v', 'V', '<C-v>' }, -- optionally, lazy load on visual mode keys
+		-- Lazy-load on the visual-mode entry keys.  desc fields surface in
+		-- :NoetherVim diff keymaps so the rows are identifiable.
+		keys = {
+			{ 'v',     mode = 'n', desc = "visual char mode" },
+			{ 'V',     mode = 'n', desc = "visual line mode" },
+			{ '<C-v>', mode = 'n', desc = "visual block mode" },
+		},
 	},
 
 	-- better "." feature
