@@ -7,6 +7,7 @@ neothervim-keymaps	noethervim.txt	/*neothervim-keymaps*
 noethervim	noethervim.txt	/*noethervim*
 noethervim-Z	noethervim.txt	/*noethervim-Z*
 noethervim-brackets	noethervim.txt	/*noethervim-brackets*
+noethervim-bundle-toggle	noethervim.txt	/*noethervim-bundle-toggle*
 noethervim-bundles	noethervim.txt	/*noethervim-bundles*
 noethervim-colorscheme-tweaks	noethervim.txt	/*noethervim-colorscheme-tweaks*
 noethervim-commands	noethervim.txt	/*noethervim-commands*
@@ -41,6 +42,7 @@ noethervim-statusline-busy-override	noethervim.txt	/*noethervim-statusline-busy-
 noethervim-statusline-error-boundary	noethervim.txt	/*noethervim-statusline-error-boundary*
 noethervim-tabline	noethervim.txt	/*noethervim-tabline*
 noethervim-tabline-bufferline	noethervim.txt	/*noethervim-tabline-bufferline*
+noethervim-templates	noethervim.txt	/*noethervim-templates*
 noethervim-toggle	noethervim.txt	/*noethervim-toggle*
 noethervim-uninstall	noethervim.txt	/*noethervim-uninstall*
 noethervim-user-autocmds	noethervim.txt	/*noethervim-user-autocmds*
@@ -53,5 +55,6 @@ noethervim-user-lsp	noethervim.txt	/*noethervim-user-lsp*
 noethervim-user-options	noethervim.txt	/*noethervim-user-options*
 noethervim-user-overrides	noethervim.txt	/*noethervim-user-overrides*
 noethervim-user-plugins	noethervim.txt	/*noethervim-user-plugins*
+noethervim-user-plugins-arrays	noethervim.txt	/*noethervim-user-plugins-arrays*
 noethervim-web-search	noethervim.txt	/*noethervim-web-search*
 noethervim.txt	noethervim.txt	/*noethervim.txt*
