@@ -301,6 +301,11 @@ let g:vimtex_compiler_latexmk_engines = {
   -- user/plugins/ if needed.
 
   -- ── noethervim-tex ────────────────────────────────────────────────────────
+  -- Spell-file shipping (en.utf-8.add math vocab + accents.utf-8.add for
+  -- LaTeX-accented proper nouns) is handled inside noethervim-tex's own
+  -- plugin/noethervim_tex.lua at plugin load -- this bundle no longer
+  -- needs to mkspell or append to spellfile.  The accent spell-check
+  -- diagnostics layer also lives there; configure via opts.accent_spell.
   {
     "Chiarandini/NoetherVim-Tex",
     event = "VeryLazy",
@@ -309,18 +314,26 @@ let g:vimtex_compiler_latexmk_engines = {
       -- preamble_folder     = vim.fn.stdpath("config") .. "/preamble/",
       -- extra_snippet_paths = {},
       -- textobjects         = true,
+      -- accent_spell        = { enabled = true, severity = vim.diagnostic.severity.INFO },
     },
     config = function(self, opts)
       require("noethervim-tex").setup(opts)
 
-      -- Load the math spell dictionary shipped with noethervim-tex.
-      local spell_add = self.dir .. "/spell/en.utf-8.add"
-      if vim.uv.fs_stat(spell_add) then
-        local spl = spell_add .. ".spl"
-        if not vim.uv.fs_stat(spl) then
-          pcall(vim.cmd, "silent mkspell! " .. vim.fn.fnameescape(spell_add))
+      -- Transitional fallback: older noethervim-tex versions don't
+      -- ship plugin/noethervim_tex.lua, so vim.g.loaded_noethervim_tex
+      -- is unset and we register the math vocab spellfile here.  The
+      -- new plugin/ file sets the flag and handles both .add files
+      -- itself, in which case this branch is skipped.  Remove this
+      -- block once the upstream noethervim-tex pin is bumped.
+      if vim.g.loaded_noethervim_tex ~= 1 then
+        local spell_add = self.dir .. "/spell/en.utf-8.add"
+        if vim.uv.fs_stat(spell_add) then
+          local spl = spell_add .. ".spl"
+          if not vim.uv.fs_stat(spl) then
+            pcall(vim.cmd, "silent mkspell! " .. vim.fn.fnameescape(spell_add))
+          end
+          vim.opt.spellfile:append(spell_add)
         end
-        vim.opt.spellfile:append(spell_add)
       end
     end,
   },
