@@ -189,7 +189,7 @@ A couple of NoetherVim-specific extras on top of VimTeX:
 
 - `yP`: copy the compiled PDF path to the system clipboard (useful
   for drag-and-drop into email or a tracker).
-- `[P` / `]P`: toggle whether the PDF size shows in the statusline.
+- `<C-w>sp`: toggle whether the PDF size shows in the statusline.
 - `<LocalLeader>vw`: run VimTeX's word count.
 
 ### Math entry via snippets
