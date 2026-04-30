@@ -208,19 +208,23 @@ let g:vimtex_compiler_latexmk_engines = {
           vim.keymap.set("n", "<localleader>vw", "<Cmd>VimtexCountWords<CR>", o("vimtex word count"))
           vim.keymap.set("i", "<s-cr>", tex_shift_enter, o("smart newline"))
 
-          -- Accent spell-check (noethervim-tex).  zG / zW / z= mirror
-          -- vim's built-in zg / zw / z= but operate on the LaTeX-encoded
-          -- token under the cursor: decode to Unicode, then add to
-          -- spellfile, mark wrong, or open suggestions accordingly.
+          -- Accent spell-check (noethervim-tex).  Override the
+          -- built-in zg / zw / z= so they understand LaTeX accent
+          -- macros: when the cursor sits on  K\"ahler  these operate
+          -- on the decoded Unicode form  Kähler  and re-encode back
+          -- to LaTeX after picking a suggestion.  When there's no
+          -- accent token under cursor the implementation falls
+          -- through to vim's built-in zg / zw / z= via  :normal! ,
+          -- so plain words still work as expected.
           local plug_opts = function(desc)
             return { silent = true, buffer = ev.buf, desc = desc, remap = true }
           end
-          vim.keymap.set("n", "zG", "<Plug>(noethervim-tex-accent-add)",
-            plug_opts("spell: add accented word"))
-          vim.keymap.set("n", "zW", "<Plug>(noethervim-tex-accent-mark-wrong)",
-            plug_opts("spell: mark accented word wrong"))
+          vim.keymap.set("n", "zg", "<Plug>(noethervim-tex-accent-add)",
+            plug_opts("spell: add (latex-aware)"))
+          vim.keymap.set("n", "zw", "<Plug>(noethervim-tex-accent-mark-wrong)",
+            plug_opts("spell: mark wrong (latex-aware)"))
           vim.keymap.set("n", "z=", "<Plug>(noethervim-tex-accent-suggest)",
-            plug_opts("spell: suggest accented form"))
+            plug_opts("spell: suggest (latex-aware)"))
         end,
       })
     end,
