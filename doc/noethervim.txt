@@ -946,6 +946,20 @@ Clickable components: ~
     Git branch/status   Open lazygit in a terminal
     Update indicator    Open Lazy plugin manager
 
+VimTeX compile indicator (latex bundle): ~
+
+    The compile indicator follows the relevant project automatically.
+    For \input children, it walks vimtex's state list to find the
+    parent project so the status surfaces even when the buffer is
+    a fragment.  For subfile projects (`subfiles.cls`) it labels
+    `[parent]` / `[subfile]` / `[parent+sub]` so it's clear which
+    side is running.  While compiling it appends a rough percent
+    against the last successful PDF size (cached at
+    `stdpath('state')/noethervim/vimtex_baseline.json`).  On success
+    the compile duration is sent to fidget under the `vimtex` group;
+    the statusline shows a persistent `compiled ✓` until the next
+    compile.
+
 Customize statusline colors and extra components via opts: >lua
     { "Chiarandini/NoetherVim", opts = {
         statusline = {
