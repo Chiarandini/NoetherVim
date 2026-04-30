@@ -122,7 +122,10 @@ vim.keymap.set("n", "_", function() split_scratch("sp") end,  { desc = "horizont
 --  Normal mode -- buffer management  (Z prefix)
 -- ──────────────────────────────────────────────────────────────
 
+-- ZZ and ZQ are vim defaults
 vim.keymap.set("n", "ZA", "<cmd>qa<cr>",         { desc = "quit all" })
+vim.keymap.set("n", "ZS", "<cmd>wqa<cr>",          { desc = "save and quit all" })
+vim.keymap.set("n", "ZW", "<cmd>wa<bar>qa!<cr>",   { desc = "save what you can, then force-quit" })
 vim.keymap.set("n", "ZF", "<cmd>q!<cr>",         { desc = "quit force" })
 vim.keymap.set("n", "ZK", "<cmd>qa!<cr>",         { desc = "quit all! (kill nvim)" })
 vim.keymap.set("n", "ZB", "<cmd>bdelete<cr>",    { desc = "delete buffer" })

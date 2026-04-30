@@ -807,6 +807,8 @@ Prefixes: ~
     `Z`                 Buffer operations
                       ZA(ll quit)  ZB(uffer delete)  ZD(scratch delete)
                       ZF(orce quit)  ZG(force delete)
+                      ZS(ave and quit all)  ZW(save what you can, force-quit)
+                      ZK(ill nvim, qa!)
 
 Other notable keymaps: ~
 
