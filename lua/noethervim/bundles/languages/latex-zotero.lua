@@ -16,7 +16,11 @@ return {
       "kkharji/sqlite.lua",
     },
     ft = { "tex", "plaintex", "latex", "markdown", "quarto", "typst", "org", "asciidoc" },
-    opts = {},
+    opts = {
+      -- Refuse to append entries that biber/biblatex would reject (raw
+      -- non-ASCII like the ' ¿? ' year placeholder, malformed years, etc.).
+      validate_bib_entry = true,
+    },
     config = function(_, opts)
       require("snacks_zotero").setup(opts)
       vim.keymap.set("n", "<localleader>z",
