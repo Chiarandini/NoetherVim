@@ -9,6 +9,9 @@
 --   nvim
 --
 -- Personal overrides go in lua/user/ -- see :help noethervim-user-config.
+-- The fastest way to scaffold one is `:NoetherVim templates` (also bound
+-- to SearchLeader+ct, default <Space>ct): pick a template, press <C-y>,
+-- and the file is stamped into lua/user/ with a diff prompt first.
 -- To debug without your overrides:  NOETHERVIM_NO_USER=1 nvim
 
 
@@ -70,8 +73,9 @@ require("lazy").setup({
 			import = "noethervim.plugins",
 			opts = {
 				colorscheme = "gruvbox",       -- default colorscheme
-				-- statusline  = {                -- statusline overrides
-				--   colors     = {},
+				-- statusline  = {                                  -- statusline overrides
+				--   edge_style  = "round",                         -- "round" | "slant" | "pointy" | "straight" | "bubbly"
+				--   colors      = {},
 				--   extra_right = {},
 				-- },
 			},

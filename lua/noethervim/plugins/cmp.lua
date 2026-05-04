@@ -26,21 +26,69 @@ return {
 			end,
 
 			-- ── Keymaps ────────────────────────────────────────────────────────
-			-- Tab/S-Tab jump snippet nodes only (no menu navigation -- use C-n/p).
-			-- Override individual keys via user/plugins/ opts merging.
-			-- See :help noethervim-completion-custom for examples.
-			keymap = {
-				preset    = "none",
-				["<C-Space>"] = { "show", "show_documentation", "hide_documentation" },
-				["<C-e>"]     = { "hide", "fallback" },
-				["<C-y>"]     = { "accept", "fallback" },
-				["<C-n>"]     = { "select_next", "fallback" },
-				["<C-p>"]     = { "select_prev", "fallback" },
-				["<C-b>"]     = { "scroll_documentation_up", "fallback" },
-				["<C-f>"]     = { "scroll_documentation_down", "fallback" },
-				["<Tab>"]     = { "snippet_forward", "fallback" },
-				["<S-Tab>"]   = { "snippet_backward", "fallback" },
-			},
+			-- Tab philosophy is configurable via lua/user/config.lua:
+			--   return { completion_style = "supertab" }   -- preferred
+			-- or via vim.g.noethervim_completion_style as an escape hatch.
+			-- Choices (see :help noethervim-completion-style):
+			--   "snippet"   (default) Tab is reserved for LuaSnip jumps only.
+			--               Pick from menu with C-n/C-p, accept with C-y.  Snippet
+			--               and menu navigation never compete for the same key.
+			--   "supertab"  Tab accepts the highlighted item (auto-selecting the
+			--               top one) and inserts a trailing space.  Falls back to
+			--               snippet_forward, then to literal Tab.  Best when you
+			--               want to "type-then-accept-with-Tab" IDE-style.
+			--   "navigate"  Tab cycles through the menu (= C-n) without accepting,
+			--               like nvim-cmp's classic default and most VSCode setups.
+			--               C-y or <CR> still accepts.  S-Tab cycles backward.
+			-- The two dominant philosophies in modern Neovim are "supertab" (IDE
+			-- muscle memory) and "snippet" (vim-vsnip / LuaSnip purist).  "navigate"
+			-- is here for users coming from older nvim-cmp configs.  If you use AI
+			-- completion (Copilot/Codeium/etc.) you'll want a fourth: bind Tab to
+			-- the AI plugin's accept_word in your user keymaps and shadow this.
+			keymap = (function()
+				local ok_user, user = pcall(require, "user.config")
+				local style = (ok_user and type(user) == "table" and user.completion_style)
+					or vim.g.noethervim_completion_style
+					or "snippet"
+				local base = {
+					preset    = "none",
+					["<C-Space>"] = { "show", "show_documentation", "hide_documentation" },
+					["<C-e>"]     = { "hide", "fallback" },
+					["<C-y>"]     = { "accept", "fallback" },
+					["<C-n>"]     = { "select_next", "fallback" },
+					["<C-p>"]     = { "select_prev", "fallback" },
+					["<C-b>"]     = { "scroll_documentation_up", "fallback" },
+					["<C-f>"]     = { "scroll_documentation_down", "fallback" },
+					["<S-Tab>"]   = { "snippet_backward", "fallback" },
+				}
+				if style == "supertab" then
+					base["<Tab>"] = {
+						function(cmp)
+							if cmp.is_visible() then
+								local accepted = cmp.select_and_accept and cmp.select_and_accept()
+									or cmp.accept()
+								if accepted then
+									vim.schedule(function()
+										vim.api.nvim_feedkeys(" ", "n", false)
+									end)
+									return true
+								end
+							end
+						end,
+						"snippet_forward",
+						"fallback",
+					}
+				elseif style == "navigate" then
+					-- Tab cycles forward through the menu without accepting; an
+					-- explicit C-y or <CR> commits.  S-Tab cycles backward (already
+					-- shadowed below to drop snippet_backward in this style).
+					base["<Tab>"]   = { "select_next", "snippet_forward",  "fallback" }
+					base["<S-Tab>"] = { "select_prev", "snippet_backward", "fallback" }
+				else
+					base["<Tab>"] = { "snippet_forward", "fallback" }
+				end
+				return base
+			end)(),
 
 
 			-- ── Snippets ────────────────────────────────────────────────────────

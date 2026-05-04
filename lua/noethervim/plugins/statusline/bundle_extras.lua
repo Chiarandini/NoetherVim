@@ -105,9 +105,19 @@ M.VimtexCompilerStatus = {
 -- files and respects `out_dir` / custom `-jobname`).  Reports a "stale"
 -- hint when the source tex is newer than the PDF and no compile is
 -- running.
+-- Filetypes where a PDF readout is meaningful.  Limiting to TeX-family
+-- buffers prevents "no pdf" from leaking into python/lua/etc. just because
+-- vim.g.heirline_pdfsize_show happens to be true (e.g. the toggle was
+-- flipped on while editing a previous tex file).
+local pdfsize_filetypes = {
+  tex = true, latex = true, plaintex = true, bib = true,
+  context = true, markdown = true, typst = true,
+}
+
 M.PdfFileSize = {
   condition = function(self)
     if not vim.g.heirline_pdfsize_show then return false end
+    if not pdfsize_filetypes[vim.bo.filetype] then return false end
     local ok, vstatus = pcall(require, "noethervim.util.vimtex_status")
     self.vstatus = ok and vstatus or nil
     self.pick    = ok and vstatus.pick(0) or nil

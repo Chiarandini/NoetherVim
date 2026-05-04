@@ -149,3 +149,156 @@ vim.api.nvim_create_autocmd("ColorScheme", {
   group    = vim.api.nvim_create_augroup("noethervim_blink_highlights", { clear = true }),
   callback = apply_blink_highlights,
 })
+
+-- ──────────────────────────────────────────────────────────────
+--  Inlay hint + line-blame readability
+--
+--  Many colorschemes (gruvbox in particular -- it explicitly does
+--  `LspInlayHint = { link = "comment" }`) render virtual text in the
+--  same dim grey as surrounding comments, so inferred types and inlay
+--  parameter names disappear visually.  We force every "informational
+--  virtual text" group to a hand-picked accent that's clearly distinct
+--  from Comment in the active theme:
+--    LspInlayHint(.Type|.Parameter)   -- typed inline LSP hints
+--    DiagnosticVirtualText.*          -- inline diagnostics
+--    GitSignsCurrentLineBlame         -- inline blame chip
+--
+--  Gruvbox uses the palette's bright orange #fe8019 -- it's loud
+--  enough not to be confused with grey comments while still belonging
+--  in the earthy palette.  Other schemes fall back to DiagnosticHint
+--  (intentionally distinct from Comment in nearly every modern theme).
+-- ──────────────────────────────────────────────────────────────
+
+local function pick_hint_fg()
+  local cs = vim.g.colors_name or ""
+  if cs:match("gruvbox") then
+    -- A calm muted teal -- gruvbox-material's "aqua" tone.  Sits between
+    -- bright_aqua (#8ec07c, used by DiagnosticHint -- too neon, blends with
+    -- hints) and bright_blue (#83a598, used by DiagnosticInfo -- would conflict
+    -- with info-severity virtual text).  Reads as "informational, distinct
+    -- from code" without competing with diagnostics.  Light variant uses
+    -- gruvbox's faded teal so the contrast pops the same way.
+    return vim.o.background == "light" and "#427b58" or "#7daea3"
+  end
+  local fg = get_hl_fg("DiagnosticHint")
+  if fg and fg ~= get_hl_fg("Comment") then return fg end
+  return get_hl_fg("NonText") or fg or "#83a598"
+end
+
+-- Pick a "just changed" accent for nvim-dap-virtual-text.  This is the
+-- transient flash that fires when a variable's value updates in the
+-- debugger -- it should be loud enough to grab the eye for one redraw,
+-- then revert to the calm hint colour on the next step.
+local function pick_changed_fg()
+  local cs = vim.g.colors_name or ""
+  if cs:match("gruvbox") then
+    -- bright yellow / faded yellow from gruvbox's palette: classic
+    -- "attention" colour, distinct from both error-red and hint-teal.
+    return vim.o.background == "light" and "#b57614" or "#fabd2f"
+  end
+  return get_hl_fg("DiagnosticWarn") or "#fabd2f"
+end
+
+local function apply_hint_highlights()
+  local hint_fg = pick_hint_fg()
+  local spec = { fg = hint_fg, italic = true }
+  -- Calm "informational" virtual text -- adopts the muted teal accent.
+  for _, group in ipairs({
+    -- LSP-driven inlay hints (parameter names, inferred types).
+    "LspInlayHint",
+    "LspInlayHintType",
+    "LspInlayHintParameter",
+    -- Inline diagnostic virtual text (when not using tiny-inline-diagnostic).
+    "DiagnosticVirtualTextHint",
+    "DiagnosticVirtualTextInfo",
+    -- Inline blame chip from gitsigns.
+    "GitSignsCurrentLineBlame",
+    -- nvim-dap-virtual-text: steady-state variable value display.
+    "NvimDapVirtualText",
+    "NvimDapVirtualTextInfo",
+  }) do
+    vim.api.nvim_set_hl(0, group, spec)
+  end
+  -- Loud transient accent for dap value changes -- bold + non-italic so
+  -- the flash differs from the steady-state inlay shape, not just colour.
+  vim.api.nvim_set_hl(0, "NvimDapVirtualTextChanged",
+    { fg = pick_changed_fg(), bold = true })
+  -- Errors during debug variable resolution stay theme-red.  Linking
+  -- (rather than setting fg directly) means colorscheme changes flow
+  -- through automatically.
+  vim.api.nvim_set_hl(0, "NvimDapVirtualTextError",
+    { link = "DiagnosticError" })
+end
+
+apply_hint_highlights()
+
+vim.api.nvim_create_autocmd("ColorScheme", {
+  group    = vim.api.nvim_create_augroup("noethervim_hint_highlights", { clear = true }),
+  callback = apply_hint_highlights,
+})
+
+-- Diagnosis helper: `:NoetherVimHintColors` prints the resolved fg of
+-- every group we touch and how it compares to Comment.  Run it if the
+-- inlay hints still look like comments -- the answer reveals whether
+-- the override didn't take, or whether the source is a different
+-- highlight group than we override.
+-- :NoetherVimHighlightUnderCursor -- print every highlight (extmark, syntax,
+-- treesitter, semantic-token) covering the position under the cursor.  Run
+-- this with the cursor sitting on the offending grey blob: the output names
+-- the exact group, which we can then add to `apply_hint_highlights` above.
+vim.api.nvim_create_user_command("NoetherVimHighlightUnderCursor", function()
+  local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+  row = row - 1   -- nvim_win_get_cursor is (1,0); extmark API is (0,0)
+  local buf = vim.api.nvim_get_current_buf()
+  local lines = { string.format("at row=%d col=%d:", row + 1, col) }
+
+  -- Syntax stack (legacy regex syntax)
+  local syn = vim.fn.synID(row + 1, col + 1, 1)
+  if syn > 0 then
+    local name = vim.fn.synIDattr(syn, "name")
+    local trans = vim.fn.synIDattr(vim.fn.synIDtrans(syn), "name")
+    lines[#lines + 1] = string.format("  syntax: %s (-> %s)", name, trans)
+  end
+
+  -- Treesitter captures
+  local ts_caps = vim.treesitter.get_captures_at_cursor(0)
+  if ts_caps and #ts_caps > 0 then
+    lines[#lines + 1] = "  treesitter: @" .. table.concat(ts_caps, ", @")
+  end
+
+  -- LSP semantic tokens
+  local ok_st, st = pcall(vim.lsp.semantic_tokens.get_at_pos, buf, row, col)
+  if ok_st and st and #st > 0 then
+    local names = {}
+    for _, t in ipairs(st) do names[#names + 1] = t.type end
+    lines[#lines + 1] = "  semantic: " .. table.concat(names, ", ")
+  end
+
+  -- Extmarks (virtual text, inlay hints, diagnostics, gitsigns blame, dap
+  -- virtual text -- *all* go through extmarks, so this is the canonical
+  -- way to find what's painting that grey strip).
+  local marks = vim.api.nvim_buf_get_extmarks(buf, -1, { row, 0 }, { row, -1 },
+    { details = true, hl_name = true })
+  if #marks > 0 then
+    lines[#lines + 1] = string.format("  %d extmark(s) on this row:", #marks)
+    for _, m in ipairs(marks) do
+      local d = m[4] or {}
+      local hl = d.hl_group or (d.virt_text and d.virt_text[1] and d.virt_text[1][2]) or "(no hl)"
+      local kind
+      if d.virt_text then
+        kind = "virt_text=" .. vim.inspect(d.virt_text):gsub("%s+", " ")
+      elseif d.virt_lines then
+        kind = "virt_lines"
+      elseif d.hl_group then
+        kind = "highlight"
+      else
+        kind = "other"
+      end
+      lines[#lines + 1] = string.format("    [%s] hl=%s  ns=%s", kind, hl, d.ns_id or "?")
+    end
+  end
+
+  vim.notify(table.concat(lines, "\n"), vim.log.levels.INFO,
+    { title = "highlight under cursor" })
+end, { desc = "show every highlight/extmark at cursor" })
+

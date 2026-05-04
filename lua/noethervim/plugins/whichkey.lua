@@ -22,18 +22,78 @@ local function wk_picker(data)
 		return table.concat(parts, " ")
 	end
 
+	--- Recursively expand groups into their leaf mappings.  Returns a flat
+	--- list where every entry corresponds to an actually-executable
+	--- keystroke (groups themselves stay in the list so the user can still
+	--- "drill in" by selecting the group, but every descendant is also
+	--- searchable from the top level).  Without this, <C-f> at the root
+	--- only searches direct children -- you'd have to navigate <leader>h
+	--- manually before "stage hunk" became findable.
+	local function flatten(items, acc, seen)
+		acc = acc or {}
+		seen = seen or {}
+		for _, item in ipairs(items) do
+			local key = tostring(item.node)
+			if not seen[key] then
+				seen[key] = true
+				table.insert(acc, item)
+				if item.group and item.node and item.node:is_group() then
+					local sub = View.get_items_for_node(item.node)
+					if #sub > 0 then flatten(sub, acc, seen) end
+				end
+			end
+		end
+		return acc
+	end
+
+	--- Build a display-friendly full key path for an item, walking from the
+	--- root down to the item.  We deliberately use `item.key` segments
+	--- (already prettified by which-key, e.g. " " → "<Space>") so the chip
+	--- reads naturally: " <Space> c u" instead of just " u ".
+	local function full_key_path(item_node, root_node)
+		local parts = {}
+		local n = item_node
+		while n and n ~= root_node do
+			local k = rawget(n, "mapping") and n.mapping.key or n.key
+			if not k then
+				-- Fall back to the raw key segment cached on the node.
+				local raw = rawget(n, "keys")
+				if raw and raw ~= "" then
+					return raw
+				end
+				break
+			end
+			table.insert(parts, 1, k)
+			n = n.parent
+		end
+		return table.concat(parts, " ")
+	end
+
 	local function pick(items, node)
 		local title = (node.desc and node.desc ~= "") and node.desc or node.keys or "Which Key"
+		local flat = flatten(items)
 
 		require("snacks").picker({
 			title = title,
 			items = (function()
 				local ret = {}
-				for _, item in ipairs(items) do
+				-- Compute the longest full-key string in this node so the
+				-- picker columns line up regardless of how deep an item is.
+				local widest = 1
+				local rows = {}
+				for _, item in ipairs(flat) do
+					local full = full_key_path(item.node, node)
+					if full == "" then full = item.key or item.raw_key or "" end
+					rows[#rows + 1] = { item = item, full = full }
+					if #full > widest then widest = #full end
+				end
+				for _, row in ipairs(rows) do
+					local item = row.item
 					local trail = breadcrumb(item.node, node)
 					ret[#ret + 1] = {
-						text = table.concat({ trail, item.raw_key, item.desc or "" }, " "),
-						formatted_key = item.key,
+						text = table.concat({ trail, row.full, item.desc or "" }, " "),
+						formatted_key = row.full,
+						key_width     = widest,
 						desc = item.desc or "",
 						breadcrumb = trail,
 						icon = item.icon or "",
@@ -50,8 +110,11 @@ local function wk_picker(data)
 				if item.icon ~= "" then
 					ret[#ret + 1] = { item.icon .. " ", item.icon_hl or "WhichKeyIcon" }
 				end
-				ret[#ret + 1] = { string.format("%-8s", item.formatted_key), "WhichKey" }
-				ret[#ret + 1] = { item.desc, item.is_group and "WhichKeyGroup" or "WhichKeyDesc" }
+				ret[#ret + 1] = {
+					string.format("%-" .. (item.key_width or 8) .. "s", item.formatted_key),
+					"WhichKey",
+				}
+				ret[#ret + 1] = { "  " .. item.desc, item.is_group and "WhichKeyGroup" or "WhichKeyDesc" }
 				if item.breadcrumb ~= "" then
 					ret[#ret + 1] = { "  " .. item.breadcrumb, "WhichKeySeparator" }
 				end

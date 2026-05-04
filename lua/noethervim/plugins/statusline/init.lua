@@ -23,6 +23,15 @@ return {
       local mc = ctx.make_mode_colors(ctx.colors)
       for k, v in pairs(mc) do ctx.mode_colors[k] = v end
 
+      -- User-configurable edge style. Mutate semiCircles in place BEFORE
+      -- component modules are required: heirline.utils.surround() captures
+      -- the delimiter strings at component-build time (during require), so
+      -- mutating later would leave the bubbles rendered with stale glyphs.
+      local edges = nv_sl.get_edges()
+      ctx.semiCircles[1] = edges.start_left
+      ctx.semiCircles[2] = edges.start_right
+      ctx.edges = edges
+
       -- Global toggle state.
       vim.g.heirline_pdfsize_show = false
       vim.g.heirline_git_show = true
@@ -46,12 +55,13 @@ return {
 
       -- ── Assembly ─────────────────────────────────────────────
 
+      -- Mode-aware bottom-statusline background.  See ctx.mode_bg /
+      -- ctx.with_mode_bg in context.lua for the helpers components can
+      -- call directly when they need to embed this bg in their own hl
+      -- (heirline's parent->child bg merge isn't always reliable when
+      -- the child's hl is computed by a function).
       local function insert_aware_bg()
-        local mode = vim.fn.mode(1):sub(1, 1)
-        if mode == "i" then
-          return { bg = ctx.colors.default_blue }
-        end
-        return { bg = ctx.colors.default_gray }
+        return { bg = ctx.mode_bg() }
       end
 
       local CircleComponent = utils.surround(ctx.semiCircles, function()
@@ -121,6 +131,23 @@ return {
         misc.Space,
       }
 
+      -- Optional opening endcap rendered immediately before ruler.Pos. Its
+      -- foreground is the active mode color (so the glyph "fills in" the
+      -- mode block) and its background mirrors StatusComponent's bg so
+      -- the glyph carves out of the surrounding section cleanly. Skipped
+      -- entirely when the chosen edge style omits end_left (e.g. "round",
+      -- "straight"), preserving the historical flush right edge.
+      local RulerEndcap = {
+        condition = function() return ctx.edges and ctx.edges.end_left ~= nil end,
+        provider = function() return ctx.edges.end_left end,
+        hl = function()
+          local mode = vim.fn.mode(1):sub(1, 1)
+          local bg = (mode == "i") and ctx.colors.default_blue or ctx.colors.light_gray
+          local fg = ctx.mode_colors[mode] or ctx.colors.default_gray
+          return { fg = fg, bg = bg }
+        end,
+      }
+
       -- ── Statuslines ─────────────────────────────────────────
 
       local DefaultStatusline = {
@@ -128,9 +155,11 @@ return {
         CircleComponent,
         { provider = " ", hl = { force = true } },
         vimode.ViMode,
+        misc.HiddenModified,
         misc.Jumpable,
         MainComponent,
         StatusComponent,
+        RulerEndcap,
         ruler.Pos,
       }
 
@@ -145,6 +174,7 @@ return {
         misc.Jumpable,
         OilComponent,
         StatusComponent,
+        RulerEndcap,
         ruler.Pos,
       }
 

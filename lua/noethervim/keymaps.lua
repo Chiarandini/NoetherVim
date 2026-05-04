@@ -78,15 +78,12 @@ vim.keymap.set("n", "<c-l>", "<c-w>l", { desc = "window right" })
 vim.keymap.set("n", "<c-w><a-h>", "<cmd>tabm -<cr>", { desc = "move tab left" })
 vim.keymap.set("n", "<c-w><a-l>", "<cmd>tabm +<cr>", { desc = "move tab right" })
 vim.keymap.set("n", "<c-w><c-q>", "<cmd>copen<cr>",  { desc = "open quickfix" })
--- Undo tree: native nvim.undotree (Neovim 0.12+).  packadd is idempotent,
--- so calling it on every keypress is fine; first call loads the plugin,
--- the rest are no-ops.  CursorMoved in the tree window applies that
--- undo state to the source buffer, giving a live preview of the file's
--- content at each state.
-vim.keymap.set("n", "<c-w><c-u>", function()
-  vim.cmd("packadd nvim.undotree")
-  vim.cmd("Undotree")
-end, { desc = "toggle undo tree" })
+-- Undo tree: mbbill/undotree.  Selecting a node shows the diff in a
+-- side pane WITHOUT applying it; press <CR> to actually move the
+-- buffer to that state.  This is the non-destructive counterpart to
+-- Neovim's builtin nvim.undotree, which applies state on every
+-- CursorMoved.
+vim.keymap.set("n", "<c-w><c-u>", "<cmd>UndotreeToggle<cr>", { desc = "toggle undo tree" })
 
 -- Toggle quickfix window (SearchLeader+q)
 local SearchLeader = require("noethervim.util").search_leader
@@ -218,6 +215,54 @@ local function comment_yank_paste()
 end
 vim.keymap.set({ "n", "v", "x" }, "<C-S-r>", comment_yank_paste, { desc = "comment and paste text" })
 
+-- gC (visual): per-line comment toggle.
+-- Vim's builtin `gc` operator picks one direction for the whole range
+-- (comment-everything-or-uncomment-everything based on the majority
+-- state).  `gC` runs the toggle line-by-line so a mixed selection ends
+-- up with each line in the *opposite* state -- handy when you want to
+-- swap which lines in a block are active vs. commented.
+--
+-- Implementation notes:
+--   * Visual-mode mappings exit visual mode before the RHS runs, so we
+--     read the range from the `'<` / `'>` marks (which Vim sets on the
+--     way out), not from `v` / `.`.
+--   * `<cmd>` keymap form prevents the leading `:` from leaving artifacts
+--     in the cmdline, and because it doesn't exit visual we capture the
+--     range cleanly.
+--   * The toggle uses Neovim's built-in `gcc` operator (Nvim 0.10+).
+local function invert_comment_visual()
+  local start_line = vim.fn.line("'<")
+  local end_line   = vim.fn.line("'>")
+  if start_line == 0 or end_line == 0 or start_line > end_line then
+    vim.notify("no visual range for gC", vim.log.levels.WARN)
+    return
+  end
+  local commentstring = vim.bo.commentstring or ""
+  local prefix = commentstring:gsub("%%s.*", ""):gsub("^%s+", ""):gsub("%s+$", "")
+  if prefix == "" then
+    vim.notify("no commentstring for filetype " .. vim.bo.filetype, vim.log.levels.WARN)
+    return
+  end
+  -- Save and restore the cursor so the user lands where they started.
+  local saved_pos = vim.api.nvim_win_get_cursor(0)
+  for lnum = start_line, end_line do
+    local line = vim.fn.getline(lnum)
+    if line:match("%S") then
+      vim.api.nvim_win_set_cursor(0, { lnum, 0 })
+      -- gcc is the line-comment operator; without `!` it follows the
+      -- builtin comment plugin if present.
+      vim.cmd("normal gcc")
+    end
+  end
+  pcall(vim.api.nvim_win_set_cursor, 0, saved_pos)
+end
+vim.keymap.set({ "v", "x" }, "gC", function()
+  -- Exit visual first so '< / '> are populated, then run.
+  vim.api.nvim_feedkeys(
+    vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "nx", false)
+  invert_comment_visual()
+end, { silent = true, desc = "invert comment per-line" })
+
 -- ──────────────────────────────────────────────────────────────
 --  Visual mode
 -- ──────────────────────────────────────────────────────────────
@@ -315,6 +360,13 @@ vim.keymap.set({ "n", "v" }, "<Esc>", function()  -- clear highlights, dismiss n
   end
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
   vim.cmd.noh()
+  -- Dismiss LSP hover/diagnostic floats spawned via util.open_floating_preview
+  -- (K, gl, vim.lsp.buf.hover, etc.).  vim.lsp.util sets b:lsp_floating_preview
+  -- on the source buffer to the float's winid.
+  local lsp_float = vim.b.lsp_floating_preview
+  if lsp_float and vim.api.nvim_win_is_valid(lsp_float) then
+    pcall(vim.api.nvim_win_close, lsp_float, true)
+  end
   if package.loaded["notify"]  then require("notify").dismiss() end
   if package.loaded["snacks"]  then require("snacks").notifier.hide() end
   if package.loaded["nvim-dap-virtual-text"] then

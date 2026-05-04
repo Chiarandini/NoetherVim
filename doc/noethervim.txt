@@ -786,7 +786,7 @@ Prefixes: ~
     `g`                 LSP & go-to
                       gd(efinition)  gD(eclaration)  gR(eferences float)
                       gt(ype def)  gi(mplementation)  gs(ignature)
-                      gl(diagnostics)  go(utline)
+                      gl(diagnostics)  go(utline)  gy(ank type at cursor)
                       gr* = Neovim 0.12 defaults (grr/grn/gra…)
                       SearchLeader+li / +lO (call hierarchy in/out)
                                                         *noethervim-brackets*
@@ -818,6 +818,13 @@ Other notable keymaps: ~
     `g<C-a>`/`g<C-x>` Sequential increment/decrement in visual selection
     `<C-/>`           Toggle comment (builtin gc/gcc, all modes)
     `<C-S-r>`         Comment lines and paste uncommented copy below
+
+    Visual: ~
+    `gC`              Invert comment per-line.  Unlike `gc` (which picks
+                      one direction for the whole range based on the
+                      majority state), `gC` toggles each selected line
+                      independently -- so a mixed selection ends up with
+                      every line in the *opposite* state.
     `s`               Substitute without polluting register
     `S`               Global search/replace (:%s/)
     `;`               Command-line (replaces :)
@@ -965,7 +972,8 @@ VimTeX compile indicator (latex bundle): ~
 Customize statusline colors and extra components via opts: >lua
     { "Chiarandini/NoetherVim", opts = {
         statusline = {
-          colors     = { ... },     -- override heirline color table
+          edge_style  = "round",    -- see edge styles below
+          colors      = { ... },    -- override heirline color table
           extra_right = { ... },    -- heirline component specs
         },
     } }
@@ -982,6 +990,26 @@ Customize statusline colors and extra components via opts: >lua
         },
     } }
 <
+                                          *noethervim-statusline-edge-style*
+Edge style ~
+
+The colored mode block at the left of the statusline (and, for some
+styles, an opening endcap on the right ruler block) follows
+`opts.statusline.edge_style`. All glyphs come from the Nerd Font
+private use area, so a Powerline-capable terminal font is required.
+
+    `round`     (default) Rounded mode bubble, flush right edge.
+    `slant`     Slanted Powerline endcaps; right ruler also slanted.
+    `pointy`    Triangle endcaps; right ruler gets a triangle opener.
+    `straight`  No endcap glyphs; mode block renders as a plain
+                rectangle, right edge stays flush.
+    `bubbly`    Rounded endcaps on both sides (left mode block and
+                right ruler block).
+
+Switching styles takes effect on the next Neovim launch (the bar is
+assembled in heirline's `config` callback). Picking an unknown name
+falls back to `round` and emits a `vim.notify` warning during setup.
+
     For custom component authoring, see |heirline-cookbook|.
 
                                          *noethervim-statusline-busy-override*
@@ -1102,6 +1130,18 @@ straightforward. See the example in
 
 `:LspRename`                  LSP rename with instance count notification.
 
+`:NoetherVimHighlightUnderCursor`
+                              Print every highlight layer covering the
+                              cursor: legacy syntax, treesitter
+                              captures, LSP semantic tokens, and ALL
+                              extmarks on the row (including virtual
+                              text from inlay hints, diagnostics,
+                              gitsigns blame, and nvim-dap-virtual-text).
+                              Useful for "what's painting that grey
+                              chip?" -- the output names the exact
+                              group so you can override it in
+                              `user/highlights.lua`.
+
 Web search command: ~                                 *noethervim-web-search*
 
 `:Search` {query}             Search the web with the current default engine.
@@ -1140,7 +1180,34 @@ Default keybindings: ~
     `<S-Tab>`     Select and insert previous item
     `<C-y>`       Accept (inherited from insert mode)
 
-Customizing keybindings: ~
+Tab key philosophy preset: ~
+                                            *noethervim-completion-style*
+Set `completion_style` in `lua/user/config.lua` to switch the entire Tab
+behaviour without writing any keymap overrides:
+
+    `"snippet"`   (default) Tab is reserved for LuaSnip jumps.  Pick from
+                the menu with C-n/C-p and accept with C-y.  Snippet
+                expansion and menu navigation never compete for Tab.
+    `"supertab"`  Tab accepts the highlighted item (auto-selecting the
+                top one if none is selected) and inserts a trailing
+                space.  Falls back to snippet_forward, then to literal
+                Tab.  IDE muscle memory.
+    `"navigate"` Tab cycles forward through the menu (= C-n) without
+                accepting; C-y or <CR> commits.  S-Tab cycles backward.
+                Matches the classic nvim-cmp default and most VSCode
+                setups.
+
+Example: >lua
+    -- lua/user/config.lua
+    return { completion_style = "supertab" }
+<
+The two philosophies people actually fight about are "supertab" and
+"snippet" -- those cover ~99% of setups.  "navigate" is here for users
+coming from older nvim-cmp configs.  AI completion (Copilot/Codeium)
+is a fourth axis: bind Tab to the AI plugin's accept_word in your
+`lua/user/keymaps.lua` to shadow whichever preset you picked.
+
+Customizing individual keys: ~
                                            *noethervim-completion-custom*
 Override in `user/plugins/` using opts merging. Each key maps to a list
 of actions -- blink tries them in order and stops at the first that

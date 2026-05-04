@@ -14,7 +14,7 @@ local q_close_ft = {
   "DressingInput", "sagarename",
   "bib", "cmp_menu", "query",
   "typr", "snacks_notif", "snacks_terminal",
-  "nvim-undotree",
+  "nvim-undotree", "undotree", "diff",
 }
 
 vim.api.nvim_create_autocmd("FileType", {
@@ -68,6 +68,55 @@ vim.api.nvim_create_autocmd("FileType", {
   pattern = "sagarename",
   callback = function(ev)
     vim.keymap.set("i", "<esc>", "<esc>ZQ", { buf = ev.buf, silent = true })
+  end,
+})
+
+-- ──────────────────────────────────────────────────────────────
+--  Auto-disable diff mode when a diff buffer is no longer visible.
+--  Closing one half of a `:diffthis` pair (or `:Gdiff`, gitsigns'
+--  diffthis, `:DiffOrig`, etc.) leaves the surviving window with
+--  &diff still set, which silently changes wrap/foldmethod/cursor-bind
+--  for the rest of the session.  We listen on BufHidden / BufWipeout
+--  (NOT BufWinLeave) so simply switching tabs or windows while the
+--  diff buffer is still on screen doesn't tear the diff down.
+--  BufHidden fires only when the buffer has no remaining windows
+--  showing it, which is exactly when the leftover &diff is unwanted.
+-- ──────────────────────────────────────────────────────────────
+
+-- Track which buffers are participating in a diff so we can detect when
+-- a hidden one was the trigger.  `diff` is a window-local option (per
+-- `:h 'diff'`), so we can't read it off the buffer at BufHidden time -
+-- the window has already gone.  We mark `b:noethervim_was_diff = true`
+-- whenever any window shows that buffer in diff mode (OptionSet on
+-- `diff` fires for the affected window) and consume the flag below.
+vim.api.nvim_create_autocmd("OptionSet", {
+  group   = vim.api.nvim_create_augroup("noethervim_diff_track", { clear = true }),
+  pattern = "diff",
+  callback = function()
+    if vim.v.option_new == "1" or vim.v.option_new == true then
+      vim.b.noethervim_was_diff = true
+    end
+  end,
+})
+
+vim.api.nvim_create_autocmd({ "BufHidden", "BufWipeout" }, {
+  group = vim.api.nvim_create_augroup("noethervim_diff_cleanup", { clear = true }),
+  callback = function(ev)
+    -- Only act for buffers we've seen participating in a diff.  Cheaper
+    -- and avoids running diffoff on every random hide event.
+    if not vim.b[ev.buf].noethervim_was_diff then return end
+    vim.b[ev.buf].noethervim_was_diff = nil
+    vim.schedule(function()
+      for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
+        for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
+          if vim.api.nvim_win_is_valid(win) and vim.wo[win].diff then
+            pcall(function()
+              vim.api.nvim_win_call(win, function() vim.cmd("diffoff") end)
+            end)
+          end
+        end
+      end
+    end)
   end,
 })
 

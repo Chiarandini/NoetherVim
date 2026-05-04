@@ -73,6 +73,17 @@ opt.hlsearch   = true    -- <Esc> clears; [oh/]oh toggles persistently
 -- Indentation
 opt.tabstop    = 4
 opt.shiftwidth = 4
+-- autoindent: copy indent from the line above when starting a new line
+-- (this is how `O` and `o` keep your code aligned).  The Neovim default
+-- is already `true`, but set it explicitly so a stray ftplugin / runtime
+-- file flipping it off can be spotted at a glance.
+-- copyindent + preserveindent: when re-indenting, reuse the existing
+-- whitespace structure (tabs vs spaces, mixed leading runs) instead of
+-- normalising to shiftwidth.  This is what makes `O` on a deeply-indented
+-- line keep its full indent run instead of snapping back to column 0.
+opt.autoindent     = true
+opt.copyindent     = true
+opt.preserveindent = true
 
 -- Splits prefer bottom-right
 opt.splitbelow = true

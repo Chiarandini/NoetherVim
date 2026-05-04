@@ -1,5 +1,8 @@
 -- Personal keymap overrides for NoetherVim.
--- Copy this file to lua/user/keymaps.lua and uncomment/add the lines you want.
+-- The fastest way to install this template is `:NoetherVim templates` (or
+-- SearchLeader+ct, default <Space>ct): pick `user/keymaps.example.lua` and
+-- press <C-y> to stamp it into lua/user/keymaps.lua.  You can also copy
+-- it manually if you prefer.
 -- lua/user/keymaps.lua is gitignored -- it never ships with the distribution.
 --
 -- This file runs after noethervim/keymaps.lua AND noethervim/toggles.lua,
@@ -42,3 +45,18 @@
 -- (they collide with cursor-line muscle memory), remap the cycle keys:
 -- vim.keymap.set("n", "<M-p>", "<Plug>(YankyPreviousEntry)", { desc = "prev yank" })
 -- vim.keymap.set("n", "<M-n>", "<Plug>(YankyNextEntry)",     { desc = "next yank" })
+
+-- ── Smart <C-a>: increment-dial-or-select-all ────────────────────────────────
+-- Vim's <C-a> increments numbers; dial.nvim (already in NoetherVim core)
+-- extends it to booleans, and/or, ==/!=, dates, semver, etc.  This wrapper
+-- delegates to dial when available, watches `changedtick` to see whether
+-- anything actually moved, and falls back to "select-all" when the cursor
+-- isn't on an incrementable token.
+-- vim.keymap.set("n", "<C-a>", function()
+--   require("lazy").load({ plugins = { "dial.nvim" }, show = false })
+--   local tick = vim.b.changedtick
+--   pcall(require("dial.map").manipulate, "increment", "normal")
+--   if vim.b.changedtick == tick then
+--     vim.cmd("normal! ggVG")
+--   end
+-- end, { desc = "dial increment, else select all" })

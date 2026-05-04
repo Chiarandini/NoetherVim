@@ -102,4 +102,46 @@ function M.cached_git_root(path)
   return _git_root_cache[path]
 end
 
+-- ── Mode-aware statusline background ──────────────────────────────
+-- The bottom statusline shifts from default_gray (normal-ish modes) to
+-- default_blue when in insert mode, so the editor's "global state"
+-- shows up in the bar as well as in the mode chip.  Heirline propagates
+-- the parent component's `hl.bg` to children that don't override it,
+-- but every once in a while a component returns a fresh hl table from
+-- a function (`hl = function() return {fg=...} end`) and the bg merge
+-- doesn't carry through cleanly -- the component renders with the
+-- terminal's default bg instead of matching the bar.  Rather than
+-- chase that case-by-case, components can call `ctx.mode_bg()` (or use
+-- the `ctx.with_mode_bg` wrapper) to embed the correct bg directly.
+--
+-- Both helpers read live state from `vim.fn.mode()` / `M.colors`, so
+-- they pick up theme changes and mode switches automatically.
+
+--- Current statusline background colour for the active mode.
+function M.mode_bg()
+  local mode = vim.fn.mode(1):sub(1, 1)
+  if mode == "i" then
+    return M.colors.default_blue
+  end
+  return M.colors.default_gray
+end
+
+--- Wrap a heirline `hl` value (table OR function returning a table) so
+--- the resolved table always has `bg` set to the current mode-aware
+--- background.  An explicit `bg` in the wrapped spec wins, so callers
+--- can still opt out for components that want their own bg.
+---
+---@param hl table|fun(self?:table):table
+---@return fun(self?:table):table
+function M.with_mode_bg(hl)
+  return function(self)
+    local resolved = type(hl) == "function" and hl(self) or hl
+    resolved = resolved and vim.tbl_extend("keep", {}, resolved) or {}
+    if resolved.bg == nil then
+      resolved.bg = M.mode_bg()
+    end
+    return resolved
+  end
+end
+
 return M

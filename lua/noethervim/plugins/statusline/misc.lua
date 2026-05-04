@@ -170,6 +170,154 @@ M.TerminalName = {
   hl = function() return { fg = ctx.colors.green, bg = ctx.colors.default_gray, bold = true } end,
 }
 
+-- Hidden-modified buffers warning.
+--
+-- A buffer that has been left in `:hide` state with unsaved edits is
+-- easy to miss: it isn't shown in any window across any tabpage and the
+-- bufferline doesn't surface it, yet :qa! will silently drop the changes.
+-- This component walks every loaded, listed, real-file buffer and counts
+-- the ones that are (a) modified and (b) not visible in any window of
+-- any tabpage.  A buffer that is still open in another split or tab is
+-- explicitly excluded.  Cleared automatically as soon as the buffer is
+-- saved, reopened, or wiped.
+local function count_hidden_modified()
+  -- nvim_list_wins() returns ALL windows across every tabpage (excluding
+  -- floating windows), which is exactly what we want here.  We still
+  -- iterate explicit tabpages too as a belt-and-braces defense against
+  -- weird edge cases where nvim_list_wins() filters something out.
+  local visible = {}
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    if vim.api.nvim_win_is_valid(win) then
+      visible[vim.api.nvim_win_get_buf(win)] = true
+    end
+  end
+  for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
+    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
+      if vim.api.nvim_win_is_valid(win) then
+        visible[vim.api.nvim_win_get_buf(win)] = true
+      end
+    end
+  end
+  local count = 0
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_is_loaded(buf)
+        and vim.bo[buf].buflisted
+        and vim.bo[buf].modified
+        and not visible[buf]
+        and vim.bo[buf].buftype == "" then
+      count = count + 1
+    end
+  end
+  return count
+end
+
+-- A muted warning chip: borrow DiagnosticWarn's foreground (every modern
+-- colorscheme defines it) and let the surrounding statusline background
+-- show through, so the badge feels integrated rather than pasted on.
+-- A single bullet makes the count read like a notification, not a banner.
+-- Float a Snacks picker filtered to hidden modified buffers.
+-- Each item lets you Enter to jump back, dd/x to wipeout, w to write.
+local function pick_hidden_modified()
+  local visible = {}
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    if vim.api.nvim_win_is_valid(win) then
+      visible[vim.api.nvim_win_get_buf(win)] = true
+    end
+  end
+  for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
+    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
+      if vim.api.nvim_win_is_valid(win) then
+        visible[vim.api.nvim_win_get_buf(win)] = true
+      end
+    end
+  end
+  local items = {}
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_is_loaded(buf)
+        and vim.bo[buf].buflisted
+        and vim.bo[buf].modified
+        and not visible[buf]
+        and vim.bo[buf].buftype == "" then
+      local name = vim.api.nvim_buf_get_name(buf)
+      local short = name == "" and "[No Name]" or vim.fn.fnamemodify(name, ":~:.")
+      items[#items + 1] = {
+        text   = short,
+        file   = name ~= "" and name or nil,
+        bufnr  = buf,
+      }
+    end
+  end
+  if #items == 0 then
+    vim.notify("no hidden modified buffers", vim.log.levels.INFO)
+    return
+  end
+  require("snacks").picker({
+    title = "Hidden Modified Buffers",
+    items = items,
+    -- The on-disk file is stale (buffer is modified-but-not-written), so
+    -- the default "file" previewer would show outdated content.  Render
+    -- the live buffer contents into the preview pane instead.
+    preview = function(pctx)
+      local item = pctx.item
+      if not item or not vim.api.nvim_buf_is_loaded(item.bufnr) then
+        return false
+      end
+      local bufnr = item.bufnr
+      local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+      -- Snacks locks preview buffers as nomodifiable to keep them from
+      -- being edited.  Flip it on, paint, flip it back.
+      local was_modifiable = vim.bo[pctx.buf].modifiable
+      vim.bo[pctx.buf].modifiable = true
+      vim.api.nvim_buf_set_lines(pctx.buf, 0, -1, false, lines)
+      local ft = vim.bo[bufnr].filetype
+      if ft and ft ~= "" then vim.bo[pctx.buf].filetype = ft end
+      vim.bo[pctx.buf].modifiable = was_modifiable
+      return true
+    end,
+    format = function(item)
+      return {
+        { "  ", "DiagnosticWarn" },
+        { item.text, "Normal" },
+      }
+    end,
+    confirm = function(picker, item)
+      picker:close()
+      if not item then return end
+      -- Switch to the live buffer (the modified one).  `vim.cmd.edit`
+      -- on the file would re-read from disk and silently drop the
+      -- unsaved changes -- we want the in-memory copy.
+      if vim.api.nvim_buf_is_valid(item.bufnr) then
+        vim.api.nvim_set_current_buf(item.bufnr)
+      elseif item.file then
+        vim.cmd.edit(vim.fn.fnameescape(item.file))
+      end
+    end,
+  })
+end
+
+M.HiddenModified = {
+  condition = function(self)
+    self.count = count_hidden_modified()
+    return self.count > 0
+  end,
+  on_click = {
+    callback = function() pcall(pick_hidden_modified) end,
+    name = "noethervim_hidden_modified_click",
+  },
+  provider = function(self)
+    return string.format(" • %d unsaved ", self.count)
+  end,
+  -- ctx.with_mode_bg embeds the active mode's statusline bg (blue in
+  -- insert, grey otherwise) into every render, so the chip blends with
+  -- the bottom bar even though heirline's parent->child bg merge doesn't
+  -- always reach this far.  See `ctx.mode_bg` for the rationale.
+  hl = ctx.with_mode_bg(function()
+    local fg = utils.get_highlight("DiagnosticWarn").fg or ctx.colors.orange or "#fabd2f"
+    return { fg = fg, italic = true }
+  end),
+  update = { "BufModifiedSet", "BufWritePost", "BufHidden", "BufDelete", "BufWipeout", "WinEnter", "WinLeave", "TabEnter", "TabLeave", "ModeChanged" },
+}
+
 -- Lazy plugin has updates
 M.Lazy = {
   condition = require("lazy.status").has_updates,

@@ -276,6 +276,79 @@ return {
 					vim.keymap.set('n', 'go', '<cmd>Outline<cr>', km_opts('symbols [o]utline'))
 					vim.keymap.set('n', SearchLeader .. 'li', vim.lsp.buf.incoming_calls, km_opts('[l]sp [i]ncoming calls'))
 					vim.keymap.set('n', SearchLeader .. 'lO', vim.lsp.buf.outgoing_calls, km_opts('[l]sp [O]utgoing calls'))
+
+					-- gy: yank the inferred type of the symbol under the cursor
+					-- into the unnamed and system-clipboard registers.
+					--
+					-- Uses the standard nvim API: pick a hover-capable client,
+					-- send textDocument/hover with that client's offset_encoding,
+					-- then run the response through vim.lsp.util.convert_input_to_markdown_lines
+					-- (the helper Neovim itself uses to render hover floats) so we
+					-- handle MarkupContent | MarkedString | string | string[]
+					-- uniformly.  We then strip code fences and the leading
+					-- "(variable) name:" / "(parameter) name:" preamble that
+					-- pyright/lua_ls/etc. prepend, and yank whatever's after the
+					-- first ":" on the signature line.
+					vim.keymap.set('n', 'gy', function()
+						local hover_clients = vim.lsp.get_clients({
+							bufnr = 0,
+							method = 'textDocument/hover',
+						})
+						if #hover_clients == 0 then
+							vim.notify("no LSP client supports hover here", vim.log.levels.WARN)
+							return
+						end
+						local hclient = hover_clients[1]
+						local params = vim.lsp.util.make_position_params(0, hclient.offset_encoding)
+						hclient:request('textDocument/hover', params, function(err, result)
+							if err then
+								vim.notify("hover request failed: " .. tostring(err.message or err), vim.log.levels.WARN)
+								return
+							end
+							if not result or not result.contents then
+								vim.notify("no hover information at cursor", vim.log.levels.WARN)
+								return
+							end
+							local lines = vim.lsp.util.convert_input_to_markdown_lines(result.contents)
+							lines = vim.lsp.util.trim_empty_lines(lines)
+							if not lines or #lines == 0 then
+								vim.notify("hover returned empty content", vim.log.levels.WARN)
+								return
+							end
+							-- Drop the language-tag fence lines if present
+							-- ("```python", "```lua", "```typescript", ...).
+							local body = {}
+							for _, line in ipairs(lines) do
+								if not line:match("^```") then
+									body[#body + 1] = line
+								end
+							end
+							if #body == 0 then
+								vim.notify("hover had only fences", vim.log.levels.WARN)
+								return
+							end
+							-- The signature is the first non-empty body line.
+							local signature
+							for _, line in ipairs(body) do
+								if line:match("%S") then signature = line; break end
+							end
+							signature = signature or body[1]
+							-- Strip "(variable)", "(parameter)", "(method)", etc.
+							local stripped = signature:gsub("^%s*%b()%s*", "")
+							-- "name: Type" → "Type".  If no colon, yank the whole
+							-- signature so e.g. function signatures still copy.
+							local typ = stripped:match(":%s*(.+)$") or stripped
+							typ = typ:gsub("^%s+", ""):gsub("%s+$", "")
+							if typ == "" then
+								vim.notify("could not extract type from hover", vim.log.levels.WARN)
+								return
+							end
+							vim.fn.setreg('"', typ)
+							vim.fn.setreg('+', typ)
+							local preview = #typ > 80 and (typ:sub(1, 77) .. "...") or typ
+							vim.notify("yanked: " .. preview, vim.log.levels.INFO)
+						end, bufnr)
+					end, km_opts('[y]ank type at cursor'))
 				end,
 			})
 
