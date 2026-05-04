@@ -367,6 +367,19 @@ vim.keymap.set({ "n", "v" }, "<Esc>", function()  -- clear highlights, dismiss n
   if lsp_float and vim.api.nvim_win_is_valid(lsp_float) then
     pcall(vim.api.nvim_win_close, lsp_float, true)
   end
+  -- Dismiss DAP inspection floats (dapui.eval = `dapui_hover`,
+  -- dap.ui.widgets.hover/preview = `dap-float`) when the cursor isn't inside
+  -- one, so focusing into the float to scroll/expand keeps it open.
+  local cur_win = vim.api.nvim_get_current_win()
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    if win ~= cur_win and vim.api.nvim_win_get_config(win).relative ~= "" then
+      local ok, ft = pcall(vim.api.nvim_get_option_value, "filetype",
+        { buf = vim.api.nvim_win_get_buf(win) })
+      if ok and (ft == "dapui_hover" or ft == "dap-float") then
+        pcall(vim.api.nvim_win_close, win, true)
+      end
+    end
+  end
   if package.loaded["notify"]  then require("notify").dismiss() end
   if package.loaded["snacks"]  then require("snacks").notifier.hide() end
   if package.loaded["nvim-dap-virtual-text"] then
