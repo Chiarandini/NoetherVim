@@ -215,9 +215,11 @@ end)
 -- ──────────────────────────────────────────────────────────────
 -- Writing buffers (tex, markdown, gitcommit, ...) get wrap + linebreak +
 -- spell + conceallevel=2; list chars are hidden.  Code buffers get
--- whitespace visibility (list chars).  Structured-text (json, yaml,
--- toml) and special buffers (help, qf, oil, terminal, dashboard, ...)
--- are left alone -- their own ftplugins / buffer settings take over.
+-- whitespace visibility (list chars), and -- when spell_in_code is
+-- enabled in lua/user/config.lua -- spell turned on, scoped to comments
+-- and strings via treesitter @spell captures.  Structured-text (json,
+-- yaml, toml) and special buffers (help, qf, oil, terminal, dashboard,
+-- ...) are left alone -- their own ftplugins / buffer settings take over.
 --
 -- FileType autocmds fire AFTER ftplugin files, so these profiles win
 -- over any same-named setting in ftplugin/*.lua.  To extend the lists
@@ -228,6 +230,9 @@ end)
 local fts = require("noethervim.util.filetypes")
 local writing_filetypes = fts.writing
 local non_code_filetypes = fts.non_code
+
+local ok_cfg, user_cfg = pcall(require, "user.config")
+local spell_in_code = ok_cfg and type(user_cfg) == "table" and user_cfg.spell_in_code == true
 
 vim.api.nvim_create_autocmd("FileType", {
   group    = vim.api.nvim_create_augroup("noethervim_writing", { clear = true }),
@@ -253,6 +258,14 @@ vim.api.nvim_create_autocmd("FileType", {
       return
     end
     vim.opt_local.list = true
+    if spell_in_code then
+      -- Treesitter @spell captures (shipped with most parsers) restrict
+      -- spellcheck to comments and string nodes; identifiers stay clean.
+      -- `spelloptions` is left untouched -- users who want CamelCase
+      -- splitting can add `vim.opt.spelloptions:append("camel")` to
+      -- lua/user/options.lua themselves.
+      vim.opt_local.spell = true
+    end
   end,
 })
 

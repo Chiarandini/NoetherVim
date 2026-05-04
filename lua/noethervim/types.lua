@@ -65,5 +65,8 @@
 ---@field non_code_filetypes? string[]
 ---     Extra filetypes that skip BOTH writing and code profiles. Extends
 ---     the distro defaults.
+---@field spell_in_code? boolean
+---     If true, the code profile enables spellcheck, scoped to comments
+---     and strings via treesitter `@spell` captures. Default: false.
 
 return {}

@@ -91,4 +91,13 @@ return {
     -- include json, yaml, toml, help, qf, oil, terminal, dashboard, dap-ui, etc.
     -- non_code_filetypes = { "csv" },
 
+    -- Enable spellcheck in code buffers.  Scoped to comments and strings via
+    -- treesitter @spell captures (identifiers are NOT spellchecked).  `[os` /
+    -- `]os` still toggle per-buffer; `zg` adds a word to your spellfile.
+    -- For CamelCase-heavy languages, you can additionally set
+    --   vim.opt.spelloptions:append("camel")
+    -- in lua/user/options.lua so getUserName is split as get/User/Name.
+    -- Default: false.
+    -- spell_in_code = true,
+
 }

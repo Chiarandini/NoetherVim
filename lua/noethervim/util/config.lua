@@ -40,6 +40,7 @@ local SCHEMA = {
   drop                         = "boolean",
   writing_filetypes            = "table",
   non_code_filetypes           = "table",
+  spell_in_code                = "boolean",
 }
 
 --- Inner schema for `cfg.statusline`. Same shape as the outer schema.

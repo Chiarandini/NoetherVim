@@ -248,7 +248,17 @@ settings on top of the globals:
                         so trailing whitespace and tabs are visible.
                         `formatoptions` omits `t` globally, so typing past
                         textwidth in code does NOT auto-break mid-line --
-                        formatters handle line length instead.
+                        formatters handle line length instead.  When
+                        `spell_in_code = true` is set in
+                        |noethervim-user-config-data|, also turns on
+                        `spell`; spellcheck is then scoped to comments
+                        and strings via treesitter @spell captures.
+                        Use `[os` / `]os` to toggle per-buffer and `zg`
+                        to add a word to your spellfile.  For CamelCase
+                        identifier splitting, append `camel` to
+                        `spelloptions` yourself in
+                        `lua/user/options.lua`; the distro leaves
+                        `spelloptions` untouched.
 
 FileType autocmds fire AFTER `ftplugin/*.lua`, so these profiles win
 over same-named ftplugin settings.  To extend the lists (e.g. treat
@@ -326,6 +336,7 @@ overrides -- those go in `lua/user/plugins/` (see |noethervim-user-plugins|). >l
       drop                         = false,
       writing_filetypes            = { "vimwiki", "quarto" },
       non_code_filetypes           = { "csv" },
+      spell_in_code                = true,
     }
 <
 Current keys: ~
@@ -379,6 +390,15 @@ Current keys: ~
                                   ftplugin / buffer settings take over.
                                   Additive: defaults stay in place.
                                   Default: `{}`.
+    `spell_in_code`                 If `true`, the code profile turns on
+                                  `spell`.  Spellcheck is scoped to
+                                  comments and strings via treesitter
+                                  `@spell` captures; identifiers are not
+                                  flagged.  `spelloptions` is left
+                                  untouched -- add `camel` yourself if
+                                  you want CamelCase splitting.  See
+                                  |noethervim-filetype-profiles|.
+                                  Default: `false`.
 
 See `templates/user/config.example.lua` for the annotated template.
 
