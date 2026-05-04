@@ -6,12 +6,20 @@ local M = {}
 
 M.semiCircles = { "", "" }
 
+-- Flexible-component priorities. Heirline collapses every flexible
+-- component at priority N before considering N+1. Components at the
+-- same priority collapse together on the same redraw, which causes a
+-- visible "herd flicker" when the bar's width oscillates by a few cells
+-- across the threshold (e.g. while typing in insert mode with debug
+-- panes open and diagnostic counts ticking). Spread same-class
+-- components across distinct levels to avoid the synchronized flip.
 M.priority = {
-  max = 4,
-  high = 3,
-  mid = 2,
-  low = 1,
-  none = 0,
+  max     = 5,
+  high    = 4,
+  mid     = 3,
+  mid_low = 2,
+  low     = 1,
+  none    = 0,
 }
 
 M.lspColor = {

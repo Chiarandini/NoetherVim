@@ -27,7 +27,7 @@ M.LSPActive = {
     return { bold = true, fg = ctx.lspColor[filetype] }
   end,
 
-  flexible = ctx.priority.mid,
+  flexible = ctx.priority.mid_low,
   { -- render all the servers
     provider = function()
       local names = {}

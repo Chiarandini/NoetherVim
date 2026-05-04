@@ -24,7 +24,7 @@ M.Pos = {
 }
 
 M.Percentage = {
-  flexible = ctx.priority.mid,
+  flexible = ctx.priority.low,
   { provider = " %p%%" },
   { provider = "" },
 }
