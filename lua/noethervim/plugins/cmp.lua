@@ -64,16 +64,24 @@ return {
 				if style == "supertab" then
 					base["<Tab>"] = {
 						function(cmp)
-							if cmp.is_visible() then
-								local accepted = cmp.select_and_accept and cmp.select_and_accept()
-									or cmp.accept()
-								if accepted then
-									vim.schedule(function()
-										vim.api.nvim_feedkeys(" ", "n", false)
-									end)
-									return true
-								end
+							if not cmp.is_visible() then return end
+							-- blink's select_and_accept / accept schedule the
+							-- text-edit asynchronously and expose a `callback`
+							-- option that fires AFTER the edit lands.  Using
+							-- vim.schedule for the trailing space races with
+							-- that internal schedule -- the space gets fed
+							-- first, the accept then replaces the typed keyword
+							-- *plus* the inserted space at the wrong cursor
+							-- position, producing "pro progress" instead of
+							-- "progress ".  Hand the space to the post-accept
+							-- callback so order is guaranteed.
+							local function append_space()
+								vim.api.nvim_feedkeys(" ", "n", false)
 							end
+							if cmp.select_and_accept then
+								return cmp.select_and_accept({ callback = append_space })
+							end
+							return cmp.accept({ callback = append_space })
 						end,
 						"snippet_forward",
 						"fallback",
