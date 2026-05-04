@@ -16,7 +16,7 @@
 --   })
 -- These re-apply automatically when you switch colorschemes.
 --
--- The persisted choice takes priority over opts.colorscheme in init.lua.
+-- The persisted choice takes priority over `colorscheme` in lua/user/config.lua.
 -- To reset, delete: vim.fn.stdpath("data") .. "/noethervim_colorscheme"
 
 return {

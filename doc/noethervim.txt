@@ -302,22 +302,25 @@ Common highlight groups to tweak: ~
 4.6 CONFIG DATA TABLE                          *noethervim-user-config-data*
 
 Create `lua/user/config.lua`. It returns a single table of values that
-core modules and bundles read at runtime -- vault paths, feature flags,
-filetype lists, and other identity-shaped settings that would be awkward
-to plumb through lazy.nvim's opts merging. Keys you do not set fall back
-to the distro default; the file is optional and missing keys are not an
-error.
+`noethervim.setup()` and individual bundles read at runtime. This is
+NoetherVim's single user-facing configuration surface: colorscheme,
+statusline overrides, vault paths, feature flags, filetype lists.
 
-This file is intentionally narrow. It is NOT a general-purpose plugin
-override mechanism -- that is |noethervim-user-plugins|. A key only earns
-a spot here if (a) the value is required for the consuming code to behave
-correctly for the user, (b) reaching the equivalent setting via opts
-merging would force the user to learn upstream plugin internals or fork
-core code, and (c) the audience is broader than power users. Otherwise,
-override via `user/plugins/` or `user/autocmds.lua`. >lua
+Keys you do not set fall back to the distro default; the file is
+optional and missing keys are not an error.
+
+This file is for personal preferences, not for arbitrary plugin
+overrides -- those go in `lua/user/plugins/` (see |noethervim-user-plugins|). >lua
     -- lua/user/config.lua
     return {
+      colorscheme                  = "gruvbox",
+      colorscheme_persistence      = false,
+      statusline = {
+        edge_style = "round",
+        colors     = {},
+      },
       obsidian_vault               = "~/Documents/MyVault/",
+      completion_style             = "supertab",
       blink_conservative_filetypes = { "tex", "latex" },
       blink_conservative_size_kb   = 500,
       drop                         = false,
@@ -326,9 +329,33 @@ override via `user/plugins/` or `user/autocmds.lua`. >lua
     }
 <
 Current keys: ~
+    `colorscheme`                   Default colorscheme name, applied
+                                  during `setup()` unless persistence
+                                  has restored a saved pick.  Default:
+                                  none (relies on Neovim's default).
+    `colorscheme_persistence`       If true, restore the last picked
+                                  colorscheme on startup.  Has no effect
+                                  unless the `colorscheme` bundle is
+                                  enabled.  Default: false.
+    `statusline.edge_style`         Shape of the colored mode block at
+                                  the left of the statusline.  See
+                                  |noethervim-statusline-edge-style|.
+                                  Default: `"round"`.
+    `statusline.colors`             Heirline color-table overrides.
+                                  See |noethervim-statusline|.
+    `statusline.extra_right`        Extra heirline component specs
+                                  appended to the right side of the
+                                  main statusline.
     `obsidian_vault`                Path to your Obsidian vault. Read by
                                   the `obsidian` bundle. Default:
                                   `~/obsidian/`.
+    `completion_style`              Tab-key philosophy for the
+                                  completion menu: `"snippet"` (default,
+                                  Tab is reserved for LuaSnip jumps),
+                                  `"supertab"` (Tab accepts visible
+                                  menu item, falls back to snippet
+                                  jump), or `"navigate"` (Tab cycles
+                                  the menu without accepting).
     `blink_conservative_filetypes`  Filetypes where keyword-triggered
                                   completion is suppressed. `<C-Space>`
                                   and LSP trigger characters (e.g. `\`
@@ -969,14 +996,15 @@ VimTeX compile indicator (latex bundle): ~
     the statusline shows a persistent `compiled ✓` until the next
     compile.
 
-Customize statusline colors and extra components via opts: >lua
-    { "Chiarandini/NoetherVim", opts = {
-        statusline = {
-          edge_style  = "round",    -- see edge styles below
-          colors      = { ... },    -- override heirline color table
-          extra_right = { ... },    -- heirline component specs
-        },
-    } }
+Customize statusline colors and extra components in `lua/user/config.lua`: >lua
+    -- lua/user/config.lua
+    return {
+      statusline = {
+        edge_style  = "round",    -- see edge styles below
+        colors      = { ... },    -- override heirline color table
+        extra_right = { ... },    -- heirline component specs
+      },
+    }
 <
     Available color keys (from `util/palette.lua`): ~
     `mode_n`, `mode_i`, `mode_v`, `mode_c`, `mode_t`, `mode_R`,
@@ -984,19 +1012,21 @@ Customize statusline colors and extra components via opts: >lua
     `lazy_updates`, `text_gray`
 
     Example -- change normal-mode indicator to blue: >lua
-    { "Chiarandini/NoetherVim", opts = {
-        statusline = {
-          colors = { mode_n = "#458588" },
-        },
-    } }
+    -- lua/user/config.lua
+    return {
+      statusline = {
+        colors = { mode_n = "#458588" },
+      },
+    }
 <
                                           *noethervim-statusline-edge-style*
 Edge style ~
 
 The colored mode block at the left of the statusline (and, for some
-styles, an opening endcap on the right ruler block) follows
-`opts.statusline.edge_style`. All glyphs come from the Nerd Font
-private use area, so a Powerline-capable terminal font is required.
+styles, an opening endcap on the right ruler block) follows the
+`statusline.edge_style` key in `lua/user/config.lua`. All glyphs come
+from the Nerd Font private use area, so a Powerline-capable terminal
+font is required.
 
     `round`     (default) Rounded mode bubble, flush right edge.
     `slant`     Slanted Powerline endcaps; right ruler also slanted.
@@ -1378,13 +1408,14 @@ A: By design.  NoetherVim keeps `y` and `p` bound to Vim's unnamed
        sequences
 
 Q: How do I change the default colorscheme?~
-A: Set `opts.colorscheme` on the NoetherVim spec in your `init.lua`:
+A: Set `colorscheme` in `lua/user/config.lua`:
 >lua
-    { "Chiarandini/NoetherVim", opts = { colorscheme = "tokyonight" } }
+    -- lua/user/config.lua
+    return { colorscheme = "tokyonight" }
 <
    When the `colorscheme` bundle is enabled, your SearchLeader+C pick
-   is persisted and takes priority over opts.colorscheme on subsequent
-   launches.  To reset the saved pick, delete
+   is persisted and takes priority over the configured default on
+   subsequent launches.  To reset the saved pick, delete
    `stdpath("data") .. "/noethervim_colorscheme"`.
 
 Q: Why is spell check on in markdown / tex / gitcommit files?~

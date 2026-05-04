@@ -1,3 +1,4 @@
+-- noethervim-template-version: 1
 -- Personal configuration for NoetherVim.
 -- The fastest way to install this template is `:NoetherVim templates` (or
 -- SearchLeader+ct, default <Space>ct): pick `user/config.example.lua` and
@@ -5,9 +6,39 @@
 -- it manually if you prefer.
 -- lua/user/config.lua is gitignored - it never ships with the distribution.
 --
--- Any key left nil (or absent) falls back to the distro default.
+-- This is the single user-facing configuration surface.  Any key left
+-- nil (or absent) falls back to the distro default.
 
 return {
+
+    -- ── Colorscheme ───────────────────────────────────────────────────────────
+    -- Default colorscheme name, applied during setup() unless the colorscheme
+    -- bundle has persisted a user pick from a prior session.
+    -- colorscheme = "gruvbox",
+
+    -- If true, restore the last picked colorscheme on startup.
+    -- Has no effect unless the colorscheme bundle is enabled.
+    -- colorscheme_persistence = false,
+
+
+    -- ── Statusline ────────────────────────────────────────────────────────────
+    -- Heirline-based statusline overrides.
+    -- statusline = {
+    --     -- Shape of the colored mode block at the left of the statusline
+    --     -- (and, for "slant"/"pointy"/"bubbly", an opening endcap on the
+    --     -- right ruler block).  Default "round" preserves the historical
+    --     -- look; "bubbly" rounds both edges; "straight" disables endcaps.
+    --     edge_style = "round",  -- "round" | "slant" | "pointy" | "straight" | "bubbly"
+    --
+    --     -- Override heirline color-table entries.  Keys match heirline's
+    --     -- color names (mode_n, mode_i, git_added, ...).
+    --     colors = { mode_n = "#458588" },
+    --
+    --     -- Extra heirline component specs appended to the right side of
+    --     -- the main statusline, after the git block.
+    --     extra_right = {},
+    -- },
+
 
     -- ── Obsidian ──────────────────────────────────────────────────────────────
     -- Path to your Obsidian vault.  Used by the `obsidian` bundle.

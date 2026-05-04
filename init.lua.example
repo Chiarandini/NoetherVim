@@ -1,4 +1,4 @@
--- noethervim-template-version: 2
+-- noethervim-template-version: 3
 -- NoetherVim user config template.
 -- Copy this file to ~/.config/nvim/init.lua
 --
@@ -8,9 +8,11 @@
 --   cp /path/to/NoetherVim/init.lua.example ~/.config/nvim/init.lua
 --   nvim
 --
--- Personal overrides go in lua/user/ -- see :help noethervim-user-config.
--- The fastest way to scaffold one is `:NoetherVim templates` (also bound
--- to SearchLeader+ct, default <Space>ct): pick a template, press <C-y>,
+-- This file is just the lazy.nvim bootstrap.  All personal configuration
+-- (colorscheme, statusline style, bundle settings, etc.) lives in
+-- lua/user/config.lua -- see :help noethervim-user-config.  The fastest
+-- way to scaffold one is `:NoetherVim templates` (also bound to
+-- SearchLeader+ct, default <Space>ct): pick a template, press <C-y>,
 -- and the file is stamped into lua/user/ with a diff prompt first.
 -- To debug without your overrides:  NOETHERVIM_NO_USER=1 nvim
 
@@ -71,17 +73,10 @@ require("lazy").setup({
 		{
 			"Chiarandini/NoetherVim",
 			import = "noethervim.plugins",
-			opts = {
-				colorscheme = "gruvbox",       -- default colorscheme
-				-- statusline  = {                                  -- statusline overrides
-				--   edge_style  = "round",                         -- "round" | "slant" | "pointy" | "straight" | "bubbly"
-				--   colors      = {},
-				--   extra_right = {},
-				-- },
-			},
-			config = function(_, opts)
-				require("noethervim").setup(opts)
-			end,
+			-- All user-facing options (colorscheme, statusline, bundle
+			-- settings, etc.) live in lua/user/config.lua.  This entry
+			-- is just the lazy spec; setup() reads the user config itself.
+			config = function() require("noethervim").setup() end,
 		},
 
 		-- ── Bundles (opt-in) ─────────────────────────────────────────────

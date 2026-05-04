@@ -2,10 +2,9 @@
 ---
 --- This file has no runtime effect -- it exists so that `lua-language-server`
 --- (via `.luarc.json` or `lazydev.nvim`) can offer completion and type
---- diagnostics on the two surfaces users touch:
+--- diagnostics on the single user-facing surface:
 ---
----   1. `opts` passed to `require("noethervim").setup(opts)` from init.lua
----   2. The data table returned from `lua/user/config.lua`
+---     The data table returned from `lua/user/config.lua`.
 ---
 --- Internal types live next to the modules that use them, with `---@private`
 --- annotations on internal helpers.
@@ -14,25 +13,9 @@
 --- policy. Field renames before the first non-alpha release land directly,
 --- without `vim.deprecate` shims.
 
----@class noethervim.Config
+---@class noethervim.StatuslineConfig
 ---
---- The opts table accepted by `require("noethervim").setup(opts)`. Forwarded
---- automatically by lazy.nvim's `config = function(_, opts) ... end` shim
---- written in `init.lua.example`.
----
----@field colorscheme? string
----     Default colorscheme name, applied during setup() unless the
----     colorscheme bundle has persisted a user pick.
----@field colorscheme_persistence? boolean
----     If true, restore the last picked colorscheme on startup.
----     Has no effect unless the colorscheme bundle is enabled.
----@field statusline? noethervim.StatuslineOpts
----     Heirline-based statusline overrides.
-
----@class noethervim.StatuslineOpts
----
---- Statusline override surface. Forwarded to `noethervim.statusline.configure()`
---- before heirline initializes.
+--- Heirline-based statusline overrides.
 ---
 ---@field colors? table<string, string>
 ---     Heirline color-table overrides. Keys match heirline's color names
@@ -40,18 +23,34 @@
 ---@field extra_right? table[]
 ---     Extra heirline component specs appended to the right side of the
 ---     main statusline, after the git block.
+---@field edge_style? "round"|"slant"|"pointy"|"straight"|"bubbly"
+---     Shape of the colored mode block at the left of the statusline and
+---     (for "bubbly", "slant", "pointy") an opening endcap on the right
+---     ruler block. Default "round" preserves the historical look.
+---     "bubbly" rounds both edges; "straight" disables endcaps entirely.
 
 ---@class noethervim.UserConfig
 ---
---- The data table returned from `lua/user/config.lua`. Read by core modules
---- and bundles for identity-shaped values that would be awkward to plumb
---- through lazy.nvim's `opts` merging (see :help noethervim-user-config-data).
+--- The data table returned from `lua/user/config.lua`. NoetherVim's
+--- single user-facing configuration surface, read by `noethervim.setup()`
+--- and by individual bundles when they activate.
 ---
 --- Every field is optional. Missing keys fall back to distro defaults.
 ---
+---@field colorscheme? string
+---     Default colorscheme name, applied during setup() unless the
+---     colorscheme bundle has persisted a user pick.
+---@field colorscheme_persistence? boolean
+---     If true, restore the last picked colorscheme on startup. Has no
+---     effect unless the colorscheme bundle is enabled.
+---@field statusline? noethervim.StatuslineConfig
+---     Heirline-based statusline overrides.
 ---@field obsidian_vault? string
 ---     Absolute or `~`-prefixed path to your Obsidian vault. Required by the
 ---     `obsidian` bundle; the bundle no-ops without it.
+---@field completion_style? "snippet"|"supertab"|"navigate"
+---     Tab-key philosophy for the completion menu. See the cmp plugin
+---     spec for the per-style behavior.
 ---@field blink_conservative_filetypes? string[]
 ---     Filetypes where blink.cmp's keyword-trigger is suppressed. C-Space
 ---     and LSP trigger characters still work. Default: `{ "tex", "latex" }`.

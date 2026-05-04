@@ -116,6 +116,32 @@ return {
         git.GitBlock,
       }
 
+      -- Either an edge-style endcap (slant/pointy/bubbly) OR the classic
+      -- `|` separator (round/straight). The endcap sits inside StatusComponent
+      -- but explicitly sets its own bg so that the `fg = StatusComponent bg /
+      -- bg = MainComponent bg` carve-out reads correctly: heirline merges
+      -- parent bg into children only when the child does not set bg.
+      local StatusOpening = {
+        fallthrough = false,
+        {
+          condition = function()
+            return ctx.edges and ctx.edges.mid_left and ctx.edges.mid_left ~= ""
+          end,
+          flexible = ctx.priority.mid,
+          {
+            provider = function() return ctx.edges.mid_left end,
+            hl = function()
+              local mode = vim.fn.mode(1):sub(1, 1)
+              local mc_bg = (mode == "i") and ctx.colors.default_blue or ctx.colors.default_gray
+              local sc_bg = (mode == "i") and ctx.colors.default_blue or ctx.colors.light_gray
+              return { fg = sc_bg, bg = mc_bg }
+            end,
+          },
+          { provider = "" },
+        },
+        misc.Separator,
+      }
+
       local StatusComponent = {
         hl = function()
           local mode = vim.fn.mode(1):sub(1, 1)
@@ -124,7 +150,7 @@ return {
           end
           return { fg = ctx.colors.text_gray, bg = ctx.colors.light_gray }
         end,
-        misc.Separator,
+        StatusOpening,
         misc.Lazy,
         ruler.FileSize,
         ruler.Percentage,

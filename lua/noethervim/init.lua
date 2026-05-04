@@ -85,28 +85,38 @@ M._user_lsp       = {}
 ---@private
 M._user_overrides = {}
 
---- Initialize NoetherVim. Called by `init.lua.example` as the lazy.nvim
---- `config = function(_, opts) require("noethervim").setup(opts) end` shim.
+--- Initialize NoetherVim. Called from the lazy.nvim `config` callback
+--- of the NoetherVim plugin spec.
 ---
---- See |noethervim-user-config| for the user-override system this orchestrates.
----
----@param opts? noethervim.Config
-function M.setup(opts)
-  opts = opts or {}
-
-  -- Validate opts at the boundary. Bad values become a vim.notify warning
-  -- rather than a hard crash; setup continues with whatever salvageable
-  -- fields remain. The same surfaces appear in :checkhealth via util.config.
-  local cfg = require("noethervim.util.config")
-  local opts_errors = cfg.validate_setup_opts(opts)
-  for _, err in ipairs(opts_errors) do
-    vim.notify("noethervim.setup: " .. err, vim.log.levels.WARN)
-  end
-
+--- All user-facing configuration lives in `lua/user/config.lua`; this
+--- function reads it once, validates type-level shape, and distributes
+--- values to the subsystems that need them. See |noethervim-user-config|.
+function M.setup()
   -- Determine whether to load user overrides.
   local load_user = not vim.env.NOETHERVIM_NO_USER
                     and not vim.g.noethervim_no_user
   M._user_loaded = load_user
+
+  -- Read the single user-facing config surface. Missing file is the
+  -- bare-Neovim case; defaults apply across the board.
+  local user_cfg = {}
+  if load_user then
+    local ok, loaded = pcall(require, "user.config")
+    if ok and type(loaded) == "table" then
+      user_cfg = loaded
+    elseif ok and loaded ~= nil then
+      vim.notify("user/config.lua: expected return table, got " .. type(loaded),
+        vim.log.levels.WARN)
+    end
+  end
+
+  -- Type-check at the boundary. Bad values become a vim.notify warning
+  -- rather than a hard crash; setup continues with whatever salvageable
+  -- fields remain. Unknown-field (typo) detection runs in :checkhealth.
+  local cfg = require("noethervim.util.config")
+  for _, err in ipairs(cfg.validate_types(user_cfg)) do
+    vim.notify("noethervim.setup: " .. err, vim.log.levels.WARN)
+  end
 
   -- Setup-time keymap source registry: wraps vim.keymap.set so every
   -- imperative registration records file+line for the inspect picker and
@@ -127,10 +137,9 @@ function M.setup(opts)
     end
   end
 
-  -- Forward statusline overrides
-  if opts.statusline then
-    require("noethervim.statusline").configure(opts.statusline)
-  end
+  -- Forward statusline overrides to the registry that the heirline
+  -- config callback reads at UIEnter.
+  require("noethervim.statusline").configure(user_cfg.statusline)
 
   -- Disable unused external providers
   vim.g.loaded_ruby_provider = 0
@@ -191,17 +200,17 @@ function M.setup(opts)
   -- user tweaks on theme switches. It runs unconditionally so that
   -- util.colorscheme.tweak() works whether or not the colorscheme
   -- bundle is enabled. setup_persistence() is bundle-gated because it
-  -- overrides opts.colorscheme with the saved pick.
+  -- overrides user_cfg.colorscheme with the saved pick.
   local cs = require("noethervim.util.colorscheme")
   cs.setup_tweaks()
-  if opts.colorscheme_persistence then
+  if user_cfg.colorscheme_persistence then
     cs.setup_persistence()
   end
-  if opts.colorscheme then
+  if user_cfg.colorscheme then
     -- Persistence may have already applied a saved scheme; only apply
     -- the default if no persisted choice was loaded.
-    if not opts.colorscheme_persistence or vim.g.colors_name == nil then
-      pcall(vim.cmd.colorscheme, opts.colorscheme)
+    if not user_cfg.colorscheme_persistence or vim.g.colors_name == nil then
+      pcall(vim.cmd.colorscheme, user_cfg.colorscheme)
     end
   end
   require("noethervim.highlights")

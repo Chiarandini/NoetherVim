@@ -6,8 +6,8 @@
 -- colorscheme the palette is derived from standard highlight groups so the
 -- statusline matches the active theme.
 --
--- User overrides (via opts.statusline.colors) are NOT applied here -- the
--- caller merges them on top with vim.tbl_extend("force", ...).
+-- User overrides (via `statusline.colors` in lua/user/config.lua) are NOT
+-- applied here -- the caller merges them on top with vim.tbl_extend("force", ...).
 
 local M = {}
 
