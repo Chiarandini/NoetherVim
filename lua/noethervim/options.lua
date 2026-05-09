@@ -102,7 +102,7 @@ opt.foldcolumn    = "0"
 opt.foldlevel     = 99
 opt.foldlevelstart = 99
 opt.foldenable    = true
-vim.cmd("set fillchars=fold:\\ ")
+vim.opt.fillchars = { fold = " " }
 
 -- Autochdir
 opt.autochdir = false

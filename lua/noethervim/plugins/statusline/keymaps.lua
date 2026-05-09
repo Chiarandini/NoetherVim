@@ -13,7 +13,7 @@ function M.setup()
 
   vim.keymap.set("n", "<c-w>sl", function()
     vim.api.nvim_exec_autocmds("User", { pattern = "HeirlineLspToggle" })
-  end, { desc = "statusline toggle Lsp" })
+  end, { desc = "statusline lsp toggle" })
 
   vim.keymap.set("n", "<c-w>sP", function()
     if vim.g.heirline_directory_show == false then
@@ -25,13 +25,13 @@ function M.setup()
         pattern = "HeirlineDirectoryOff",
       })
     end
-  end, { desc = "Pwd In Statusline" })
+  end, { desc = "statusline pwd toggle" })
 
   vim.keymap.set("n", "<c-w>s<c-p>", function()
     vim.api.nvim_exec_autocmds("User", {
       pattern = "HeirlinePDFModeOn",
     })
-  end, { desc = "PDF Mode" })
+  end, { desc = "statusline pdf-mode on" })
 end
 
 return M
