@@ -26,25 +26,9 @@ return {
 			end,
 
 			-- ── Keymaps ────────────────────────────────────────────────────────
-			-- Tab philosophy is configurable via lua/user/config.lua:
-			--   return { completion_style = "supertab" }   -- preferred
-			-- or via vim.g.noethervim_completion_style as an escape hatch.
-			-- Choices (see :help noethervim-completion-style):
-			--   "snippet"   (default) Tab is reserved for LuaSnip jumps only.
-			--               Pick from menu with C-n/C-p, accept with C-y.  Snippet
-			--               and menu navigation never compete for the same key.
-			--   "supertab"  Tab accepts the highlighted item (auto-selecting the
-			--               top one) and inserts a trailing space.  Falls back to
-			--               snippet_forward, then to literal Tab.  Best when you
-			--               want to "type-then-accept-with-Tab" IDE-style.
-			--   "navigate"  Tab cycles through the menu (= C-n) without accepting,
-			--               like nvim-cmp's classic default and most VSCode setups.
-			--               C-y or <CR> still accepts.  S-Tab cycles backward.
-			-- The two dominant philosophies in modern Neovim are "supertab" (IDE
-			-- muscle memory) and "snippet" (vim-vsnip / LuaSnip purist).  "navigate"
-			-- is here for users coming from older nvim-cmp configs.  If you use AI
-			-- completion (Copilot/Codeium/etc.) you'll want a fourth: bind Tab to
-			-- the AI plugin's accept_word in your user keymaps and shadow this.
+			-- Tab philosophy: set completion_style in lua/user/config.lua to
+			-- "snippet" (default), "supertab", or "navigate".  See
+			-- :help noethervim-completion-style for behaviour and AI-completion notes.
 			keymap = (function()
 				local ok_user, user = pcall(require, "user.config")
 				local style = (ok_user and type(user) == "table" and user.completion_style)

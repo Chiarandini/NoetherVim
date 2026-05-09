@@ -3,10 +3,6 @@
 --
 -- Zotero citation picker for LaTeX / Markdown / Quarto / Typst / Org.
 -- Requires: Zotero running locally.
---
--- Backend: snacks.picker. The legacy telescope-zotero spec was retained here
--- as an `enabled = false` rollback path through 2026-04; removed once the
--- snacks backend proved stable (see dev-docs/telescope-removal-plan.md §5).
 
 return {
   {

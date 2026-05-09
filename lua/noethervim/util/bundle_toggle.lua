@@ -1,6 +1,4 @@
--- bundle_toggle.lua -- enable/disable a NoetherVim bundle by editing
--- the user's init.lua, with diff confirmation. See
--- dev-docs/bundle-toggle-design.md for the design rationale.
+-- enable/disable a bundle by editing the user's init.lua, with diff confirmation.
 
 local M = {}
 

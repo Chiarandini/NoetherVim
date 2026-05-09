@@ -55,8 +55,6 @@ local function tex_shift_enter()
   end
 end
 
-local SearchLeader = require("noethervim.util").search_leader
-
 return {
 
   -- ── texlab LSP (Mason install scoped to this bundle) ──────────────────────
@@ -361,10 +359,9 @@ let g:vimtex_compiler_latexmk_engines = {
   },
 
   -- ── snacks-bibtex ─────────────────────────────────────────────────────────
-  -- BibTeX citation picker on snacks.picker. Replaces telescope-bibtex
-  -- (see dev-docs/telescope-removal-plan.md §4 phase 3.2). Same <c-s-c>
-  -- keymap; context-aware .bib discovery scans the current buffer's
-  -- bibliography directives before falling back to the cwd.
+  -- BibTeX citation picker on snacks.picker. <c-s-c> in insert mode;
+  -- context-aware .bib discovery scans the current buffer's bibliography
+  -- directives before falling back to the cwd.
   {
     "Chiarandini/snacks-bibtex.nvim",
     dependencies = { "folke/snacks.nvim" },
@@ -383,13 +380,6 @@ let g:vimtex_compiler_latexmk_engines = {
       require("snacks_bibtex").setup(opts)
     end,
   },
-
-  -- telescope-media-files: dropped 2026-04-23 (see
-  -- dev-docs/telescope-removal-plan.md §3.2). Snacks.picker has first-class
-  -- image preview; the media-files extension's niche (PDF preview via
-  -- ueberzug) is not widely used by the target audience and the plugin's
-  -- Linux-only dependency chain makes it awkward on macOS. Reinstate via
-  -- user/plugins/ if needed.
 
   -- ── noethervim-tex ────────────────────────────────────────────────────────
   -- Spell-file shipping (en.utf-8.add math vocab + accents.utf-8.add for

@@ -5,7 +5,6 @@
 --   • nvim-dap + nvim-dap-ui (multi-panel sidebar), virtual text,
 --     language adapters (Python, Neovim Lua, JS/TS via vscode-js-debug, Go)
 --   • inline snacks pickers: SearchLeader+D* for commands/breakpoints/variables/frames
---     (replaces telescope-dap, see dev-docs/telescope-removal-plan.md §4 phase 3.3)
 --
 -- Related bundles (enable separately):
 --   • test.lua:        neotest test runner
@@ -299,11 +298,12 @@ return {
 			},
 			{
 				"theHamsta/nvim-dap-virtual-text",
+				lazy = true,
 				config = function()
 					require("nvim-dap-virtual-text").setup()
 				end,
 			},
-			{ "mfussenegger/nvim-dap-python" },
+			{ "mfussenegger/nvim-dap-python", lazy = true },
 			{
 				"jbyuki/one-small-step-for-vimkind",
 				keys = { {
@@ -314,6 +314,7 @@ return {
 			},
 			{
 				"mxsdev/nvim-dap-vscode-js",
+				lazy = true,
 				opts = {
 					debugger_path = vim.fn.stdpath("data") .. "/lazy/vscode-js-debug",
 					adapters = { "pwa-node", "pwa-chrome", "pwa-msedge", "node-terminal", "pwa-extensionHost" },
@@ -321,6 +322,7 @@ return {
 			},
 			{
 				"microsoft/vscode-js-debug",
+				lazy = true,
 				version = "1.x",
 				build   = "npm i && npm run compile vsDebugServerBundle && mv dist out",
 			},
