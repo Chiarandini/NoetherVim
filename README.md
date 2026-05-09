@@ -212,17 +212,7 @@ All bundles are opt-in - the core is fully functional with none enabled. See [Bu
 
 ### Adding your own plugins
 
-Drop plugin specs in `~/.config/nvim/lua/user/plugins/`. Any `.lua` file there is auto-imported by lazy.nvim:
-
-```lua
--- ~/.config/nvim/lua/user/plugins/my-plugins.lua
-return {
-    { "some/plugin", event = "VeryLazy", opts = {} },
-    { "my-local-plugin", dir = "~/programming/my-plugin" },
-}
-```
-
-To override an existing plugin's settings, use the same repository string - lazy.nvim deep-merges `opts` automatically:
+Drop plugin specs in `~/.config/nvim/lua/user/plugins/`. Any `.lua` file there is auto-imported by lazy.nvim. To override an existing plugin's settings, use the same repository string - lazy.nvim deep-merges `opts` automatically:
 
 ```lua
 -- ~/.config/nvim/lua/user/plugins/snacks.lua
@@ -233,7 +223,7 @@ return {
 }
 ```
 
-See `templates/user/plugins/example.lua` in the installed distro for more patterns, or [`docs/user-config-examples.md`](docs/user-config-examples.md) for drop-in snippets.
+For array-valued opts (`ensure_installed`, `formatters_by_ft`, etc.), the function-form `opts`, and adding extra `keys`/`cmd`/`event` triggers, see `:help noethervim-user-plugins`. Drop-in snippets: [`docs/user-config-examples.md`](docs/user-config-examples.md), or run `:NoetherVim templates` inside Neovim.
 
 ### Overriding options, keymaps, and more
 

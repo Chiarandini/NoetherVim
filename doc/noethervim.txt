@@ -35,47 +35,20 @@ CONTENTS                                                  *noethervim-contents*
 1. INTRODUCTION                                    *noethervim* *neothervim*
 
 NoetherVim is an opinionated Neovim distribution built on lazy.nvim. It
-ships sensible defaults, 30+ core plugins, and 38 opt-in bundles -- while
-providing a robust user configuration system that survives upstream updates.
+ships sensible defaults, 30+ core plugins, and 38 opt-in bundles, with a
+user configuration system that survives upstream updates.
 
-Key principles:~
-- Update-safe: user files and distro files never overlap.
-- Last-write wins: user overrides load after core modules.
-- opts table: plugin overrides use lazy.nvim spec merging.
-- Minimal magic: user files are plain Lua, no special APIs.
+This help file covers in-editor usage and reference. For design rationale,
+system requirements, and installation, see the README in the project root.
 
 ==============================================================================
 2. INSTALLATION                          *noethervim-install* *neothervim-install*
 
-If you have an existing Neovim config, back it up first: >bash
-    mv ~/.config/nvim ~/.config/nvim.bak
-    mv ~/.local/share/nvim ~/.local/share/nvim.bak
-    mv ~/.local/state/nvim ~/.local/state/nvim.bak
-    mv ~/.cache/nvim ~/.cache/nvim.bak
-<
-Copy the starter config and open Neovim: >bash
-    mkdir -p ~/.config/nvim
-    curl -fLo ~/.config/nvim/init.lua \
-      https://raw.githubusercontent.com/Chiarandini/NoetherVim/main/init.lua.example
-    nvim
-<
-On first launch, lazy.nvim and NoetherVim bootstrap themselves and all
-plugins install automatically. Copy any personal settings into `lua/user/`
-afterwards (see |noethervim-user-config|).
-
                                                     *noethervim-nvim-appname*
-Trying NoetherVim without replacing your config: ~
-
-Neovim's `NVIM_APPNAME` feature lets you run multiple configs side by
-side. Your existing `~/.config/nvim/` stays untouched: >bash
-    mkdir -p ~/.config/noethervim
-    curl -fLo ~/.config/noethervim/init.lua \
-      https://raw.githubusercontent.com/Chiarandini/NoetherVim/main/init.lua.example
-    NVIM_APPNAME=noethervim nvim
-<
-Add an alias for convenience: >bash
-    alias nv='NVIM_APPNAME=noethervim nvim'
-<
+                                                    *noethervim-uninstall*
+For initial installation -- backup paths, the bootstrap `curl`, NVIM_APPNAME
+side-by-side trials, and uninstall / reset commands -- see the README in
+the project root.  Once Neovim is running, this help file is the reference.
 
 Updating: ~
 
@@ -83,20 +56,13 @@ Run inside Neovim. This updates the distro and all plugins: >vim
     :Lazy update
 <
 
-Uninstalling: ~
-                                                    *noethervim-uninstall*
-Remove the config, data, state, and cache directories. Restore your
-backup if you made one: >bash
-    rm -rf ~/.config/nvim ~/.local/share/nvim ~/.local/state/nvim ~/.cache/nvim
-<
-
 ==============================================================================
 3. QUICKSTART                                          *noethervim-quickstart*
 
-1. Copy `init.lua.example` to `~/.config/nvim/init.lua` (see above).
-2. Uncomment the bundles you want (see |noethervim-bundles|).
-3. Launch `nvim`. Plugins install automatically.
-4. To customize, create files in `lua/user/` (see |noethervim-user-config|).
+Inside Neovim, open `:NoetherVim bundles` (or SearchLeader+cb) to enable
+bundles, then `:NoetherVim templates` (or SearchLeader+ct) to stamp the
+`lua/user/` config files you want. Both flows show a diff prompt before
+writing. See |noethervim-bundle-toggle| and |noethervim-templates|.
 
 ==============================================================================
 4. USER CONFIGURATION                                  *noethervim-user-config*
