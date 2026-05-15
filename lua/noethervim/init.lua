@@ -162,19 +162,68 @@ function M.setup()
     "<cmd>lua Snacks.terminal('lazygit')<cr>", { desc = "lazygit" })
 
   -- ── LSP server configs ─────────────────────────────────────────
-  -- Core servers (lua/noethervim/lsp/*.lua)
-  local lsp_paths = vim.api.nvim_get_runtime_file("lua/noethervim/lsp/*.lua", true)
-  for _, path in ipairs(lsp_paths) do
-    local name = vim.fn.fnamemodify(path, ":t:r")
-    require("noethervim.lsp." .. name)
-  end
-  -- User LSP overrides (vim.lsp.config deep-merges when called again)
-  if load_user then
-    for _, path in ipairs(vim.api.nvim_get_runtime_file("lua/user/lsp/*.lua", true)) do
-      local name = vim.fn.fnamemodify(path, ":t:r")
-      local ok = pcall(require, "user.lsp." .. name)
-      if ok then table.insert(M._user_lsp, name) end
+  -- Core servers (lua/noethervim/lsp/*.lua). Just registrations via
+  -- `vim.lsp.config()`; the server starts when a matching FileType is
+  -- triggered. Deferred to first real-file FileType (oil/dashboard
+  -- buffers don't need LSP), then on demand. This shaves ~4ms off
+  -- `nvim .` startup since the directory buffer never triggers LSP.
+  do
+    local lsp_loaded = false
+    local function load_lsp_configs()
+      if lsp_loaded then return end
+      lsp_loaded = true
+      for _, path in ipairs(vim.api.nvim_get_runtime_file("lua/noethervim/lsp/*.lua", true)) do
+        local name = vim.fn.fnamemodify(path, ":t:r")
+        require("noethervim.lsp." .. name)
+      end
+      -- User LSP overrides (vim.lsp.config deep-merges when called again)
+      if load_user then
+        for _, path in ipairs(vim.api.nvim_get_runtime_file("lua/user/lsp/*.lua", true)) do
+          local name = vim.fn.fnamemodify(path, ":t:r")
+          local ok = pcall(require, "user.lsp." .. name)
+          if ok then table.insert(M._user_lsp, name) end
+        end
+      end
     end
+    -- Trigger before the first language-bearing buffer attaches to LSP.
+    -- FileType fires for every buffer including `oil`/`snacks_dashboard`;
+    -- gate on a real on-disk filename so directory browsing doesn't pay
+    -- the cost. BufReadPost is a belt-and-suspenders fallback.
+    --
+    -- We `vim.schedule` the actual load so the FileType handler returns
+    -- immediately -- the file is visible the moment treesitter / syntax
+    -- finishes, and LSP attaches one tick later. Re-fire FileType after
+    -- registration so `vim.lsp.enable`'s autocmd actually picks up the
+    -- current buffer (it normally only fires for buffers opened after
+    -- `enable()`).
+    local lsp_group = vim.api.nvim_create_augroup("NoetherVimLspLoader", { clear = true })
+    vim.api.nvim_create_autocmd({ "FileType", "BufReadPost" }, {
+      group = lsp_group,
+      callback = function(args)
+        if args.event == "FileType" then
+          local ft = args.match
+          if ft == "" or ft == "oil" or ft == "snacks_dashboard"
+              or ft == "alpha" or ft == "lazy" then
+            return
+          end
+        end
+        local buf = args.buf
+        vim.schedule(function()
+          load_lsp_configs()
+          -- Replay FileType for the buffer so the LSP autostart autocmds
+          -- (registered by the per-server `vim.lsp.enable` calls) see it.
+          -- Skip buffers without a window: re-firing FileType on a hidden
+          -- buffer runs ftplugin code (treesitter.start, etc.) that
+          -- assumes a window context and errors out. LSP can only attach
+          -- to a displayed buffer anyway.
+          if vim.api.nvim_buf_is_valid(buf)
+              and #vim.fn.win_findbuf(buf) > 0 then
+            vim.api.nvim_exec_autocmds("FileType", { buffer = buf })
+          end
+        end)
+        vim.api.nvim_del_augroup_by_id(lsp_group)
+      end,
+    })
   end
 
   -- ── Core keymaps + toggles ─────────────────────────────────────
@@ -193,7 +242,13 @@ function M.setup()
   user("autocmds")
 
   -- ── Commands ───────────────────────────────────────────────────
-  require("noethervim.commands")
+  -- :Reset, :DiffOrig, :Redir, etc. Deferred to keep `nvim .` fast;
+  -- the commands aren't typed in the first ~100ms of a session.
+  vim.api.nvim_create_autocmd("User", {
+    pattern = "VeryLazy",
+    once = true,
+    callback = function() require("noethervim.commands") end,
+  })
 
   -- ── Highlights & colorscheme ───────────────────────────────────
   -- setup_tweaks() registers the ColorScheme autocmd that re-applies
@@ -227,25 +282,32 @@ function M.setup()
     end
   end
 
-  -- ── Inspection & comparison commands ───────────────────────────
-  require("noethervim.inspect").setup()
-
   -- ── Release the keymap.set wrapper ─────────────────────────────
   -- All setup-scope keymaps have now been registered. User-time
   -- vim.keymap.set calls (ftplugin, post-load plugin configs,
   -- interactive :lua) run against the stock function.
   keymap_registry.uninstall()
 
-  -- ── Helptags ───────────────────────────────────────────────────
-  -- lazy.nvim generates helptags for plugins it manages, but in dev
-  -- mode (rtp:prepend) it may not.  Ensure :help noethervim works.
-  local doc_dir = vim.api.nvim_get_runtime_file("doc/noethervim.txt", false)[1]
-  if doc_dir then
-    local dir = vim.fn.fnamemodify(doc_dir, ":h")
-    if not vim.uv.fs_stat(dir .. "/tags") then
-      pcall(vim.cmd, "helptags " .. vim.fn.fnameescape(dir))
-    end
-  end
+  -- ── Deferred setup (inspect + helptags) ────────────────────────
+  -- These register pickers/commands that aren't reachable in the first
+  -- ~100ms of a session; running them at VeryLazy keeps `nvim .` fast.
+  vim.api.nvim_create_autocmd("User", {
+    pattern = "VeryLazy",
+    once = true,
+    callback = function()
+      require("noethervim.inspect").setup()
+      -- lazy.nvim generates helptags for plugins it manages, but in
+      -- dev mode (rtp:prepend) it may not.  Ensure :help noethervim
+      -- works.
+      local doc_dir = vim.api.nvim_get_runtime_file("doc/noethervim.txt", false)[1]
+      if doc_dir then
+        local dir = vim.fn.fnamemodify(doc_dir, ":h")
+        if not vim.uv.fs_stat(dir .. "/tags") then
+          pcall(vim.cmd, "helptags " .. vim.fn.fnameescape(dir))
+        end
+      end
+    end,
+  })
 end
 
 return M

@@ -174,87 +174,103 @@ let g:vimtex_compiler_latexmk_engines = {
         desc = "Auto-compile on save ONLY if VimTeX compiler was started",
       })
 
-      -- yP: copy compiled PDF to clipboard
-      vim.keymap.set("n", "yP", function()
-        require("noethervim.util.copy_pdf").copy_pdf_to_clipboard()
-        vim.notify("yanked pdf")
-      end, { desc = "yank PDF to clipboard" })
-
-      -- ── VimTeX compile lifecycle hooks ────────────────────────────────
-      -- The heirline statusline listens for `b:vimtex.compiler.status`
-      -- transitions, but vimtex doesn't emit BufEnter-style events on
-      -- transition.  Forwarding its User events into a redrawstatus +
-      -- baseline cache update keeps the statusline crisp and lets the
-      -- next compile show a rough completion percentage.
-      local vstatus  = require("noethervim.util.vimtex_status")
-      local vt_group = vim.api.nvim_create_augroup("noethervim_vimtex_status", { clear = true })
-
-      ---@type table<string, integer>  state.tex -> compile start (ms)
-      local compile_start = {}
-
-      local function current_state_pair()
-        local pick = vstatus.pick(0)
-        return pick and pick.state or nil
-      end
-
-      vim.api.nvim_create_autocmd("User", {
-        group   = vt_group,
-        pattern = "VimtexEventCompileStarted",
+      -- ── VimTeX compile lifecycle hooks (deferred until a tex file opens) ──
+      -- vimtex itself loads at startup (lazy = false) for inverse-search
+      -- support, but the lifecycle plumbing here (vimtex_status, the yP
+      -- keymap, the User VimtexEvent* listeners) only matters once you
+      -- actually open a .tex file. Deferring saves ~12ms off `nvim .`
+      -- startup because vimtex_status is a heavy module.
+      vim.api.nvim_create_autocmd("FileType", {
+        pattern = { "tex", "latex" },
+        once    = true,
         callback = function()
-          local state = current_state_pair()
-          if state and type(state.tex) == "string" then
-            compile_start[state.tex] = (vim.uv or vim.loop).now()
+          -- yP: copy compiled PDF to clipboard
+          vim.keymap.set("n", "yP", function()
+            require("noethervim.util.copy_pdf").copy_pdf_to_clipboard()
+            vim.notify("yanked pdf")
+          end, { desc = "yank PDF to clipboard" })
+
+          -- The heirline statusline listens for `b:vimtex.compiler.status`
+          -- transitions, but vimtex doesn't emit BufEnter-style events on
+          -- transition.  Forwarding its User events into a redrawstatus +
+          -- baseline cache update keeps the statusline crisp and lets the
+          -- next compile show a rough completion percentage.
+          local vstatus  = require("noethervim.util.vimtex_status")
+          local vt_group = vim.api.nvim_create_augroup("noethervim_vimtex_status", { clear = true })
+
+          ---@type table<string, integer>  state.tex -> compile start (ms)
+          local compile_start = {}
+
+          local function current_state_pair()
+            local pick = vstatus.pick(0)
+            return pick and pick.state or nil
           end
+
+          vim.api.nvim_create_autocmd("User", {
+            group   = vt_group,
+            pattern = "VimtexEventCompileStarted",
+            callback = function()
+              local state = current_state_pair()
+              if state and type(state.tex) == "string" then
+                compile_start[state.tex] = (vim.uv or vim.loop).now()
+              end
+              vstatus.invalidate()
+              pcall(vim.cmd.redrawstatus)
+            end,
+          })
+
+          vim.api.nvim_create_autocmd("User", {
+            group   = vt_group,
+            pattern = { "VimtexEventCompiling", "VimtexEventCompileStopped", "VimtexEventCompileFailed" },
+            callback = function()
+              vstatus.invalidate()
+              pcall(vim.cmd.redrawstatus)
+            end,
+          })
+
+          vim.api.nvim_create_autocmd("User", {
+            group   = vt_group,
+            pattern = "VimtexEventCompileSuccess",
+            callback = function()
+              local state = current_state_pair()
+              if state and type(state.tex) == "string" then
+                local started = compile_start[state.tex]
+                local elapsed = started and ((vim.uv or vim.loop).now() - started) or 0
+                compile_start[state.tex] = nil
+                vstatus.record_success(state, elapsed)
+
+                -- Push the compile time through fidget if it's available
+                -- (loaded on LspAttach -- texlab covers tex buffers).  Fall
+                -- back to vim.notify so the duration still surfaces when
+                -- fidget hasn't loaded yet.
+                local secs = string.format("%.1fs", elapsed / 1000)
+                local name = vim.fn.fnamemodify(state.tex, ":t")
+                local msg  = string.format("vimtex: %s compiled in %s", name, secs)
+                -- group = "vimtex" makes fidget label the bubble "vimtex"
+                -- instead of the default unnamed-group title "Notification".
+                local ok, fidget = pcall(require, "fidget")
+                if ok and type(fidget.notify) == "function" then
+                  fidget.notify(msg, vim.log.levels.INFO, { group = "vimtex" })
+                else
+                  vim.notify(msg, vim.log.levels.INFO)
+                end
+              end
+              vstatus.invalidate()
+              pcall(vim.cmd.redrawstatus)
+            end,
+          })
+
+          vim.api.nvim_create_autocmd("User", {
+            group   = vt_group,
+            pattern = "VimtexEventInitPost",
+            callback = function() vstatus.invalidate() end,
+          })
+
+          -- Manually fire VimtexEventInitPost-equivalent: the current
+          -- buffer just opened, so refresh the statusline once.
           vstatus.invalidate()
           pcall(vim.cmd.redrawstatus)
         end,
-      })
-
-      vim.api.nvim_create_autocmd("User", {
-        group   = vt_group,
-        pattern = { "VimtexEventCompiling", "VimtexEventCompileStopped", "VimtexEventCompileFailed" },
-        callback = function()
-          vstatus.invalidate()
-          pcall(vim.cmd.redrawstatus)
-        end,
-      })
-
-      vim.api.nvim_create_autocmd("User", {
-        group   = vt_group,
-        pattern = "VimtexEventCompileSuccess",
-        callback = function()
-          local state = current_state_pair()
-          if state and type(state.tex) == "string" then
-            local started = compile_start[state.tex]
-            local elapsed = started and ((vim.uv or vim.loop).now() - started) or 0
-            compile_start[state.tex] = nil
-            vstatus.record_success(state, elapsed)
-
-            -- Push the compile time through fidget if it's available
-            -- (loaded on LspAttach -- texlab covers tex buffers).  Fall
-            -- back to vim.notify so the duration still surfaces when
-            -- fidget hasn't loaded yet.
-            local secs = string.format("%.1fs", elapsed / 1000)
-            local name = vim.fn.fnamemodify(state.tex, ":t")
-            local msg  = string.format("vimtex: %s compiled in %s", name, secs)
-            -- group = "vimtex" makes fidget label the bubble "vimtex"
-            -- instead of the default unnamed-group title "Notification".
-            local ok, fidget = pcall(require, "fidget")
-            if ok and type(fidget.notify) == "function" then
-              fidget.notify(msg, vim.log.levels.INFO, { group = "vimtex" })
-            else
-              vim.notify(msg, vim.log.levels.INFO)
-            end
-          end
-          vstatus.invalidate()
-          pcall(vim.cmd.redrawstatus)
-        end,
-      })
-
-      vim.api.nvim_create_autocmd("User", {
-        group   = vt_group,
-        pattern = "VimtexEventInitPost",
-        callback = function() vstatus.invalidate() end,
       })
 
       -- Buffer-local keymaps for tex files (only active when latex bundle is enabled)

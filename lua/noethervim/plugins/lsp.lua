@@ -178,15 +178,51 @@ return {
 		config = function(_, opts)
 			local icons = require('noethervim.util.icons')
 
+			-- Start with Neovim's built-in capabilities (cheap, no plugin
+			-- load) plus the folding-range bits texlab / lua_ls care about.
+			-- The blink.cmp enrichment is merged in LATER via the
+			-- LspAttach autocmd below -- requiring blink here would pull
+			-- ~37ms of submodule loads onto every file open, even when
+			-- the user doesn't press `i` to actually trigger completion.
+			-- See `:help vim.lsp.protocol.make_client_capabilities`.
 			vim.lsp.config('*', {
-				capabilities = require('blink.cmp').get_lsp_capabilities({
-					textDocument = {
-						foldingRange = {
-							dynamicRegistration = false,
-							lineFoldingOnly = true,
+				capabilities = vim.tbl_deep_extend("force",
+					vim.lsp.protocol.make_client_capabilities(),
+					{
+						textDocument = {
+							foldingRange = {
+								dynamicRegistration = false,
+								lineFoldingOnly = true,
+							},
 						},
-					},
-				}),
+					}
+				),
+			})
+
+			-- Once blink.cmp finally loads (on InsertEnter / CmdlineEnter),
+			-- re-issue `vim.lsp.config('*', ...)` with the enriched
+			-- capabilities. Newly-attached clients pick up the fuller set
+			-- the next time they initialize; existing clients keep their
+			-- current capabilities for the rest of the session (which is
+			-- fine -- the default caps cover everything except a few
+			-- snippet/resolve niceties).
+			vim.api.nvim_create_autocmd("User", {
+				pattern = "BlinkCmpSetupComplete",
+				once    = true,
+				callback = function()
+					local ok, blink = pcall(require, "blink.cmp")
+					if not ok then return end
+					vim.lsp.config('*', {
+						capabilities = blink.get_lsp_capabilities({
+							textDocument = {
+								foldingRange = {
+									dynamicRegistration = false,
+									lineFoldingOnly     = true,
+								},
+							},
+						}),
+					})
+				end,
 			})
 
 

@@ -261,6 +261,14 @@ return {
 
 			require("blink.cmp").setup(opts)
 
+			-- Signal to deferred consumers (e.g. lsp.lua's capabilities
+			-- enrichment) that blink is fully initialized and safe to
+			-- require. Fired once per session.
+			vim.api.nvim_exec_autocmds("User", {
+				pattern  = "BlinkCmpSetupComplete",
+				modeline = false,
+			})
+
 			-- Monkey-patch undo_preview: when the cursor has moved since the
 			-- preview was applied (user typed/deleted), commit the preview
 			-- instead of reverting it.  Without this, the cursor-compensation

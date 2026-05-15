@@ -133,6 +133,3 @@ opt.shada = "'1000,<50,s10,h"
 
 -- Wildignore
 vim.opt.wildignore:append({"*/.git/*", "*.swp"})
-
--- Fallback colorscheme applied before plugins load (overwritten by the real theme)
-vim.cmd.colorscheme("slate")
