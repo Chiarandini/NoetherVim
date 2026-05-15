@@ -2,7 +2,7 @@
 -- Open with: <C-w><C-o> (float) or :Oil (replace buffer)
 --
 -- Custom keymaps (in addition to Oil defaults -- press g? inside Oil):
---   gd          Toggle detail view (permissions, size, mtime)
+--   gd          Toggle detail view (adds permissions to default size + mtime)
 --   gf          Fuzzy find in current directory
 --   gG          Live grep in current directory
 --   gV          Pick destination and open dual-pane float (q closes both)
@@ -18,7 +18,120 @@
 --   yp / yd / yn   Yank full path / dir / filename to unnamed register
 --   Yp / Yd / Yn   Same, but straight to the system clipboard (+)
 
+-- Columns: only `icon` by default. Size/mtime metadata is rendered as
+-- virt_text via the `User OilEnter` handler below, NOT as real oil
+-- columns. Why: real columns with `require_stat = true` make oil block
+-- on `cb_collect(#entries, ...)` for every fs_stat before rendering
+-- (see oil.nvim:adapters/files.lua:484). That visible "buffer empty for
+-- a beat, then populates" delay is exactly what virt_text avoids --
+-- extmarks paint in as stats arrive, one row at a time, with no gate on
+-- the directory listing itself.
+--
+-- `gd` switches to the real-column verbose view (icon + permissions +
+-- size + mtime) for the rare moments you want sortable / editable
+-- permissions; that view accepts the stat-wait.
+local default_columns = { "icon" }
+local detail_columns  = { "icon", "permissions", "size", "mtime" }
 local detail = false
+
+-- ── Async virt_text metadata ──────────────────────────────────────────
+-- Render size + mtime as eol virt_text on each oil row. We listen to
+-- `User OilEnter` (fired by oil after every render -- entry, refresh,
+-- toggle hidden, change sort) and async-stat each visible entry. The
+-- buffer is already on screen by then; extmarks paint in as the stat
+-- callbacks resolve. No render is blocked.
+local meta_ns = vim.api.nvim_create_namespace("noethervim.oil.meta")
+
+local function format_size(bytes)
+	if bytes >= 1e9 then return string.format("%6.1fG", bytes / 1e9) end
+	if bytes >= 1e6 then return string.format("%6.1fM", bytes / 1e6) end
+	if bytes >= 1e3 then return string.format("%6.1fk", bytes / 1e3) end
+	return string.format("%5dB ", bytes)
+end
+
+-- Mirror oil's built-in mtime column format: "Mon DD HH:MM" for this
+-- year, "Mon DD  YYYY" for other years, so the visual feel matches the
+-- detail view.
+local _current_year
+local function format_mtime(sec)
+	if not sec then return "" end
+	_current_year = _current_year or os.date("%Y")
+	if os.date("%Y", sec) ~= _current_year then
+		return os.date("%b %d  %Y", sec)
+	end
+	return os.date("%b %d %H:%M", sec)
+end
+
+-- Per-session stat cache. fs_stat is fast, but oil refires OilEnter on
+-- every change-sort / toggle-hidden / cd, so caching saves a pile of
+-- redundant calls. Keyed by absolute path; invalidated on directory
+-- mutation by oil's own refresh, which renames buffers and changes
+-- listings -- stale entries can't surface that way.
+local stat_cache = {}
+
+local function decorate_oil_buffer(bufnr)
+	if not vim.api.nvim_buf_is_valid(bufnr) then return end
+	local ok, oil = pcall(require, "oil")
+	if not ok then return end
+	local dir = oil.get_current_dir(bufnr)
+	if not dir then return end
+
+	vim.api.nvim_buf_clear_namespace(bufnr, meta_ns, 0, -1)
+
+	local uv    = vim.uv or vim.loop
+	local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+
+	-- First pass: find the widest entry line so the metadata column can
+	-- start at the same screen column on every row. Skip `../` (no
+	-- metadata) and unsaved rows (entry.id == 0). `strdisplaywidth`
+	-- handles wide glyphs (the file icon) and multibyte filenames.
+	local widths = {}
+	local max_w  = 0
+	for lnum = 1, #lines do
+		local entry = oil.get_entry_on_line(bufnr, lnum)
+		if entry and entry.name and entry.name ~= ".." and entry.id and entry.id ~= 0 then
+			local w = vim.fn.strdisplaywidth(lines[lnum])
+			widths[lnum] = w
+			if w > max_w then max_w = w end
+		end
+	end
+
+	-- Second pass: async-stat each entry, paint when the stat resolves.
+	-- The leading-space pad = (max_w - this row's width) + a 2-space
+	-- gutter, so every metadata block starts at column `max_w + 2`.
+	for lnum, w in pairs(widths) do
+		local entry = oil.get_entry_on_line(bufnr, lnum)
+		if entry then
+			local path     = dir .. entry.name
+			local lead_pad = string.rep(" ", (max_w - w) + 2)
+			local function paint(stat)
+				if not stat then return end
+				if not vim.api.nvim_buf_is_valid(bufnr) then return end
+				local size_txt  = (stat.type == "directory") and "      " or format_size(stat.size)
+				local mtime_txt = format_mtime(stat.mtime and stat.mtime.sec)
+				local text      = lead_pad .. size_txt .. "  " .. mtime_txt
+				pcall(vim.api.nvim_buf_set_extmark, bufnr, meta_ns, lnum - 1, 0, {
+					virt_text     = { { text, "Comment" } },
+					virt_text_pos = "eol",
+					hl_mode       = "combine",
+					invalidate    = true,
+				})
+			end
+
+			local cached = stat_cache[path]
+			if cached then
+				paint(cached)
+			else
+				uv.fs_stat(path, vim.schedule_wrap(function(err, stat)
+					if not err and stat then
+						stat_cache[path] = stat
+						paint(stat)
+					end
+				end))
+			end
+		end
+	end
+end
 
 -- Yank the entry under the cursor. `mods` is a |fnamemodify()| mods string
 -- (e.g. ":h", ":t"), or nil for the full path. `reg` is the target register
@@ -277,13 +390,59 @@ end
 return {
 	{
 		"stevearc/oil.nvim",
-		lazy = false,
+		-- ── Lazy-load oil on demand instead of `lazy = false`. ─────────────
+		-- `init` runs at spec-resolution time (during lazy.setup), BEFORE
+		-- runtime plugins like netrw load. We:
+		--   1. Disable netrw early (same effect as oil's setup would have
+		--      had, just hoisted up so it's in place before netrw's plugin
+		--      file is sourced). Stays scoped to oil's spec -- remove the
+		--      oil bundle and netrw is back.
+		--   2. Register a one-shot BufAdd that pulls oil in the moment a
+		--      directory buffer is created. This covers `nvim .`, `:e dir/`,
+		--      session-restored directory buffers, anything. After the first
+		--      hit we delete the augroup -- oil's own BufAdd takes over from
+		--      then on.
+		--
+		-- Load triggers (besides the directory shim above):
+		--   * `cmd = "Oil"`           -- `:Oil` from anywhere
+		--   * `keys = <c-w><c-o>`     -- float open from anywhere
+		init = function()
+			vim.g.loaded_netrw       = 1
+			vim.g.loaded_netrwPlugin = 1
+
+			-- Future directory buffers (`:e somedir/`, session restore, etc.)
+			-- get caught by this BufAdd autocmd, which loads oil on demand.
+			local group = vim.api.nvim_create_augroup("noethervim_oil_lazy", { clear = true })
+			vim.api.nvim_create_autocmd("BufAdd", {
+				group   = group,
+				nested  = true,
+				callback = function(args)
+					local name = vim.api.nvim_buf_get_name(args.buf)
+					if name ~= "" and vim.fn.isdirectory(name) == 1 then
+						require("oil")  -- triggers lazy load + oil.setup
+						pcall(vim.api.nvim_del_augroup_by_id, group)
+					end
+				end,
+			})
+
+			-- `nvim .` case: argv buffer is created during argv processing,
+			-- BEFORE init.lua sources, so the BufAdd autocmd above never sees
+			-- it. Check the current buffer ourselves -- if it's a directory,
+			-- load oil now (during lazy.setup, before BufRead fires) so oil
+			-- can rename the buffer to `oil:///path/` in time for its
+			-- BufReadCmd to take over.
+			local cur = vim.api.nvim_buf_get_name(0)
+			if cur ~= "" and vim.fn.isdirectory(cur) == 1 then
+				require("oil")
+				pcall(vim.api.nvim_del_augroup_by_id, group)
+			end
+		end,
 		keys = { {'<c-w><c-o>', function() require('oil').open_float() end, desc = "Oil Mode"}, },
-		cmd = { "Oil" },
+		cmd  = { "Oil" },
 		dependencies = { "nvim-tree/nvim-web-devicons" },
 		opts = {
 			default_file_explorer = true,
-			columns = { "icon" },
+			columns = default_columns,
 			buf_options = {
 				buflisted = false,
 				bufhidden = "hide",
@@ -326,14 +485,10 @@ return {
 				["~"] = { "actions.cd", opts = { scope = "tab" }, mode = "n" },
 				["gs"] = { "actions.change_sort", mode = "n" },
 				["gd"] = {
-					desc = "Toggle file detail view",
+					desc = "Toggle file detail view (adds permissions)",
 					callback = function()
 						detail = not detail
-						if detail then
-							require("oil").set_columns({ "icon", "permissions", "size", "mtime" })
-						else
-							require("oil").set_columns({ "icon" })
-						end
+						require("oil").set_columns(detail and detail_columns or default_columns)
 					end,
 				},
 				["gx"] = "actions.open_external",
@@ -528,7 +683,17 @@ return {
 				max_width = 0,
 				max_height = 0,
 				border = "rounded",
-				win_options = { winblend = 10 },
+				-- IMPORTANT: oil's float opens a NEW window and applies only
+				-- `float.win_options` to it (see oil.nvim/init.lua:269) -- the
+				-- outer `win_options` table is NOT carried over. So anything
+				-- the float must inherit goes here too. Without conceallevel
+				-- the float renders oil's `^/\d+ ` entry-id prefixes (which
+				-- are concealed by oil's syntax file) as raw text.
+				win_options = {
+					winblend       = 10,
+					conceallevel   = 3,
+					concealcursor  = "nvic",
+				},
 				preview_split = "auto",
 				override = function(conf) return conf end,
 			},
@@ -554,5 +719,21 @@ return {
 			ssh = { border = "rounded" },
 			keymaps_help = { border = "rounded" },
 		},
+		config = function(_, opts)
+			require("oil").setup(opts)
+			-- Async metadata decoration: paint size/mtime as virt_text after
+			-- every oil render. `User OilEnter` fires once the buffer is ready
+			-- (see oil.nvim:view.lua:572). Wrapped in vim.schedule so the
+			-- decoration walk runs one tick later -- the buffer is already
+			-- visible by then, so stats trickle in without blocking.
+			vim.api.nvim_create_autocmd("User", {
+				pattern = "OilEnter",
+				callback = function(args)
+					vim.schedule(function()
+						decorate_oil_buffer(args.data.buf or 0)
+					end)
+				end,
+			})
+		end,
 	},
 }
