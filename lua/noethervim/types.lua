@@ -28,6 +28,11 @@
 ---     (for "bubbly", "slant", "pointy") an opening endcap on the right
 ---     ruler block. Default "round" preserves the historical look.
 ---     "bubbly" rounds both edges; "straight" disables endcaps entirely.
+---@field tab_modified_indicator? string
+---     Glyph shown on a tab containing unsaved changes. Default `" ●"`.
+---     Common alternatives: `" [+]"` (vim default), `" *"`, `" "`,
+---     `" ◉"`. A leading space is recommended -- it separates the
+---     indicator from the tab's filename.
 
 ---@class noethervim.UserConfig
 ---

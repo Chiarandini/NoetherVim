@@ -323,6 +323,11 @@ Current keys: ~
     `statusline.extra_right`        Extra heirline component specs
                                   appended to the right side of the
                                   main statusline.
+    `statusline.tab_modified_indicator`
+                                  Glyph rendered on a tab containing
+                                  unsaved changes. Default `" ●"`.
+                                  Common alternatives: `" [+]"`,
+                                  `" *"`, `" "`, `" ◉"`.
     `obsidian_vault`                Path to your Obsidian vault. Read by
                                   the `obsidian` bundle. Default:
                                   `~/obsidian/`.

@@ -64,7 +64,9 @@ local TablineModified = {
   condition = function(self)
     return tab_modified(self.tabpage)
   end,
-  provider = " ●",
+  provider = function()
+    return require("noethervim.statusline").get_tab_modified_indicator()
+  end,
   hl = function(self)
     if self.is_active then
       return { fg = ctx.colors.text_gray, bg = ctx.colors.light_gray }

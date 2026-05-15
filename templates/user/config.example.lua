@@ -37,6 +37,11 @@ return {
     --     -- Extra heirline component specs appended to the right side of
     --     -- the main statusline, after the git block.
     --     extra_right = {},
+    --
+    --     -- Glyph shown on a tabpage that contains an unsaved buffer.
+    --     -- Default " ●".  Common alternatives: " [+]" (vim default),
+    --     -- " *", " ", " ◉".
+    --     tab_modified_indicator = " ●",
     -- },
 
 

@@ -45,9 +45,10 @@ local SCHEMA = {
 
 --- Inner schema for `cfg.statusline`. Same shape as the outer schema.
 local STATUSLINE_SCHEMA = {
-  colors      = "table",
-  extra_right = "table",
-  edge_style  = "string",
+  colors                 = "table",
+  extra_right            = "table",
+  edge_style             = "string",
+  tab_modified_indicator = "string",
 }
 
 --- Type-check `cfg`. Returns a list of error strings; empty when valid.

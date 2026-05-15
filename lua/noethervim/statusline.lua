@@ -99,4 +99,11 @@ function M.list_edge_styles()
   return names
 end
 
+--- Returns the tab modified-indicator glyph. Defaults to `" ●"`; users
+--- can override via `statusline.tab_modified_indicator` in user/config.lua
+--- (e.g. `" [+]"` for the vim-default look).
+function M.get_tab_modified_indicator()
+  return _opts.tab_modified_indicator or " ●"
+end
+
 return M
