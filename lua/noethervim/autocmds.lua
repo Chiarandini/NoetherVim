@@ -234,37 +234,66 @@ local non_code_filetypes = fts.non_code
 local ok_cfg, user_cfg = pcall(require, "user.config")
 local spell_in_code = ok_cfg and type(user_cfg) == "table" and user_cfg.spell_in_code == true
 
-vim.api.nvim_create_autocmd("FileType", {
-  group    = vim.api.nvim_create_augroup("noethervim_writing", { clear = true }),
-  pattern  = vim.tbl_keys(writing_filetypes),
-  callback = function(ev)
-    vim.opt_local.wrap         = true
-    vim.opt_local.linebreak    = true
-    vim.opt_local.list         = false
-    vim.opt_local.conceallevel = 2
-    vim.opt_local.spell        = true
-    vim.opt_local.formatoptions:append("t")  -- auto-wrap at textwidth
-    vim.keymap.set("i", "<c-l>", "<c-g>u<Esc>[s1z=`]a<c-g>u",
-      { buffer = ev.buf, silent = true, desc = "fix spelling" })
-  end,
-})
+-- ── Code vs. writing profiles ─────────────────────────────────────
+-- Two FileType groups apply window-local "profile" options (wrap,
+-- list, spell, etc.) to the windows showing the buffer.
+--
+-- WHY win_findbuf INSTEAD OF `vim.opt_local` / `setlocal`:
+-- FileType fires for the buffer whose filetype just changed, but the
+-- callback runs in the context of the *currently active* window --
+-- which may be unrelated. Plugins that create hidden scratch buffers
+-- and set their filetype (mason-registry, lazydev's lib-doc loader,
+-- treesitter's auto_install probes, etc.) would otherwise stamp our
+-- profile options onto the dashboard / oil / whatever window happens
+-- to be current at startup. Iterating `win_findbuf(ev.buf)` ensures
+-- we only touch windows actually displaying the buffer; hidden
+-- buffers harmlessly fall through.
+--
+-- We also re-apply on BufWinEnter so a buffer that gets shown later
+-- (`:badd` then later `:b`, or a split into an existing buffer)
+-- still inherits the profile.
 
-vim.api.nvim_create_autocmd("FileType", {
-  group    = vim.api.nvim_create_augroup("noethervim_code", { clear = true }),
-  pattern  = "*",
+local function apply_writing_profile(buf)
+  -- Buffer-local: formatoptions, the keymap.
+  vim.bo[buf].formatoptions = vim.bo[buf].formatoptions .. "t"
+  if not vim.b[buf].noethervim_writing_keymap then
+    vim.keymap.set("i", "<c-l>", "<c-g>u<Esc>[s1z=`]a<c-g>u",
+      { buffer = buf, silent = true, desc = "fix spelling" })
+    vim.b[buf].noethervim_writing_keymap = true
+  end
+  for _, win in ipairs(vim.fn.win_findbuf(buf)) do
+    vim.wo[win].wrap         = true
+    vim.wo[win].linebreak    = true
+    vim.wo[win].list         = false
+    vim.wo[win].conceallevel = 2
+    vim.wo[win].spell        = true
+  end
+end
+
+local function apply_code_profile(buf)
+  for _, win in ipairs(vim.fn.win_findbuf(buf)) do
+    vim.wo[win].list = true
+    if spell_in_code then
+      -- Treesitter @spell captures (shipped with most parsers)
+      -- restrict spellcheck to comments and string nodes; identifiers
+      -- stay clean. `spelloptions` is left untouched -- users who
+      -- want CamelCase splitting can add
+      --   vim.opt.spelloptions:append("camel")
+      -- in lua/user/options.lua.
+      vim.wo[win].spell = true
+    end
+  end
+end
+
+vim.api.nvim_create_autocmd({ "FileType", "BufWinEnter" }, {
+  group    = vim.api.nvim_create_augroup("noethervim_profiles", { clear = true }),
   callback = function(ev)
     local ft = vim.bo[ev.buf].filetype
-    if ft == "" or writing_filetypes[ft] or non_code_filetypes[ft] then
-      return
-    end
-    vim.opt_local.list = true
-    if spell_in_code then
-      -- Treesitter @spell captures (shipped with most parsers) restrict
-      -- spellcheck to comments and string nodes; identifiers stay clean.
-      -- `spelloptions` is left untouched -- users who want CamelCase
-      -- splitting can add `vim.opt.spelloptions:append("camel")` to
-      -- lua/user/options.lua themselves.
-      vim.opt_local.spell = true
+    if ft == "" or non_code_filetypes[ft] then return end
+    if writing_filetypes[ft] then
+      apply_writing_profile(ev.buf)
+    else
+      apply_code_profile(ev.buf)
     end
   end,
 })
