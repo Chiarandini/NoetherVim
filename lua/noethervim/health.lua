@@ -281,6 +281,50 @@ function M.check()
     end
   end
 
+  -- ── Session / option drift ───────────────────────────────────────────
+  -- Sessions saved while 'sessionoptions' contained `localoptions` can
+  -- restore stale buffer-local values that override updated globals
+  -- (e.g. spelllang stuck at "en_us" after the distro default moved to
+  -- "en", or formatoptions frozen with `t` after the global rewrite).
+  -- NoetherVim drops `localoptions` from the default `sessionoptions` to
+  -- prevent new sessions from doing this, but pre-existing session files
+  -- keep their stale state until re-saved.
+  --
+  -- We spot-check `spelllang` across loaded buffers: it is rarely set by
+  -- ftplugins, so divergence from the global is a strong drift signal.
+  -- formatoptions / textwidth are skipped because legitimate ftplugins
+  -- routinely set them (python, lua, gitcommit, ...), which would drown
+  -- the check in false positives.
+  h.start("Session / option drift")
+  do
+    local global_sl = vim.go.spelllang
+    local drift = {}
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+      if vim.api.nvim_buf_is_loaded(buf)
+        and vim.bo[buf].buflisted
+        and vim.bo[buf].buftype == ""
+      then
+        local local_sl = vim.bo[buf].spelllang
+        if local_sl ~= "" and local_sl ~= global_sl then
+          local name = vim.api.nvim_buf_get_name(buf)
+          if name == "" then name = "[buffer " .. buf .. "]" end
+          table.insert(drift, string.format(
+            "  %s -- spelllang=%s (global=%s)",
+            vim.fn.fnamemodify(name, ":~:."), local_sl, global_sl))
+        end
+      end
+    end
+    if #drift == 0 then
+      h.ok("No spelllang drift across loaded buffers")
+    else
+      h.warn(("%d buffer(s) have spelllang differing from global -- "
+        .. "likely a stale session restoring `localoptions`:"):format(#drift))
+      for _, line in ipairs(drift) do h.info(line) end
+      h.info("Fix: re-save the session with :SaveSession, or delete the "
+        .. "stale session file under " .. vim.fn.stdpath("state") .. "/sessions/")
+    end
+  end
+
   -- ── Override conflicts ───────────────────────────────────────────────
   -- Diff the keymap snapshots captured by init.lua around user.keymaps load
   -- to surface every core mapping the user redefined. Informational only --

@@ -1,3 +1,7 @@
+-- NOETHERVIM OPTIONS
+-- see :help Noethervim -> Options for explanations of the more contentious choices (ex. autowrite
+-- and autowriteall)
+
 -- Enable the Lua bytecode cache (must be first for maximum benefit)
 vim.loader.enable()
 
@@ -57,7 +61,7 @@ vim.opt.listchars = {
 --   j  remove comment leader when joining lines
 --   n  recognize numbered lists (uses formatlistpat)
 -- `t` (auto-wrap text) is deliberately omitted globally so code files
--- don't get broken mid-line while typing -- formatters handle it.
+-- don't get broken mid-line while typing (delegated to formatters)
 opt.formatoptions  = "croq1jn"
 
 -- Diff
@@ -76,7 +80,7 @@ opt.shiftwidth = 4
 -- autoindent: copy indent from the line above when starting a new line
 -- (this is how `O` and `o` keep your code aligned).  The Neovim default
 -- is already `true`, but set it explicitly so a stray ftplugin / runtime
--- file flipping it off can be spotted at a glance.
+-- file flipping it off can be more easily debugged.
 -- copyindent + preserveindent: when re-indenting, reuse the existing
 -- whitespace structure (tabs vs spaces, mixed leading runs) instead of
 -- normalising to shiftwidth.  This is what makes `O` on a deeply-indented
@@ -108,7 +112,15 @@ vim.opt.fillchars = { fold = " " }
 opt.autochdir = false
 
 -- Session restoration
-opt.sessionoptions = "blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions"
+-- `localoptions` is intentionally omitted: it captures every buffer-local
+-- option at save time, which then overrides updated globals when the
+-- session reloads (e.g. spelllang stays "en_us" long after the distro
+-- default moved to "en").  NoetherVim's FileType-driven writing/code
+-- profiles re-establish the per-buffer values that matter (wrap, spell,
+-- list, conceallevel, ...) on every buffer load, so capturing them in
+-- sessions is mostly redundant.  Add `localoptions` back in your personal
+-- options.lua if you depend on session-restoring buffer-local state.
+opt.sessionoptions = "blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal"
 
 -- Undo
 opt.undofile   = true
@@ -120,11 +132,16 @@ vim.fn.mkdir(undodir, "p")
 vim.o.undodir = undodir
 
 -- Cache/swap dirs (use stdpath so they work regardless of appname)
+-- NOTE: swap file are off  by default (see Noethervim doc for the explanation)
 vim.o.dir = vim.fn.stdpath("state") .. "/swap"
 vim.fn.mkdir(vim.o.dir, "p")
 
 -- Spell
-vim.opt.spelllang = { "en_us" }
+-- "en" accepts all English regional dialects (US, UK, CA, AU, NZ) so the
+-- default doesn't flag "colour"/"color" as wrong for either camp.  Narrow
+-- in your personal config if you want strict regional checking, e.g.
+-- vim.opt.spelllang = { "en_us" } or { "en_gb" } or { "en_us", "de_de" }.
+vim.opt.spelllang = { "en" }
 -- Spellfile lives in the user's config dir
 vim.o.spellfile = vim.fn.stdpath("config") .. "/spell/en.utf-8.add"
 

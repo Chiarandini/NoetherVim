@@ -31,3 +31,16 @@
 -- noethervim/autocmds.lua (tex, markdown, norg, rst, typst, ...).
 -- Override globally here if needed:
 -- vim.o.conceallevel = 0
+
+-- ── Spell ────────────────────────────────────────────────────────────────────
+-- Default is { "en" } -- accepts all English regional dialects (US, UK, ...)
+-- so "colour" and "color" both pass.  Narrow for stricter checking:
+-- vim.opt.spelllang = { "en_us" }            -- US only
+-- vim.opt.spelllang = { "en_gb" }            -- UK only
+-- vim.opt.spelllang = { "en_us", "de_de" }   -- bilingual
+
+-- ── Sessions ─────────────────────────────────────────────────────────────────
+-- Default `sessionoptions` omits `localoptions` to avoid restoring stale
+-- buffer-local values (e.g. spelllang frozen at en_us across config updates).
+-- Add it back if you want per-buffer option state preserved across sessions:
+-- vim.opt.sessionoptions:append("localoptions")

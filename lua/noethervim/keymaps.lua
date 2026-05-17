@@ -20,6 +20,27 @@ vim.keymap.set("i", "<C-p>",   "<nop>",      { desc = "disabled" })
 vim.keymap.set("i", "<C-s>",   "<nop>",      { desc = "disabled" })
 vim.keymap.set("i", "<C-=>",   "<C-r>=",     { desc = "expression register" })
 
+-- <S-CR>: newline without comment-leader continuation.
+-- Strips `r`/`o` from formatoptions, fires <CR>, then restores on
+-- TextChangedI (which runs after the buffer change settles, so the
+-- restore can't race the <CR>).  Buffer-local <S-CR> maps (e.g. the
+-- markdown smart-list one) take precedence over this global mapping.
+-- Note: requires a terminal that distinguishes <S-CR> from <CR>
+-- (Kitty, WezTerm, iTerm2 with the CSI-u profile, most GUIs).
+vim.keymap.set("i", "<S-CR>", function()
+  local fo = vim.bo.formatoptions
+  local stripped = fo:gsub("[ro]", "")
+  if stripped ~= fo then
+    vim.bo.formatoptions = stripped
+    vim.api.nvim_create_autocmd("TextChangedI", {
+      buffer = 0,
+      once = true,
+      callback = function() vim.bo.formatoptions = fo end,
+    })
+  end
+  return "<CR>"
+end, { expr = true, replace_keycodes = true, desc = "newline without comment continuation" })
+
 -- ──────────────────────────────────────────────────────────────
 --  Normal mode -- general
 -- ──────────────────────────────────────────────────────────────

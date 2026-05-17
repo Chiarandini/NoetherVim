@@ -908,7 +908,14 @@ Shadowed defaults: ~
 ------------------------------------------------------------------------------
 9.1 FILETYPE KEYMAPS                                   *noethervim-ftplugin*
 
-These keymaps activate only in their respective filetype.
+These keymaps activate only in their respective filetype, except for the
+"all filetypes" group below which applies globally.
+
+    all filetypes (insert): ~
+    `<S-CR>`            Newline without comment-leader continuation.
+                       Buffer-local `<S-CR>` mappings (e.g. markdown
+                       list continuation) take precedence over this.
+                       Same terminal caveat as the markdown entry below.
 
     tex: ~
     `:PDF`              Open compiled PDF
