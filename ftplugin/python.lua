@@ -1,0 +1,6 @@
+vim.bo.tabstop=4
+vim.bo.shiftwidth=4
+vim.bo.expandtab=true
+vim.bo.textwidth=79
+vim.bo.autoindent=true
+vim.o.smarttab=true

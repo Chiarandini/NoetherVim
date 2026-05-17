@@ -1,19 +1,17 @@
 --- Setup-time registry of keymap registration sites.
 ---
---- WHY THIS EXISTS
 --- `vim.api.nvim_get_keymap()` tells us a keymap exists, but not where it
 --- was registered. The :NoetherVim diff-keymaps picker and the guide
---- jump-to-source handler need the second piece: file + line. There is no
---- public Neovim API for that. We get it by transient instrumentation.
+--- jump-to-source handler needs file + line. There is no
+--- public Neovim API for that. We get it by a transient instrumentation.
 ---
---- HOW IT WORKS
 --- During `noethervim.setup()` we replace `vim.keymap.set` with a wrapper
 --- that records the callsite (via `debug.getinfo`) keyed by
---- mode|resolved_lhs, then forwards to the stock implementation. The
+--- mode|resolved_lhs, then forwards to the default implementation. The
 --- wrapper is installed once at the start of setup() and uninstalled
 --- before setup() returns -- nothing persists into user-time. Users
 --- writing `vim.keymap.set` at runtime (ftplugin, post-load plugin
---- configs, interactive :lua) hit the stock function with no wrapping.
+--- configs, interactive :lua) hit the default function with no wrapping.
 ---
 --- WHAT IT DOESN'T COVER
 --- Lazy-managed `keys = {...}` specs do not go through `vim.keymap.set`
@@ -23,12 +21,11 @@
 --- table.
 ---
 --- ARCHITECTURAL NOTE
---- This is the most "magical" piece in the codebase. It is justified
---- because (a) the wrapper is narrowly scoped to setup() only, (b) it
---- self-uninstalls, and (c) the alternative (forcing every core file to
---- call a NoetherVim wrapper API) would violate the "explicit over
---- magic" principle far more visibly than a transient debug hook does.
---- See dev-docs/architecture.md §1 for the principle list.
+--- This wrapper exists because because (a) the wrapper is narrowly scoped
+--- to setup() only, (b) it self-uninstalls, and (c) the alternative
+--- (forcing every core file to call a NoetherVim wrapper API) would violate
+--- the "explicit over magic" principle far more visibly than a transient
+--- debug hook does. See dev-docs/architecture.md §1 for the principle list.
 
 local M = {}
 
@@ -36,10 +33,10 @@ M._registry = {}   -- [mode|resolved_lhs] = { file, line }  (last-write-wins)
 M._history  = {}   -- [mode|resolved_lhs] = { {file, line}, ... }  (all writes, for overlap detection)
 M._orig     = nil
 
---- Canonicalise an lhs into the exact form `nvim_get_keymap` reports.
+--- Canonicalise a lhs into the exact form `nvim_get_keymap` reports.
 ---
 --- The round-trip has four steps:
----   1. Expand `<Leader>` / `<LocalLeader>` (case-insensitive) -- the
+---   1. Expand `<Leader>` / `<LocalLeader>` (case-insensitive). The
 ---      keymap API does this silently when setting, and `nvim_get_keymap`
 ---      reports the expanded form.
 ---   2. `nvim_replace_termcodes` maps every `<Xxx>` form to its internal
@@ -191,7 +188,7 @@ local function pick_frame(resolved_lhs)
   return fallback_file or "", fallback_line or 0
 end
 
---- Install the wrapper. Idempotent -- a second call is a no-op.
+--- Install the wrapper. Idempotent (a second call is a no-op).
 function M.install()
   if M._orig then return end
   M._orig = vim.keymap.set

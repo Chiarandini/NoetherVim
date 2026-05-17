@@ -79,6 +79,7 @@ local KeyboardMode = {
   end,
   hl = function() return { fg = ctx.colors.default_blue } end,
   provider = function()
+    -- TODO: this is specific to japanese; it must be updated and most likely exposed in config.lua
     return "J"
   end,
 }
