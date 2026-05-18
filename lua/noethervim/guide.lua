@@ -348,8 +348,11 @@ function M.open()
     end
   end
 
-  -- Arrow keys for resize
-  for _, k in ipairs({ "<Up>", "<Down>", "<Left>", "<Right>" }) do
+  -- Arrow keys for resize (and <S-Arrow> for shrink-from-that-edge).
+  for _, k in ipairs({
+    "<Up>",   "<Down>",   "<Left>",   "<Right>",
+    "<S-Up>", "<S-Down>", "<S-Left>", "<S-Right>",
+  }) do
     local lhs = vim.api.nvim_replace_termcodes(k, true, true, true)
     local d = kms.n[lhs]
     if d and not used[lhs] then

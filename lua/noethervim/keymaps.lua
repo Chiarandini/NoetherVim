@@ -119,11 +119,19 @@ vim.keymap.set("n", SearchLeader .. "q", function()
 end, { desc = "[q]uickfix toggle" })
 -- <c-w>u: set in commands.lua (show unsaved buffers)
 
--- Resize splits with arrow keys
-vim.keymap.set("n", "<up>",    "<cmd>resize +2<cr>",          { desc = "taller" })
-vim.keymap.set("n", "<down>",  "<cmd>resize -2<cr>",          { desc = "shorter" })
-vim.keymap.set("n", "<left>",  "<cmd>vertical resize +2<cr>", { desc = "wider" })
-vim.keymap.set("n", "<right>", "<cmd>vertical resize -2<cr>", { desc = "narrower" })
+-- Resize splits with arrow keys. Arrow direction is always direction of
+-- motion: plain <Arrow> pushes the near edge outward (grow); <S-Arrow>
+-- pulls the far edge inward (shrink). All eight are silent no-ops when
+-- there is no neighbor on the moving edge. See util/smart_resize.lua.
+local sr = require("noethervim.util.smart_resize")
+vim.keymap.set("n", "<up>",      function() sr.grow_up()      end, { desc = "grow up" })
+vim.keymap.set("n", "<down>",    function() sr.grow_down()    end, { desc = "grow down" })
+vim.keymap.set("n", "<left>",    function() sr.grow_left()    end, { desc = "grow left" })
+vim.keymap.set("n", "<right>",   function() sr.grow_right()   end, { desc = "grow right" })
+vim.keymap.set("n", "<S-up>",    function() sr.shrink_down()  end, { desc = "pull bottom edge up" })
+vim.keymap.set("n", "<S-down>",  function() sr.shrink_up()    end, { desc = "pull top edge down" })
+vim.keymap.set("n", "<S-left>",  function() sr.shrink_right() end, { desc = "pull right edge left" })
+vim.keymap.set("n", "<S-right>", function() sr.shrink_left()  end, { desc = "pull left edge right" })
 
 -- Quick splits (unnamed scratch buffers -- save with :w <name> if needed)
 local function split_scratch(cmd)

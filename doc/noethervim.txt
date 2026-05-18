@@ -894,6 +894,14 @@ Shadowed defaults: ~
     `<C-w><C-q>`    Open quickfix
                     (default: close window -- use `<C-w>q` or `:q`)
     `<C-w>Q`        Toggle Trouble diagnostics panel
+                                                    *noethervim-resize-arrows*
+    `<Arrow>`       Resize current window: push the near edge in the
+                    arrow direction (grow).
+                    (default: one-cell / one-line motion -- use `hjkl`)
+    `<S-Arrow>`     Resize current window: pull the far edge in the
+                    arrow direction (shrink).  No-op when no neighbor
+                    exists on the moving edge.
+                    (default: same one-cell / one-line motion)
 
                                                     *noethervim-semicolon*
     Note on `;`: this is a keystroke-economy pick, not a universal win.

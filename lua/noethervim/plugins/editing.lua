@@ -33,6 +33,18 @@ return {
 	{
 		"mg979/vim-visual-multi",
 		event = "BufReadPost",
+		init = function()
+			-- Free <S-Arrow> in normal mode -- we use them for split
+			-- resizing (see keymaps.lua). VM still has <C-N> to start a
+			-- multi-cursor session; the "Select h/j/k/l" extenders
+			-- become available only after VM is active via other means.
+			vim.g.VM_maps = vim.tbl_extend("force", vim.g.VM_maps or {}, {
+				["Select h"] = "",
+				["Select j"] = "",
+				["Select k"] = "",
+				["Select l"] = "",
+			})
+		end,
 	},
 
 	--  delete extra white space
