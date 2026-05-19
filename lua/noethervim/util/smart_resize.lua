@@ -38,6 +38,24 @@ local function neighbor(dir)
   return vim.fn.win_getid(nbr)
 end
 
+--- True when there's nothing to resize against: either the current
+--- tabpage has at most one non-floating window, or the current window
+--- is itself a float (win_move_separator/statusline don't apply to
+--- floats).  Lets callers fall back to plain cursor motion.
+function M.is_solo()
+  if vim.api.nvim_win_get_config(0).relative ~= "" then
+    return true
+  end
+  local count = 0
+  for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+    if vim.api.nvim_win_get_config(win).relative == "" then
+      count = count + 1
+      if count > 1 then return false end
+    end
+  end
+  return true
+end
+
 function M.grow_right(amount)
   if neighbor("l") then
     vim.fn.win_move_separator(0, amount or M.amount)

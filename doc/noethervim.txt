@@ -896,7 +896,11 @@ Shadowed defaults: ~
     `<C-w>Q`        Toggle Trouble diagnostics panel
                                                     *noethervim-resize-arrows*
     `<Arrow>`       Resize current window: push the near edge in the
-                    arrow direction (grow).
+                    arrow direction (grow).  Falls back to `hjkl` cursor
+                    motion when the tab has a single non-floating window
+                    (nothing to resize against) or the current window is
+                    a float.  Counts pass through, so `5<Down>` jumps 5
+                    lines via the `j` remap.
                     (default: one-cell / one-line motion -- use `hjkl`)
     `<S-Arrow>`     Resize current window: pull the far edge in the
                     arrow direction (shrink).  No-op when no neighbor
