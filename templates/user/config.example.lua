@@ -80,6 +80,10 @@ return {
     -- Bracket insertion after accept is owned by blink (completion.accept.auto_brackets,
     -- already on); the standalone autopair plugin (mini.pairs in noethervim.plugins.autopair)
     -- handles bracket pairing while you type and is configured separately.
+    --
+    -- To remap individual completion keys (C-y, C-n/C-p, C-Space, etc.) drop a
+    -- spec into lua/user/plugins/ that overrides blink.cmp's `opts.keymap`.
+    -- See :help noethervim-completion-custom for ready-to-copy snippets.
 
     -- ── Animations ────────────────────────────────────────────────────────────
     -- Set drop = false to disable seasonal drop.nvim animations (default: enabled).
