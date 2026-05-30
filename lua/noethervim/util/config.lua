@@ -32,6 +32,7 @@ end
 local SCHEMA = {
   colorscheme                  = "string",
   colorscheme_persistence      = "boolean",
+  statusline_enabled           = "boolean",
   statusline                   = "table",
   obsidian_vault               = "string",
   completion_style             = "string",
@@ -41,6 +42,14 @@ local SCHEMA = {
   writing_filetypes            = "table",
   non_code_filetypes           = "table",
   spell_in_code                = "boolean",
+  toggle_feedback              = "string",
+}
+
+--- Permitted values for the small enum fields. Validated alongside the
+--- type schema; unknown strings would otherwise silently fall back to
+--- the default behavior, which masks typos.
+local ENUMS = {
+  toggle_feedback = { "notify", "echo", "off" },
 }
 
 --- Inner schema for `cfg.statusline`. Same shape as the outer schema.
@@ -67,6 +76,13 @@ function M.validate_types(cfg)
   for key, expected in pairs(SCHEMA) do
     if cfg[key] ~= nil then
       add(check("user.config", key, cfg[key], expected, true))
+    end
+  end
+
+  for key, valid in pairs(ENUMS) do
+    if type(cfg[key]) == "string" and not vim.tbl_contains(valid, cfg[key]) then
+      add("user.config." .. key .. ": expected one of "
+        .. table.concat(valid, ", ") .. ", got " .. cfg[key])
     end
   end
 

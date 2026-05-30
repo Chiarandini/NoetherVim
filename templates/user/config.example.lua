@@ -8,7 +8,14 @@
 --
 -- This is the single user-facing configuration surface.  Any key left
 -- nil (or absent) falls back to the distro default.
+--
+-- The `---@type` annotation below tells lua-language-server (via
+-- lazydev.nvim, which ships with the distro) what the returned table
+-- accepts.  With it in place, the completion popup shows per-field docs
+-- when you type a key, hover (`K`) shows the type + description, and
+-- typos like `toggle_feedbck` get flagged by the LSP.
 
+---@type noethervim.UserConfig
 return {
 
     -- ── Colorscheme ───────────────────────────────────────────────────────────
@@ -22,7 +29,13 @@ return {
 
 
     -- ── Statusline ────────────────────────────────────────────────────────────
-    -- Heirline-based statusline overrides.
+    -- Hard opt-out for NoetherVim's built-in statusline / tabline / winbar.
+    -- Set to false if you want to install lualine, mini.statusline, etc.
+    -- via lua/user/plugins/.  Default: true (heirline ships out of the box).
+    -- statusline_enabled = false,
+    --
+    -- Heirline-based statusline overrides.  Ignored when
+    -- statusline_enabled = false.
     -- statusline = {
     --     -- Shape of the colored mode block at the left of the statusline
     --     -- (and, for "slant"/"pointy"/"bubbly", an opening endcap on the
@@ -58,24 +71,52 @@ return {
     -- Files larger than this (in KB) also get conservative mode, regardless of filetype.
     -- blink_conservative_size_kb = 500,
 
-    -- Tab key philosophy.  Choices:
-    --   "snippet"   (default) Tab is reserved for LuaSnip jumps.  Pick from the
-    --               completion menu with C-n/C-p, accept with C-y.  Snippet expansion
-    --               and menu navigation never fight over the same key.
-    --   "supertab"  When the menu is visible, Tab accepts the highlighted item and
-    --               inserts a trailing space.  When no menu is open, Tab falls
-    --               back to a snippet jump (then to literal Tab).  S-Tab still
-    --               jumps backwards through snippets.
-    --   "navigate"  Tab cycles forward through the menu (= C-n) without accepting,
-    --               like the classic nvim-cmp default and most VSCode setups.
-    --               C-y or <CR> commits.  S-Tab cycles backward.
+    -- Tab key philosophy.  Three built-in styles -- "snippet" is the default.
     -- completion_style = "supertab",
     --
-    -- The two philosophies people actually fight about are "supertab" (IDE-style
-    -- muscle memory) and "snippet" (vim-vsnip / LuaSnip purist) -- those are
-    -- ~99% of setups.  "navigate" is here for users coming from older nvim-cmp
-    -- configs.  AI completion (Copilot/Codeium/etc.) is a fourth axis: bind Tab
-    -- to the AI plugin's accept_word in lua/user/keymaps.lua to shadow this.
+    -- ┌───────────────────────────┬───────────────┬───────────────────┬───────────────┐
+    -- │ Scenario                  │ snippet       │ supertab          │ navigate      │
+    -- ├───────────────────────────┼───────────────┼───────────────────┼───────────────┤
+    -- │ Menu: select next         │ C-n           │ C-n               │ Tab / C-n     │
+    -- │ Menu: select prev         │ C-p           │ C-p               │ S-Tab / C-p   │
+    -- │ Menu: accept selection    │ C-y           │ Tab (also adds    │ C-y or <CR>   │
+    -- │                           │               │  trailing space)  │               │
+    -- │ Menu: cancel / hide       │ C-e or <Esc>  │ C-e or <Esc>      │ C-e or <Esc>  │
+    -- │ Snippet: expand at cursor │ Tab           │ Tab (always wins  │ Tab (after    │
+    -- │                           │               │  over menu)       │  menu nav)    │
+    -- │ Snippet: jump fwd         │ Tab           │ Tab               │ Tab           │
+    -- │ Snippet: jump back        │ S-Tab         │ S-Tab             │ S-Tab         │
+    -- │ Snippet: cancel jumps     │ <Esc>         │ <Esc>             │ <Esc>         │
+    -- │ Cmdline: next match       │ Tab (selects  │ Tab               │ Tab           │
+    -- │                           │  + inserts)   │                   │               │
+    -- │ Cmdline: prev match       │ S-Tab         │ S-Tab             │ S-Tab         │
+    -- └───────────────────────────┴───────────────┴───────────────────┴───────────────┘
+    --
+    -- Notes on each style:
+    --   "snippet"   Tab is reserved for LuaSnip; menu nav is C-n/C-p, accept is
+    --               C-y.  Snippet expansion and menu navigation never fight.
+    --               Pick this if you live in snippets and prefer muscle memory
+    --               that matches plain vim's "completion is C-n / C-y".
+    --   "supertab"  Tab does the obvious thing in IDE muscle memory: snippets
+    --               win when expandable, otherwise accept the menu item with
+    --               trailing space.  Best for users coming from VSCode.
+    --   "navigate"  Tab cycles the menu (= C-n) without accepting -- the classic
+    --               nvim-cmp default.  Best for users migrating from older
+    --               cmp setups.
+    --
+    -- AI completion (Copilot / Codeium / supermaven / smart-actions) is NOT
+    -- bundled.  When you add one, bind its accept-word action to Tab inside
+    -- lua/user/keymaps.lua AFTER blink loads; it will shadow whatever the
+    -- chosen style does for Tab.  Minimal sketch:
+    --
+    --     vim.keymap.set("i", "<Tab>", function()
+    --       if require("copilot.suggestion").is_visible() then
+    --         require("copilot.suggestion").accept_word()
+    --       else
+    --         -- fall through to blink / luasnip
+    --         vim.api.nvim_feedkeys(vim.keycode("<Tab>"), "n", false)
+    --       end
+    --     end, { desc = "ai accept / completion" })
     --
     -- Bracket insertion after accept is owned by blink (completion.accept.auto_brackets,
     -- already on); the standalone autopair plugin (mini.pairs in noethervim.plugins.autopair)
@@ -108,5 +149,15 @@ return {
     -- in lua/user/options.lua so getUserName is split as get/User/Name.
     -- Default: false.
     -- spell_in_code = true,
+
+
+    -- ── Toggle feedback ───────────────────────────────────────────────────────
+    -- Channel for the confirmation message shown when a bracket-prefix toggle
+    -- (`[ow`, `]os`, etc.) fires.
+    --   "notify" (default) -- vim.notify, rendered as a snacks toast
+    --   "echo"             -- nvim_echo, classic one-line cmdline message
+    --                         (still kept in `:messages`)
+    --   "off"              -- silent
+    -- toggle_feedback = "echo",
 
 }

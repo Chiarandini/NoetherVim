@@ -8,7 +8,33 @@
 -- toggle(lhs, enable_rhs, disable_rhs, desc)  → maps [lhs and ]lhs
 -- map(lhs, rhs, desc)                         → single directional map
 
-local function TOGGLE_PRINT(text)
+local M = {}
+
+--- Style of confirmation message emitted when a toggle fires. Read each
+--- time so a user can flip it at runtime without restarting. Values:
+---   "notify" (default) -- vim.notify, picked up by snacks as a toast
+---   "echo"             -- nvim_echo, classic cmdline message (kept in :messages)
+---   "off"              -- silent
+local function feedback_style()
+  local ok, user = pcall(require, "user.config")
+  if ok and type(user) == "table" and type(user.toggle_feedback) == "string" then
+    return user.toggle_feedback
+  end
+  return "notify"
+end
+
+--- Emit a toggle confirmation message via the user-chosen channel. Exposed
+--- so the keymap RHS strings can route through a single dispatcher rather
+--- than inlining vim.notify -- changing feedback_style flips every toggle
+--- at once.
+---@param text string
+function M._notify(text)
+  local style = feedback_style()
+  if style == "off" then return end
+  if style == "echo" then
+    vim.api.nvim_echo({ { text } }, true, {})
+    return
+  end
   vim.notify(text, vim.log.levels.INFO)
 end
 
@@ -17,7 +43,7 @@ local function map(lhs, rhs, desc, echo)
   if type(rhs) == "string" then
     if echo ~= false then
       vim.keymap.set("n", lhs,
-        rhs .. '<cmd>lua vim.notify("' .. descr .. '", vim.log.levels.INFO)<cr>',
+        rhs .. '<cmd>lua require("noethervim.toggles")._notify("' .. descr .. '")<cr>',
         { desc = descr })
     else
       vim.keymap.set("n", lhs, rhs, { desc = descr })
@@ -26,7 +52,7 @@ local function map(lhs, rhs, desc, echo)
     if echo ~= false then
       vim.keymap.set("n", lhs, function()
         rhs()
-        TOGGLE_PRINT(descr)
+        M._notify(descr)
       end, { desc = descr })
     else
       vim.keymap.set("n", lhs, rhs, { desc = descr })
@@ -139,7 +165,7 @@ toggle("oA",
 vim.g.blink_toggle = true
 local function toggle_cmp(bool)
   vim.g.blink_toggle = bool
-  vim.notify("completion " .. (bool and "enabled" or "disabled"), vim.log.levels.INFO)
+  M._notify("completion " .. (bool and "enabled" or "disabled"))
 end
 vim.keymap.set("n", "[oC", function() toggle_cmp(true)  end, { desc = "enable completion" })
 vim.keymap.set("n", "]oC", function() toggle_cmp(false) end, { desc = "disable completion" })
@@ -291,3 +317,5 @@ xmap ]e <Plug>(nv-move-sel-down)
 nmap [<Space> <Plug>(nv-blank-up)
 nmap ]<Space> <Plug>(nv-blank-down)
 ]])
+
+return M

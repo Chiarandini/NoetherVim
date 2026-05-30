@@ -131,6 +131,13 @@ return {
 				opts = {
 					library = {
 						{ path = "${3rd}/luv/library", words = { "vim%.uv" } },
+						-- Surface noethervim.UserConfig (and any other public
+						-- LuaCATS class under the noethervim.* namespace) in
+						-- lua/user/*.lua so the popup menu shows field docs
+						-- and typos are flagged. Gated by `words` so the
+						-- distribution source only loads into lua_ls when
+						-- the buffer actually references it.
+						{ path = "NoetherVim",         words = { "noethervim%." } },
 					},
 				},
 			},

@@ -370,6 +370,16 @@ Current keys: ~
                                   you want CamelCase splitting.  See
                                   |noethervim-filetype-profiles|.
                                   Default: `false`.
+    `toggle_feedback`               Channel for the confirmation message
+                                  emitted when a bracket-prefix toggle
+                                  (`[ow`, `]os`, etc.) fires.
+                                  `"notify"` (default) routes through
+                                  `vim.notify` and is picked up as a
+                                  snacks toast.  `"echo"` uses
+                                  `nvim_echo` for the classic one-line
+                                  cmdline message (still recorded in
+                                  `:messages`).  `"off"` suppresses the
+                                  message entirely.
 
 See `templates/user/config.example.lua` for the annotated template.
 

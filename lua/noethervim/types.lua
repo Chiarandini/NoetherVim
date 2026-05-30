@@ -48,8 +48,14 @@
 ---@field colorscheme_persistence? boolean
 ---     If true, restore the last picked colorscheme on startup. Has no
 ---     effect unless the colorscheme bundle is enabled.
+---@field statusline_enabled? boolean
+---     If false, skip NoetherVim's heirline statusline/tabline/winbar
+---     entirely so a user-supplied alternative (lualine, mini.statusline,
+---     etc.) can take over with no conflict. Default: true. Drop the
+---     replacement plugin into lua/user/plugins/.
 ---@field statusline? noethervim.StatuslineConfig
----     Heirline-based statusline overrides.
+---     Heirline-based statusline overrides. Ignored when
+---     `statusline_enabled = false`.
 ---@field obsidian_vault? string
 ---     Absolute or `~`-prefixed path to your Obsidian vault. Required by the
 ---     `obsidian` bundle; the bundle no-ops without it.
@@ -73,5 +79,12 @@
 ---@field spell_in_code? boolean
 ---     If true, the code profile enables spellcheck, scoped to comments
 ---     and strings via treesitter `@spell` captures. Default: false.
+---@field toggle_feedback? "notify"|"echo"|"off"
+---     Channel for the confirmation message emitted when a bracket-prefix
+---     toggle (`[ox` / `]ox`, etc.) fires. `"notify"` (default) routes
+---     through `vim.notify`, which snacks renders as a toast. `"echo"`
+---     uses `nvim_echo` for the classic single-line cmdline message
+---     (still recorded in `:messages`). `"off"` suppresses the message
+---     entirely.
 
 return {}
