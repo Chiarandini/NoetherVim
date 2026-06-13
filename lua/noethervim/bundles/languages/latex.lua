@@ -80,8 +80,9 @@ return {
       local ns = vim.api.nvim_create_namespace("noethervim_latex_highlights")
 
       local function highlight_theorem_tags(bufnr)
-        local parser = vim.treesitter.get_parser(bufnr, "latex")
-        if not parser then return end
+        -- get_parser throws when the latex parser isn't installed
+        local ok, parser = pcall(vim.treesitter.get_parser, bufnr, "latex")
+        if not ok or not parser then return end
         vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
         local tree = parser:parse()[1]
         if not tree then return end
