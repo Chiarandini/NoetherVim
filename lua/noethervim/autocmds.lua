@@ -298,3 +298,41 @@ vim.api.nvim_create_autocmd({ "FileType", "BufWinEnter" }, {
   end,
 })
 
+-- ──────────────────────────────────────────────────────────────
+--  Restore last cursor position
+-- ──────────────────────────────────────────────────────────────
+-- In-house replacement for ethanholz/nvim-lastplace: that plugin's
+-- BufRead handler registered a fresh buffer-local BufWinEnter autocmd
+-- on every read with no dedup, so handlers piled up over a session
+-- (and exploded quadratically whenever the quickfix buffer churned).
+-- All we actually need is the classic '"-mark jump, scheduled so it
+-- runs after filetype detection has settled.
+
+local lastplace_ignore_buftype  = { quickfix = true, nofile = true, help = true }
+local lastplace_ignore_filetype = { gitcommit = true, gitrebase = true, svn = true, hgcommit = true }
+
+vim.api.nvim_create_autocmd("BufReadPost", {
+  group = vim.api.nvim_create_augroup("noethervim_lastplace", { clear = true }),
+  callback = function(ev)
+    local buf = ev.buf
+    vim.schedule(function()
+      if not vim.api.nvim_buf_is_valid(buf)
+          or lastplace_ignore_buftype[vim.bo[buf].buftype]
+          or lastplace_ignore_filetype[vim.bo[buf].filetype] then
+        return
+      end
+      local mark = vim.api.nvim_buf_get_mark(buf, '"')
+      if mark[1] <= 0 or mark[1] > vim.api.nvim_buf_line_count(buf) then return end
+      for _, win in ipairs(vim.fn.win_findbuf(buf)) do
+        -- Respect an explicit position (`nvim +42 file`, a quickfix
+        -- jump, ...): only restore when the cursor still sits on line 1.
+        if vim.api.nvim_win_get_cursor(win)[1] == 1 then
+          pcall(vim.api.nvim_win_set_cursor, win, mark)
+          -- open folds at the restored position and center the view
+          vim.api.nvim_win_call(win, function() vim.cmd("normal! zvzz") end)
+        end
+      end
+    end)
+  end,
+})
+
