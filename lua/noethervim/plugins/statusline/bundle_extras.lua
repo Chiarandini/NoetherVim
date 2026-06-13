@@ -26,6 +26,34 @@ M.DAPMessages = {
   hl = function() return utils.get_highlight("Debug") end,
 }
 
+-- Passive vimtex error count, cached per quickfix list generation.
+--
+-- Never call vimtex#qf#inquire from statusline code: it is not a query --
+-- it re-parses the compile log and REBUILDS the quickfix list (~36
+-- `setlocal errorformat` calls + `caddfile`) on every render.  That
+-- storms OptionSet/FileType, which redraws plugins (treesitter-context
+-- blink), which re-renders the statusline: a self-sustaining loop that
+-- persists after the compiler stops, because status stays 3.  The
+-- rebuild also aborts in statusline context (textlock), so the count
+-- never rendered anyway.  vimtex's own compile callback already ran
+-- inquire and filled the list; just read it.
+local qf_cache = { id = -1, tick = -1, count = 0 }
+local function vimtex_qf_error_count()
+  local info = vim.fn.getqflist({ id = 0, changedtick = 1, title = 1 })
+  if info.id == qf_cache.id and info.changedtick == qf_cache.tick then
+    return qf_cache.count
+  end
+  local count = 0
+  -- vimtex titles its list "VimTeX errors (...)"; ignore foreign lists.
+  if (info.title or ""):find("VimTeX", 1, true) then
+    for _, item in ipairs(vim.fn.getqflist()) do
+      if item.valid == 1 then count = count + 1 end
+    end
+  end
+  qf_cache = { id = info.id, tick = info.changedtick, count = count }
+  return count
+end
+
 -- VimTeX compiler status.
 --
 -- Picks the most relevant vimtex state for the current buffer (handling
@@ -87,9 +115,7 @@ M.VimtexCompilerStatus = {
     elseif status == 2 then
       return role_tag() .. "compiled " .. icons.checkmark .. continuous
     elseif status == 3 then
-      local count = 0
-      local ok, n = pcall(vim.fn["vimtex#qf#inquire"], "")
-      if ok then count = tonumber(n) or 0 end
+      local count = vimtex_qf_error_count()
       if count > 0 then
         return string.format("%scompile error (%d) %s%s", role_tag(), count, icons.error, continuous)
       end
