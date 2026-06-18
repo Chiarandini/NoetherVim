@@ -5,6 +5,17 @@ return {
   {
     'rebelot/heirline.nvim',
     event = 'UIEnter',
+    -- Hard opt-out: user.config.statusline_enabled = false skips heirline
+    -- entirely so a replacement plugin (lualine, mini.statusline, etc.)
+    -- can take over without conflict.  Bundle-level toggles still go
+    -- through `enabled = function() ... end`; this one uses `cond`
+    -- because lazy evaluates cond at spec resolution -- if the plugin
+    -- is gone, none of its UIEnter wiring runs in the first place.
+    cond = function()
+      local ok, user = pcall(require, "user.config")
+      if not ok or type(user) ~= "table" then return true end
+      return user.statusline_enabled ~= false
+    end,
     config = function()
       local conditions = require("heirline.conditions")
       local utils = require("heirline.utils")
