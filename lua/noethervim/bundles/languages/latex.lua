@@ -216,7 +216,11 @@ let g:vimtex_compiler_latexmk_engines = {
                 compile_start[state.tex] = (vim.uv or vim.loop).now()
               end
               vstatus.invalidate()
-              pcall(vim.cmd.redrawstatus)
+              -- bang = refresh every window's statusline, not just the
+              -- current one.  vimtex emits these in the parent's buffer
+              -- context; the user is often focused elsewhere (subfile
+              -- buffer, PDF viewer split) when a compile lands.
+              pcall(vim.cmd.redrawstatus, { bang = true })
             end,
           })
 
@@ -225,7 +229,11 @@ let g:vimtex_compiler_latexmk_engines = {
             pattern = { "VimtexEventCompiling", "VimtexEventCompileStopped", "VimtexEventCompileFailed" },
             callback = function()
               vstatus.invalidate()
-              pcall(vim.cmd.redrawstatus)
+              -- bang = refresh every window's statusline, not just the
+              -- current one.  vimtex emits these in the parent's buffer
+              -- context; the user is often focused elsewhere (subfile
+              -- buffer, PDF viewer split) when a compile lands.
+              pcall(vim.cmd.redrawstatus, { bang = true })
             end,
           })
 
@@ -257,7 +265,11 @@ let g:vimtex_compiler_latexmk_engines = {
                 end
               end
               vstatus.invalidate()
-              pcall(vim.cmd.redrawstatus)
+              -- bang = refresh every window's statusline, not just the
+              -- current one.  vimtex emits these in the parent's buffer
+              -- context; the user is often focused elsewhere (subfile
+              -- buffer, PDF viewer split) when a compile lands.
+              pcall(vim.cmd.redrawstatus, { bang = true })
             end,
           })
 
@@ -268,9 +280,10 @@ let g:vimtex_compiler_latexmk_engines = {
           })
 
           -- Manually fire VimtexEventInitPost-equivalent: the current
-          -- buffer just opened, so refresh the statusline once.
+          -- buffer just opened, so refresh the statusline once.  Bang
+          -- to match the event handlers above.
           vstatus.invalidate()
-          pcall(vim.cmd.redrawstatus)
+          pcall(vim.cmd.redrawstatus, { bang = true })
         end,
       })
 
