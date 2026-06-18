@@ -28,7 +28,10 @@ return {
         workspaces = {
           { name = "main", path = vault },
         },
-        completion = { nvim_cmp = false, blink = true, create_new = true },
+        -- Completion is provided automatically via obsidian.nvim's built-in
+        -- obsidian-ls LSP server (picked up through blink.cmp's lsp source);
+        -- the old `nvim_cmp`/`blink` toggles are deprecated (removed in 4.0).
+        completion = { create_new = true },
         picker = {
           name = "snacks.pick",
           note_mappings  = { new = "<c-n>", insert_link = "<C-l>" },
