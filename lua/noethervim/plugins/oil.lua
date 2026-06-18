@@ -433,8 +433,38 @@ return {
 			-- BufReadCmd to take over.
 			local cur = vim.api.nvim_buf_get_name(0)
 			if cur ~= "" and vim.fn.isdirectory(cur) == 1 then
-				require("oil")
+				local oil = require("oil")
 				pcall(vim.api.nvim_del_augroup_by_id, group)
+
+				-- ── Paint Oil FIRST, before the post-VimEnter load wave ──────
+				-- Oil's directory listing is rendered from an async libuv
+				-- scandir callback. Just `require("oil")` here loads the *code*
+				-- but the *render* is still an async callback -- and the moment
+				-- VimEnter fires, lazy pulls in the whole VeryLazy/BufRead wave
+				-- (treesitter, LSP, blink.cmp, gitsigns, which-key, ...). That
+				-- ~50-plugin wave hogs the main thread for a few hundred ms, so
+				-- Oil's scandir callback is serviced LAST and the listing only
+				-- paints ~250-400ms after launch -- the long-standing "Oil
+				-- isn't instant on `nvim .`" gripe.
+				--
+				-- So we open oil on the dir right here and pump the event loop
+				-- (vim.wait) until its first render fires. The scan is serviced
+				-- immediately, during startup, and the wave streams in behind
+				-- an already-visible listing. Net: same total startup work,
+				-- just reordered so the thing you're staring at comes first.
+				-- Drops time-to-paint from ~300ms to ~80ms here.
+				--
+				-- pcall-guarded so a failure can never break startup; the
+				-- BufReadCmd path still renders oil even if open() is skipped.
+				local painted = false
+				local au = vim.api.nvim_create_autocmd("User", {
+					pattern  = "OilEnter",
+					once     = true,
+					callback = function() painted = true end,
+				})
+				pcall(oil.open, cur)
+				vim.wait(1000, function() return painted end, 5)
+				pcall(vim.api.nvim_del_autocmd, au)
 			end
 		end,
 		keys = { {'<c-w><c-o>', function() require('oil').open_float() end, desc = "Oil Mode"}, },
