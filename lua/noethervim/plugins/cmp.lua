@@ -47,6 +47,12 @@ return {
 				}
 				if style == "supertab" then
 					base["<Tab>"] = {
+						-- snippet_forward runs FIRST so an expandable LuaSnip
+						-- trigger at the cursor (e.g. `:defn` in tex) wins over
+						-- whatever the menu is currently showing (vimtex, lsp,
+						-- buffer words).  Without this, Tab accepts the menu's
+						-- first match and the snippet never gets a chance.
+						"snippet_forward",
 						function(cmp)
 							if not cmp.is_visible() then return end
 							-- blink's select_and_accept / accept schedule the
@@ -67,7 +73,6 @@ return {
 							end
 							return cmp.accept({ callback = append_space })
 						end,
-						"snippet_forward",
 						"fallback",
 					}
 				elseif style == "navigate" then
@@ -159,6 +164,23 @@ return {
 
 					snippets = {
 						max_items = 8, -- large LuaSnip set; cap what reaches the renderer
+						-- Hide LuaSnip regex-trigger (regTrig) snippets from the
+						-- menu.  blink's adapter sets `insertText = snip.trigger`
+						-- on these items, so the regex pattern itself gets pasted
+						-- when the user accepts -- e.g. `:defn` would yield
+						-- `:defn%s?([:%w-...])` in the buffer.  They stay
+						-- expandable: typing the trigger and pressing Tab routes
+						-- through snippet_forward -> luasnip's expand_or_jump.
+						transform_items = function(_, items)
+							local ok, ls = pcall(require, "luasnip")
+							if not ok then return items end
+							return vim.tbl_filter(function(item)
+								local id = item.data and item.data.snip_id
+								if not id then return true end
+								local snip = ls.get_id_snippet(id)
+								return not (snip and snip.regTrig)
+							end, items)
+						end,
 					},
 
 					-- ── Step 3: custom native blink sources ───────────────────────────
