@@ -356,6 +356,78 @@ function M.status()
   vim.notify(table.concat(lines, "\n"), vim.log.levels.INFO, { title = "NoetherVim" })
 end
 
+-- ── Conventions reference ───────────────────────────────────────────
+-- Provisional: surfaces the distribution's shared conventions in one
+-- scratch buffer so they don't have to be re-discovered from source.
+-- Kept short on purpose; expand only when something is actually
+-- non-obvious from `:help noethervim`.  May be removed if it doesn't
+-- prove useful in practice.
+function M.conventions()
+  local lines = {
+    "NoetherVim conventions  (provisional -- may change or be removed)",
+    "",
+    "──  Load order  ─────────────────────────────────────────────────",
+    "  1. lua/noethervim/options.lua, autocmds.lua, keymaps.lua",
+    "  2. lua/noethervim/plugins/* (core specs via lazy.nvim)",
+    "  3. lua/noethervim/bundles/<cat>/<name>.lua (opt-in bundles)",
+    "  4. lua/user/* (your overrides -- last-write-wins)",
+    "",
+    "──  Configuration philosophy  ───────────────────────────────────",
+    "  user.config       Declarative knobs (set once).  Primary source.",
+    "                    See templates/user/config.example.lua.",
+    "  vim.g.noethervim_ Bootstrap flags only (must be set BEFORE the",
+    "                    distro loads -- e.g. noethervim_dev,",
+    "                    noethervim_no_user).",
+    "  vim.g.heirline_*  Runtime toggles flipped by commands/keymaps",
+    "                    after startup (e.g. [oG toggles git module).",
+    "",
+    "──  Plugin override pattern  ────────────────────────────────────",
+    "  lazy.nvim merges `opts` tables across spec entries.  To tune a",
+    "  plugin, declare it again in lua/user/plugins/<name>.lua with",
+    "  the SAME repo string and an `opts` (or `opts = function`) entry.",
+    "  No registration API; the merge is mechanical.",
+    "",
+    "──  Where to put new code  ──────────────────────────────────────",
+    "  Keymap           keymaps.lua  OR  ftplugin/<ft>.lua  (per-ft)",
+    "  Autocmd          autocmds.lua",
+    "  Plugin spec      plugins/<name>.lua  OR  bundles/<cat>/<name>.lua",
+    "  Filetype option  ftplugin/<ft>.lua",
+    "  LSP server       lsp/<server>.lua",
+    "",
+    "──  Update safety  ──────────────────────────────────────────────",
+    "  `git pull` or `:Lazy update` MUST NOT overwrite user config.",
+    "  User files (lua/user/*) live in a separate tree -- they are",
+    "  loaded after distro files, so they always win.",
+    "",
+    "  Press q or <Esc> to close.",
+  }
+
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  vim.bo[buf].buftype   = "nofile"
+  vim.bo[buf].bufhidden = "wipe"
+  vim.bo[buf].modifiable = false
+  vim.bo[buf].filetype  = "noethervim-conventions"
+
+  local width  = math.min(78, vim.o.columns - 8)
+  local height = math.min(#lines + 2, vim.o.lines - 8)
+  local win = vim.api.nvim_open_win(buf, true, {
+    relative  = "editor",
+    width     = width,
+    height    = height,
+    row       = math.floor((vim.o.lines - height) / 2),
+    col       = math.floor((vim.o.columns - width) / 2),
+    style     = "minimal",
+    border    = "rounded",
+    title     = " NoetherVim conventions ",
+    title_pos = "center",
+  })
+
+  local function close() pcall(vim.api.nvim_win_close, win, true) end
+  vim.keymap.set("n", "q",     close, { buffer = buf, nowait = true, silent = true })
+  vim.keymap.set("n", "<Esc>", close, { buffer = buf, nowait = true, silent = true })
+end
+
 -- ── Keymap source helpers ────────────────────────────────────────
 --
 -- Source attribution for a (mode, resolved_lhs) pair is driven by three
@@ -1786,6 +1858,7 @@ local subcommand_descriptions = {
   templates         = "Stamp user-config templates into lua/user/ (<C-y>)",
   ["keymap-guide"]  = "Keymap namespace reference buffer",
   status            = "Show which user override files are loaded",
+  conventions       = "Quick reference of load order, config, and overrides (provisional)",
   diff              = "Compare overrides vs distro defaults (keymaps / options / file)",
   override          = "Open the user override file matching the current buffer",
   ["debug-keymaps"] = "Trace where each keymap was registered",
@@ -1800,6 +1873,7 @@ local subcommands = {
   templates         = M.templates,
   ["keymap-guide"]  = function() require("noethervim.guide").open() end,
   status            = M.status,
+  conventions       = M.conventions,
   diff              = function(args) M.diff(args) end,
   override          = M.override,
   ["debug-keymaps"] = function() M.debug_keymaps() end,
