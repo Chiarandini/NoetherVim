@@ -29,6 +29,13 @@
 -- Vim's default (insert previously inserted text):
 -- vim.keymap.del("i", "<C-a>")
 
+-- ── Insert-mode escape  ──────────────────────────────────────────────────────
+-- NoetherVim doesn't ship `jk` -> <Esc>.  Words containing the literal
+-- "jk" (e.g. "rejkindle") would stall while vim waits to see whether
+-- the next key completes the mapping; if that tradeoff is fine for you,
+-- uncomment:
+-- vim.keymap.set("i", "jk", "<Esc>", { desc = "escape to normal mode" })
+
 -- ── Add personal keymaps ─────────────────────────────────────────────────────
 -- Use <Leader> for global actions, <LocalLeader> for filetype-specific
 -- ones, and SearchLeader (default <Space>) for fuzzy navigation only.
