@@ -22,6 +22,8 @@
 -- Basic buffer-local options (textwidth, synmaxcol) stay in ftplugin/tex.lua.
 -- Folding is handled by nvim-ufo + texlab (zc to close, zR/zM to toggle all).
 
+local SearchLeader = require("noethervim.util").search_leader
+
 local function tex_shift_enter()
   local row, col  = unpack(vim.api.nvim_win_get_cursor(0))
   local line       = vim.api.nvim_get_current_line()
@@ -534,6 +536,9 @@ let g:vimtex_compiler_latexmk_engines = {
     },
     ft   = { "tex", "latex" },
     cmd  = { "LatexLabels", "SnacksLatexLabels", "SnacksLatexLabelsExport" },
+		keys = {
+			{ SearchLeader .. "w", "<cmd>SnacksLatexLabels<cr>", desc = "labels" },
+		},
     opts = {
       cache_strategy    = "global",
       recursive         = true,
