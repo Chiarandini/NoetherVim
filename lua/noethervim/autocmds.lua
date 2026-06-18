@@ -123,15 +123,33 @@ vim.api.nvim_create_autocmd({ "BufHidden", "BufWipeout" }, {
 -- ──────────────────────────────────────────────────────────────
 --  Auto-reload buffers when focus returns
 -- ──────────────────────────────────────────────────────────────
+-- The trigger set fires rapidly during workflows that thrash focus or
+-- buffer enters -- e.g. a VimTeX continuous compile that bounces between
+-- the tex source, log/aux scratch buffers, and the PDF viewer.  Each
+-- bare `:checktime` walks every loaded buffer, and the resulting UI churn
+-- (tab modified flags, statusline redraws) shows up as flicker.  Coalesce
+-- bursts into a single trailing-edge call so checktime runs at most once
+-- per ~200ms.  Legitimate reloads still feel instant; the cost is a tiny
+-- delay before an externally-edited file pops back in.
 
-vim.api.nvim_create_autocmd(
-  { "FocusGained", "BufEnter", "InsertEnter", "InsertLeave", "FileChangedShell" },
-  {
-    group   = vim.api.nvim_create_augroup("noethervim_autoread", { clear = true }),
-    pattern = "*",
-    callback = function() vim.cmd("checktime") end,
-  }
-)
+do
+  local pending = false
+  vim.api.nvim_create_autocmd(
+    { "FocusGained", "BufEnter", "InsertEnter", "InsertLeave", "FileChangedShell" },
+    {
+      group   = vim.api.nvim_create_augroup("noethervim_autoread", { clear = true }),
+      pattern = "*",
+      callback = function()
+        if pending then return end
+        pending = true
+        vim.defer_fn(function()
+          pending = false
+          pcall(vim.cmd, "checktime")
+        end, 200)
+      end,
+    }
+  )
+end
 
 -- ──────────────────────────────────────────────────────────────
 --  Out-of-sync detection
