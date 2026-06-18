@@ -212,6 +212,9 @@ return {
 
       local SpecialStatusline = {
         condition = function()
+          -- :DiffOrig's disk-side scratch is nofile but conceptually a file;
+          -- let it fall through to DefaultStatusline so it renders normally.
+          if vim.b.noethervim_diff_scratch then return false end
           return conditions.buffer_matches({
             buftype = { "nofile", "prompt", "help", "quickfix" },
             filetype = { "^git.*", "fugitive" },
@@ -260,7 +263,7 @@ return {
       local heirline = require("heirline")
       heirline.setup({
         statusline = StatusLines,
-        -- winbar = winbar.Dropbar,
+        winbar = winbar.DiffLabel,
         tabline = tabline.TabPages,
       })
 

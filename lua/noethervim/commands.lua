@@ -33,13 +33,23 @@ end, {
 -- ──────────────────────────────────────────────────────────────
 
 vim.api.nvim_create_user_command("DiffOrig", function()
-  local ft = vim.bo.filetype
+  local ft        = vim.bo.filetype
+  local orig_tail = vim.fn.expand("%:t")
+  if orig_tail == "" then orig_tail = "[No Name]" end
   vim.cmd("vert new")
   vim.bo.buftype   = "nofile"
   vim.bo.bufhidden = "wipe"
   vim.bo.filetype  = ft
   vim.cmd("r ++edit #")
   vim.cmd("0d_")
+  -- Tag the scratch buffer so the statusline / tabline / winbar can tell
+  -- which window is the on-disk side. pcall guards against E95 when the
+  -- name is already taken (e.g. a leftover scratch from a prior DiffOrig).
+  pcall(vim.api.nvim_buf_set_name, 0, ("[disk] %s"):format(orig_tail))
+  -- Mark this as a DiffOrig scratch so SpecialStatusline doesn't catch it
+  -- on its buftype=nofile rule and render the minimal help-style bar
+  -- (e.g. if the user :bdelete's the original window with autowrite on).
+  vim.b.noethervim_diff_scratch = true
   vim.cmd("diffthis")
   vim.cmd("wincmd p")
   vim.cmd("diffthis")

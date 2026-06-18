@@ -31,7 +31,19 @@ return {
 		dependencies = "kevinhwang91/promise-async",
 		event = "BufReadPost",
 		opts = {
+			-- Disable the brief background flash that ufo paints across a fold
+			-- when it opens. The effect is purely cosmetic, and its extmark
+			-- writes (render/init.lua highlightLinesWithTimeout) reach for
+			-- end_row values that go stale during diff-mode undo/redo and
+			-- spam "Invalid 'end_row': out of range" through the decoration
+			-- provider. Setting the timeout to 0 short-circuits the whole
+			-- code path (see decorator.lua: openFoldHlEnabled gate).
+			open_fold_hl_timeout = 0,
 			provider_selector = function(bufnr, filetype, buftype)
+				-- Skip transient scratch buffers (e.g. :DiffOrig's disk-side
+				-- pane). ufo otherwise carries fold state across the diff
+				-- pair, which compounds the highlight-flash crash above.
+				if buftype == 'nofile' then return '' end
 				local ftMap = {
 					vim = 'indent',
 					python = {'indent'},
