@@ -324,8 +324,19 @@ let g:vimtex_compiler_latexmk_engines = {
             plug_opts("spell: add (latex-aware)"))
           vim.keymap.set("n", "zw", "<Plug>(noethervim-tex-accent-mark-wrong)",
             plug_opts("spell: mark wrong (latex-aware)"))
-          vim.keymap.set("n", "z=", "<Plug>(noethervim-tex-accent-suggest)",
-            plug_opts("spell: suggest (latex-aware)"))
+          -- z= : on a LaTeX accent token (K\"ahler) open the custom
+          -- latex-aware picker that re-encodes the chosen suggestion back to
+          -- its accent macro.  On a plain word, fall through to which-key's
+          -- spelling popup -- the global z= behaviour this buffer-local map
+          -- would otherwise shadow.
+          vim.keymap.set("n", "z=", function()
+            local accent = require("noethervim-tex.accent_spell")
+            if accent.token_under_cursor() then
+              accent.suggest()
+            else
+              require("which-key").show({ keys = "z=" })
+            end
+          end, o("spell: suggest (which-key / latex-aware)"))
         end,
       })
     end,
