@@ -276,6 +276,18 @@ return {
         statusline = StatusLines,
         winbar = winbar.DiffLabel,
         tabline = tabline.TabPages,
+        opts = {
+          -- The DiffLabel winbar is meaningful only on diff windows (its
+          -- `condition` is `vim.wo.diff`), which are normal splits. Heirline
+          -- still stamps the winbar option onto every window taller than one
+          -- row; on a normal window an empty (non-diff) winbar collapses, but
+          -- on a floating window the reserved row stays as a blank slot -- e.g.
+          -- the blank row above blink.cmp's completion menu. Skip floats so the
+          -- winbar never lands there; diff splits are unaffected.
+          disable_winbar_cb = function()
+            return vim.api.nvim_win_get_config(0).relative ~= ""
+          end,
+        },
       })
 
       -- Error boundary: a crash inside any component propagates up through
