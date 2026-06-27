@@ -4,7 +4,7 @@ return {
 	config = function()
 		require("argmark").setup {
 			keys = {
-				edit = "<space>ae",
+				edit = require("noethervim.util").search_leader .. "ae",
 				rm = "<leader>ax",
 				go = "<leader>a<leader>",
 				add = "<leader>aa",
