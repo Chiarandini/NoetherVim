@@ -81,19 +81,52 @@ return {
     init = function()
       local ns = vim.api.nvim_create_namespace("noethervim_latex_highlights")
 
+      -- Theorem environments in this distro use the form
+      --   \begin{theorem}{label}{Human Tag}
+      -- (the same \begin{env}{..}{..} convention snacks-latex-labels keys
+      -- off of below).  We colour that second curly arg -- the
+      -- human-readable "tag" -- with texRefArg.
+      --
+      -- A dedicated, predicate-free query is built lazily on first use.
+      -- The old code iterated the *entire* latex `highlights` query looking
+      -- for a `texTheoremTag` capture, which (a) the rewritten upstream
+      -- latex grammar no longer emits, so the feature silently did nothing,
+      -- and (b) forced evaluation of that query's #eq?/#match? predicates,
+      -- whose get_node_text calls raised "Index out of bounds" on a buffer
+      -- still settling right after BufRead.
+      local theorem_query
+      local function get_query()
+        if theorem_query == nil then
+          local ok, q = pcall(vim.treesitter.query.parse, "latex", [[
+            (generic_environment
+              . (begin)
+              . (curly_group)
+              . (curly_group (text) @theorem_tag))
+          ]])
+          theorem_query = ok and q or false
+        end
+        return theorem_query or nil
+      end
+
       local function highlight_theorem_tags(bufnr)
+        if not vim.api.nvim_buf_is_loaded(bufnr) then return end
         -- get_parser throws when the latex parser isn't installed
         local ok, parser = pcall(vim.treesitter.get_parser, bufnr, "latex")
         if not ok or not parser then return end
-        vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
+        local query = get_query()
+        if not query then return end
         local tree = parser:parse()[1]
         if not tree then return end
-        local query = vim.treesitter.query.get("latex", "highlights")
-        if not query then return end
+
+        vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
         for id, node in query:iter_captures(tree:root(), bufnr) do
-          if query.captures[id] == "texTheoremTag" then
+          if query.captures[id] == "theorem_tag" then
             local r1, c1, r2, c2 = node:range()
-            vim.api.nvim_buf_set_extmark(bufnr, ns, r1, c1, {
+            -- pcall: a node range can momentarily outrun the buffer if the
+            -- tree lags an edit, which would make set_extmark raise
+            -- "Invalid 'col': out of range".  Don't let one stale node abort
+            -- the whole pass.
+            pcall(vim.api.nvim_buf_set_extmark, bufnr, ns, r1, c1, {
               end_row  = r2,
               end_col  = c2,
               hl_group = "texRefArg",
@@ -106,7 +139,13 @@ return {
       vim.api.nvim_create_autocmd({ "BufRead", "BufWritePost" }, {
         group    = vim.api.nvim_create_augroup("noethervim_latex_hl", { clear = true }),
         pattern  = "*.tex",
-        callback = function(args) highlight_theorem_tags(args.buf) end,
+        -- Defer off the BufRead critical path: parsing synchronously while
+        -- the buffer is still being read is what raced into the
+        -- out-of-bounds errors above.
+        callback = function(args)
+          local buf = args.buf
+          vim.schedule(function() highlight_theorem_tags(buf) end)
+        end,
       })
     end,
   },
