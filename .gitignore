@@ -5,3 +5,5 @@ tests/
 .claude/
 dev-docs/
 CONTRIBUTING.md
+.keys
+README_backup.md
