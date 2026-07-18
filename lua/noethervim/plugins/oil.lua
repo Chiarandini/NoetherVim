@@ -420,6 +420,40 @@ return {
 					local name = vim.api.nvim_buf_get_name(args.buf)
 					if name ~= "" and vim.fn.isdirectory(name) == 1 then
 						require("oil")  -- triggers lazy load + oil.setup
+
+						-- oil.setup() hijacks the *current* buffer into an
+						-- oil:// buffer, but the buffer that tripped us here
+						-- (args.buf) is often NOT current yet: `:e .` from a
+						-- non-reusable buffer (the dashboard, or any open file)
+						-- creates a NEW directory buffer while the old one is
+						-- still current, so setup's hijack checks the wrong
+						-- buffer -- and oil's own BufAdd handler can't retro-fire
+						-- for a buffer whose BufAdd is already in flight. That
+						-- directory buffer would then reach its BufReadCmd still
+						-- named `/path` (not `oil://`), match oil's BufReadCmd
+						-- pattern nowhere, and sit blank *forever* -- the
+						-- intermittent "`:e .` opens an empty buffer" bug. So we
+						-- hijack args.buf ourselves (the same rename oil's own
+						-- maybe_hijack_directory_buffer does) unless setup
+						-- already renamed it. Its upcoming BufReadCmd then
+						-- matches `oil://*` and renders as normal.
+						if vim.api.nvim_buf_is_valid(args.buf)
+							and not vim.api.nvim_buf_get_name(args.buf):find("://", 1, true)
+						then
+							pcall(function()
+								local ocfg  = require("oil.config")
+								local ofs   = require("oil.fs")
+								local outil = require("oil.util")
+								outil.rename_buffer(
+									args.buf,
+									outil.addslash(
+										ocfg.adapter_to_scheme.files
+											.. ofs.os_to_posix_path(vim.fn.fnamemodify(name, ":p"))
+									)
+								)
+							end)
+						end
+
 						pcall(vim.api.nvim_del_augroup_by_id, group)
 					end
 				end,
