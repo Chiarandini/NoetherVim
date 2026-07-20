@@ -519,9 +519,9 @@ let g:vimtex_compiler_latexmk_engines = {
     },
   },
 
-  -- ── Oil: open .tex file in current dir (gt) ─────────────────────────────
-  -- LaTeX-specific Oil keymap -- opens the .tex file in the current Oil
-  -- directory, or shows a picker if there are multiple.
+  -- ── Oil: open .tex (gt) / .pdf (gP) in current dir ──────────────────────
+  -- LaTeX-specific Oil keymaps -- open the .tex (gt) or .pdf (gP) file in the
+  -- current Oil directory, or show a picker if there are multiple.
   {
     "stevearc/oil.nvim",
     opts = {
@@ -553,6 +553,41 @@ let g:vimtex_compiler_latexmk_engines = {
                 format_item = function(f) return vim.fn.fnamemodify(f, ":t") end,
               }, function(choice)
                 if choice then open_file(choice) end
+              end)
+            end
+          end,
+        },
+        -- gP: twin of gt, but for the compiled PDF. Hands the file to the
+        -- system viewer (Skim, per the user's VimTeX setup) via the same
+        -- detached `open`/`xdg-open` idiom as :PDF above. Unlike gt we stay
+        -- in nvim, so Oil is left open -- no float-close, no :edit.
+        ["gP"] = {
+          desc = "open .pdf file in current dir",
+          callback = function()
+            local dir = require("oil").get_current_dir()
+            if not dir then return end
+            local files = vim.fn.glob(dir .. "*.pdf", false, true)
+            if #files == 0 then
+              vim.notify("No .pdf files in " .. dir, vim.log.levels.WARN)
+              return
+            end
+            local function open_pdf(path)
+              if vim.fn.has("macunix") == 1 then
+                vim.fn.jobstart({ "open", path }, { detach = true })
+              elseif vim.fn.has("win32") == 1 then
+                vim.fn.jobstart({ "cmd.exe", "/c", "start", "", path }, { detach = true })
+              else
+                vim.fn.jobstart({ "xdg-open", path }, { detach = true })
+              end
+            end
+            if #files == 1 then
+              open_pdf(files[1])
+            else
+              vim.ui.select(files, {
+                prompt = "Select .pdf file:",
+                format_item = function(f) return vim.fn.fnamemodify(f, ":t") end,
+              }, function(choice)
+                if choice then open_pdf(choice) end
               end)
             end
           end,
