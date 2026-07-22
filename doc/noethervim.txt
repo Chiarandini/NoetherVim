@@ -944,6 +944,19 @@ These keymaps activate only in their respective filetype, except for the
     `<S-CR>`            Smart newline in environments (insert)
     `<C-l>`             Auto-fix nearest spelling error (insert)
     `<LocalLeader>vw`   VimTeX word count
+    `gd`                Jump to the label under the cursor (`\cref`,
+                       `\ref`, `\eqref`, ...) via the label cache;
+                       LSP definition when not on a prefixed label
+    `<C-]>`             Same label jump through the tag stack, so
+                       `<C-t>` returns.  Works across subfiles and
+                       nested sub-books
+    `:VimtexToggleMain` Switch between compiling the current subfile
+                       and the full project.  Subfile projects
+                       (`subfiles.cls`) start in subfile mode
+    `:VimtexStop`       Stop compilation AND disarm the on-save
+                       auto-compile for the project; the next manual
+                       compile re-arms it.  `:VimtexStopAll` does the
+                       same for every open project
 
     markdown: ~
     `<S-CR>`            Smart newline in lists (insert)

@@ -11,6 +11,15 @@
 --   yP keymap:                  copy compiled PDF to clipboard
 --   <c-w>sp:                    toggle PDF size in statusline
 --   theorem highlighting:       treesitter-based theorem label coloring
+--   gd / <C-]>:                 jump to the label under the cursor (\cref, \ref,
+--                               \eqref, ...) via the label cache; <C-]> pushes the
+--                               tag stack so <C-t> returns.  Works across subfiles
+--                               and nested sub-books.
+--   label completion docs:      hovering a label completion shows its
+--                               part/chapter/section and LaTeX source.
+--   subfile compilation:        subfile projects compile the current subfile by
+--                               default; :VimtexToggleMain switches to the full
+--                               project (g:vimtex_subfile_start_local = 1).
 --   For Zotero citations, enable the separate latex-zotero bundle.
 --
 -- PDF viewer: NOT set by the distro -- set vim.g.vimtex_view_method in lua/user/options.lua:
@@ -202,6 +211,10 @@ let g:vimtex_compiler_latexmk_engines = {
     \ '_'                : '-lualatex',
     \}
 ]=])
+      -- Subfile projects (subfiles.cls) start in local mode: compiling from
+      -- a chapter builds that chapter's standalone PDF, not the whole book.
+      -- :VimtexToggleMain switches the buffer to the full project (and back).
+      vim.g.vimtex_subfile_start_local = 1
       vim.api.nvim_create_autocmd("BufWritePost", {
         pattern  = "*.tex",
         callback = function()
@@ -378,6 +391,50 @@ let g:vimtex_compiler_latexmk_engines = {
               require("which-key").show({ keys = "z=" })
             end
           end, o("spell: suggest (which-key / latex-aware)"))
+
+          -- Stopping: vimtex's stop() is a no-op unless a compile is
+          -- mid-run, which with single-shot latexmk (continuous = 0) it
+          -- almost never is, so the BufWritePost auto-compile above would
+          -- keep re-firing forever.  Wrap the stop entry points to mark the
+          -- project stopped (status 0, vimtex's stopped-state); the
+          -- auto-compile stands down and the next manual compile re-arms
+          -- it.  Both the commands and the <plug> mappings need wrapping:
+          -- <localleader>lk maps to <plug>(vimtex-stop), which calls
+          -- vimtex#compiler#stop() directly, bypassing :VimtexStop.
+          local function statusline_refresh()
+            pcall(function() require("noethervim.util.vimtex_status").invalidate() end)
+            pcall(vim.cmd.redrawstatus, { bang = true })
+          end
+
+          local function stop_project()
+            if vim.fn.exists("b:vimtex") == 0 then return end
+            if vim.api.nvim_eval("b:vimtex.compiler.is_running()") == 1 then
+              vim.fn["vimtex#compiler#stop"]()
+            else
+              vim.notify("vimtex: on-save auto-compile disarmed")
+            end
+            vim.cmd("let b:vimtex.compiler.status = 0")
+            statusline_refresh()
+          end
+
+          local function stop_all_projects()
+            vim.fn["vimtex#compiler#stop_all"]()
+            vim.cmd([[
+              for st in vimtex#state#list_all()
+                let st.compiler.status = 0
+              endfor
+              unlet! st
+            ]])
+            statusline_refresh()
+            vim.notify("vimtex: all projects stopped, on-save auto-compile disarmed")
+          end
+
+          vim.api.nvim_buf_create_user_command(ev.buf, "VimtexStop", stop_project,
+            { desc = "stop compilation and on-save auto-compile" })
+          vim.api.nvim_buf_create_user_command(ev.buf, "VimtexStopAll", stop_all_projects,
+            { desc = "stop all compilation and on-save auto-compile" })
+          vim.keymap.set("n", "<plug>(vimtex-stop)", stop_project, { buffer = ev.buf })
+          vim.keymap.set("n", "<plug>(vimtex-stop-all)", stop_all_projects, { buffer = ev.buf })
         end,
       })
     end,
@@ -501,7 +558,12 @@ let g:vimtex_compiler_latexmk_engines = {
     end,
   },
 
-  -- Register the preambles blink.cmp source (provided by noethervim-tex).
+  -- Register the preambles blink.cmp source (provided by noethervim-tex)
+  -- and enrich vimtex's label completions with documentation: hovering a
+  -- label item in \cref{...} / \ref{...} shows the part/chapter/section it
+  -- lives under and its LaTeX source (theorem statement, titled box, ...)
+  -- in the documentation window.  Labels missing from the cache resolve to
+  -- no documentation -- exactly the previous behaviour.
   {
     "saghen/blink.cmp",
     opts = {
@@ -513,6 +575,17 @@ let g:vimtex_compiler_latexmk_engines = {
           preambles = {
             name   = "preambles",
             module = "noethervim-tex.sources.preambles",
+          },
+          vimtex = {
+            override = {
+              resolve = function(_source, item, callback)
+                local labels = require("noethervim.util.latex_labels")
+                local label  = item.textEdit and item.textEdit.newText or item.label
+                local entry  = label and labels.find_entry(label)
+                local doc    = entry and labels.documentation(entry)
+                callback(doc and { documentation = { kind = "markdown", value = doc } } or nil)
+              end,
+            },
           },
         },
       },
@@ -644,88 +717,46 @@ let g:vimtex_compiler_latexmk_engines = {
       vim.keymap.set("n", "<localleader>vul", "<cmd>LatexLabels update<cr>",    { buf = 0, desc = "update latex labels" })
       vim.keymap.set("n", "<localleader>vuh", "<cmd>CachedHeadings update<cr>", { buf = 0, desc = "update headings cache" })
 
-      -- ── gd: goto label definition ────────────────────────────────────────
-      -- Extracts the label under the cursor (e.g. "th:bezoutIdentity" from
-      -- \cref{th:bezoutIdentity}), looks it up in the latex_labels cache, and
-      -- jumps to the defining line.  Falls back to vim.lsp.buf.definition()
-      -- when the cursor is not on a prefixed label.
-      -- Cache strategy is hardcoded to "global" (the telescope-latex-references
-      -- default); update if you override cache_strategy in telescope setup.
-      local function label_at_cursor()
-        local line = vim.api.nvim_get_current_line()
-        local col  = vim.api.nvim_win_get_cursor(0)[2] + 1  -- 1-indexed
-        -- Walk every "prefix:name" token in the line; return the one under cursor.
-        local pos = 1
-        while true do
-          local s, e, label = line:find("(%a+:%a[%a%d%-_%.]*)", pos)
-          if not s then break end
-          if col >= s and col <= e then return label end
-          pos = e + 1
-        end
-        return nil
-      end
+      -- ── gd / <C-]>: goto label definition ────────────────────────────────
+      -- Label extraction and cache lookup live in noethervim.util.latex_labels.
+      -- gd jumps directly (LSP fallback when not on a prefixed label);
+      -- 'tagfunc' routes <C-]>, <C-w>] and :tag through the same lookup while
+      -- pushing the tag stack, so <C-t> jumps back.  Both search the current
+      -- project's cache first (subfile chains resolve to their top-level
+      -- root), then every other cached project.
+      local labels = require("noethervim.util.latex_labels")
 
-      -- Jump to a found entry: open its file if needed, go to line, center.
-      local function jump_to_entry(e, utils)
-        local target = utils.verify_or_find_label(e.filename, e.line, e.id, 200) or e.line
-        local cur    = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ":p")
-        if cur ~= e.filename then
-          vim.cmd("edit " .. vim.fn.fnameescape(e.filename))
-        end
-        vim.api.nvim_win_set_cursor(0, { target, 0 })
-        vim.cmd("normal! zz")
-      end
+      local function setup_nav(bufnr)
+        vim.bo[bufnr].tagfunc = "v:lua.require'noethervim.util.latex_labels'.tagfunc"
 
-      local function setup_gd(bufnr)
         vim.keymap.set("n", "gd", function()
-          local label = label_at_cursor()
+          local label = labels.label_at_cursor()
           if not label then vim.lsp.buf.definition(); return end
-
-          local cache = require("latex_nav_core.latex_labels.cache")
-          local utils = require("latex_nav_core.latex")
-
-          -- 1. Search the current project's cache first.
-          local root = utils.get_root_file()
-          if root then
-            local entries = cache.read_cache(cache.get_cache_path(root, "global"))
-            if entries then
-              for _, e in ipairs(entries) do
-                if e.id == label then jump_to_entry(e, utils); return end
-              end
-            end
+          local entry = labels.find_entry(label)
+          if not entry then
+            -- Nowhere to jump -- label not yet written or indexed.
+            vim.notify("[gd] '" .. label .. "' not found in any cache -- run :LatexLabels update", vim.log.levels.WARN)
+            return
           end
-
-          -- 2. Label not in current project -- search all other cached files.
-          --    Covers cross-file references once those files have been indexed.
-          local cache_dir = vim.fn.stdpath("data") .. "/cached_labels"
-          local all_files = vim.fn.glob(cache_dir .. "/*.labels", false, true)
-          local current_cache = root and cache.get_cache_path(root, "global") or ""
-          for _, path in ipairs(all_files) do
-            if path ~= current_cache then
-              local entries = cache.read_cache(path)
-              if entries then
-                for _, e in ipairs(entries) do
-                  if e.id == label then jump_to_entry(e, utils); return end
-                end
-              end
-            end
+          local cur = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ":p")
+          if cur ~= entry.filename then
+            vim.cmd("edit " .. vim.fn.fnameescape(entry.filename))
           end
-
-          -- 3. Nowhere to jump -- label not yet written or indexed.
-          vim.notify("[gd] '" .. label .. "' not found in any cache -- run :LatexLabels update", vim.log.levels.WARN)
+          vim.api.nvim_win_set_cursor(0, { entry.line, 0 })
+          vim.cmd("normal! zz")
         end, { buffer = bufnr, desc = "goto label definition (LaTeX)" })
       end
 
-      -- Wire gd for buffers opened after this plugin loads.
+      -- Wire navigation for buffers opened after this plugin loads.
       vim.api.nvim_create_autocmd("FileType", {
         pattern  = { "tex", "latex" },
-        callback = function(args) setup_gd(args.buf) end,
+        callback = function(args) setup_nav(args.buf) end,
       })
       -- The FileType event already fired for the buffer that triggered this
       -- plugin load, so wire it up for the current buffer immediately too.
       local ft = vim.bo.filetype
       if ft == "tex" or ft == "latex" then
-        setup_gd(vim.api.nvim_get_current_buf())
+        setup_nav(vim.api.nvim_get_current_buf())
       end
       -- Re-register after texlab attaches: the LspAttach handler in lsp.lua fires
       -- after FileType and overwrites gd with vim.lsp.buf.definition.
@@ -734,7 +765,7 @@ let g:vimtex_compiler_latexmk_engines = {
         callback = function(args)
           local client = vim.lsp.get_client_by_id(args.data.client_id)
           if client and client.name == "texlab" then
-            setup_gd(args.buf)
+            setup_nav(args.buf)
           end
         end,
       })
