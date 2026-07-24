@@ -115,11 +115,26 @@ uncomment the relevant lines.
 4.2 OPTIONS                                          *noethervim-user-options*
 
 Create `lua/user/options.lua`. It runs after `noethervim/options.lua`,
-so any value you set overwrites the distro default: >lua
+so any global value you set overwrites the distro default: >lua
     -- lua/user/options.lua
-    vim.o.textwidth = 120       -- default: 100
     vim.o.scrolloff = 8         -- default: 4
     vim.o.autochdir = true      -- default: false
+<
+                                                  *noethervim-option-layers*
+Note: this holds for "genuinely" global options. Filetype-scoped options set
+by the ftplugin layer (`formatoptions`, `comments`, `commentstring`, and often
+`textwidth`, `tabstop`, `shiftwidth`) are only seeded in `options.lua`; an
+ftplugin runs after it and sets the effective per-buffer value. Neovim's own
+bundled ftplugins do this too, so setting one of these in `user/options.lua`
+does not take effect for filetypes whose ftplugin sets it. To change the
+effective value, use the filetype layer: a `FileType` autocmd in
+`lua/user/autocmds.lua`, or an `after/ftplugin/<ft>.lua`. For example, to stop
+comment-leader continuation on <Enter> and o/O across filetypes: >lua
+    vim.api.nvim_create_autocmd("FileType", {
+      callback = function()
+        vim.opt_local.formatoptions:remove({ "r", "o" })
+      end,
+    })
 <
 Notable non-default choices: ~
 
@@ -435,8 +450,9 @@ for the same plugin.
 
 If you prefer keeping all keymaps in one place, set them in
 `lua/user/keymaps.lua` instead. That file loads early, before lazy-loaded
-plugins, so map to a `<cmd>...<cr>` (which triggers the load) or wrap the call,
-rather than referencing a plugin function that may not be loaded yet.
+plugins, so map to a `<cmd>...<cr>` (which triggers the load) or wrap the
+call, (function() ... end) rather than referencing a plugin function that may
+not be loaded yet.
 
 Array-valued opts: ~                    *noethervim-user-plugins-arrays*
 
@@ -793,8 +809,9 @@ The which-key popup appears after a 1500 ms delay by default. To
 change this, add to `lua/user/plugins/whichkey.lua`: >lua
     return {
       { "folke/which-key.nvim",
-        -- opts as a function merges into the core config, keeping its group
-        -- and icon registrations; a `config` here would replace them.
+        -- Remember that setting `config` would override, not extend,
+        -- the behaviour, and passing `opts= {...}` would override the
+        -- default optoins
         opts = function(_, opts)
           vim.o.timeoutlen = 500
           opts.delay = 500
@@ -955,7 +972,7 @@ These keymaps activate only in their respective filetype, except for the
                         Markdown and LaTeX bundles are enabled.
     Note: smart-enter's `<S-CR>` needs a terminal that sends it distinctly
     from `<CR>` (Kitty, WezTerm, Ghostty, Neovide, most GUIs); some send
-    plain `<CR>` for both. NoetherVim also assumes a Nerd Font throughout.
+    plain `<CR>` for both.
 
     tex: ~
     `:PDF`              Open compiled PDF

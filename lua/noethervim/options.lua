@@ -36,7 +36,6 @@ opt.swapfile     = false
 -- for writing filetypes.  The breakindent / linebreak / showbreak settings
 -- only take effect when wrap is on, so they're harmless here and active
 -- in writing buffers.
-opt.textwidth     = 100
 opt.wrap          = false
 opt.breakindent   = true
 opt.linebreak     = true
@@ -52,7 +51,19 @@ vim.opt.listchars = {
   extends  = "›",
   precedes = "‹",
 }
--- formatoptions flags (global; writing profile re-adds `t` for writing):
+-- ── Filetype-scoped defaults (seeds) ──────────────────────────────────────
+-- These buffer-local options are set per filetype by the ftplugin layer
+-- (Neovim's bundled ftplugins, the language bundles, an after/ftplugin), which
+-- runs after this file and takes precedence. The values here are the fallback
+-- for buffers whose ftplugin sets nothing, not a global policy; to change the
+-- effective value, set it in the filetype layer (a FileType autocmd or
+-- after/ftplugin/<ft>.lua), not here or in user/options.lua.
+-- See :help noethervim-option-layers.
+opt.textwidth  = 100
+opt.tabstop    = 4
+opt.shiftwidth = 4
+
+-- formatoptions (seed; the writing profile re-adds `t` for writing):
 --   c  auto-wrap comments using textwidth
 --   r  continue comment leader after <Enter>
 --   o  continue comment leader after o/O
@@ -60,9 +71,9 @@ vim.opt.listchars = {
 --   1  don't break line after a one-letter word
 --   j  remove comment leader when joining lines
 --   n  recognize numbered lists (uses formatlistpat)
--- `t` (auto-wrap text) is deliberately omitted globally so code files
--- don't get broken mid-line while typing (delegated to formatters)
-opt.formatoptions  = "croq1jn"
+-- `t` (auto-wrap text) is omitted so code files don't break mid-line while
+-- typing (delegated to formatters).
+opt.formatoptions = "croq1jn"
 
 -- Diff
 vim.opt.diffopt:append("vertical")
@@ -74,9 +85,8 @@ opt.incsearch  = true
 opt.smartcase  = true
 opt.hlsearch   = true    -- <Esc> clears; [oh/]oh toggles persistently
 
--- Indentation
-opt.tabstop    = 4
-opt.shiftwidth = 4
+-- Indentation behaviour (tabstop / shiftwidth are seeded above; ftplugins,
+-- editorconfig, and guess-indent.nvim refine them per buffer).
 -- autoindent: copy indent from the line above when starting a new line
 -- (this is how `O` and `o` keep your code aligned).  The Neovim default
 -- is already `true`, but set it explicitly so a stray ftplugin / runtime

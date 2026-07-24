@@ -32,6 +32,7 @@ noethervim-leader	noethervim.txt	/*noethervim-leader*
 noethervim-localleader	noethervim.txt	/*noethervim-localleader*
 noethervim-mapsearchleader	noethervim.txt	/*noethervim-mapsearchleader*
 noethervim-nvim-appname	noethervim.txt	/*noethervim-nvim-appname*
+noethervim-option-layers	noethervim.txt	/*noethervim-option-layers*
 noethervim-option-toggles	noethervim.txt	/*noethervim-option-toggles*
 noethervim-quickstart	noethervim.txt	/*noethervim-quickstart*
 noethervim-resize-arrows	noethervim.txt	/*noethervim-resize-arrows*
