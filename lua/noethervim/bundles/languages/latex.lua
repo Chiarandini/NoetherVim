@@ -8,6 +8,7 @@
 --   • snacks-bibtex:             BibTeX citation picker (<c-s-c> in insert mode)
 --   • noethervim-tex:            LuaSnip snippets, blink.cmp sources, textobject keymaps
 --   • snacks-latex-labels:       label/heading jump (<localleader>w, <localleader>vul/vuh)
+--   • smart-enter.nvim:          <S-CR> continues environments (\\ rows, &= in align, \item)
 --   yP keymap:                  copy compiled PDF to clipboard
 --   <c-w>sp:                    toggle PDF size in statusline
 --   theorem highlighting:       treesitter-based theorem label coloring
@@ -26,47 +27,23 @@
 --   vim.g.vimtex_view_method = 'skim'   -- or 'zathura', 'sioyek', etc.
 
 
--- ── LaTeX filetype helpers (used by the FileType autocmd below) ────────────
--- These only run when the latex bundle is enabled AND a tex file is opened.
--- Basic buffer-local options (textwidth, synmaxcol) stay in ftplugin/tex.lua.
--- Folding is handled by nvim-ufo + texlab (zc to close, zR/zM to toggle all).
-
 local SearchLeader = require("noethervim.util").search_leader
 
-local function tex_shift_enter()
-  local row, col  = unpack(vim.api.nvim_win_get_cursor(0))
-  local line       = vim.api.nvim_get_current_line()
-  local ws         = string.match(line, "^%s*") or ""
-
-  local envs = {
-    { names = { "cases", "gather*", "matrix", "pmatrix" }, pre = "\\\\", text = "" },
-    { names = { "align", "align*" },                       pre = "\\\\", text = "&= " },
-    {
-      names = { "itemize", "enumerate" },
-      text  = "\\item ",
-      adjust_ws = function(l, w)
-        return l:match("\\item") and (w:sub(1) or "") or w
-      end,
-    },
-  }
-
-  for _, env in ipairs(envs) do
-    for _, name in ipairs(env.names) do
-      local inside = vim.fn["vimtex#env#is_inside"](name)
-      if inside[1] > 0 and inside[2] > 0 then
-        local pre     = env.pre or ""
-        local text    = env.text or ""
-        local cur_ws  = env.adjust_ws and env.adjust_ws(line, ws) or ws
-        local new_line = cur_ws .. text
-        vim.api.nvim_buf_set_text(0, row - 1, col, row - 1, col, { pre, new_line })
-        vim.api.nvim_win_set_cursor(0, { row + 1, #new_line + 1 })
-        return
-      end
-    end
-  end
-end
-
 return {
+
+  -- ── smart-enter.nvim: LaTeX environment continuation ──────────────────────
+  -- The plugin and its global <S-CR> come from core (plugins/editing.lua).
+  -- This only adds the tex/latex rules, merged into core's opts by lazy:
+  -- "\\" in math rows, "\\" then "&= " in align, "\item " in lists.
+  {
+    "Chiarandini/smart-enter.nvim",
+    opts = {
+      filetypes = {
+        tex   = { preset = "latex" },
+        latex = { preset = "latex" },
+      },
+    },
+  },
 
   -- ── texlab LSP (Mason install scoped to this bundle) ──────────────────────
   -- Per-server config lives in lua/noethervim/lsp/texlab.lua; that file is a
@@ -361,7 +338,6 @@ let g:vimtex_compiler_latexmk_engines = {
           end, { desc = "open compiled PDF" })
 
           vim.keymap.set("n", "<localleader>vw", "<Cmd>VimtexCountWords<CR>", o("vimtex word count"))
-          vim.keymap.set("i", "<s-cr>", tex_shift_enter, o("smart newline"))
 
           -- Accent spell-check (noethervim-tex).  Override the
           -- built-in zg / zw / z= so they understand LaTeX accent

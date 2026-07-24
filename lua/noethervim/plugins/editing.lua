@@ -72,5 +72,23 @@ return {
 
 	-- better "." feature
 	{ "tpope/vim-repeat", event = "BufReadPost" },
+
+	-- smart-enter.nvim: context dispatched <S-CR>.  Owns the global insert
+	-- mode <S-CR> (a newline that skips the comment leader) and continues
+	-- Markdown lists.  The latex bundle merges in LaTeX environment rules.
+	{
+		"Chiarandini/smart-enter.nvim",
+		event = "InsertEnter",
+		opts = {
+			key      = "<S-CR>",
+			fallback = "newline",
+			filetypes = {
+				markdown = { preset = "markdown" },
+			},
+		},
+		config = function(_, opts)
+			require("smart_enter").setup(opts)
+		end,
+	},
 }
 
