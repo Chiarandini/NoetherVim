@@ -276,7 +276,7 @@ function M.templates()
   end
 
   Snacks.picker({
-    title   = "NoetherVim Templates  [<C-y>] stamp into lua/user/",
+    title   = "NoetherVim Templates  [<C-y>] merge into lua/user/",
     items   = picker_items,
     preview = "file",
     confirm = confirm_readonly,
@@ -1961,10 +1961,10 @@ function M.setup()
   -- Note: SearchLeader+cu (user settings), +cc (config lua),
   -- +cf (ftplugins), +cs (snippets) are defined in
   -- snacks.lua.  These keymaps extend the same namespace.
-  vim.keymap.set("n", SearchLeader .. "cnn", M.files,        { desc = "[n]oetherVim source" })
-  vim.keymap.set("n", SearchLeader .. "cng", M.grep,         { desc = "[n]oetherVim [g]rep" })
-  vim.keymap.set("n", SearchLeader .. "cb", M.bundles,       { desc = "[b]undles" })
-  vim.keymap.set("n", SearchLeader .. "ct", M.templates,     { desc = "[t]emplates" })
+  vim.keymap.set("n", SearchLeader .. "cf", M.files,        { desc = "NoetherVim [f]iles" })
+  vim.keymap.set("n", SearchLeader .. "cg", M.grep,         { desc = "NoetherVim [g]rep" })
+  vim.keymap.set("n", SearchLeader .. "cb", M.bundles,       { desc = "NoetherVim [b]undles" })
+  vim.keymap.set("n", SearchLeader .. "ct", M.templates,     { desc = "NoetherVim [t]emplates" })
   vim.keymap.set("n", SearchLeader .. "ck", M.diff_keymaps, { desc = "diff [k]eymaps" })
   vim.keymap.set("n", SearchLeader .. "co", M.diff_options, { desc = "diff [o]ptions" })
 

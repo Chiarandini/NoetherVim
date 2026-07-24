@@ -8,11 +8,10 @@
 
 local q_close_ft = {
   "help", "man", "lspinfo", "checkhealth",  -- qf handled by ftplugin/qf.lua
-  "notify", "oil", "fugitiveblame",
+  "notify", "fugitiveblame",                -- oil is editable: no q-to-close
   "startuptime", "lazy", "mason",
   "spectre_panel", "crunner", "dap-float",
-  "DressingInput", "sagarename",
-  "bib", "cmp_menu", "query",
+  "DressingInput", "cmp_menu",
   "typr", "snacks_notif", "snacks_terminal",
   "nvim-undotree", "undotree", "diff",
 }
@@ -27,8 +26,8 @@ vim.api.nvim_create_autocmd("FileType", {
 
 -- Oil floating-window navigation:
 --   <c-h>/<c-l>  → jump to the other Oil float (dual-pane mode)
---   q            → close BOTH Oil floats (overrides the generic q_close above)
--- Only activates when Oil opens inside a floating window.
+-- Only activates when Oil opens inside a floating window. Oil buffers are
+-- editable, so there is no q-to-close (oil's own close keymaps apply).
 vim.api.nvim_create_autocmd("FileType", {
   group = vim.api.nvim_create_augroup("noethervim_oil_float", { clear = true }),
   pattern = "oil",
@@ -54,20 +53,6 @@ vim.api.nvim_create_autocmd("FileType", {
       local other = other_oil_float()
       if other then vim.api.nvim_set_current_win(other) end
     end, vim.tbl_extend("force", opts, { desc = "go to other Oil pane" }))
-    vim.keymap.set("n", "q", function()
-      local other = other_oil_float()
-      if other then pcall(vim.api.nvim_win_close, other, true) end
-      pcall(vim.api.nvim_win_close, win, true)
-    end, vim.tbl_extend("force", opts, { desc = "close all Oil floats" }))
-  end,
-})
-
--- sagarename also needs <Esc> to close
-vim.api.nvim_create_autocmd("FileType", {
-  group = vim.api.nvim_create_augroup("noethervim_esc_close", { clear = true }),
-  pattern = "sagarename",
-  callback = function(ev)
-    vim.keymap.set("i", "<esc>", "<esc>ZQ", { buf = ev.buf, silent = true })
   end,
 })
 
@@ -129,7 +114,7 @@ vim.api.nvim_create_autocmd({ "BufHidden", "BufWipeout" }, {
 -- bare `:checktime` walks every loaded buffer, and the resulting UI churn
 -- (tab modified flags, statusline redraws) shows up as flicker.  Coalesce
 -- bursts into a single trailing-edge call so checktime runs at most once
--- per ~200ms.  Legitimate reloads still feel instant; the cost is a tiny
+-- per ~100ms.  Legitimate reloads still feel instant; the cost is a tiny
 -- delay before an externally-edited file pops back in.
 
 do
@@ -145,7 +130,7 @@ do
         vim.defer_fn(function()
           pending = false
           pcall(vim.cmd, "checktime")
-        end, 200)
+        end, 100)
       end,
     }
   )
@@ -154,7 +139,7 @@ end
 -- ──────────────────────────────────────────────────────────────
 --  Out-of-sync detection
 --  When a file changes on disk AND the buffer has unsaved edits,
---  autoread can't silently reload (would clobber user changes).
+--  autoread can't silently reload (would clash with user changes).
 --  Flag the buffer so UI (statusline) can surface the conflict.
 --  Cleared on next successful write or read.
 -- ──────────────────────────────────────────────────────────────
@@ -207,20 +192,20 @@ end, { desc = "open terminal" })
 --  Heirline component update events
 -- ──────────────────────────────────────────────────────────────
 
-local hl_group = vim.api.nvim_create_augroup("noethervim_heirline", { clear = true })
+local heirline_group = vim.api.nvim_create_augroup("noethervim_heirline", { clear = true })
 
-local function hl_event(pattern, callback)
-  vim.api.nvim_create_autocmd("User", { group = hl_group, pattern = pattern, callback = callback })
+local function heirline_event(pattern, callback)
+  vim.api.nvim_create_autocmd("User", { group = heirline_group, pattern = pattern, callback = callback })
 end
 
-hl_event("HeirlineGitToggle",    function() vim.g.heirline_git_show     = not vim.g.heirline_git_show;     vim.cmd.redrawstatus() end)
-hl_event("HeirlinePdfSizeToggle",function() vim.g.heirline_pdfsize_show = not vim.g.heirline_pdfsize_show; vim.cmd.redrawstatus() end)
-hl_event("HeirlineLspToggle",    function() vim.g.heirline_lsp_show     = not vim.g.heirline_lsp_show;     vim.cmd.redrawstatus() end)
-hl_event("HeirlineDirectoryOn",  function() vim.g.heirline_directory_show           = true;  vim.cmd.redrawstatus() end)
-hl_event("HeirlineDirectoryOff", function() vim.g.heirline_directory_show           = false; vim.cmd.redrawstatus() end)
-hl_event("HeirlineRelativeDirOn",function() vim.g.heirline_proj_relative_dir_show   = true;  vim.cmd.redrawstatus() end)
-hl_event("HeirlineRelativeDirOff",function() vim.g.heirline_proj_relative_dir_show  = false; vim.cmd.redrawstatus() end)
-hl_event("HeirlinePDFModeOn",    function()
+heirline_event("HeirlineGitToggle",    function() vim.g.heirline_git_show     = not vim.g.heirline_git_show;     vim.cmd.redrawstatus() end)
+heirline_event("HeirlinePdfSizeToggle",function() vim.g.heirline_pdfsize_show = not vim.g.heirline_pdfsize_show; vim.cmd.redrawstatus() end)
+heirline_event("HeirlineLspToggle",    function() vim.g.heirline_lsp_show     = not vim.g.heirline_lsp_show;     vim.cmd.redrawstatus() end)
+heirline_event("HeirlineDirectoryOn",  function() vim.g.heirline_directory_show           = true;  vim.cmd.redrawstatus() end)
+heirline_event("HeirlineDirectoryOff", function() vim.g.heirline_directory_show           = false; vim.cmd.redrawstatus() end)
+heirline_event("HeirlineRelativeDirOn",function() vim.g.heirline_proj_relative_dir_show   = true;  vim.cmd.redrawstatus() end)
+heirline_event("HeirlineRelativeDirOff",function() vim.g.heirline_proj_relative_dir_show  = false; vim.cmd.redrawstatus() end)
+heirline_event("HeirlinePDFModeOn",    function()
   vim.g.heirline_git_show       = false
   vim.g.heirline_lsp_show       = false
   vim.g.heirline_directory_show = false
@@ -353,4 +338,3 @@ vim.api.nvim_create_autocmd("BufReadPost", {
     end)
   end,
 })
-
