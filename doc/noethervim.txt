@@ -193,6 +193,15 @@ To override a core autocmd, clear its augroup first: >lua
     vim.api.nvim_create_augroup("noethervim_q_close", { clear = true })
     -- Then re-create with your preferred list
 <
+Core augroups (clear any of these to disable or replace the feature): ~
+    `noethervim_q_close`      q-to-close in non-editing windows
+    `noethervim_profiles`     the writing / code filetype profiles
+    `noethervim_lastplace`    restore last cursor position on read
+    `noethervim_autoread`     reload buffers when focus or edits change
+    `noethervim_term`         terminal window tweaks (no numbers, scrolloff)
+    `noethervim_diff_cleanup` auto diffoff when a diff half closes
+    `noethervim_oil_float`    Oil dual-pane navigation
+
                                                  *noethervim-filetype-profiles*
 Filetype profiles (writing and code): ~
 
@@ -232,8 +241,9 @@ over same-named ftplugin settings. To extend the lists (e.g. treat
 set `writing_filetypes` / `non_code_filetypes` in `lua/user/config.lua`
 -- see |noethervim-user-config-data|.
 
-To override the whole profile, clear the augroup and re-create: >lua
-    vim.api.nvim_create_augroup("noethervim_writing", { clear = true })
+Both profiles are applied by a single augroup, `noethervim_profiles`. To
+override the whole profile, clear it and re-create: >lua
+    vim.api.nvim_create_augroup("noethervim_profiles", { clear = true })
     -- then register your own FileType autocmd
 <
 The global `wrap` default is OFF; the writing profile re-enables it
@@ -285,8 +295,8 @@ statusline overrides, vault paths, feature flags, filetype lists.
 Keys you do not set fall back to the distro default; the file is
 optional and missing keys are not an error.
 
-This file is for personal preferences, not for arbitrary plugin
-overrides -- those go in `lua/user/plugins/` (see |noethervim-user-plugins|). >lua
+Note: this file is for personal preferences. Arbitrary plugin overrides go in
+`lua/user/plugins/` instead (see |noethervim-user-plugins|). >lua
     -- lua/user/config.lua
     return {
       colorscheme                  = "gruvbox",
@@ -422,6 +432,11 @@ To add extra keymaps to an existing plugin: >lua
 <
 lazy.nvim unions `keys`, `cmd`, `event`, and `ft` tables from all specs
 for the same plugin.
+
+If you prefer keeping all keymaps in one place, set them in
+`lua/user/keymaps.lua` instead. That file loads early, before lazy-loaded
+plugins, so map to a `<cmd>...<cr>` (which triggers the load) or wrap the call,
+rather than referencing a plugin function that may not be loaded yet.
 
 Array-valued opts: ~                    *noethervim-user-plugins-arrays*
 
@@ -778,10 +793,12 @@ The which-key popup appears after a 1500 ms delay by default. To
 change this, add to `lua/user/plugins/whichkey.lua`: >lua
     return {
       { "folke/which-key.nvim",
-        opts = { delay = function() return 500 end },
-        config = function(_, opts)
+        -- opts as a function merges into the core config, keeping its group
+        -- and icon registrations; a `config` here would replace them.
+        opts = function(_, opts)
           vim.o.timeoutlen = 500
-          require("which-key").setup(opts)
+          opts.delay = 500
+          return opts
         end,
       },
     }
@@ -934,11 +951,11 @@ These keymaps activate only in their respective filetype, except for the
     all filetypes (insert): ~
     `<S-CR>`            Smart newline (smart-enter.nvim). Continues the
                         structure at the cursor: Markdown lists, and LaTeX
-                        environments, etc. Presets get apended when the
+                        environments, etc. Presets are appended when the
                         Markdown and LaTeX bundles are enabled.
-    Note: `<S-CR>` requires a terminal that sends distinct escape
-    sequences for Shift+Enter (Kitty, WezTerm, Ghostty, Neovide).
-    Some terminals send plain `<CR>` for both.
+    Note: smart-enter's `<S-CR>` needs a terminal that sends it distinctly
+    from `<CR>` (Kitty, WezTerm, Ghostty, Neovide, most GUIs); some send
+    plain `<CR>` for both. NoetherVim also assumes a Nerd Font throughout.
 
     tex: ~
     `:PDF`              Open compiled PDF
@@ -1025,6 +1042,11 @@ VimTeX compile indicator (latex bundle): ~
     `stdpath('state')/noethervim/vimtex_baseline.json`). On success the
     compile duration is sent to fidget under the `vimtex` group; the
     statusline shows a persistent `compiled ✓` until the next compile.
+
+Customizing the statusline: ~
+
+These keys apply to the default heirline statusline; if you replace the
+statusline (for example with lualine), they have no effect.
 
 Customize statusline colors and extra components in `lua/user/config.lua`: >lua
     -- lua/user/config.lua
