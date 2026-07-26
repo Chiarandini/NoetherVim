@@ -16,7 +16,7 @@
 -- and the file is stamped into lua/user/ with a diff prompt first.
 -- To debug without your overrides:  NOETHERVIM_NO_USER=1 nvim
 
-
+-- Feel free to delete any comments if they feel like they overcrowd your init.lua
 
 -- ── 1. Leaders -- must come before lazy.nvim loads ──────────────────────────
 -- Plugins register keymaps at spec-load time using these globals.
@@ -25,12 +25,13 @@ vim.g.mapleader         = "\\"       -- <Leader>  -- global actions
 vim.g.maplocalleader    = ","        -- <LocalLeader> -- filetype actions
 vim.g.mapsearchleader = "<space>"    -- search/navigation prefix (default: <Space>)
 
--- Opt-out of the Snacks dashboard shown on empty-arg startup.
--- Uncomment to open straight into an empty buffer instead.
+-- Opt-out of the Snacks dashboard shown on empty-arg startup (i.e. plain
+-- `nvim` rather than `nvim {file}`). Uncomment to open straight into an
+-- empty buffer instead.
 -- vim.g.noethervim_dashboard = false
 
 -- ── 2. Bootstrap lazy.nvim and NoetherVim ─────────────────────────────────
--- Both must be on the rtp BEFORE lazy.setup() so that
+-- Both must be on the runetime path (rtp) BEFORE lazy.setup() so that
 -- `import = "noethervim.plugins"` resolves on first launch.
 
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
@@ -54,11 +55,10 @@ if not vim.uv.fs_stat(noethervimpath) then
 end
 vim.opt.rtp:prepend(noethervimpath)
 
--- Route lazy.nvim's startup notifications through `vim.notify` after
--- VimEnter so a stale bundle import in the spec below -- or any other
--- error lazy emits while resolving the spec -- surfaces as a snacks
--- toast instead of an ErrorMsg on the cmdline (which fires the
--- hit-enter prompt on top of the dashboard).
+-- The follwoing route lazy.nvim's startup notifications through `vim.notify`
+-- after VimEnter so a stale bundle import in the spec below (or any other
+-- error lazy emits while resolving the spec) surfaces as a snacks
+-- notification instead of an ErrorMsg on the cmdline.
 require("noethervim.util").buffer_notify()
 
 -- ── 3. Start NoetherVim ────────────────────────────────────────────────────
@@ -80,8 +80,10 @@ require("lazy").setup({
 		},
 
 		-- ── Bundles (opt-in) ─────────────────────────────────────────────
-		-- Uncomment the bundles you want. Categories are filesystem-derived:
-		-- lua/noethervim/bundles/<category>/<name>.lua.
+		-- Uncomment the bundles you want. Categories correspond to
+		-- the respective folder on the file-system:
+		-- lua/noethervim/bundles/<category>/<name>.lua. (FIX: this doesn't point to correct path)
+		-- Press SearchLeader + cb (default <space>cb)to search through bundles and their descriptions.
 
 		-- languages/
 		-- { import = "noethervim.bundles.languages.rust" },         -- rustaceanvim (beyond plain rust-analyzer)

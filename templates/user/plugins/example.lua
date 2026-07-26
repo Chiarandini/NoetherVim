@@ -1,12 +1,16 @@
 -- Drop your personal plugin specs in this directory.
 -- Any .lua file here is auto-imported by lazy.nvim.
+
+-- This file itself is just documentation - it returns an empty table.
+-- Any uncommented plugin code must be moved to the the return table
+-- at the end of the file.
 --
 -- See :help noethervim-user-plugins for documentation.
 --
 -- ── Adding new plugins ───────────────────────────────────────────────────────
 --
--- Personal plugins you don't want in the distro:
---   { "some/private-plugin", event = "VeryLazy", opts = {} }
+-- Download plugins from github:
+--   { "some/plugin", event = "VeryLazy", opts = {} }
 --
 -- Local / in-development plugins:
 --   { dir = "~/programming/my-plugin", config = function() ... end }
@@ -60,16 +64,14 @@
 -- Prevent a plugin from loading with cond = false (or enabled = false):
 --   { "Chiarandini/snacks-zotero.nvim", cond = false }
 --
--- Both work: lazy.nvim resolves these on the merged plugin (last-write-wins),
--- and user fragments are always last.  `cond = false` keeps the plugin in
+-- lazy.nvim resolves these on the merged plugin (last-write-wins),
+-- and user fragments are always last. `cond = false` keeps the plugin in
 -- lazy's disabled list (visible in :Lazy); `enabled = false` removes it
 -- entirely.
 --
--- Replace a broken plugin with your own fork:
+-- Replace a plugin with your own fork:
 --   { "Chiarandini/snacks-zotero.nvim", cond = false },
---   { "yourname/snacks-zotero.nvim", dev = true },
+--   { "yourname/snacks-zotero.nvim" },
 --
--- To fully remove a bundle's plugins, just comment out the import in init.lua.
---
--- This file itself is just documentation - it returns an empty table.
+-- To fully remove a bundle, just comment out the import in init.lua.
 return {}

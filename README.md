@@ -1,10 +1,10 @@
 # NoetherVim
 
-A Neovim distribution with a minimal abstraction layer, nameed after [Emmy Noether](https://en.wikipedia.org/wiki/Emmy_Noether) (the name also contains *nvim* - *noether**Vim***).
+A Neovim distribution with a minimal abstraction layer, named after [Emmy Noether](https://en.wikipedia.org/wiki/Emmy_Noether) (the name also contains *nvim* - *noether**Vim***).
 
-LaTeX, BibTeX, and VimTeX get the same level of support as LSP and treesitter. Everything else you'd expect is configured out of the box: completion (blink.cmp), DAP, diagnostics, formatters. Startup is fast by using lazy-loading.
+Latex gets the same level of support as LSP and treesitter. Everything else you'd expect is configured out of the box: completion (blink.cmp), DAP, diagnostics, formatters, etc. Startup is fast by using lazy-loading.
 
-The distro is opinionated, but anything and everything can be overridden through `lua/user/`; in fact the distro's architecture prioritizes easy overriding (see [Configuration](#configuration))
+The distro is opinionated, but anything and everything can be overridden through `lua/user/`; in fact the distro's architecture prioritizes easy overriding (see [configuration](#configuration))
 
 
 > [!NOTE]
@@ -39,15 +39,15 @@ keymap your config has overridden; `:NoetherVim diff options` does the same
 for options. "What does this distro actually change?" should be a one-command
 question, even after you layer your own config on top.
 
-- **LaTeX, BibTeX, and VimTeX are first-class**, The
+- **LaTeX, BibTeX, and VimTeX are first-class,** The
 distro ships custom Snacks-based label and heading pickers, preamble snippets,
-and BibTeX/Zotero citation tooling. See the [onboarding guide for
+and BibTeX/Zotero citation tooling, and auto-adds 1000+ mathematical terms and names to the
+dictionary. See the [onboarding guide for
 mathematicians](docs/onboarding/mathematicians.md).
 
-- **Bundles cover non-coding workflows.** This is not as advanced as the latex bundle, but it
-integrates most common other uses of neovim, for example `writing/` (obsidian, neorg, markdown),
-`practice/` (training, hardtime, presentation), and `terminal/` (tmux,
-remote-dev) are first-class categories alongside `languages/` and `tools/`.
+- **Bundles cover non-coding workflows.** Bundles integrate most common other uses of neovim, for example
+  `writing/` (obsidian, neorg, markdown), `practice/` (training, hardtime, presentation), and
+  `terminal/` (tmux, remote-dev) are first-class categories alongside `languages/` and `tools/`.
 
 Neovim 0.12 ships a built-in package manager (`vim.pack`), but NoetherVim
 stays on lazy.nvim because the override model (deep-merged `opts`,
@@ -62,7 +62,7 @@ setup into a distribution.
 ## Requirements
 
 - Neovim >= 0.12
-- A [Nerd Font](https://www.nerdfonts.com/) for icons
+- A [Nerd Font](https://www.nerdfonts.com/) for icons along with a compatible terminal.
 - `git`, `fd`, `ripgrep`, a C compiler (for treesitter parsers)
 
 <details>
@@ -102,26 +102,33 @@ Some bundles have their own dependencies:
 
 ## Installation
 
+Copy the starter config and open Neovim:
+
+```bash
+mkdir -p ~/.config/nvim
+curl -fLo ~/.config/nvim/init.lua https://raw.githubusercontent.com/Chiarandini/NoetherVim/main/init.lua.example
+nvim
+```
+This copies NoetherVim's `init.lua` template which auto-installs LazyVim + NoetherVim, the core
+plugins, and has all bundles commented. On first launch, lazy.nvim bootstraps itself, pulls all
+plugins, and runs `noethervim.setup()`. If you know what you're doing you can write the `init.lua`
+file yourself - this documentation will assume you used the init.lua template provided by
+NoetherVim.
+
+
 > [!IMPORTANT]
-> If you have an existing Neovim config, **back it up first**:
+> If you have an existing Neovim config, back it up first before running the above command:
 > ```bash
 > mv ~/.config/nvim ~/.config/nvim.bak
 > mv ~/.local/share/nvim ~/.local/share/nvim.bak
 > mv ~/.local/state/nvim ~/.local/state/nvim.bak
 > mv ~/.cache/nvim ~/.cache/nvim.bak
 > ```
+> see [migrating from an existing config](#migrating-from-an-existing-config) for granular
+> migration options.
 
-Copy the starter config and open Neovim:
-
-```bash
-mkdir -p ~/.config/nvim
-curl -fLo ~/.config/nvim/init.lua \
-  https://raw.githubusercontent.com/Chiarandini/NoetherVim/main/init.lua.example
-nvim
-```
-
-On first launch, lazy.nvim bootstraps itself, pulls all plugins, and runs `noethervim.setup()`.
-
+<!-- FOR FUTURE ME: do the above backup commands backup too much, i.e. the state, or is it
+necessary?  -->
 > [!TIP]
 > **Want to try NoetherVim without replacing your config?** Neovim's `NVIM_APPNAME` feature lets you run multiple configs side by side:
 > ```bash
@@ -130,7 +137,7 @@ On first launch, lazy.nvim bootstraps itself, pulls all plugins, and runs `noeth
 >   https://raw.githubusercontent.com/Chiarandini/NoetherVim/main/init.lua.example
 > NVIM_APPNAME=noethervim nvim
 > ```
-> Your existing `~/.config/nvim/` stays untouched. Add `alias nv='NVIM_APPNAME=noethervim nvim'` to your shell profile for convenience.
+> Your existing `~/.config/nvim/` stays untouched. Add `alias nv='NVIM_APPNAME=noethervim nvim'` (where `nv` can be replaced by any name you want) to your shell profile for convenience.
 
 > [!TIP]
 > **New to Neovim-as-a-distribution, or coming in primarily for LaTeX / Typst work?**
@@ -144,13 +151,11 @@ Run `:Lazy update` inside Neovim. This updates the distro and all plugins.
 
 ### Migrating from an existing config
 
-Back up your current `~/.config/nvim/` before installing. NoetherVim replaces `init.lua`, so anything there will be overwritten.
-
 Once you're running, you can bring over your personal settings:
-- **Plugins** - add lazy.nvim specs to `lua/user/plugins/` (see [Configuration](#configuration))
-- **Options/keymaps/autocmds** - check what the distro defaults to before re-adding (type
-  `:NoetherVim diff keymaps` to check out the distro's keymaps)
-- **LSP configs** - NoetherVim configures servers through `lua/noethervim/lsp/`; if you had custom server settings, look there first
+- **Plugins**: add lazy.nvim specs to `lua/user/plugins/` (see [Configuration](#configuration))
+- **Options/keymaps/autocmds**: check what the distro defaults to before re-adding (type
+  `:NoetherVim diff {keymaps/options}` to check out the distro's keymaps)
+- **LSP configs**: NoetherVim configures servers through `lua/noethervim/lsp/`; if you had custom server settings, look there first
 
 ### Uninstalling
 
@@ -158,7 +163,7 @@ Quick crash course: the following are important files/locations for any Neovim s
 
 | Path | Contents |
 |---|---|
-| `~/.config/nvim/init.lua` | Your leaders and bundle selection |
+| `~/.config/nvim/init.lua` | Neovim's entry point that bootstraps your personal config |
 | `~/.config/nvim/lua/user/` | Your plugin specs, option/keymap/autocmd overrides |
 | `~/.config/nvim/lazy-lock.json` | Your pinned plugin versions |
 | `~/.local/state/nvim/` | Shada (command/search history, marks, registers), undo history, sessions, views |
@@ -223,7 +228,9 @@ return {
 }
 ```
 
-For array-valued opts (`ensure_installed`, `formatters_by_ft`, etc.), the function-form `opts`, and adding extra `keys`/`cmd`/`event` triggers, see `:help noethervim-user-plugins`. Drop-in snippets: [`docs/user-config-examples.md`](docs/user-config-examples.md), or run `:NoetherVim templates` inside Neovim.
+For array-valued opts (`ensure_installed`, `formatters_by_ft`, etc.), the function-form `opts`, and adding extra `keys`/`cmd`/`event` triggers, see `:help noethervim-user-plugins`.
+
+Drop-in copy-paste plugin snippets: [`docs/user-config-examples.md`](docs/user-config-examples.md), or run `:NoetherVim templates` inside Neovim.
 
 ### Overriding options, keymaps, and more
 
@@ -271,9 +278,9 @@ Bundles are optional feature groups, enabled in `init.lua` (see [Enabling bundle
 | `[` / `]` | Previous / next (diagnostics, hunks, buffers, …) |
 | `[o` / `]o` | Toggle options on / off (wrap, spell, …) |
 
-`q` closes non-editing windows (help, quickfix, Oil, notify, man, …)
+`q` closes non-editing windows (help, quickfix, notify, man, …)
 
-**Discovering distro keymaps:** press any prefix key and wait for which-key to show available actions. Use SearchLeader+ck (default: `<Space>ck`) or run `:NoetherVim diff keymaps` to search all keymaps in the distribution and your user files by description and to see which keymaps were over-written. To search for all keymappings active (including neovim defaults and those introduced by plugins), use SearchLeader+fk (default: `<Space>fk`).
+**Discovering distro keymaps:** press any prefix key and wait for which-key to show available actions. Use SearchLeader+ck (default: `<Space>ck`) or run `:NoetherVim diff keymaps` to search all keymaps in the distribution and your user files by description and to see which keymaps were over-written. To search for all active keymappings (including neovim defaults and those introduced by plugins), use SearchLeader+fk (default: `<Space>fk`).
 
 
 ---
