@@ -26,7 +26,7 @@ and has the biggest community.
 
 NoetherVim exists for the cases where I wanted a different set of opinions:
 
-**Keybindings follow Vim's native prefix conventions + one addition.** `<C-w>` for window
+- **Keybindings follow Vim's native prefix conventions + one addition.** `<C-w>` for window
 manipulation, `[`/`]` for directional navigation, `[o`/`]o` for option toggles,
 `g` for goto / LSP actions. `<Leader>` and `<LocalLeader>` stay separated
 (global vs. filetype-specific, per `:help maplocalleader`). If you have
@@ -34,17 +34,17 @@ Vim-flavoured muscle memory, this feels native. There is an additional prefix na
 distribution: a `<searchleader>` which defaults to `<Space>`, see [Keybinding
 Philosophy](#keybinding-philosophy)
 
-**Inspection is built in.** `:NoetherVim diff keymaps` shows every distro
+- **Inspection is built in.** `:NoetherVim diff keymaps` shows every distro
 keymap your config has overridden; `:NoetherVim diff options` does the same
 for options. "What does this distro actually change?" should be a one-command
 question, even after you layer your own config on top.
 
-**LaTeX, BibTeX, and VimTeX are first-class**, The
+- **LaTeX, BibTeX, and VimTeX are first-class**, The
 distro ships custom Snacks-based label and heading pickers, preamble snippets,
 and BibTeX/Zotero citation tooling. See the [onboarding guide for
 mathematicians](docs/onboarding/mathematicians.md).
 
-**Bundles cover non-coding workflows.** This is not as advanced as the latex bundle, but it
+- **Bundles cover non-coding workflows.** This is not as advanced as the latex bundle, but it
 integrates most common other uses of neovim, for example `writing/` (obsidian, neorg, markdown),
 `practice/` (training, hardtime, presentation), and `terminal/` (tmux,
 remote-dev) are first-class categories alongside `languages/` and `tools/`.
