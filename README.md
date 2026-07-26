@@ -1,6 +1,6 @@
 # NoetherVim
 
-A Neovim distribution with a minimal abstraction layer. The name is after [Emmy Noether](https://en.wikipedia.org/wiki/Emmy_Noether) (the name also contains *nvim* - *noether**Vim***).
+A Neovim distribution with a minimal abstraction layer, nameed after [Emmy Noether](https://en.wikipedia.org/wiki/Emmy_Noether) (the name also contains *nvim* - *noether**Vim***).
 
 LaTeX, BibTeX, and VimTeX get the same level of support as LSP and treesitter. Everything else you'd expect is configured out of the box: completion (blink.cmp), DAP, diagnostics, formatters. Startup is fast by using lazy-loading.
 
