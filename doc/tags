@@ -24,6 +24,7 @@ noethervim-filetype-profiles	noethervim.txt	/*noethervim-filetype-profiles*
 noethervim-ftplugin	noethervim.txt	/*noethervim-ftplugin*
 noethervim-g	noethervim.txt	/*noethervim-g*
 noethervim-guide	noethervim.txt	/*noethervim-guide*
+noethervim-hard-wrap	noethervim.txt	/*noethervim-hard-wrap*
 noethervim-health	noethervim.txt	/*noethervim-health*
 noethervim-health-terminal	noethervim.txt	/*noethervim-health-terminal*
 noethervim-inspect	noethervim.txt	/*noethervim-inspect*

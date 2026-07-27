@@ -307,6 +307,15 @@ settings on top of the globals:
                         `lua/user/options.lua`; the distro leaves
                         `spelloptions` untouched.
 
+                                                    *noethervim-hard-wrap*
+The writing profile hard wraps: `formatoptions+t` breaks a line at
+'textwidth' as you type. That is what you want for prose in version
+control, but it means a phrase can end up split across two lines, and
+`/brown fox` then finds nothing when the wrap falls between the words.
+Enable the `wrapsearch` bundle to make `/` and `?` match across the
+break; see |noethervim-bundles|. To stop hard wrapping instead, remove
+`t` from `formatoptions` in an `after/ftplugin/<ft>.lua`.
+
 FileType autocmds fire AFTER `ftplugin/*.lua`, so these profiles win
 over same-named ftplugin settings. To extend the lists (e.g. treat
 `vimwiki` as writing, or skip the code profile for a custom filetype),
@@ -729,6 +738,11 @@ Available bundles (grouped by category): ~
                      Recommended: also enable the markdown bundle.
                      Configure vault path in lua/user/config.lua.
     `neorg`          .norg wiki / note-taking.
+    `wrapsearch`     Make `/` and `?` match across hard-wrapped lines, so
+                     a phrase split by a wrap is still findable. The
+                     writing profile hard-wraps by default, so this is its
+                     counterpart. `g/` searches verbatim for one search.
+                     See |noethervim-filetype-profiles|.
     `presentation`   Slide presentations (presenting.nvim) + showkeys.
 
     terminal/ ~

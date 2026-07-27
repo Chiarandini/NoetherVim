@@ -126,6 +126,7 @@ local bundle_descriptions = {
   yanky           = "yank ring -- cycle through paste history (<C-p>/<C-n>)",
   -- writing
   markdown        = "render, preview, tables, math, image paste",
+  wrapsearch      = "search across hard-wrapped lines (/ and ?)",
   obsidian        = "Obsidian vault integration (pair with markdown bundle)",
   neorg           = ".norg wiki / note-taking",
   -- terminal

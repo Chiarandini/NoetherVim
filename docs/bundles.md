@@ -52,6 +52,7 @@ Some bundles have external dependencies:
 | `markdown` | render-markdown, preview, tables, math, image paste |
 | `obsidian` | Obsidian vault integration (pair with markdown bundle) |
 | `neorg` | `.norg` wiki and note-taking system |
+| `wrapsearch` | Make `/` and `?` match across hard-wrapped lines; `g/` searches verbatim |
 
 ## Terminal & environment
 
