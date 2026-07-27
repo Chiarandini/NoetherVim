@@ -48,8 +48,14 @@ local SCHEMA = {
 --- Permitted values for the small enum fields. Validated alongside the
 --- type schema; unknown strings would otherwise silently fall back to
 --- the default behavior, which masks typos.
+---
+--- Every string-valued key with a closed set of values belongs here.
+--- `statusline.edge_style` is the one exception: its values live in
+--- `noethervim.statusline` and are checked below through
+--- `list_edge_styles()` so the two cannot drift apart.
 local ENUMS = {
-  toggle_feedback = { "notify", "echo", "off" },
+  toggle_feedback  = { "notify", "echo", "off" },
+  completion_style = { "snippet", "supertab", "navigate" },
 }
 
 --- Inner schema for `cfg.statusline`. Same shape as the outer schema.
