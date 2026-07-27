@@ -170,18 +170,6 @@ vim.api.nvim_create_autocmd("TermOpen", {
   end,
 })
 
--- <Esc><Esc> exits terminal mode (one Esc is sent to the program)
-vim.keymap.set("t", "<esc><esc>", "<c-\\><c-n>")
-
--- Open a small terminal at the bottom of the screen
-vim.keymap.set("n", "<c-w>t", function()
-  vim.cmd.new()
-  vim.cmd.wincmd("J")
-  vim.api.nvim_win_set_height(0, 12)
-  vim.wo.winfixheight = true
-  vim.cmd.term()
-end, { desc = "open terminal" })
-
 -- ──────────────────────────────────────────────────────────────
 --  Heirline component update events
 -- ──────────────────────────────────────────────────────────────

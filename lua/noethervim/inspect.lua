@@ -10,7 +10,6 @@
 -- the false-positive without giving up the annotation.
 ---@diagnostic disable: undefined-doc-name
 
-local SearchLeader = require("noethervim.util").search_leader
 local Snacks = require("snacks")
 
 local M = {}
@@ -2194,29 +2193,6 @@ function M.setup()
   vim.api.nvim_create_user_command("NoetherVim",  noethervim_handler, noethervim_cmd_opts)
   vim.api.nvim_create_user_command("NeotherVim",  noethervim_handler, noethervim_cmd_opts) -- common misspelling alias
 
-  -- ── Keymaps (SearchLeader+c prefix) ──────────────────────────
-  -- Note: SearchLeader+cu (user settings), +cc (config lua),
-  -- +cf (ftplugins), +cs (snippets) are defined in
-  -- snacks.lua.  These keymaps extend the same namespace.
-  vim.keymap.set("n", SearchLeader .. "cf", M.files,        { desc = "NoetherVim [f]iles" })
-  vim.keymap.set("n", SearchLeader .. "cg", M.grep,         { desc = "NoetherVim [g]rep" })
-  vim.keymap.set("n", SearchLeader .. "cb", M.bundles,       { desc = "NoetherVim [b]undles" })
-  vim.keymap.set("n", SearchLeader .. "ct", M.templates,     { desc = "NoetherVim [t]emplates" })
-  vim.keymap.set("n", SearchLeader .. "ck", M.diff_keymaps, { desc = "diff [k]eymaps" })
-  vim.keymap.set("n", SearchLeader .. "co", M.diff_options, { desc = "diff [o]ptions" })
-
-  vim.keymap.set("n", SearchLeader .. "?", function()
-    require("noethervim.guide").open()
-  end, { desc = "keymap guide" })
-
-  vim.keymap.set("n", "<leader>i", "<cmd>edit $MYVIMRC<cr>", { desc = "open [i]nit.lua" })
-
-  -- ── upstream compare ────────────────────────────────────────
-  vim.keymap.set("n", SearchLeader .. "cd", function()
-    M.diff_file()
-  end, { desc = "[d]iff file" })
-
-  vim.keymap.set("n", SearchLeader .. "ce", M.override, { desc = "[e]dit override" })
 end
 
 return M

@@ -85,9 +85,22 @@ vim.keymap.set("n", "<c-w><c-q>", "<cmd>copen<cr>",  { desc = "open quickfix" })
 -- CursorMoved.
 vim.keymap.set("n", "<c-w><c-u>", "<cmd>UndotreeToggle<cr>", { desc = "toggle undo tree" })
 
--- Toggle quickfix window (SearchLeader+q)
-local SearchLeader = require("noethervim.util").search_leader
-vim.keymap.set("n", SearchLeader .. "q", function()
+-- Open a small terminal at the bottom of the screen.  This shadows Vim's
+-- builtin <C-w>t (go to top-left window); <C-w>k reaches the same window.
+vim.keymap.set("n", "<c-w>t", function()
+  vim.cmd.new()
+  vim.cmd.wincmd("J")
+  vim.api.nvim_win_set_height(0, 12)
+  vim.wo.winfixheight = true
+  vim.cmd.term()
+end, { desc = "open terminal" })
+
+-- <Esc><Esc> leaves terminal mode; a single <Esc> still reaches the program.
+vim.keymap.set("t", "<esc><esc>", "<c-\\><c-n>", { desc = "exit terminal mode" })
+
+-- Toggle the quickfix window.  A one-shot action rather than a search, so it
+-- lives under <Leader> and not in the SearchLeader namespace.
+vim.keymap.set("n", "<leader>q", function()
   for _, win in ipairs(vim.api.nvim_list_wins()) do
     if vim.fn.getwinvar(win, "&buftype") == "quickfix" then
       vim.cmd("cclose")
@@ -429,3 +442,44 @@ vim.keymap.set({ "n", "v" }, "<RightMouse>", function()
     menu.open(options, { mouse = true })
   end
 end, { desc = "context menu" })
+
+-- ──────────────────────────────────────────────────────────────
+--  Inspection (SearchLeader+c prefix)
+-- ──────────────────────────────────────────────────────────────
+-- Registered here rather than alongside the pickers in inspect.lua, which
+-- only runs at VeryLazy.  That is too late on both counts: it would land
+-- after lua/user/overrides/*.lua and so beat a user override, and it is
+-- past the point where the keymap-source registry is still recording, so
+-- the diff picker and guide would have no file+line to jump to.
+--
+-- The bodies require noethervim.inspect on first press, not at load time,
+-- so registering early costs nothing at startup.
+--
+-- SearchLeader+cu (user settings), +cc (config lua), +cf (ftplugins) and
+-- +cs (snippets) are defined in snacks.lua, in the same namespace.
+
+local SearchLeader = require("noethervim.util").search_leader
+
+--- Call `name` on noethervim.inspect, loading the module on first use.
+local function inspect(name)
+  return function() require("noethervim.inspect")[name]() end
+end
+
+vim.keymap.set("n", SearchLeader .. "cf", inspect("files"),         { desc = "NoetherVim [f]iles" })
+vim.keymap.set("n", SearchLeader .. "cg", inspect("grep"),          { desc = "NoetherVim [g]rep" })
+vim.keymap.set("n", SearchLeader .. "cb", inspect("bundles"),       { desc = "NoetherVim [b]undles" })
+vim.keymap.set("n", SearchLeader .. "ct", inspect("templates"),     { desc = "NoetherVim [t]emplates" })
+vim.keymap.set("n", SearchLeader .. "ck", inspect("diff_keymaps"),  { desc = "diff [k]eymaps" })
+vim.keymap.set("n", SearchLeader .. "co", inspect("diff_options"),  { desc = "diff [o]ptions" })
+vim.keymap.set("n", SearchLeader .. "ca", inspect("diff_autocmds"), { desc = "diff [a]utocmds" })
+vim.keymap.set("n", SearchLeader .. "cd", inspect("diff_file"),     { desc = "[d]iff file" })
+
+vim.keymap.set("n", SearchLeader .. "?", function()
+  require("noethervim.guide").open()
+end, { desc = "keymap guide" })
+
+vim.keymap.set("n", "<leader>i", "<cmd>edit $MYVIMRC<cr>", { desc = "open [i]nit.lua" })
+
+-- Creating and opening an override file is an action on the current buffer,
+-- not a search, so it sits under <Leader> rather than SearchLeader+c.
+vim.keymap.set("n", "<leader>e", inspect("override"), { desc = "[e]dit override" })

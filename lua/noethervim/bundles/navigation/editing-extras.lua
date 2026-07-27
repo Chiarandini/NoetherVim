@@ -3,7 +3,7 @@
 --
 -- Provides:
 --   argmark:          mark and navigate function argument positions
---     SearchLeader+ae edit argument marks
+--     <leader>ae      edit argument marks
 --     <leader>aa      add argument mark
 --     <leader>ax      remove argument mark
 --     <leader>aX      clear all argument marks
@@ -12,7 +12,6 @@
 --   comment-box.nvim: decorative ASCII comment boxes
 --     <leader>bb      left-aligned fixed-size box
 --     <leader>bl      centered line separator
-local SearchLeader = require("noethervim.util").search_leader
 
 return {
 
@@ -22,7 +21,7 @@ return {
 		event = "BufReadPost",
 		opts = {
 			keys = {
-				edit = SearchLeader .. "ae",
+				edit = "<leader>ae",
 				rm = "<leader>ax",
 				go = "<leader>a<leader>",
 				add = "<leader>aa",

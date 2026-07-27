@@ -4,22 +4,22 @@
 -- Provides nvim-neorg for structured note-taking and personal wiki.
 -- Default workspace: ~/neorg/  (override in lua/user/plugins/)
 --
--- Key bindings (SearchLeader defaults to <Space>, see vim.g.mapsearchleader):
---   SearchLeader+ww  -- open Neorg wiki index
---   SearchLeader+wt  -- open wiki in new tab
---   SearchLeader+wv  -- open wiki in vertical split
---   SearchLeader+wr  -- close all Neorg buffers
-local SearchLeader = require("noethervim.util").search_leader
+-- Key bindings.  These open or close wiki buffers rather than searching, so
+-- they live under <Leader> (global actions), not the SearchLeader namespace.
+--   <Leader>ww  -- open Neorg wiki index
+--   <Leader>wt  -- open wiki in new tab
+--   <Leader>wv  -- open wiki in vertical split
+--   <Leader>wr  -- close all Neorg buffers
 
 return {
 	{
 		"nvim-neorg/neorg",
 		dependencies = { "3rd/image.nvim" },
 		keys = {
-			{ SearchLeader .. "ww", "<cmd>Neorg index<cr>",              desc = "Neorg wiki" },
-			{ SearchLeader .. "wt", "<cmd>tabe<cr><cmd>Neorg index<cr>", desc = "Neorg wiki (new tab)" },
-			{ SearchLeader .. "wv", "<cmd>vs<cr><cmd>Neorg index<cr>",   desc = "Neorg wiki (vsplit)" },
-			{ SearchLeader .. "wr", "<cmd>Neorg return<cr>",             desc = "Close Neorg buffers" },
+			{ "<leader>ww", "<cmd>Neorg index<cr>",              desc = "Neorg wiki" },
+			{ "<leader>wt", "<cmd>tabe<cr><cmd>Neorg index<cr>", desc = "Neorg wiki (new tab)" },
+			{ "<leader>wv", "<cmd>vs<cr><cmd>Neorg index<cr>",   desc = "Neorg wiki (vsplit)" },
+			{ "<leader>wr", "<cmd>Neorg return<cr>",             desc = "Close Neorg buffers" },
 			{ "<localleader>nr", "<cmd>Neorg return<cr>", ft = "norg", desc = "return from Neorg" },
 			{ "<localleader>nc", "<cmd>Neorg toc<cr>",    ft = "norg", desc = "Neorg TOC" },
 		},
