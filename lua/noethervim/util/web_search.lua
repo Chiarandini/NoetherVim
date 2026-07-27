@@ -1,6 +1,7 @@
 -- NoetherVim web search utilities
 -- Command:  :Search [<engine>] <query>   (engines: see search_engines table)
 --           :Search set <engine>          (set the default engine)
+--           :Search ?  |  :Search set     (report the current engine)
 -- Lua API:  M.search_diagnostic_under_cursor(), M.search_selected_text(), M.open_plugin_repo()
 
 local M = {}
@@ -48,24 +49,42 @@ end
 --  :Search command (subcommand-dispatch)
 -- ──────────────────────────────────────────────────────────────
 
+--- Report which engine is active, with the full list for reference.
+local function report_engine()
+  local names = vim.tbl_keys(search_engines)
+  table.sort(names)
+  local lines = { "Current engine: " .. current_engine, "", "Available:" }
+  for _, name in ipairs(names) do
+    lines[#lines + 1] = (name == current_engine and "  * " or "    ") .. name
+  end
+  vim.notify(table.concat(lines, "\n"), vim.log.levels.INFO, { title = "Search Engine" })
+end
+
 --- :Search <query>...                 search with current default engine
 --- :Search <engine> <query>...        search with the named engine
 --- :Search set <engine>               change the default engine
+--- :Search ?  /  :Search set          report the current engine
 local function search_cmd(o)
   local args = o.fargs
   if #args == 0 then
-    vim.notify("Usage: :Search [<engine>|set] <query>", vim.log.levels.WARN,
+    vim.notify("Usage: :Search [<engine>|set|?] <query>", vim.log.levels.WARN,
       { title = "Web Search" })
     return
   end
 
   local first = args[1]
 
+  -- `?` is not a plausible query on its own, so it is safe to spend on the
+  -- report. `set` with no engine reports too, rather than warning.
+  if first == "?" and #args == 1 then
+    report_engine()
+    return
+  end
+
   if first == "set" then
     local engine = args[2]
     if not engine then
-      vim.notify("Usage: :Search set <engine>", vim.log.levels.WARN,
-        { title = "Search Engine" })
+      report_engine()
       return
     end
     if search_engines[engine] then
@@ -106,6 +125,9 @@ local function search_complete(_, line)
     if ("set"):find(partial, 1, true) == 1 then
       table.insert(matches, "set")
     end
+    if ("?"):find(partial, 1, true) == 1 then
+      table.insert(matches, "?")
+    end
     for e in pairs(search_engines) do
       if e:find(partial, 1, true) == 1 then table.insert(matches, e) end
     end
@@ -128,7 +150,7 @@ end
 vim.api.nvim_create_user_command("Search", search_cmd, {
   nargs = "+",
   complete = search_complete,
-  desc = "web search ([engine|set] query)",
+  desc = "web search ([engine|set|?] query)",
 })
 
 -- ──────────────────────────────────────────────────────────────
