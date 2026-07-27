@@ -261,12 +261,16 @@ function M.setup()
   if user_cfg.colorscheme_persistence then
     cs.setup_persistence()
   end
-  if user_cfg.colorscheme then
-    -- Persistence may have already applied a saved scheme; only apply
-    -- the default if no persisted choice was loaded.
-    if not user_cfg.colorscheme_persistence or vim.g.colors_name == nil then
-      pcall(vim.cmd.colorscheme, user_cfg.colorscheme)
-    end
+  -- Fall back to gruvbox when the user has not picked a scheme. It is the
+  -- shipped default, and the dashboard / statusline fallback colours are
+  -- chosen against it, so an unconfigured install still looks coherent.
+  -- Its spec is `lazy = true`; lazy.nvim's ColorSchemePre handler loads it
+  -- on demand here.
+  local scheme = user_cfg.colorscheme or "gruvbox"
+  -- Persistence may have already applied a saved scheme; only apply the
+  -- default if no persisted choice was loaded.
+  if not user_cfg.colorscheme_persistence or vim.g.colors_name == nil then
+    pcall(vim.cmd.colorscheme, scheme)
   end
   require("noethervim.highlights")
   user("highlights")  -- after colorscheme so user highlights are not overwritten
