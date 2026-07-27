@@ -9,6 +9,14 @@
 --- Internal types live next to the modules that use them, with `---@private`
 --- annotations on internal helpers.
 ---
+--- FORMATTING RULE, load-bearing: each `@field`'s entire description must sit
+--- on the same physical line as the tag. lua-language-server binds a `---`
+--- continuation line to the NEXT tag rather than the one above it, so a
+--- wrapped description silently becomes the following field's documentation
+--- and every field ends up describing its neighbour. Text on preceding lines
+--- fails the same way. Do not reflow this file for line length; keep the
+--- prose tight instead.
+---
 --- Stability: alpha. See dev-docs/architecture.md §1.1 for the deprecation
 --- policy. Field renames before the first non-alpha release land directly,
 --- without `vim.deprecate` shims.
@@ -17,74 +25,33 @@
 ---
 --- Heirline-based statusline overrides.
 ---
----@field colors? table<string, string>
----     Heirline color-table overrides. Keys match heirline's color names
----     (e.g. `mode_n`, `mode_i`, `git_added`); values are hex strings.
----@field extra_right? table[]
----     Extra heirline component specs appended to the right side of the
----     main statusline, after the git block.
----@field edge_style? "round"|"slant"|"pointy"|"straight"|"bubbly"
----     Shape of the colored mode block at the left of the statusline and
----     (for "bubbly", "slant", "pointy") an opening endcap on the right
----     ruler block. Default "round" preserves the historical look.
----     "bubbly" rounds both edges; "straight" disables endcaps entirely.
----@field tab_modified_indicator? string
----     Glyph shown on a tab containing unsaved changes. Default `" ●"`.
----     Common alternatives: `" [+]"` (vim default), `" *"`, `" "`,
----     `" ◉"`. A leading space is recommended -- it separates the
----     indicator from the tab's filename.
+---@field colors? table<string, string> Heirline color-table overrides. Keys match heirline's color names (e.g. `mode_n`, `mode_i`, `git_added`); values are hex strings.
+---@field extra_right? table[] Extra heirline component specs appended to the right side of the main statusline, after the git block.
+---@field edge_style? "round"|"slant"|"pointy"|"straight"|"bubbly" Shape of the colored mode block at the left of the statusline, and (for "bubbly", "slant", "pointy") an opening endcap on the right ruler block. Default "round" preserves the historical look; "bubbly" rounds both edges; "straight" disables endcaps entirely.
+---@field tab_modified_indicator? string Glyph shown on a tab containing unsaved changes. Default `" ●"`. Common alternatives: `" [+]"` (vim default), `" *"`, `" "`, `" ◉"`. A leading space is recommended -- it separates the indicator from the tab's filename.
+---@field filetype_profile? boolean If true, render a marker showing which filetype profile (writing or code) claimed the current buffer. Clicking it reports the profile, the detected filetype, and the live values of the options the profile sets. Default: false.
+---@field git_click? fun() Called when the git branch/status block is clicked. The default opens lazygit when it is on PATH and falls back to snacks' git-status picker otherwise; lazygit is optional, not a prerequisite.
 
 ---@class noethervim.UserConfig
 ---
---- The data table returned from `lua/user/config.lua`. NoetherVim's
---- single user-facing configuration surface, read by `noethervim.setup()`
---- and by individual bundles when they activate.
+--- The data table returned from `lua/user/config.lua`: everything
+--- NoetherVim itself lets you change about its behaviour.
 ---
 --- Every field is optional. Missing keys fall back to distro defaults.
 ---
----@field colorscheme? string
----     Default colorscheme name, applied during setup() unless the
----     colorscheme bundle has persisted a user pick.
----@field colorscheme_persistence? boolean
----     If true, restore the last picked colorscheme on startup. Has no
----     effect unless the colorscheme bundle is enabled.
----@field statusline_enabled? boolean
----     If false, skip NoetherVim's heirline statusline/tabline/winbar
----     entirely so a user-supplied alternative (lualine, mini.statusline,
----     etc.) can take over with no conflict. Default: true. Drop the
----     replacement plugin into lua/user/plugins/.
----@field statusline? noethervim.StatuslineConfig
----     Heirline-based statusline overrides. Ignored when
----     `statusline_enabled = false`.
----@field obsidian_vault? string
----     Absolute or `~`-prefixed path to your Obsidian vault. Required by the
----     `obsidian` bundle; the bundle no-ops without it.
----@field completion_style? "snippet"|"supertab"|"navigate"
----     Tab-key philosophy for the completion menu. See the cmp plugin
----     spec for the per-style behavior.
----@field blink_conservative_filetypes? string[]
----     Filetypes where blink.cmp's keyword-trigger is suppressed. C-Space
----     and LSP trigger characters still work. Default: `{ "tex", "latex" }`.
----@field blink_conservative_size_kb? integer
----     File size (in KB) above which conservative completion mode kicks in
----     regardless of filetype. Default: 500.
----@field drop? boolean
----     If false, disable seasonal drop.nvim animations. Default: true.
----@field writing_filetypes? string[]
----     Extra filetypes to treat as writing (wrap, linebreak, spell, conceal,
----     formatoptions+t). Extends the distro defaults.
----@field non_code_filetypes? string[]
----     Extra filetypes that skip BOTH writing and code profiles. Extends
----     the distro defaults.
----@field spell_in_code? boolean
----     If true, the code profile enables spellcheck, scoped to comments
----     and strings via treesitter `@spell` captures. Default: false.
----@field toggle_feedback? "notify"|"echo"|"off"
----     Channel for the confirmation message emitted when a bracket-prefix
----     toggle (`[ox` / `]ox`, etc.) fires. `"notify"` (default) routes
----     through `vim.notify`, which snacks renders as a toast. `"echo"`
----     uses `nvim_echo` for the classic single-line cmdline message
----     (still recorded in `:messages`). `"off"` suppresses the message
----     entirely.
+---@field colorscheme? string Colorscheme applied at startup, unless the colorscheme bundle has restored a previously picked one. Defaults to `"gruvbox"`, the shipped theme; the dashboard and statusline fallback colours are chosen to match it.
+---@field colorscheme_persistence? boolean If true, restore the last picked colorscheme on startup. Has no effect unless the colorscheme bundle is enabled. Default: false.
+---@field statusline_enabled? boolean If false, skip NoetherVim's heirline statusline, tabline and winbar entirely, so a user-supplied alternative (lualine, mini.statusline) can take over with no conflict. Drop the replacement into `lua/user/plugins/`. Default: true.
+---@field statusline? noethervim.StatuslineConfig Heirline-based statusline overrides. Ignored when `statusline_enabled = false`.
+---@field obsidian_vault? string Absolute or `~`-prefixed path to your Obsidian vault. Required by the `obsidian` bundle, which does nothing until it is set.
+---@field completion_style? "snippet"|"supertab"|"navigate" Tab-key philosophy for the completion menu. `"snippet"` reserves Tab for LuaSnip, `"supertab"` accepts the menu item, `"navigate"` cycles the menu without accepting. Default: `"snippet"`.
+---@field blink_conservative_filetypes? string[] Filetypes where blink.cmp's keyword-trigger is suppressed. `<C-Space>` and LSP trigger characters still work. Default: `{ "tex", "latex" }`.
+---@field blink_conservative_size_kb? integer File size (in KB) above which conservative completion mode kicks in regardless of filetype. Default: 500.
+---@field drop? boolean If false, disable the seasonal drop.nvim animations from the `eye-candy` bundle. Default: true.
+---@field writing_filetypes? string[] Extra filetypes to treat as writing (wrap, linebreak, spell, conceal, `formatoptions+t`). Added to the defaults rather than replacing them.
+---@field non_code_filetypes? string[] Extra filetypes that skip BOTH the writing and code profiles, leaving their own ftplugin settings in charge. Added to the defaults.
+---@field q_close_filetypes? string[] Extra filetypes where a bare `q` closes the window. Added to the defaults; editable filetypes (`oil`, `markdown`, ...) are excluded because `q` would shadow macro recording. To drop one of the defaults instead, clear the `noethervim_q_close` augroup and recreate the autocmd.
+---@field spell_in_code? boolean If true, the code profile enables spellcheck, scoped to comments and strings via treesitter `@spell` captures so identifiers are not flagged. Default: false.
+---@field toggle_feedback? "notify"|"echo"|"off" Channel for the confirmation message emitted when a bracket-prefix toggle (`[ox` / `]ox`) fires. `"notify"` (default) routes through `vim.notify`, which snacks renders as a toast; `"echo"` uses `nvim_echo` for the classic cmdline message; `"off"` suppresses it.
 
 return {}
