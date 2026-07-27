@@ -103,7 +103,6 @@ require("lazy").setup({
 		-- { import = "noethervim.bundles.tools.http" },          -- kulala.nvim HTTP/REST client
 		-- { import = "noethervim.bundles.tools.git" },           -- Fugit2, diffview, git-conflict
 		-- { import = "noethervim.bundles.tools.ai" },            -- CodeCompanion (needs ANTHROPIC_API_KEY)
-		-- { import = "noethervim.bundles.tools.smart-actions" }, -- AI code actions on grA (Claude Code / Anthropic)
 		-- { import = "noethervim.bundles.tools.refactoring" },   -- extract function/variable/block
 		-- { import = "noethervim.bundles.tools.octo" },         -- GitHub PRs/issues (needs gh CLI)
 		-- { import = "noethervim.bundles.tools.nvim-dev" },     -- StartupTime, Luapad, vimls (config-dev)

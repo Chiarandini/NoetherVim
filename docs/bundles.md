@@ -31,7 +31,6 @@ Some bundles have external dependencies:
 | `http` | kulala.nvim HTTP/REST/gRPC/GraphQL client |
 | `git` | Fugitive, Flog, Fugit2 TUI, diffview, git-conflict, gitignore |
 | `ai` | CodeCompanion - Anthropic, OpenAI, Gemini, Ollama, and more |
-| `smart-actions` | AI-suggested code actions on `grA` (Claude Code / Anthropic) |
 | `refactoring` | Extract function, variable, block |
 | `octo` | GitHub PRs / issues / reviews via `gh` CLI (`<C-w>O` for PR list) |
 | `nvim-dev` | Neovim config development: `:StartupTime`, `:Luapad`, vimls LSP for `.vim` files |
@@ -44,7 +43,7 @@ Some bundles have external dependencies:
 | `flash` | Enhanced `f`/`t` and `/` motions with labels |
 | `projects` | Project switcher |
 | `editing-extras` | Argument marking (argmark) + decorative ASCII comment boxes |
-| `yanky` | Yank ring -- cycle through paste history with `<C-p>`/`<C-n>` after a paste |
+| `yanky` | Yank ring: cycle through paste history with `<C-p>`/`<C-n>` after a paste |
 
 ## Writing & notes
 
@@ -70,7 +69,7 @@ Some bundles have external dependencies:
 | `eye-candy` | Animations (drop.nvim, cellular-automaton), scrollbar, block display |
 | `minimap` | Sidebar minimap with git/diagnostic markers |
 | `helpview` | Rendered `:help` pages |
-| `tableaux` | noethervim-tableaux -- animated mathematical dashboard scenes |
+| `tableaux` | noethervim-tableaux: animated mathematical dashboard scenes |
 
 ## Practice & utilities
 
