@@ -258,7 +258,11 @@ local spell_in_code = ok_cfg and type(user_cfg) == "table" and user_cfg.spell_in
 
 local function apply_writing_profile(buf)
   -- Buffer-local: formatoptions, the keymap.
-  vim.bo[buf].formatoptions = vim.bo[buf].formatoptions .. "t"
+  -- Guarded: this runs on BufWinEnter as well as FileType, so an
+  -- unconditional append would add `t` again on every window switch.
+  if not vim.bo[buf].formatoptions:find("t", 1, true) then
+    vim.bo[buf].formatoptions = vim.bo[buf].formatoptions .. "t"
+  end
   if not vim.b[buf].noethervim_writing_keymap then
     vim.keymap.set("i", "<c-l>", "<c-g>u<Esc>[s1z=`]a<c-g>u",
       { buffer = buf, silent = true, desc = "fix spelling" })
