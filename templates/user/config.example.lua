@@ -6,8 +6,14 @@
 -- it manually if you prefer.
 -- lua/user/config.lua is gitignored - it never ships with the distribution.
 --
--- This is the single user-facing configuration surface.  Any key left
--- nil (or absent) falls back to the distro default.
+-- Any key left nil (or absent) falls back to the distro default.
+--
+-- This file covers what the distribution itself lets you change.  Other
+-- settings have their own home:
+--   lua/user/options.lua   anything with a vim.o / vim.opt equivalent
+--   lua/user/plugins/      anything a plugin exposes through `opts`
+--   init.lua (vim.g.*)     leaders and the dashboard opt-out, which have to
+--                          be set before plugins load
 --
 -- The `---@type` annotation below tells lua-language-server (via
 -- lazydev.nvim, which ships with the distro) what the returned table
@@ -19,8 +25,10 @@
 return {
 
     -- ── Colorscheme ───────────────────────────────────────────────────────────
-    -- Default colorscheme name, applied during setup() unless the colorscheme
-    -- bundle has persisted a user pick from a prior session.
+    -- Colorscheme applied during setup(), unless the colorscheme bundle has
+    -- persisted a user pick from a prior session.  Defaults to "gruvbox",
+    -- which the distro ships and pins.  Enable the colorscheme bundle for
+    -- ten more themes and a picker.
     -- colorscheme = "gruvbox",
 
     -- If true, restore the last picked colorscheme on startup.
@@ -55,6 +63,17 @@ return {
     --     -- Default " ●".  Common alternatives: " [+]" (vim default),
     --     -- " *", " ", " ◉".
     --     tab_modified_indicator = " ●",
+    --
+    --     -- Show a marker for the filetype profile (writing or code) that
+    --     -- claimed the current buffer.  Click it to see the profile, the
+    --     -- detected filetype, and what the profile actually turned on.
+    --     -- Default: false.
+    --     filetype_profile = true,
+    --
+    --     -- What clicking the git branch/status block does.  The default
+    --     -- opens lazygit when it is on PATH, and snacks' git-status
+    --     -- picker otherwise -- lazygit is optional, not a prerequisite.
+    --     git_click = function() vim.cmd("Git") end,
     -- },
 
 
@@ -104,10 +123,12 @@ return {
     --               nvim-cmp default.  Best for users migrating from older
     --               cmp setups.
     --
-    -- AI completion (Copilot / Codeium / supermaven / smart-actions) is NOT
-    -- bundled.  When you add one, bind its accept-word action to Tab inside
+    -- AI completion (Copilot / Codeium / supermaven) is NOT bundled -- each
+    -- needs an account or API key, so the distro does not pick one for you.
+    -- When you add one, bind its accept-word action to Tab inside
     -- lua/user/keymaps.lua AFTER blink loads; it will shadow whatever the
-    -- chosen style does for Tab.  Minimal sketch:
+    -- chosen style does for Tab.  Full spec + keymap in
+    -- docs/user-config-examples.md.  Minimal sketch:
     --
     --     vim.keymap.set("i", "<Tab>", function()
     --       if require("copilot.suggestion").is_visible() then
@@ -140,6 +161,13 @@ return {
     -- ftplugin / buffer settings take over (e.g. listchars stay off).  Defaults
     -- include json, yaml, toml, help, qf, oil, terminal, dashboard, dap-ui, etc.
     -- non_code_filetypes = { "csv" },
+
+    -- Extra filetypes where a bare `q` closes the window.  Defaults cover
+    -- read-only panels (help, man, lazy, mason, checkhealth, undotree, diff,
+    -- ...).  Editable filetypes are left out on purpose: `q` there would
+    -- shadow macro recording.  Add them anyway if you never record macros in
+    -- those buffers -- `oil` is the common case.
+    -- q_close_filetypes = { "oil" },
 
     -- Enable spellcheck in code buffers.  Scoped to comments and strings via
     -- treesitter @spell captures (identifiers are NOT spellchecked).  `[os` /

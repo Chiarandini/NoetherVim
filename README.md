@@ -109,8 +109,8 @@ mkdir -p ~/.config/nvim
 curl -fLo ~/.config/nvim/init.lua https://raw.githubusercontent.com/Chiarandini/NoetherVim/main/init.lua.example
 nvim
 ```
-This copies NoetherVim's `init.lua` template which auto-installs LazyVim + NoetherVim, the core
-plugins, and has all bundles commented. On first launch, lazy.nvim bootstraps itself, pulls all
+This copies NoetherVim's `init.lua` template, which auto-installs lazy.nvim + NoetherVim and the core
+plugins, and has all bundles commented out. On first launch, lazy.nvim bootstraps itself, pulls all
 plugins, and runs `noethervim.setup()`. If you know what you're doing you can write the `init.lua`
 file yourself - this documentation will assume you used the init.lua template provided by
 NoetherVim.
@@ -127,8 +127,6 @@ NoetherVim.
 > see [migrating from an existing config](#migrating-from-an-existing-config) for granular
 > migration options.
 
-<!-- FOR FUTURE ME: do the above backup commands backup too much, i.e. the state, or is it
-necessary?  -->
 > [!TIP]
 > **Want to try NoetherVim without replacing your config?** Neovim's `NVIM_APPNAME` feature lets you run multiple configs side by side:
 > ```bash
@@ -140,10 +138,13 @@ necessary?  -->
 > Your existing `~/.config/nvim/` stays untouched. Add `alias nv='NVIM_APPNAME=noethervim nvim'` (where `nv` can be replaced by any name you want) to your shell profile for convenience.
 
 > [!TIP]
-> **New to Neovim-as-a-distribution, or coming in primarily for LaTeX / Typst work?**
-> See the [onboarding guide for mathematicians](docs/onboarding/mathematicians.md),
-> a walkthrough of the install, the math bundles, snippets, citations, and how to
-> extend the setup.
+> **Just installed it?** [Your first session](docs/onboarding/README.md) covers the
+> keybinding prefixes, the four commands worth running first, and a tour of the
+> defaults you can change.
+>
+> **Coming in primarily for LaTeX / Typst work?** Continue with the
+> [onboarding guide for mathematicians](docs/onboarding/mathematicians.md): the math
+> bundles, snippets, citations, and how to extend the setup.
 
 ### Updating
 
@@ -230,7 +231,7 @@ return {
 
 For array-valued opts (`ensure_installed`, `formatters_by_ft`, etc.), the function-form `opts`, and adding extra `keys`/`cmd`/`event` triggers, see `:help noethervim-user-plugins`.
 
-Drop-in copy-paste plugin snippets: [`docs/user-config-examples.md`](docs/user-config-examples.md), or run `:NoetherVim templates` inside Neovim.
+Plugins deliberately left out of the distribution (AI completion, translation, AI code actions, lighter jump motions) have copy-paste specs and the reasoning behind each omission in [`docs/user-config-examples.md`](docs/user-config-examples.md). For scaffolding your own files, run `:NoetherVim templates` inside Neovim.
 
 ### Overriding options, keymaps, and more
 
@@ -243,7 +244,7 @@ NoetherVim loads user override files after each core module. Create any of these
 | `autocmds.lua` | Autocommands |
 | `highlights.lua` | Highlight groups (runs after colorscheme) |
 | `lsp/<server>.lua` | Per-server LSP settings |
-| `config.lua` | Config data table -- vault paths, feature flags, filetype lists (`:help noethervim-user-config-data`) |
+| `config.lua` | Config data table: vault paths, feature flags, filetype lists (`:help noethervim-user-config-data`) |
 
 Template files are provided in `templates/user/` in the installed distro - copy the ones you want and uncomment the relevant lines. The fastest way to grab one is `:NoetherVim templates` (or SearchLeader+ct): pick a template and press `<C-y>` to stamp it into `lua/user/`, with a diff prompt before any file is written.
 
@@ -258,7 +259,7 @@ Bundles are optional feature groups, enabled in `init.lua` (see [Enabling bundle
 | Category | Bundles |
 |---|---|
 | Programming languages | [`rust`](docs/bundles.md#programming-languages), [`go`](docs/bundles.md#programming-languages), [`java`](docs/bundles.md#programming-languages), [`python`](docs/bundles.md#programming-languages), [`latex`](docs/bundles.md#programming-languages), [`latex-zotero`](docs/bundles.md#programming-languages), [`web-dev`](docs/bundles.md#programming-languages) |
-| Tools | [`debug`](docs/bundles.md#tools), [`test`](docs/bundles.md#tools), [`repl`](docs/bundles.md#tools), [`task-runner`](docs/bundles.md#tools), [`database`](docs/bundles.md#tools), [`http`](docs/bundles.md#tools), [`git`](docs/bundles.md#tools), [`ai`](docs/bundles.md#tools), [`smart-actions`](docs/bundles.md#tools), [`refactoring`](docs/bundles.md#tools), [`octo`](docs/bundles.md#tools), [`nvim-dev`](docs/bundles.md#tools) |
+| Tools | [`debug`](docs/bundles.md#tools), [`test`](docs/bundles.md#tools), [`repl`](docs/bundles.md#tools), [`task-runner`](docs/bundles.md#tools), [`database`](docs/bundles.md#tools), [`http`](docs/bundles.md#tools), [`git`](docs/bundles.md#tools), [`ai`](docs/bundles.md#tools), [`refactoring`](docs/bundles.md#tools), [`octo`](docs/bundles.md#tools), [`nvim-dev`](docs/bundles.md#tools) |
 | Navigation & editing | [`harpoon`](docs/bundles.md#navigation--editing), [`flash`](docs/bundles.md#navigation--editing), [`projects`](docs/bundles.md#navigation--editing), [`editing-extras`](docs/bundles.md#navigation--editing), [`yanky`](docs/bundles.md#navigation--editing) |
 | Writing & notes | [`markdown`](docs/bundles.md#writing--notes), [`obsidian`](docs/bundles.md#writing--notes), [`neorg`](docs/bundles.md#writing--notes) |
 | Terminal & environment | [`better-term`](docs/bundles.md#terminal--environment), [`tmux`](docs/bundles.md#terminal--environment), [`remote-dev`](docs/bundles.md#terminal--environment) |
@@ -271,7 +272,7 @@ Bundles are optional feature groups, enabled in `init.lua` (see [Enabling bundle
 
 | Prefix | Purpose |
 |---|---|
-| `<Space>` (configurable) | Fuzzy navigation and search -- set `vim.g.mapsearchleader` to change |
+| `<Space>` (configurable) | Fuzzy navigation and search; set `vim.g.mapsearchleader` to change |
 | `<Leader>` (`\`) | Global actions (format, open tools) |
 | `<LocalLeader>` (`,`) | Filetype-specific actions (compile LaTeX, run script) |
 | `<C-w>` | All window navigation and manipulation |
@@ -345,7 +346,7 @@ bundle details, and FAQ - run inside Neovim:
 :help noethervim
 ```
 
-Browse NoetherVim source with `:NoetherVim files`, bundles with `:NoetherVim bundles`, and installed plugins with `:NoetherVim plugins`. When viewing a source file, run `:NoetherVim override` (or SearchLeader+ce) to open the corresponding user override file in a split - the file is created if it doesn't exist.
+Browse NoetherVim source with `:NoetherVim files`, bundles with `:NoetherVim bundles`, and installed plugins with `:NoetherVim plugins`. When viewing a source file, run `:NoetherVim override` (or `<Leader>e`) to open the corresponding user override file in a split - the file is created if it doesn't exist.
 
 > [!NOTE]
 > If muscle memory makes you type `:NeotherVim`, that works too.

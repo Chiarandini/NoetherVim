@@ -9,6 +9,11 @@ This document is not a Vim tutorial and not an argument for switching editors. I
 targeting people who already want to. The goal is to shorten the path from install to
 a setup where you can actually write a paper, take notes, manage references, etc.
 
+It builds on [your first session](README.md), which covers the parts that are
+not specific to mathematics: the keybinding prefixes, the commands worth
+running first, and the defaults you can change. Sections 4 and 5 below repeat
+just enough of it to stay self-contained.
+
 ---
 
 ## 1. Who this guide is for
@@ -333,7 +338,7 @@ Your Obsidian app and NoetherVim edit the same files.
 for thesis-style hierarchical notes or long-running research journals.
 Default workspace is `~/neorg/`. Key openers:
 
-- `<Space>ww` - open the wiki index.
+- `<Leader>ww` - open the wiki index.
 - `<Space>wt` / `<Space>wv` - index in a new tab / vertical split.
 - `<LocalLeader>nc` - table of contents for the current norg file.
 
@@ -368,7 +373,7 @@ vim.keymap.set("n", "<LocalLeader>c", "<Plug>(vimtex-compile)",
 ```
 
 From any core NoetherVim file opened via `:NoetherVim files`, press
-`<Space>ce` (the same keymap as `:NoetherVim override`) to open the
+`<Leader>e` (the same keymap as `:NoetherVim override`) to open the
 matching user override file in a split. NoetherVim creates it if it
 doesn't exist and puts you at the right place.
 

@@ -20,6 +20,21 @@
 -- })
 
 -- ── Override a core autocommand ──────────────────────────────────────────────
--- To disable the q-to-quit autocmd for a specific filetype, clear the group:
+-- To ADD a filetype to the q-to-quit list, set q_close_filetypes in
+-- lua/user/config.lua -- no autocmd needed.
+--
+-- To REMOVE one of the distro's entries, clear the group and re-create the
+-- autocmd with your own list:
 -- vim.api.nvim_create_augroup("noethervim_q_close", { clear = true })
--- Then re-create it with your preferred list (see noethervim/autocmds.lua).
+-- local fts = vim.tbl_filter(
+--   function(ft) return ft ~= "diff" end,
+--   require("noethervim.util.filetypes").q_close
+-- )
+-- vim.api.nvim_create_autocmd("FileType", {
+--   group   = "noethervim_q_close",
+--   pattern = fts,
+--   callback = function(ev)
+--     vim.keymap.set("n", "q", "<cmd>close<cr>",
+--       { buf = ev.buf, silent = true, nowait = true })
+--   end,
+-- })

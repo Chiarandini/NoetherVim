@@ -1,4 +1,4 @@
-*noethervim.txt*    NoetherVim distribution -- user guide
+*noethervim.txt*    NoetherVim distribution user guide
 
 Author:   Chiarandini
 License:  MIT
@@ -35,7 +35,7 @@ CONTENTS                                                  *noethervim-contents*
 1. INTRODUCTION                                    *noethervim* *neothervim*
 
 NoetherVim is an opinionated Neovim distribution built on lazy.nvim. It
-ships sensible defaults, 30+ core plugins, and 38 opt-in bundles, with a
+ships sensible defaults, 30+ core plugins, and 37 opt-in bundles, with a
 user configuration system that survives upstream updates.
 
 This help file covers in-editor usage and reference. For design rationale,
@@ -46,8 +46,8 @@ system requirements, and installation, see the README in the project root.
 
                                                     *noethervim-nvim-appname*
                                                     *noethervim-uninstall*
-For initial installation -- backup paths, the bootstrap `curl`, NVIM_APPNAME
-side-by-side trials, and uninstall / reset commands -- see the README in
+For initial installation (backup paths, the bootstrap `curl`, NVIM_APPNAME
+side-by-side trials, and uninstall / reset commands), see the README in
 the project root. Once Neovim is running, this help file is the reference.
 
 Updating: ~
@@ -59,10 +59,28 @@ Run inside Neovim. This updates the distro and all plugins: >vim
 ==============================================================================
 3. QUICKSTART                                          *noethervim-quickstart*
 
-Inside Neovim, open `:NoetherVim bundles` (or SearchLeader+cb) to enable
-bundles, then `:NoetherVim templates` (or SearchLeader+ct) to stamp the
-`lua/user/` config files you want. Both flows show a diff prompt before
-writing. See |noethervim-bundle-toggle| and |noethervim-templates|.
+Four commands, in the order worth running them: ~
+
+    SearchLeader+?    Every active keymap, grouped by namespace. `<CR>` on
+                    a line jumps to where it was defined.
+                    See |noethervim-guide|.
+    `:checkhealth noethervim`
+                    Confirms your terminal, tools and config are in order.
+                    See |noethervim-health|.
+    SearchLeader+cb   Enable bundles. See |noethervim-bundle-toggle|.
+    SearchLeader+ct   Stamp `lua/user/` config templates. Start with
+                    `user/config.example.lua`, which is an annotated list
+                    of everything the distribution lets you change about
+                    its own behaviour. See |noethervim-templates|.
+
+Both the bundle and template flows show a diff prompt before writing.
+
+The keymap prefixes are the fastest thing to learn: |noethervim-keymaps|.
+
+A longer walkthrough for a first session, including the prefixes and the
+defaults worth reviewing, lives in `docs/onboarding/README.md` in the
+project root; `docs/onboarding/mathematicians.md` continues it for LaTeX
+and Typst work.
 
 ==============================================================================
 4. USER CONFIGURATION                                  *noethervim-user-config*
@@ -77,7 +95,16 @@ NoetherVim loads user override files automatically after each core module.
 User files live in your config directory's `lua/user/` folder and are
 never touched by upstream updates.
 
-The loading order is: >
+                                                     *noethervim-load-order*
+Loading happens in three stages. ~
+
+Stage 1 collects plugin specs. Nothing runs yet; your `user/plugins/`
+files are merged last, so your `opts` win over both the distro's and any
+bundle's. A bundle sits in between: it can change a core plugin's `opts`,
+and you can change a bundle's.
+
+Stage 2 runs the configuration files, distro first and yours second at
+every step: >
     noethervim/options.lua   ->  user/options.lua
     noethervim/lsp/*.lua     ->  user/lsp/*.lua
     noethervim/keymaps.lua   \
@@ -87,8 +114,24 @@ The loading order is: >
     colorscheme               >  user/highlights.lua
     user/overrides/*.lua         (last-resort hooks)
 <
-Plugin specs in `user/plugins/` are merged by lazy.nvim before any of
-the above runs.
+Stage 3 is deferred until after the screen is drawn: the extra commands,
+and each lazy-loaded plugin whenever its trigger fires.
+
+                                              *noethervim-override-timing*
+What stage 3 means for overrides: ~
+
+`user/overrides/*.lua` is the last thing in stage 2, not the last thing
+overall. It wins against everything the distribution sets in stage 2, and
+against a plugin's `keys` entries: once you remap one of those, it stays
+remapped whether or not the plugin later loads.
+
+It does NOT win against stage 3, which is mainly a lazy-loaded plugin's
+own `config` function and buffer-local LSP keymaps applied on
+`LspAttach`. Those run later and overwrite you.
+
+For those, override at the layer that runs at the same time: an
+`LspAttach` autocmd for LSP keymaps, or a `config` wrapper in your
+`user/plugins/` spec for a plugin's own bindings.
 
 ------------------------------------------------------------------------------
 4.1 DIRECTORY STRUCTURE                                  *noethervim-user-dir*
@@ -141,20 +184,20 @@ Notable non-default choices: ~
   `swapfile` is OFF; `undofile` is ON. NoetherVim favours persistent
   undo over swap-based crash recovery; in the author's experience,
   swap's "file changed on disk" prompts produced more false positives
-  than they prevented lost work. Your mileage may differ -- if you
+  than they prevented lost work. Your mileage may differ; if you
   want swap back (e.g. on flaky SSH / VM sessions), set
   `vim.o.swapfile = true` in `user/options.lua`.
 
   `autowrite` ON, `autowriteall` OFF, `autoread` ON. Buffer-switch
   commands (`:next`, `:make`, `<C-^>`, `:buffer`) auto-save unsaved
-  edits; reload commands (`:e`) do not -- running `:e` on a modified
+  edits; reload commands (`:e`) do not, so running `:e` on a modified
   buffer errors with `E37: No write since last change`.
 
   The `autowriteall=false` guard prevents a specific data-loss
   scenario: if a buffer is modified while an external process also
   edits the file on disk, `autowriteall=true` would silently write
-  the stale buffer first when you `:e` -- overwriting the external
-  changes, then reloading the result -- destroying the external edits
+  the stale buffer first when you `:e`, overwriting the external
+  changes, then reloading the result, destroying the external edits
   with no warning. With `autowriteall=false`, `:e` errors instead,
   forcing an explicit choice (`:e!` discards buffer edits; `:w!`
   overwrites disk). Treat `:e` as "load file into buffer," not
@@ -190,7 +233,7 @@ NoetherVim keymap philosophy: >
                                                             *g:mapsearchleader*
 g:mapsearchleader ~
     The key prefix for all search/navigation keymaps. Defaults to `<Space>`.
-    Works like |mapleader| -- set it in your init.lua BEFORE `lazy.setup()`: >lua
+    Works like |mapleader|; set it in your init.lua BEFORE `lazy.setup()`: >lua
         vim.g.mapsearchleader = "<C-s>"   -- or ";", "\\", etc.
 <
     All keymaps in the SearchLeader namespace (find, grep, LSP, git, config,
@@ -208,6 +251,20 @@ To override a core autocmd, clear its augroup first: >lua
     vim.api.nvim_create_augroup("noethervim_q_close", { clear = true })
     -- Then re-create with your preferred list
 <
+                                                        *noethervim-q-close*
+q-to-close: ~
+
+A bare `q` closes the window in filetypes you cannot usefully edit (help,
+man, lazy, mason, checkhealth, undotree, diff, and friends). Editable
+filetypes are excluded on purpose, because `q` there would shadow macro
+recording, so `oil`, `markdown` and the like are left alone.
+
+To ADD a filetype, set `q_close_filetypes` in `lua/user/config.lua`; see
+|noethervim-user-config-data|. To REMOVE one of the defaults, clear the
+`noethervim_q_close` augroup and re-create the autocmd from
+`require("noethervim.util.filetypes").q_close` minus the entries you do
+not want. `templates/user/autocmds.example.lua` has the full snippet.
+
 Core augroups (clear any of these to disable or replace the feature): ~
     `noethervim_q_close`      q-to-close in non-editing windows
     `noethervim_profiles`     the writing / code filetype profiles
@@ -277,7 +334,7 @@ is applied, so your overrides are not wiped by the theme: >lua
 Highlight tweaks (colorscheme bundle): ~
 
 Plain `nvim_set_hl` calls are lost when you switch colorschemes. If the
-`colorscheme` bundle is enabled, use the tweak helper instead -- tweaks
+`colorscheme` bundle is enabled, use the tweak helper instead; tweaks
 re-apply automatically on every colorscheme change: >lua
     -- lua/user/highlights.lua
     require("noethervim.util.colorscheme").tweak({
@@ -311,7 +368,21 @@ Keys you do not set fall back to the distro default; the file is
 optional and missing keys are not an error.
 
 Note: this file is for personal preferences. Arbitrary plugin overrides go in
-`lua/user/plugins/` instead (see |noethervim-user-plugins|). >lua
+`lua/user/plugins/` instead (see |noethervim-user-plugins|).
+
+Which surface to reach for: ~
+
+    `config.lua`        Values NoetherVim's own code branches on, with no
+                      `vim.o` or plugin-`opts` home of their own.
+    `user/options.lua`  Anything with a `vim.o` / `vim.opt` equivalent.
+    `user/plugins/`     Anything a plugin exposes through `opts`. Plugin
+                      options are not repeated in `config.lua`; go
+                      straight to the spec.
+    `vim.g.*`           Leaders and the dashboard opt-out, set in
+                      `init.lua`. These have to be in place before
+                      plugins load, which is earlier than `config.lua`
+                      is read.
+>lua
     -- lua/user/config.lua
     return {
       colorscheme                  = "gruvbox",
@@ -327,18 +398,29 @@ Note: this file is for personal preferences. Arbitrary plugin overrides go in
       drop                         = false,
       writing_filetypes            = { "vimwiki", "quarto" },
       non_code_filetypes           = { "csv" },
+      q_close_filetypes            = { "oil" },
       spell_in_code                = true,
     }
 <
 Current keys: ~
-    `colorscheme`                   Default colorscheme name, applied
-                                  during `setup()` unless persistence
-                                  has restored a saved pick. Default:
-                                  none (relies on Neovim's default).
+    `colorscheme`                   Colorscheme applied at startup unless
+                                  persistence has restored a previously
+                                  picked one. Default: `"gruvbox"`, which
+                                  the distribution ships and pins. The
+                                  dashboard and statusline fallback
+                                  colours are chosen against it, so a
+                                  fresh install looks coherent without
+                                  any configuration.
     `colorscheme_persistence`       If true, restore the last picked
                                   colorscheme on startup. Has no effect
                                   unless the `colorscheme` bundle is
                                   enabled. Default: false.
+    `statusline_enabled`            Set to `false` to skip NoetherVim's
+                                  heirline statusline, tabline and
+                                  winbar entirely, so a replacement
+                                  (lualine, mini.statusline) dropped into
+                                  `lua/user/plugins/` takes over with no
+                                  conflict. Default: `true`.
     `statusline.edge_style`         Shape of the colored mode block at
                                   the left of the statusline. See
                                   |noethervim-statusline-edge-style|.
@@ -353,6 +435,22 @@ Current keys: ~
                                   unsaved changes. Default `" ●"`.
                                   Common alternatives: `" [+]"`,
                                   `" *"`, `" "`, `" ◉"`.
+    `statusline.filetype_profile`   Set to `true` to render a marker for
+                                  the filetype profile (writing or code)
+                                  that claimed the current buffer.
+                                  Clicking it reports the profile, the
+                                  detected filetype, and the live values
+                                  of the options the profile sets, so
+                                  per-buffer toggles (`[ow`, `]os`, ...)
+                                  show up too. See
+                                  |noethervim-filetype-profiles|.
+                                  Default: `false`.
+    `statusline.git_click`          Function called when the git
+                                  branch/status block is clicked. The
+                                  default opens lazygit when it is on
+                                  PATH and falls back to snacks'
+                                  git-status picker otherwise; lazygit
+                                  is optional, not a prerequisite.
     `obsidian_vault`                Path to your Obsidian vault. Read by
                                   the `obsidian` bundle. Default:
                                   `~/obsidian/`.
@@ -382,16 +480,21 @@ Current keys: ~
                                   See |noethervim-filetype-profiles|.
                                   Default: `{}`.
     `non_code_filetypes`            Extra filetypes that skip both the
-                                  writing and code profiles -- their own
+                                  writing and code profiles; their own
                                   ftplugin / buffer settings take over.
                                   Additive: defaults stay in place.
                                   Default: `{}`.
+    `q_close_filetypes`             Extra filetypes where a bare `q`
+                                  closes the window. Additive: defaults
+                                  stay in place. `{ "oil" }` is the
+                                  common addition. See
+                                  |noethervim-q-close|. Default: `{}`.
     `spell_in_code`                 If `true`, the code profile turns on
                                   `spell`. Spellcheck is scoped to
                                   comments and strings via treesitter
                                   `@spell` captures; identifiers are not
                                   flagged. `spelloptions` is left
-                                  untouched -- add `camel` yourself if
+                                  untouched; add `camel` yourself if
                                   you want CamelCase splitting. See
                                   |noethervim-filetype-profiles|.
                                   Default: `false`.
@@ -425,7 +528,7 @@ To add a new plugin, write a normal lazy.nvim spec: >lua
     }
 <
 To override a plugin the distro already loads, use the EXACT same
-repository string -- lazy.nvim deep-merges `opts` tables automatically: >lua
+repository string, and lazy.nvim deep-merges `opts` tables automatically: >lua
     -- lua/user/plugins/snacks.lua
     return {
       { "folke/snacks.nvim",
@@ -457,7 +560,7 @@ not be loaded yet.
 Array-valued opts: ~                    *noethervim-user-plugins-arrays*
 
 `vim.tbl_deep_extend` (the function lazy.nvim uses to merge `opts`) does
-NOT extend sequential arrays -- it REPLACES them. Keys like
+NOT extend sequential arrays; it REPLACES them. Keys like
 `ensure_installed` (Mason / treesitter), `formatters_by_ft.<ft>` (conform),
 and `linters_by_ft.<ft>` (nvim-lint) all behave this way.
 
@@ -504,7 +607,7 @@ To add a new server, call `vim.lsp.config()` and `vim.lsp.enable()`: >lua
     vim.lsp.enable("gleam")
 <
 To adjust a server the distro already configures, call `vim.lsp.config()`
-again with the same name -- Neovim deep-merges the tables: >lua
+again with the same name, and Neovim deep-merges the tables: >lua
     -- lua/user/lsp/lua_ls.lua
     vim.lsp.config("lua_ls", {
       settings = {
@@ -525,9 +628,16 @@ when opts merging and module hooks are insufficient: >lua
     -- lua/user/overrides/custom-diagnostics.lua
     vim.diagnostic.config({ virtual_text = { prefix = ">>" } })
 <
-WARNING: lazy-loaded plugins may not be loaded yet when overrides run.
-For lazy-loaded plugin config, use |noethervim-user-plugins| (spec
-merging) instead -- lazy.nvim handles the timing correctly.
+"After everything else" means everything in stage 2 of
+|noethervim-load-order|. Overrides also beat plugin `keys` entries: once
+you remap one, lazy.nvim leaves it alone, before and after the plugin
+loads.
+
+They do NOT beat stage 3: a lazy-loaded plugin's own `config` function,
+or buffer-local LSP keymaps applied on `LspAttach`. Those run later and
+win. For a plugin's own bindings use |noethervim-user-plugins| (spec
+merging), which lazy.nvim times correctly; for LSP keymaps use your own
+`LspAttach` autocmd. See |noethervim-override-timing|.
 
 ==============================================================================
 5. BUNDLES                                 *noethervim-bundles* *neothervim-bundles*
@@ -572,10 +682,10 @@ so they remain visible after the notification has disappeared.
 Available bundles (grouped by category): ~
 
     languages/ ~
-    `rust`           rustaceanvim -- enhanced Rust beyond rust-analyzer.
-    `go`             go.nvim -- Go test gen, struct tags, interface impl.
-    `java`           nvim-jdtls -- proper Java LSP (requires special setup).
-    `python`         venv-selector.nvim -- virtual environment switching.
+    `rust`           rustaceanvim: enhanced Rust beyond rust-analyzer.
+    `go`             go.nvim: Go test gen, struct tags, interface impl.
+    `java`           nvim-jdtls: proper Java LSP (requires special setup).
+    `python`         venv-selector.nvim: virtual environment switching.
     `latex`          VimTeX, img-clip, bibtex picker, LaTeX textobjects.
                      Requires: latexmk, TeX distribution.
     `latex-zotero`   Zotero citation picker.
@@ -593,7 +703,6 @@ Available bundles (grouped by category): ~
     `ai`             CodeCompanion (Anthropic, OpenAI, Gemini, Ollama, …).
                      Default: Anthropic. Override adapter in user/plugins/.
                      Requires: API key env var for cloud providers.
-    `smart-actions`  AI code actions on grA (Claude Code / Anthropic).
     `refactoring`    Extract function/variable/block.
     `octo`           GitHub PRs / issues / reviews via the `gh` CLI.
                      `<C-w>O` opens the PR list. Requires `gh` (and
@@ -609,7 +718,7 @@ Available bundles (grouped by category): ~
                      `S` behavior remains accessible via `:%s/`.
     `projects`       Project switcher via snacks.picker.
     `editing-extras` Argument marking (argmark) + decorative comment boxes.
-    `yanky`          Yank ring -- cycle through paste history with
+    `yanky`          Yank ring: cycle through paste history with
                      `<C-p>`/`<C-n>` after a paste; SearchLeader+y opens
                      a fuzzy picker over the full history.
 
@@ -635,14 +744,14 @@ Available bundles (grouped by category): ~
     `colorscheme`    10 popular themes + persistence + highlight tweaks.
                      Themes: gruvbox, catppuccin, tokyonight, rose-pine,
                      kanagawa, onedark, nord, everforest, nightfox,
-                     solarized. All lazy -- only the active one loads.
+                     solarized. All lazy; only the active one loads.
                      SearchLeader+C picks persist across restarts.
                      See |noethervim-colorscheme-tweaks| for highlight
                      overrides that survive theme switches.
     `eye-candy`      Animations, scrollbar, code block visualizer.
     `minimap`        Sidebar minimap with diagnostics and git signs.
     `helpview`       Rendered :help pages.
-    `tableaux`       noethervim-tableaux -- animated mathematical dashboard
+    `tableaux`       noethervim-tableaux: animated mathematical dashboard
                      scenes (Sieve, Collatz, Lorenz, Game of Life, …).
 
     practice/ ~
@@ -670,7 +779,7 @@ Writing custom snippets: ~
 
 LuaSnip loads user snippets from `stdpath("config")/LuaSnip/<filetype>/`.
 Create a directory for the target filetype (e.g. `LuaSnip/tex/`,
-`LuaSnip/python/`) and add `.lua` files inside it -- each file should
+`LuaSnip/python/`) and add `.lua` files inside it; each file should
 return a snippet list. LuaSnip auto-loads them alongside any
 plugin-provided snippets.
 
@@ -694,7 +803,7 @@ accidental edits to the distribution.
     SearchLeader+cu   (snacks)                 Browse user config files
     SearchLeader+cb   `:NoetherVim bundles`    Browse bundle source files
     SearchLeader+ct   `:NoetherVim templates`  Stamp user-config templates
-    SearchLeader+ce   `:NoetherVim override`   Edit/create user override
+    `<Leader>e`      `:NoetherVim override`   Edit/create user override
     SearchLeader+cL   (snacks)                 Lazy plugin list
     SearchLeader+?    `:NoetherVim keymap-guide`  Keymap namespace reference
     `<Leader>i`     (inspect)                Open init.lua for editing
@@ -747,16 +856,31 @@ Compare your user overrides against NoetherVim defaults.
 
     SearchLeader+ck `:NoetherVim diff keymaps`
                     Smart picker showing all keymaps annotated with:
-                    `[CORE]` -- unchanged NoetherVim default
-                    `[USER]` -- keymap added by your user/keymaps.lua
-                    `[OVERRIDE]` -- core keymap you changed
-                    `[DELETED]` -- core keymap you removed
+                    `[CORE]`: unchanged NoetherVim default
+                    `[USER]`: keymap added by your user/keymaps.lua
+                    `[OVERRIDE]`: core keymap you changed
+                    `[DELETED]`: core keymap you removed
 
     SearchLeader+co `:NoetherVim diff options`
                     Smart picker showing all tracked options (the set of
                     options NoetherVim explicitly configures) annotated with:
-                    `[CORE]` -- unchanged NoetherVim default
-                    `[OVERRIDE]` -- option you changed in user/options.lua
+                    `[CORE]`: unchanged NoetherVim default
+                    `[OVERRIDE]`: option you changed in user/options.lua
+
+    SearchLeader+ca `:NoetherVim diff autocmds`
+                    Smart picker showing every augroup NoetherVim
+                    declares, annotated with:
+                    `[CORE]`: unchanged NoetherVim default
+                    `[OVERRIDE]`: augroup you replaced from `lua/user/`
+                    `[CLEARED]`: augroup you emptied and did not refill
+                    `[INACTIVE]`: not in use this session, because the
+                    bundle is off or the plugin has not loaded. Expected,
+                    not a problem.
+                    `[USER]`: augroup you added
+                    Overriding an autocommand means clearing its augroup
+                    and re-registering, so this is the view that tells you
+                    whether that worked. `<CR>` opens the file and line
+                    that registered the handler.
 
     SearchLeader+cd `:NoetherVim diff`
                     Smart picker listing all NoetherVim modules across
@@ -783,7 +907,7 @@ When active, all `user/` module hooks, LSP overrides, and
 `user/plugins/` is also skipped (via the conditional import in
 init.lua.example).
 
-This is NOT a runtime toggle -- restart Neovim to apply.
+This is NOT a runtime toggle; restart Neovim to apply.
 
 Check current status: `:NoetherVim status`
 
@@ -875,7 +999,7 @@ Other notable keymaps: ~
 
     Normal: ~
     `<C-a>` / `<C-x>` Enhanced increment/decrement (numbers, booleans,
-                      dates, operators, semver -- via dial.nvim)
+                      dates, operators, semver, via dial.nvim)
     `g<C-a>`/`g<C-x>` Sequential increment/decrement in visual selection
     `<C-/>`           Toggle comment (builtin gc/gcc, all modes)
     `<C-S-r>`         Comment lines and paste uncommented copy below
@@ -884,7 +1008,7 @@ Other notable keymaps: ~
     `gC`              Invert comment per-line. Unlike `gc` (which picks
                       one direction for the whole range based on the
                       majority state), `gC` toggles each selected line
-                      independently -- so a mixed selection ends up with
+                      independently: so a mixed selection ends up with
                       every line in the *opposite* state.
     `s`               Substitute without polluting register
     `S`               Global search/replace (:%s/)
@@ -926,7 +1050,7 @@ Shadowed defaults: ~
     `;`             Command-line (replaces `:`)
                     (default: repeat last f/F/t/T motion)
     `n` / `N`       Always forward / always backward
-                    (default: next / prev in search direction -- after
+                    (default: next / prev in search direction: after
                     `?pat`, default `n` goes up)
     `|`             Vertical split tmp
                     (default: go to screen column)
@@ -935,7 +1059,7 @@ Shadowed defaults: ~
     `+`             New tab
                     (default: go to next line, first non-blank)
     `<C-w><C-q>`    Open quickfix
-                    (default: close window -- use `<C-w>q` or `:q`)
+                    (default: close window: use `<C-w>q` or `:q`)
     `<C-w>Q`        Toggle Trouble diagnostics panel
                                                     *noethervim-resize-arrows*
     `<Arrow>`       Resize current window: push the near edge in the
@@ -944,7 +1068,7 @@ Shadowed defaults: ~
                     (nothing to resize against) or the current window is
                     a float. Counts pass through, so `5<Down>` jumps 5
                     lines via the `j` remap.
-                    (default: one-cell / one-line motion -- use `hjkl`)
+                    (default: one-cell / one-line motion: use `hjkl`)
     `<S-Arrow>`     Resize current window: pull the far edge in the
                     arrow direction (shrink). No-op when no neighbor
                     exists on the moving edge.
@@ -1080,7 +1204,7 @@ Customize statusline colors and extra components in `lua/user/config.lua`: >lua
     `green`, `blue`, `orange`, `red`, `purple`, `default_gray`,
     `lazy_updates`, `text_gray`
 
-    Example -- change normal-mode indicator to blue: >lua
+    Example, changing the normal-mode indicator to blue: >lua
     -- lua/user/config.lua
     return {
       statusline = {
@@ -1133,9 +1257,7 @@ defaults naturally: >lua
 <
     The animation timer only ticks while something is driving
     `vim.bo.busy` > 0, so overrides wanting animation should also
-    increment busy on the relevant buffer. The smart-actions bundle
-    uses this hook to recolour the spinner while a request is in
-    flight; see |smart-actions|.
+    increment busy on the relevant buffer.
 
                                           *noethervim-statusline-error-boundary*
 Error recovery ~
@@ -1169,7 +1291,7 @@ Tab management keymaps: ~
 Switching to a bufferline ~
 
 NoetherVim defaults to a tabline because tabs and buffers serve
-different purposes in Vim's model -- tabs are layout viewports, buffers
+different purposes in Vim's model: tabs are layout viewports, buffers
 are open files. Reaching for a bufferline to manage open files often
 signals that a fuzzy-finder or |:ls| would be a more effective habit.
 That said, if you prefer a bufferline, replacing the tabline is
@@ -1236,7 +1358,7 @@ straightforward. See the example in
                               extmarks on the row (including virtual
                               text from inlay hints, diagnostics,
                               gitsigns blame, and nvim-dap-virtual-text).
-                              Useful for tweaking and debugging -- the output
+                              Useful for tweaking and debugging; the output
                               names the exact group so you can override it in
                               `user/highlights.lua`.
 
@@ -1245,11 +1367,15 @@ Web search command: ~                                 *noethervim-web-search*
 `:Search` {query}             Search the web with the current default engine.
 `:Search` {engine} {query}    Search the web with a specific engine.
 `:Search set` {engine}        Set the default search engine for this session.
+`:Search ?`                   Report the engine currently in use, with the
+                            full list of engines (the active one marked).
+                            `:Search set` with no engine does the same.
 
 Available engines: brave (default), duckduckgo, google, ecosia,
 github, startpage, reddit, stackoverflow, wikipedia, youtube.
 
-Tab-completion is available for engine names and the `set` subcommand.
+Tab-completion is available for engine names and the `set` / `?`
+subcommands.
 
 ==============================================================================
 11. COMPLETION                                        *noethervim-completion*
@@ -1308,7 +1434,7 @@ picked.
 Customizing individual keys: ~
                                            *noethervim-completion-custom*
 Override in `user/plugins/` using opts merging. Each key maps to a list
-of actions -- blink tries them in order and stops at the first that
+of actions; blink tries them in order and stops at the first that
 succeeds.
 
 Tab to accept (instead of snippet jump): >lua
@@ -1363,12 +1489,36 @@ todos ~
 
 Run `:checkhealth noethervim` to verify your setup. Checks include:
 
-- Required tools: git, rg (ripgrep)
-- Optional tools: node, zoxide, lazygit
+- Required tools: git, rg (ripgrep), fd
+- Optional tools: node, zoxide, lazygit, tree-sitter
+- Terminal: true colour, `<S-CR>` support, Nerd Font (heuristic, see below)
 - LaTeX toolchain (if latex bundle enabled)
 - Template version: warns if your init.lua is outdated
 - User override status: lists loaded user modules
 - Configuration: user config dir, plugin dir, vault paths
+- Active bundles, spec errors, option drift, override conflicts
+- LSP servers and feature flags
+
+                                                  *noethervim-health-terminal*
+About the terminal section: ~
+
+These results are a guess. A terminal cannot be asked what it supports,
+so the check goes by `$TERM` and `$TERM_PROGRAM`, both of which can be
+wrong, especially through a multiplexer. An unrecognised terminal is
+reported as unknown rather than broken.
+
+What it is checking for is whether `<S-CR>` arrives as its own key
+instead of a plain `<CR>`. Several keymaps need that, notably the
+list-continuation and environment-aware `<S-CR>` bindings. Terminals
+known to support it include kitty, Ghostty, WezTerm, Alacritty, foot and
+iTerm2 3.5+. Apple Terminal does not. To test it yourself, press `<S-CR>`
+in insert mode inside a markdown list: a new list item means it works.
+
+Under tmux, add `set -g extended-keys on`, otherwise `<S-CR>` never
+reaches Neovim regardless of the terminal.
+
+Nerd Font presence cannot be detected at all. The check prints sample
+glyphs instead; if they render as boxes, the font is missing.
 
 ==============================================================================
 13. FAQ                                          *noethervim-faq* *neothervim-faq*
@@ -1382,7 +1532,7 @@ A: Create `lua/user/lsp/<server>.lua` with `vim.lsp.config()` and
       opts = { ensure_installed = { "lua_ls", "basedpyright", ..., "gopls" } } }
 <
    `ensure_installed` is an array, so the table-form override REPLACES
-   the distro list -- include every server you want loaded. To extend
+   the distro list, so include every server you want loaded. To extend
    the distro list instead, see |noethervim-user-plugins-arrays|.
 
 Q: How do I add a linter?~
@@ -1408,7 +1558,7 @@ A: Both are managed by Mason, the same as LSP servers. Use `:Mason`
    via `:Mason`.
 
 Q: Does NoetherVim format on save?~
-A: No -- auto-formatting is deliberately off. Use `<Leader>ff` for
+A: No; auto-formatting is deliberately off. Use `<Leader>ff` for
    explicit formatting (conform.nvim with LSP fallback). To opt into
    save-time formatting, override conform in `user/plugins/`:
 >lua
@@ -1468,8 +1618,8 @@ A: By design. NoetherVim keeps `y` and `p` bound to Vim's unnamed
 <
    Caveat: insert `<C-v>` shadows Vim's "insert next char literally"
    default. Substitutes:
-     - `<C-q>` -- literal-insert in most terminals
-     - `<C-r>+` -- insert clipboard register literally
+     - `<C-q>`: literal-insert in most terminals
+     - `<C-r>+`: insert clipboard register literally
      - cmdline `<C-v>{char}` is unshadowed; pairs well with `:verbose`
        when introspecting keymaps that contain literal control
        sequences
@@ -1516,11 +1666,11 @@ A: Yes. Years of typing `neo-` will do that. The alias is there so you
 Q: What is vim-abolish and how do I use it?~
 A: NoetherVim ships a fork of vim-abolish that adds context-aware
    expansion. The fork exposes three features:
-   1. `:Subvert` -- case-preserving find/replace (facility->building
+   1. `:Subvert`: case-preserving find/replace (facility->building
       preserves Facility->Building, FACILITY->BUILDING)
-   2. `:Abolish` -- smart auto-correct (`:Abolish teh the` corrects all
+   2. `:Abolish`: smart auto-correct (`:Abolish teh the` corrects all
       case variants in insert mode)
-   3. Coercion operators -- `crs` snake_case, `crm` MixedCase,
+   3. Coercion operators: `crs` snake_case, `crm` MixedCase,
       `crc` camelCase, `cru` UPPER_CASE, `cr-` dash-case
    Add personal typo corrections in `lua/user/plugins/abolish.lua`.
 

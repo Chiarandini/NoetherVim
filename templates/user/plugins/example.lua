@@ -2,8 +2,8 @@
 -- Any .lua file here is auto-imported by lazy.nvim.
 
 -- This file itself is just documentation - it returns an empty table.
--- Any uncommented plugin code must be moved to the the return table
--- at the end of the file.
+-- Any plugin code you uncomment must be moved into the return table at
+-- the end of the file.
 --
 -- See :help noethervim-user-plugins for documentation.
 --
@@ -18,13 +18,20 @@
 --
 -- ── Overriding existing plugin configuration ─────────────────────────────────
 --
--- Use the EXACT same plugin repo string as NoetherVim uses.
--- lazy.nvim deep-merges opts tables automatically - you only need
--- to specify the keys you want to change.
+-- Use the EXACT same plugin repo string as NoetherVim uses.  Your spec is
+-- merged with the distro's and applied last.  Three rules cover every case:
+--
+--   1. `opts` tables merge key by key.  Name only the keys you want to
+--      change; the rest of the plugin's settings stay as they were.
+--   2. Lists inside `opts` are REPLACED, not appended.  To add to one, use
+--      the function form of `opts` shown below.
+--   3. `keys`, `cmd`, `event` and `ft` always append, so adding a keymap
+--      never removes an existing one.
 --
 -- Override snacks picker defaults:
 --   { "folke/snacks.nvim",
 --     opts = { picker = { layout = { preset = "vertical" } } } }
+--   Only `picker.layout` changes; the rest of the picker setup is untouched.
 --
 -- Add extra keymaps to an existing plugin:
 --   { "folke/snacks.nvim",
@@ -34,7 +41,10 @@
 --   { "saghen/blink.cmp",
 --     opts = { completion = { list = { max_items = 10 } } } }
 --
--- Customize completion keybindings (see :help noethervim-completion-custom):
+-- Customize completion keybindings (see :help noethervim-completion-custom).
+-- Pick the overall Tab philosophy with `completion_style` in
+-- lua/user/config.lua; use the specs below to change individual keys on top
+-- of it.  Keys you do not name keep whatever that style gave them.
 --
 -- Tab to accept, S-Tab for snippet backward:
 --   { "saghen/blink.cmp", opts = { keymap = {
@@ -55,9 +65,22 @@
 --       ["<Tab>"] = { "accept", "fallback" },
 --   } } } }
 --
--- Override Mason's ensure_installed servers:
+-- Choose exactly which LSP servers Mason installs.  This is a list (rule 2),
+-- so it REPLACES the defaults and anything your enabled bundles added, which
+-- is what you want when you would rather not download servers you never use:
 --   { "neovim/nvim-lspconfig",
 --     opts = { ensure_installed = { "gopls", "rust_analyzer" } } }
+--
+-- To ADD servers and keep the rest, use the function form of `opts`:
+--   { "neovim/nvim-lspconfig",
+--     opts = function(_, opts)
+--       vim.list_extend(opts.ensure_installed, { "gopls", "rust_analyzer" })
+--     end }
+--
+-- Treesitter parsers are the exception to rule 2: this ADDS `gleam` and
+-- keeps the parsers already installed.
+--   { "nvim-treesitter/nvim-treesitter",
+--     opts = { ensure_installed = { "gleam" } } }
 --
 -- ── Disabling a plugin ──────────────────────────────────────────────────────
 --

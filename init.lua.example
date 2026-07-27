@@ -21,9 +21,9 @@
 -- ── 1. Leaders -- must come before lazy.nvim loads ──────────────────────────
 -- Plugins register keymaps at spec-load time using these globals.
 
-vim.g.mapleader         = "\\"       -- <Leader>  -- global actions
-vim.g.maplocalleader    = ","        -- <LocalLeader> -- filetype actions
-vim.g.mapsearchleader = "<space>"    -- search/navigation prefix (default: <Space>)
+vim.g.mapleader         = "\\"       -- <Leader>: global actions
+vim.g.maplocalleader    = ","        -- <LocalLeader>: filetype actions
+vim.g.mapsearchleader   = "<space>"  -- search/navigation prefix (default: <Space>)
 
 -- Opt-out of the Snacks dashboard shown on empty-arg startup (i.e. plain
 -- `nvim` rather than `nvim {file}`). Uncomment to open straight into an
@@ -31,8 +31,9 @@ vim.g.mapsearchleader = "<space>"    -- search/navigation prefix (default: <Spac
 -- vim.g.noethervim_dashboard = false
 
 -- ── 2. Bootstrap lazy.nvim and NoetherVim ─────────────────────────────────
--- Both must be on the runetime path (rtp) BEFORE lazy.setup() so that
--- `import = "noethervim.plugins"` resolves on first launch.
+-- Clone both so they are on the runtime path before lazy.setup() runs.
+-- Nothing else can install lazy.nvim, and NoetherVim has to be present for
+-- the require() a few lines below to work on a first launch.
 
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.uv.fs_stat(lazypath) then
@@ -55,10 +56,9 @@ if not vim.uv.fs_stat(noethervimpath) then
 end
 vim.opt.rtp:prepend(noethervimpath)
 
--- The follwoing route lazy.nvim's startup notifications through `vim.notify`
--- after VimEnter so a stale bundle import in the spec below (or any other
--- error lazy emits while resolving the spec) surfaces as a snacks
--- notification instead of an ErrorMsg on the cmdline.
+-- Show startup errors (e.g. a bundle import below that no longer exists) as
+-- a notification after startup, rather than a cmdline error that stops on a
+-- "Press ENTER" prompt.
 require("noethervim.util").buffer_notify()
 
 -- ── 3. Start NoetherVim ────────────────────────────────────────────────────
@@ -80,10 +80,12 @@ require("lazy").setup({
 		},
 
 		-- ── Bundles (opt-in) ─────────────────────────────────────────────
-		-- Uncomment the bundles you want. Categories correspond to
-		-- the respective folder on the file-system:
-		-- lua/noethervim/bundles/<category>/<name>.lua. (FIX: this doesn't point to correct path)
-		-- Press SearchLeader + cb (default <space>cb)to search through bundles and their descriptions.
+		-- Uncomment the bundles you want.  Each import string maps to a
+		-- file inside the cloned distribution:
+		--   noethervim.bundles.<category>.<name>
+		--   -> ~/.local/share/nvim/lazy/NoetherVim/lua/noethervim/bundles/<category>/<name>.lua
+		-- Press SearchLeader + cb (default <space>cb) to browse bundles and
+		-- their descriptions; <CR> on an entry opens that file.
 
 		-- languages/
 		-- { import = "noethervim.bundles.languages.rust" },         -- rustaceanvim (beyond plain rust-analyzer)
