@@ -5,20 +5,14 @@
 --  Philosophy: any window you can't usefully edit should close
 --  with a single `q` keypress (no macro-recording concern there).
 -- ──────────────────────────────────────────────────────────────
-
-local q_close_ft = {
-  "help", "man", "lspinfo", "checkhealth",  -- qf handled by ftplugin/qf.lua
-  "notify", "fugitiveblame",                -- oil is editable: no q-to-close
-  "startuptime", "lazy", "mason",
-  "spectre_panel", "crunner", "dap-float",
-  "DressingInput", "cmp_menu",
-  "typr", "snacks_notif", "snacks_terminal",
-  "nvim-undotree", "undotree", "diff",
-}
+-- The list lives in noethervim.util.filetypes and already includes
+-- whatever `q_close_filetypes` in lua/user/config.lua adds to it.  To drop
+-- one of the distro's entries instead, clear this augroup and recreate the
+-- autocmd -- see templates/user/autocmds.example.lua.
 
 vim.api.nvim_create_autocmd("FileType", {
   group = vim.api.nvim_create_augroup("noethervim_q_close", { clear = true }),
-  pattern = q_close_ft,
+  pattern = require("noethervim.util.filetypes").q_close,
   callback = function(ev)
     vim.keymap.set("n", "q", "<cmd>close<cr>", { buf = ev.buf, silent = true, nowait = true })
   end,

@@ -111,6 +111,9 @@ return {
         misc.Space,
         git.GitBlock,
       }
+      if nv_sl.show_filetype_profile() then
+        table.insert(MainComponent, misc.FiletypeProfile)
+      end
       for _, c in ipairs(nv_sl.get_extra_right()) do
         table.insert(MainComponent, c)
       end

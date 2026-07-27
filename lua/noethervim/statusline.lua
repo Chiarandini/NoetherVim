@@ -106,4 +106,31 @@ function M.get_tab_modified_indicator()
   return _opts.tab_modified_indicator or " ●"
 end
 
+--- True when the filetype-profile marker should be rendered. Off unless
+--- `statusline.filetype_profile = true` in `lua/user/config.lua`.
+function M.show_filetype_profile()
+  return _opts.filetype_profile == true
+end
+
+--- Returns the handler for clicking the git block in the statusline.
+---
+--- lazygit is a nice default but an optional external program, so the
+--- default handler only reaches for it when it is actually on PATH and
+--- otherwise opens snacks' git-status picker, which always ships. Set
+--- `statusline.git_click` in `lua/user/config.lua` to a function of your
+--- own to replace both.
+---@return fun()
+function M.get_git_click()
+  if type(_opts.git_click) == "function" then return _opts.git_click end
+  return function()
+    if vim.fn.executable("lazygit") == 1 then
+      -- Deferred so the click's own redraw finishes before the terminal
+      -- window steals focus.
+      vim.defer_fn(function() Snacks.terminal("lazygit") end, 100)
+    else
+      Snacks.picker.git_status({ title = "Git Status" })
+    end
+  end
+end
+
 return M

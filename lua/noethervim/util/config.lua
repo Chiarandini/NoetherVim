@@ -41,6 +41,7 @@ local SCHEMA = {
   drop                         = "boolean",
   writing_filetypes            = "table",
   non_code_filetypes           = "table",
+  q_close_filetypes            = "table",
   spell_in_code                = "boolean",
   toggle_feedback              = "string",
 }
@@ -64,6 +65,8 @@ local STATUSLINE_SCHEMA = {
   extra_right            = "table",
   edge_style             = "string",
   tab_modified_indicator = "string",
+  filetype_profile       = "boolean",
+  git_click              = "function",
 }
 
 --- Type-check `cfg`. Returns a list of error strings; empty when valid.

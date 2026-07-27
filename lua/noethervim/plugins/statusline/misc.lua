@@ -146,6 +146,57 @@ M.FileType = {
   hl = function() return { fg = utils.get_highlight("Type").fg, bold = true } end,
 }
 
+-- ── Filetype profile marker ──────────────────────────────────────────
+-- Which of the two FileType profiles (see noethervim-filetype-profiles)
+-- claimed this buffer.  Off by default: enable with
+--   statusline = { filetype_profile = true }
+-- in lua/user/config.lua.  Clicking reports what the profile actually
+-- turned on, read from the live window so per-buffer toggles ([ow, ]os,
+-- ...) show up too.
+
+--- Classify the current buffer. Mirrors the dispatch in autocmds.lua.
+---@return "writing"|"code"|"none"
+local function current_profile()
+  local fts = require("noethervim.util.filetypes")
+  local ft = vim.bo.filetype
+  if ft == "" or fts.non_code[ft] then return "none" end
+  return fts.writing[ft] and "writing" or "code"
+end
+
+local profile_glyph = { writing = icons.pencil, code = icons.text }
+
+M.FiletypeProfile = {
+  condition = function()
+    return current_profile() ~= "none"
+  end,
+  provider = function()
+    return " " .. profile_glyph[current_profile()] .. " "
+  end,
+  hl = function()
+    return { fg = current_profile() == "writing" and ctx.colors.blue or ctx.colors.green }
+  end,
+  on_click = {
+    callback = function()
+      local profile = current_profile()
+      local win, buf = vim.api.nvim_get_current_win(), vim.api.nvim_get_current_buf()
+      local lines = {
+        "profile:    " .. profile,
+        "filetype:   " .. (vim.bo[buf].filetype ~= "" and vim.bo[buf].filetype or "(none)"),
+        "",
+        "wrap:          " .. tostring(vim.wo[win].wrap),
+        "linebreak:     " .. tostring(vim.wo[win].linebreak),
+        "list:          " .. tostring(vim.wo[win].list),
+        "spell:         " .. tostring(vim.wo[win].spell),
+        "conceallevel:  " .. tostring(vim.wo[win].conceallevel),
+        "formatoptions: " .. vim.bo[buf].formatoptions,
+      }
+      vim.notify(table.concat(lines, "\n"), vim.log.levels.INFO,
+        { title = "NoetherVim filetype profile" })
+    end,
+    name = "heirline_filetype_profile",
+  },
+}
+
 -- Help filename
 M.HelpFileName = {
   condition = function()

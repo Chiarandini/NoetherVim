@@ -87,10 +87,10 @@ M.GitBlock = {
   end,
 
   on_click = {
+    -- Resolved per click rather than captured once, so a user handler set
+    -- in lua/user/config.lua applies without a restart.
     callback = function()
-      vim.defer_fn(function()
-        Snacks.terminal('lazygit')
-      end, 100)
+      require("noethervim.statusline").get_git_click()()
     end,
     name = "heirline_git",
   },
