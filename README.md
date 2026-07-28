@@ -2,6 +2,8 @@
 
 A Neovim distribution with a minimal abstraction layer, named after [Emmy Noether](https://en.wikipedia.org/wiki/Emmy_Noether) (the name also contains *nvim* - *noether**Vim***).
 
+![Dashboard, file picker, a LaTeX buffer, the which-key prefix panel, the keymap diff, and the label picker](docs/assets/hero.gif)
+
 Latex gets the same level of support as LSP and treesitter. Everything else you'd expect is configured out of the box: completion (blink.cmp), DAP, diagnostics, formatters, etc. Startup is fast by using lazy-loading.
 
 The distro is opinionated, but anything and everything can be overridden through `lua/user/`; in fact the distro's architecture prioritizes easy overriding (see [configuration](#configuration))
@@ -282,6 +284,8 @@ Bundles are optional feature groups, enabled in `init.lua` (see [Enabling bundle
 `q` closes non-editing windows (help, quickfix, notify, man, …)
 
 **Discovering distro keymaps:** press any prefix key and wait for which-key to show available actions. Use SearchLeader+ck (default: `<Space>ck`) or run `:NoetherVim diff keymaps` to search all keymaps in the distribution and your user files by description and to see which keymaps were over-written. To search for all active keymappings (including neovim defaults and those introduced by plugins), use SearchLeader+fk (default: `<Space>fk`).
+
+![Searching every distro keymap by description](docs/assets/diff-keymaps.gif)
 
 
 ---
