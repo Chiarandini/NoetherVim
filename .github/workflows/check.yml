@@ -45,7 +45,14 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Run lua-language-server
-        uses: mrcjkb/lua-typecheck-action@v0
+        # v0 pins lua-language-server 3.7.4, which predates tuple type
+        # syntax (`[string, string][]`, added in 3.8.0) and so rejects
+        # annotations that editors accept.  v1 pins 3.13.6.  `directories`
+        # is set explicitly because its default changed from `lua` to `.`
+        # between the two majors.  `.` covers ftplugin/ and templates/ too,
+        # not just lua/.
+        uses: mrcjkb/lua-typecheck-action@v1
         with:
           configpath: ".luarc.json"
           checklevel: Warning
+          directories: "."
