@@ -48,22 +48,37 @@ config = function(_, opts)
 	require("luasnip.loaders.from_lua").lazy_load({ paths = vim.fn.stdpath("config") .. "/LuaSnip/" })
 
 	vim.api.nvim_create_user_command('LuaSnipEdit', function()
-		local cfg = vim.fn.stdpath("config")
+		local cfg  = vim.fn.stdpath("config")
+		local data = vim.fn.stdpath("data")
 		require("luasnip.loaders.from_lua").edit_snippet_files({
-			-- Only ever offer paths under your own config.  Plugins that ship
-			-- snippets register load paths too, so the unfiltered picker lists
-			-- them next to yours -- and picking one writes a personal snippet
-			-- into somebody else's repository (or, for a `dev` checkout, into
-			-- your own working tree, where it then loads twice).
-			-- A format() returning nil drops the path from the picker entirely.
+			-- Every registered path stays listed, because reading the snippets a
+			-- plugin ships is half of what this picker is for.  Yours are marked
+			-- $CONFIG, everything else is marked [shipped].
 			format = function(path, _)
-				if not vim.startswith(path, cfg) then
-					return nil
+				if vim.startswith(path, cfg) then
+					return (path:gsub(vim.pesc(cfg), "$CONFIG"))
 				end
-				return (path:gsub(vim.pesc(cfg), "$CONFIG"))
+				return "[shipped] " .. (path:gsub(vim.pesc(data), "$DATA"))
+			end,
+			-- Writing is what needs guarding, not opening: a snippet added to a
+			-- plugin's file is lost on update, and in a `dev` checkout it dirties
+			-- that repo and then loads twice alongside your own copy.  'readonly'
+			-- is a speed bump rather than a wall -- :w! still goes through, which
+			-- is what you want when you are deliberately editing a plugin you
+			-- maintain.
+			edit = function(file)
+				vim.cmd("edit " .. vim.fn.fnameescape(file))
+				if not vim.startswith(file, cfg) then
+					vim.bo.readonly = true
+					vim.notify(
+						"Shipped snippet file: read-only (:w! to override).\n"
+							.. "Personal snippets belong in " .. cfg .. "/LuaSnip/",
+						vim.log.levels.INFO
+					)
+				end
 			end,
 		})
-	end, { desc = "edit snippet files (own config only)" })
+	end, { desc = "edit snippet files (shipped ones read-only)" })
 	vim.keymap.set('n', SearchLeader .. 'es', '<cmd>LuaSnipEdit<cr>', { desc = 'edit snippets' })
 
 	-- Tab/S-Tab snippet navigation is handled by blink.cmp (snippets.preset = "luasnip").
