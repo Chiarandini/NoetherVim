@@ -48,8 +48,22 @@ config = function(_, opts)
 	require("luasnip.loaders.from_lua").lazy_load({ paths = vim.fn.stdpath("config") .. "/LuaSnip/" })
 
 	vim.api.nvim_create_user_command('LuaSnipEdit', function()
-		require("luasnip.loaders.from_lua").edit_snippet_files()
-	end, { desc = "edit snippet files" })
+		local cfg = vim.fn.stdpath("config")
+		require("luasnip.loaders.from_lua").edit_snippet_files({
+			-- Only ever offer paths under your own config.  Plugins that ship
+			-- snippets register load paths too, so the unfiltered picker lists
+			-- them next to yours -- and picking one writes a personal snippet
+			-- into somebody else's repository (or, for a `dev` checkout, into
+			-- your own working tree, where it then loads twice).
+			-- A format() returning nil drops the path from the picker entirely.
+			format = function(path, _)
+				if not vim.startswith(path, cfg) then
+					return nil
+				end
+				return (path:gsub(vim.pesc(cfg), "$CONFIG"))
+			end,
+		})
+	end, { desc = "edit snippet files (own config only)" })
 	vim.keymap.set('n', SearchLeader .. 'es', '<cmd>LuaSnipEdit<cr>', { desc = 'edit snippets' })
 
 	-- Tab/S-Tab snippet navigation is handled by blink.cmp (snippets.preset = "luasnip").
