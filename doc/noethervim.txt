@@ -816,6 +816,16 @@ is lost on the next |:Lazy| update, and in a `dev` checkout it dirties that
 repository and then loads twice alongside your own copy. Use `:w!` when you
 do mean to edit a plugin you maintain.
 
+When you have no snippet file of your own for the filetype, the list also
+offers one to create, marked `(new)`: >
+    ~/.config/nvim    · rust.lua (new)
+<
+Choosing it writes a skeleton and opens it. The skeleton is not decoration:
+an empty Lua file returns nil, and LuaSnip errors the next time it loads
+that filetype. Without this entry a filetype whose snippets all come from
+plugins is a dead end, because a single candidate is opened directly and
+that candidate is read-only.
+
 Ownership is taken from lazy.nvim's plugin registry rather than from the
 path, so it stays correct when a config symlinks its `LuaSnip/` directory
 elsewhere, and when a `dev` checkout lives outside `stdpath("data")`.

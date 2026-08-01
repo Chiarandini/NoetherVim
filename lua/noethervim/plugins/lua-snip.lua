@@ -77,7 +77,9 @@ config = function(_, opts)
 	end
 
 	vim.api.nvim_create_user_command('LuaSnipEdit', function()
-		local plugins = lazy_plugins()
+		local plugins   = lazy_plugins()
+		local cfg       = vim.fn.stdpath("config")
+		local shown_cfg = vim.fn.fnamemodify(cfg, ":~")
 
 		--- Name of the plugin that owns `path`, or nil when the file is yours.
 		local function owning_plugin(path)
@@ -110,12 +112,42 @@ config = function(_, opts)
 				end
 				return ("%-16s · %s"):format(owner, vim.fn.fnamemodify(path, ":t"))
 			end,
+			-- Without this, a filetype you have no snippets for is a dead end:
+			-- LuaSnip asks which filetype, then returns silently because it has
+			-- nothing to offer.  Worse, a filetype where only a plugin ships
+			-- snippets skips the second prompt entirely and drops you into a
+			-- read-only file with no route to your own.  Offer that route.
+			extend = function(ft, existing)
+				for _, path in ipairs(existing) do
+					if not owning_plugin(path) then
+						return {}          -- you already have one; nothing to add
+					end
+				end
+				local target = cfg .. "/LuaSnip/" .. ft .. ".lua"
+				return { { ("%-16s · %s (new)"):format(shown_cfg, ft .. ".lua"), target } }
+			end,
 			-- Writing is what needs guarding, not opening: a snippet saved into a
 			-- plugin's tree is lost on the next :Lazy update, and in a dev checkout
 			-- it dirties that repo and then loads twice alongside your own copy.
 			-- 'readonly' still yields to :w!, which is what you want when you are
 			-- deliberately editing a plugin you maintain.
 			edit = function(file)
+				-- A brand new snippet file has to return a table; an empty buffer
+				-- would make LuaSnip error the next time it loads the filetype.
+				if vim.fn.filereadable(file) == 0 then
+					vim.fn.mkdir(vim.fn.fnamemodify(file, ":h"), "p")
+					vim.fn.writefile({
+						"-- " .. vim.fn.fnamemodify(file, ":t:r") .. " snippets",
+						"local ls = require(\"luasnip\")",
+						"local s = ls.snippet",
+						"local t = ls.text_node",
+						"local i = ls.insert_node",
+						"local fmta = require(\"luasnip.extras.fmt\").fmta",
+						"",
+						"return {",
+						"}",
+					}, file)
+				end
 				vim.cmd("edit " .. vim.fn.fnameescape(file))
 				vim.bo.readonly = owning_plugin(file) ~= nil
 			end,
