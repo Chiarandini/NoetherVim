@@ -826,6 +826,11 @@ that filetype. Without this entry a filetype whose snippets all come from
 plugins is a dead end, because a single candidate is opened directly and
 that candidate is read-only.
 
+Writing the new file registers it immediately, so its snippets work in the
+same session. LuaSnip scans the snippet directory once at startup and its
+own reload-on-write only refreshes files already in that cache, so a
+filetype it has never seen would otherwise stay inert until a restart.
+
 Ownership is taken from lazy.nvim's plugin registry rather than from the
 path, so it stays correct when a config symlinks its `LuaSnip/` directory
 elsewhere, and when a `dev` checkout lives outside `stdpath("data")`.

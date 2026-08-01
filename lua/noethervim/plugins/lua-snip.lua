@@ -83,6 +83,7 @@ config = function(_, opts)
 		local cfg       = vim.fn.stdpath("config")
 		local shown_cfg = vim.fn.fnamemodify(cfg, ":~")
 
+
 		--- Name of the plugin that owns `path`, or nil when the file is yours.
 		local function owning_plugin(path)
 			local target = canonical(path)
@@ -141,7 +142,8 @@ config = function(_, opts)
 			edit = function(file)
 				-- A brand new snippet file has to return a table; an empty buffer
 				-- would make LuaSnip error the next time it loads the filetype.
-				if vim.fn.filereadable(file) == 0 then
+				local created = vim.fn.filereadable(file) == 0
+				if created then
 					vim.fn.mkdir(vim.fn.fnamemodify(file, ":h"), "p")
 					vim.fn.writefile({
 						"-- " .. vim.fn.fnamemodify(file, ":t:r") .. " snippets",
@@ -157,6 +159,26 @@ config = function(_, opts)
 				end
 				vim.cmd("edit " .. vim.fn.fnameescape(file))
 				vim.bo.readonly = owning_plugin(file) ~= nil
+
+				-- lazy_load() scanned the directory once, so a filetype LuaSnip has
+				-- never seen stays unregistered no matter how many times the new
+				-- file is written: its BufWritePost reload only refreshes files
+				-- already in the cache.  Re-scan after the first write, so the
+				-- snippets work in this session instead of after a restart.
+				if created then
+					vim.api.nvim_create_autocmd("BufWritePost", {
+						buffer = vim.api.nvim_get_current_buf(),
+						once   = true,
+						desc   = "luasnip: register a newly created snippet file",
+						callback = function()
+							pcall(function()
+								require("luasnip.loaders.from_lua").load({
+									paths = cfg .. "/LuaSnip/",
+								})
+							end)
+						end,
+					})
+				end
 			end,
 		})
 	end, { desc = "edit snippet files (plugin-owned ones read-only)" })
