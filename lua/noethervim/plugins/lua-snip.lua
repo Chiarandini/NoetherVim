@@ -35,7 +35,9 @@ config = function(_, opts)
 			},
 		},
 		ft_func = function()
-			return vim.split(vim.bo.filetype, ".", true)
+			-- trimempty: an unset 'filetype' splits to { "" }, which shows up as a
+			-- blank row in the :LuaSnipEdit filetype prompt and names nothing.
+			return vim.split(vim.bo.filetype, ".", { plain = true, trimempty = true })
 		end,
 		load_ft_func = require("luasnip.extras.filetype_functions").extend_load_ft({
 			html = { 'javascript' },
@@ -118,6 +120,11 @@ config = function(_, opts)
 			-- snippets skips the second prompt entirely and drops you into a
 			-- read-only file with no route to your own.  Offer that route.
 			extend = function(ft, existing)
+				-- Belt and braces against a filetype that cannot name a file: an
+				-- empty one would propose creating a file called ".lua".
+				if type(ft) ~= "string" or not ft:match("^[%w_%-]+$") then
+					return {}
+				end
 				for _, path in ipairs(existing) do
 					if not owning_plugin(path) then
 						return {}          -- you already have one; nothing to add
