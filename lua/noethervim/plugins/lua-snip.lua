@@ -83,6 +83,18 @@ config = function(_, opts)
 		local cfg       = vim.fn.stdpath("config")
 		local shown_cfg = vim.fn.fnamemodify(cfg, ":~")
 
+		-- Without this the prompt just quietly offers "all", which reads as a bug
+		-- when you believe you are in a Rust buffer and the file is named
+		-- tmp.rust: Neovim maps .rs, not .rust, so the buffer has no filetype and
+		-- there is nothing filetype-specific to edit.
+		if vim.bo.filetype == "" then
+			vim.notify(
+				"LuaSnipEdit: this buffer has no filetype, so only \"all\" snippets apply.\n"
+					.. "Set one with :setfiletype <ft> if that is not what you meant.",
+				vim.log.levels.WARN
+			)
+		end
+
 
 		--- Name of the plugin that owns `path`, or nil when the file is yours.
 		local function owning_plugin(path)

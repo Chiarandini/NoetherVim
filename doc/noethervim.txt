@@ -831,6 +831,12 @@ same session. LuaSnip scans the snippet directory once at startup and its
 own reload-on-write only refreshes files already in that cache, so a
 filetype it has never seen would otherwise stay inert until a restart.
 
+In a buffer with no 'filetype' there is nothing filetype-specific to edit,
+so the prompt can only offer `all` and a warning says so. This is easy to
+hit by accident: Neovim maps `.rs` to `rust`, not `.rust`, so a scratch file
+named `tmp.rust` has no filetype at all and the prompt looks broken rather
+than empty. `:setfiletype` fixes it.
+
 Ownership is taken from lazy.nvim's plugin registry rather than from the
 path, so it stays correct when a config symlinks its `LuaSnip/` directory
 elsewhere, and when a `dev` checkout lives outside `stdpath("data")`.
