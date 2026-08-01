@@ -47,38 +47,80 @@ config = function(_, opts)
 
 	require("luasnip.loaders.from_lua").lazy_load({ paths = vim.fn.stdpath("config") .. "/LuaSnip/" })
 
+	-- Snippet files reach the picker from three places: your own config, plugins
+	-- that ship snippets, and `dev` checkouts of those plugins.  Ownership comes
+	-- from lazy.nvim's registry rather than a path prefix, because a prefix test
+	-- gets it wrong in both directions: the dev config symlinks LuaSnip/ into
+	-- ~/.config/nvim, so your own files resolve outside stdpath("config"), while
+	-- a dev checkout under ~/programming is nowhere near stdpath("data").
+	-- fs_realpath, not resolve(): it collapses symlinks *and* normalises case.
+	-- Case matters because lazy names a dev directory after the repo string
+	-- ("Chiarandini/NoetherVim-Tex" -> .../NoetherVim-Tex) while the checkout on
+	-- disk may be spelled differently (.../noethervim-tex).  A case-insensitive
+	-- filesystem happily opens both, but a string compare of the two fails.
+	local function canonical(path)
+		return vim.uv.fs_realpath(path) or vim.fs.normalize(path)
+	end
+
+	local function lazy_plugins()
+		local ok, lazy_config = pcall(require, "lazy.core.config")
+		if not ok then
+			return {}
+		end
+		local plugins = {}
+		for name, plugin in pairs(lazy_config.plugins) do
+			if plugin.dir then
+				table.insert(plugins, { name = name, dir = canonical(plugin.dir) })
+			end
+		end
+		return plugins
+	end
+
 	vim.api.nvim_create_user_command('LuaSnipEdit', function()
-		local cfg  = vim.fn.stdpath("config")
-		local data = vim.fn.stdpath("data")
-		require("luasnip.loaders.from_lua").edit_snippet_files({
-			-- Every registered path stays listed, because reading the snippets a
-			-- plugin ships is half of what this picker is for.  Yours are marked
-			-- $CONFIG, everything else is marked [shipped].
-			format = function(path, _)
-				if vim.startswith(path, cfg) then
-					return (path:gsub(vim.pesc(cfg), "$CONFIG"))
+		local plugins = lazy_plugins()
+
+		--- Name of the plugin that owns `path`, or nil when the file is yours.
+		local function owning_plugin(path)
+			local target = canonical(path)
+			for _, plugin in ipairs(plugins) do
+				if target == plugin.dir or vim.startswith(target, plugin.dir .. "/") then
+					return plugin.name
 				end
-				return "[shipped] " .. (path:gsub(vim.pesc(data), "$DATA"))
+			end
+			return nil
+		end
+
+		-- luasnip.loaders, not luasnip.loaders.from_lua: the from_lua variant takes
+		-- no arguments and delegates to a lua-only helper that silently discards
+		-- opts, so format/edit never ran (nor did LuaSnip's own $CONFIG shortening).
+		require("luasnip.loaders").edit_snippet_files({
+			-- Every path stays listed: reading the snippets a plugin ships is half
+			-- of what this picker is for.  Label as owner + filename: the filetype
+			-- was chosen a prompt ago, so the LuaSnip/<ft>/ segment every entry
+			-- shares carries nothing, and the directory reduces to an identity that
+			-- lazy already knows.  Filenames alone would collide (your preamble.lua
+			-- and the one a plugin ships), hence the owner.
+			format = function(path, _)
+				local owner = owning_plugin(path)
+				if not owner then
+					-- Yours: name the tree it came from, which is whatever sits above
+					-- LuaSnip/, so an extra_snippet_paths entry reads honestly too.
+					local root = path:match("^(.*)/LuaSnip/") or vim.fn.fnamemodify(path, ":h")
+					owner = vim.fn.fnamemodify(root, ":~")
+				end
+				return ("%-16s · %s"):format(owner, vim.fn.fnamemodify(path, ":t"))
 			end,
-			-- Writing is what needs guarding, not opening: a snippet added to a
-			-- plugin's file is lost on update, and in a `dev` checkout it dirties
-			-- that repo and then loads twice alongside your own copy.  'readonly'
-			-- is a speed bump rather than a wall -- :w! still goes through, which
-			-- is what you want when you are deliberately editing a plugin you
-			-- maintain.
+			-- Writing is what needs guarding, not opening: a snippet saved into a
+			-- plugin's tree is lost on the next :Lazy update, and in a dev checkout
+			-- it dirties that repo and then loads twice alongside your own copy.
+			-- 'readonly' still yields to :w!, which is what you want when you are
+			-- deliberately editing a plugin you maintain.
 			edit = function(file)
 				vim.cmd("edit " .. vim.fn.fnameescape(file))
-				if not vim.startswith(file, cfg) then
-					vim.bo.readonly = true
-					vim.notify(
-						"Shipped snippet file: read-only (:w! to override).\n"
-							.. "Personal snippets belong in " .. cfg .. "/LuaSnip/",
-						vim.log.levels.INFO
-					)
-				end
+				vim.bo.readonly = owning_plugin(file) ~= nil
 			end,
 		})
-	end, { desc = "edit snippet files (shipped ones read-only)" })
+	end, { desc = "edit snippet files (plugin-owned ones read-only)" })
 	vim.keymap.set('n', SearchLeader .. 'es', '<cmd>LuaSnipEdit<cr>', { desc = 'edit snippets' })
 
 	-- Tab/S-Tab snippet navigation is handled by blink.cmp (snippets.preset = "luasnip").

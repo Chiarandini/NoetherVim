@@ -797,6 +797,29 @@ Create a directory for the target filetype (e.g. `LuaSnip/tex/`,
 return a snippet list. LuaSnip auto-loads them alongside any
 plugin-provided snippets.
 
+SearchLeader+es (`:LuaSnipEdit`) jumps to a snippet file for the current
+filetype. Every registered file is listed, yours and the ones plugins
+ship, so the picker doubles as a way to read how a bundled snippet is
+built.
+
+Entries read as owner and filename, for example: >
+    ~/.config/nvim    · preamble.lua
+    NoetherVim-Tex    · commands.lua
+<
+The filetype was chosen a prompt earlier, so the `LuaSnip/<ft>/` segment
+every entry shares is left out; the owner is the lazy.nvim plugin name, or
+the tree the file came from when it is one of yours. Filenames alone would
+collide, since your `preamble.lua` and a plugin's are both in the list.
+
+A file owned by a plugin opens with 'readonly' set: a snippet saved there
+is lost on the next |:Lazy| update, and in a `dev` checkout it dirties that
+repository and then loads twice alongside your own copy. Use `:w!` when you
+do mean to edit a plugin you maintain.
+
+Ownership is taken from lazy.nvim's plugin registry rather than from the
+path, so it stays correct when a config symlinks its `LuaSnip/` directory
+elsewhere, and when a `dev` checkout lives outside `stdpath("data")`.
+
 For LaTeX snippets, `noethervim-tex` exposes helper functions: >lua
     local helper = require("noethervim-tex").luasnip_helper
     local tex_utils = helper.tex_utils   -- in_mathzone, in_text, etc.
