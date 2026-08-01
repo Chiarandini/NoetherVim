@@ -545,12 +545,19 @@ let g:vimtex_compiler_latexmk_engines = {
     opts = {
       sources = {
         per_filetype = {
-          tex = { "lsp", "snippets", "vimtex", "images", "preambles" },
+          tex = { "lsp", "snippets", "vimtex", "figures", "preambles" },
         },
         providers = {
           preambles = {
             name   = "preambles",
             module = "noethervim-tex.sources.preambles",
+          },
+          -- Completes figure filenames inside \incfig{}, \includegraphics{}
+          -- and \import{}{}.  The list previously named a provider "images"
+          -- that was never defined, so the entry did nothing.
+          figures = {
+            name   = "figures",
+            module = "noethervim-tex.sources.figures",
           },
           vimtex = {
             override = {
