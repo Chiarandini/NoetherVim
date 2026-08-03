@@ -141,7 +141,7 @@ NoetherVim.
 
 > [!TIP]
 > **Just installed it?** [Your first session](docs/onboarding/README.md) covers the
-> keybinding prefixes, the four commands worth running first, and a tour of the
+> keybinding prefixes, the commands worth running first, and a tour of the
 > defaults you can change.
 >
 > **Coming in primarily for LaTeX / Typst work?** Continue with the

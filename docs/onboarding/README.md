@@ -52,7 +52,7 @@ same works for `<Leader>`, `[`, and `<C-w>`.
 
 ## 3. Take the tour
 
-Four commands, in the order worth running them:
+Three commands, in the order worth running them:
 
 - `<Space>?` (`:NoetherVim keymap-guide`): every active keymap, grouped by
   namespace. It reads live state, so it reflects the bundles you enabled and
@@ -62,8 +62,6 @@ Four commands, in the order worth running them:
   in order. Worth running once now, and again whenever something misbehaves.
 - `<Space>cb` (`:NoetherVim bundles`): the bundle catalogue, with
   descriptions and which are active.
-- `:NoetherVim conventions`: a one-screen summary of load order and where
-  overrides go.
 
 ## 4. Read the defaults
 
