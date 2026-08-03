@@ -39,8 +39,11 @@ opt.swapfile     = false
 opt.wrap          = false
 opt.breakindent   = true
 opt.linebreak     = true
-vim.opt.breakindentopt = "sbr,min:0,shift:1"
-vim.opt.showbreak  = "↳"
+vim.opt.breakindentopt = "sbr,min:0,shift:0"
+-- Empty: the wrapped-line marker is drawn in the number column by the
+-- writing profile (autocmds.lua) instead, so it costs no text column and
+-- continuation lines align with the text they continue.
+vim.opt.showbreak  = ""
 
 -- listchars: makes `list = true` (set by the code profile in autocmds.lua)
 -- readable.  tab shows as arrow, trailing whitespace as middle dot.

@@ -285,7 +285,9 @@ settings on top of the globals:
                         `linebreak`, `spell`, `conceallevel = 2`, appends
                         `t` to `formatoptions` (auto-wrap at textwidth),
                         and hides list chars. Also binds `<C-l>` in
-                        insert mode for spell-fix.
+                        insert mode for spell-fix, and sets a
+                        'statuscolumn' that marks wrapped lines --
+                        see |noethervim-wrap-marker|.
     `noethervim_code`     Matches: every filetype NOT in the writing list,
                         structured-text set (json, jsonc, yaml, toml),
                         or special-buffer set (help, man, lspinfo, query,
@@ -330,6 +332,28 @@ override the whole profile, clear it and re-create: >lua
 The global `wrap` default is OFF; the writing profile re-enables it
 for writing filetypes. Global `list` is OFF; the code profile re-enables
 it for code filetypes. Listchars are styled in `noethervim/options.lua`.
+
+                                                  *noethervim-wrap-marker*
+Soft-wrapped lines are marked with `↳` in the number column rather than
+with 'showbreak', which is empty by default. 'showbreak' occupies a text
+cell, so a continuation line would start one column to the right of the
+text it continues -- visible on any line with no leading indent, and not
+fixable through 'breakindentopt', whose `shift` only adjusts the indent
+'breakindent' already applied.
+
+The marker is set by the writing profile and removed again by the code
+profile. Both steps only touch a 'statuscolumn' the distro itself set, so
+if you define your own in `lua/user/options.lua` it is left alone: >lua
+    vim.o.statuscolumn = "%l "
+<
+To go back to an inline 'showbreak' arrow, set both in
+`lua/user/options.lua`: >lua
+    vim.o.showbreak    = "↳"
+    vim.o.statuscolumn = "%s%=%l "
+<
+Setting 'statuscolumn' to an empty string does NOT opt out -- empty means
+"nothing set yet", so the writing profile fills it in. Give it a value of
+your own, or clear the `noethervim_profiles` augroup entirely.
 
 ------------------------------------------------------------------------------
 4.5 HIGHLIGHTS                                    *noethervim-user-highlights*

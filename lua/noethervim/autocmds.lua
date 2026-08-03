@@ -271,6 +271,24 @@ local spell_in_code = ok_cfg and type(user_cfg) == "table" and user_cfg.spell_in
 -- (`:badd` then later `:b`, or a split into an existing buffer)
 -- still inherits the profile.
 
+-- Wrapped-line marker.  It lives in the number column rather than in
+-- 'showbreak' because 'showbreak' occupies a text cell, which pushes every
+-- continuation line one column right of the text it continues.  v:virtnum
+-- is >0 on wrapped rows and <0 on virtual-text lines, which get a blank.
+-- %C keeps the fold column working for anyone who turns 'foldcolumn' on.
+local writing_statuscolumn =
+  [[%C%s%=%{v:virtnum > 0 ? "↳" : (v:virtnum < 0 ? "" : (v:relnum == 0 ? v:lnum : v:relnum))} ]]
+
+--- Set the wrap marker unless this window already carries a 'statuscolumn'
+--- the user chose.  The profile runs on every FileType/BufWinEnter, long
+--- after lua/user/ has loaded, so without this it would win every time.
+local function set_writing_statuscolumn(win)
+  local current = vim.wo[win].statuscolumn
+  if current == "" or current == writing_statuscolumn then
+    vim.wo[win].statuscolumn = writing_statuscolumn
+  end
+end
+
 local function apply_writing_profile(buf)
   -- Buffer-local: formatoptions, the keymap.
   -- Guarded: this runs on BufWinEnter as well as FileType, so an
@@ -289,12 +307,19 @@ local function apply_writing_profile(buf)
     vim.wo[win].list         = false
     vim.wo[win].conceallevel = 2
     vim.wo[win].spell        = true
+    set_writing_statuscolumn(win)
   end
 end
 
 local function apply_code_profile(buf)
   for _, win in ipairs(vim.fn.win_findbuf(buf)) do
     vim.wo[win].list = true
+    -- Window-local, so the wrap marker would otherwise persist when a code
+    -- buffer is opened in a window that was showing a writing buffer.  Only
+    -- ours is cleared; a statuscolumn the user set stays put.
+    if vim.wo[win].statuscolumn == writing_statuscolumn then
+      vim.wo[win].statuscolumn = ""
+    end
     if spell_in_code then
       -- Treesitter @spell captures (shipped with most parsers)
       -- restrict spellcheck to comments and string nodes; identifiers

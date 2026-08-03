@@ -38,6 +38,7 @@ noethervim-nvim-appname	noethervim.txt	/*noethervim-nvim-appname*
 noethervim-option-layers	noethervim.txt	/*noethervim-option-layers*
 noethervim-option-toggles	noethervim.txt	/*noethervim-option-toggles*
 noethervim-override-timing	noethervim.txt	/*noethervim-override-timing*
+noethervim-picker-help	noethervim.txt	/*noethervim-picker-help*
 noethervim-q-close	noethervim.txt	/*noethervim-q-close*
 noethervim-quickstart	noethervim.txt	/*noethervim-quickstart*
 noethervim-resize-arrows	noethervim.txt	/*noethervim-resize-arrows*
@@ -66,5 +67,6 @@ noethervim-user-overrides	noethervim.txt	/*noethervim-user-overrides*
 noethervim-user-plugins	noethervim.txt	/*noethervim-user-plugins*
 noethervim-user-plugins-arrays	noethervim.txt	/*noethervim-user-plugins-arrays*
 noethervim-web-search	noethervim.txt	/*noethervim-web-search*
+noethervim-wrap-marker	noethervim.txt	/*noethervim-wrap-marker*
 noethervim.txt	noethervim.txt	/*noethervim.txt*
 opposite	noethervim.txt	/*opposite*

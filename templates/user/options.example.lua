@@ -13,6 +13,14 @@
 -- vim.o.wrap          = true  -- default: false (writing profile enables it)
 -- vim.o.formatoptions = "tcq" -- default: "croq1jn" (writing profile adds "t")
 
+-- Wrapped lines are marked with an arrow in the number column, not with
+-- 'showbreak', so continuation lines stay aligned with the text they
+-- continue.  To get the inline marker back, set BOTH of these -- an empty
+-- statuscolumn reads as "unset" and the writing profile refills it.
+-- See :help noethervim-wrap-marker.
+-- vim.o.showbreak    = "↳"     -- default: "" (marker lives in the gutter)
+-- vim.o.statuscolumn = "%s%=%l "
+
 -- ── Indentation ──────────────────────────────────────────────────────────────
 -- vim.o.tabstop    = 2  -- default: 4
 -- vim.o.shiftwidth = 2  -- default: 4
