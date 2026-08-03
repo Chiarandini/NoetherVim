@@ -817,6 +817,23 @@ via opts override in `user/plugins/`: >lua
         textobjects = false,
     } }
 <
+                                                   *noethervim-snippet-stop*
+Getting out of a snippet: ~
+
+    `<C-u>`             Stop every snippet in the buffer (insert, select)
+    `<LocalLeader>u`    Same, from normal mode
+    `:LuaSnipStop`      Same, as a command
+    `<Leader>u`         Unlink only the snippet you are in
+
+Stopping is not the same as unlinking. Unlinking drops one snippet and
+hands the cursor to its neighbour, but LuaSnip's extmarks stay behind, so
+a buffer can end up with no active snippet and still carry marks that
+highlight text and interfere with later expansions. Stopping unlinks
+everything and clears those marks, which is what to reach for when a
+buffer feels haunted by snippets that are no longer there. Buffer text is
+never touched, and snippets expand normally again afterwards.
+
+                                                       *noethervim-snippets*
 Writing custom snippets: ~
 
 LuaSnip loads user snippets from `stdpath("config")/LuaSnip/<filetype>/`.
@@ -1477,6 +1494,13 @@ straightforward. See the example in
                               unsaved changes or the file was modified
                               externally. Close the scratch split with
                               `:q` when done.
+
+`:LuaSnipEdit`                Open a snippet file for the current filetype.
+                              See |noethervim-snippets|.
+
+`:LuaSnipStop`                Stop every snippet in the buffer and clear
+                              LuaSnip's leftover marks. See
+                              |noethervim-snippet-stop|.
 
 `:LspRename`                  LSP rename with instance count notification.
 

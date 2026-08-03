@@ -44,6 +44,8 @@ noethervim-quickstart	noethervim.txt	/*noethervim-quickstart*
 noethervim-resize-arrows	noethervim.txt	/*noethervim-resize-arrows*
 noethervim-semicolon	noethervim.txt	/*noethervim-semicolon*
 noethervim-shadowed	noethervim.txt	/*noethervim-shadowed*
+noethervim-snippet-stop	noethervim.txt	/*noethervim-snippet-stop*
+noethervim-snippets	noethervim.txt	/*noethervim-snippets*
 noethervim-space	noethervim.txt	/*noethervim-space*
 noethervim-stale-imports	noethervim.txt	/*noethervim-stale-imports*
 noethervim-statusline	noethervim.txt	/*noethervim-statusline*

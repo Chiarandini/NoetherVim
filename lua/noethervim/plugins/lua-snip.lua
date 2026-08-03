@@ -205,29 +205,55 @@ smap <silent><expr> <c-q> luasnip#choice_active() ? '<Plug>luasnip-next-choice' 
 	-- jk expand/jump: personal preference -- add to lua/user/ if desired.
 
 	vim.keymap.set('n', '<leader>u', require('luasnip').unlink_current, { desc = 'unlink current snippet' })
-	vim.keymap.set('i', '<c-u>', function()
-		local ls = require('luasnip')
-		if ls.session.current_nodes[vim.api.nvim_get_current_buf()] then
-			ls.unlink_current()
-		else
-			vim.notify("no active snippets", vim.log.levels.WARN)
-		end
-	end, { desc = 'unlink current snippet' })
 
-	vim.keymap.set('n', '<localleader>u', function()
+	--- Tear every snippet out of the current buffer.
+	---
+	--- Unlinking alone is not enough. `unlink_current()` drops one snippet
+	--- and hands the cursor to its neighbour, but it leaves LuaSnip's
+	--- extmarks behind -- a buffer that has been unlinked down to no active
+	--- node still carries marks that keep highlighting text and can confuse
+	--- later expansions. Those are the leftovers that need clearing, and
+	--- they survive even when there is no current node to unlink at all.
+	local function stop_all_snippets()
 		local ls = require('luasnip')
+		local session = require('luasnip.session')
 		local buf = vim.api.nvim_get_current_buf()
-		local count = 0
-		while ls.session.current_nodes[buf] do
+
+		-- Bounded: this is interactive, and a jumplist that somehow never
+		-- clears would otherwise hang the editor rather than misbehave.
+		local unlinked = 0
+		while session.current_nodes[buf] and unlinked < 100 do
 			ls.unlink_current()
-			count = count + 1
+			unlinked = unlinked + 1
 		end
-		if count > 0 then
-			vim.notify("unlinked " .. count .. " snippet(s)", vim.log.levels.INFO)
+		session.current_nodes[buf] = nil
+
+		local stale = #vim.api.nvim_buf_get_extmarks(buf, session.ns_id, 0, -1, {})
+		vim.api.nvim_buf_clear_namespace(buf, session.ns_id, 0, -1)
+		return unlinked, stale
+	end
+
+	local function stop_all_and_report()
+		local unlinked, stale = stop_all_snippets()
+		if unlinked == 0 and stale == 0 then
+			vim.notify("no snippets to stop", vim.log.levels.WARN)
 		else
-			vim.notify("no active snippets", vim.log.levels.WARN)
+			vim.notify(
+				string.format("stopped %d snippet(s), cleared %d mark(s)", unlinked, stale),
+				vim.log.levels.INFO)
 		end
-	end, { desc = 'unlink all active snippets' })
+	end
+
+	vim.api.nvim_create_user_command('LuaSnipStop', stop_all_and_report,
+		{ desc = 'Stop every snippet in the buffer and clear leftover marks' })
+
+	-- Insert and select, where you are when a snippet goes wrong. Normal-mode
+	-- <C-u> is left alone so it keeps scrolling half a page.
+	vim.keymap.set({ 'i', 's' }, '<c-u>', stop_all_and_report,
+		{ desc = 'stop all snippets' })
+
+	vim.keymap.set('n', '<localleader>u', stop_all_and_report,
+		{ desc = 'stop all snippets' })
 
 	vim.cmd([[
 function SourceSnippets()
