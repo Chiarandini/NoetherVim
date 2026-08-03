@@ -11,17 +11,88 @@ M.Align = { provider = "%=" }
 M.Separator = { flexible = ctx.priority.mid, { provider = "|" }, { provider = "" } }
 M.Space = { provider = " " }
 
--- Luasnip jump detecting
+-- Active-snippet jump indicator: which tabstop you are on, how many are
+-- left, and which directions actually lead somewhere.
+--
+-- LuaSnip's `jumpable(dir)` is not usable here: it reports whether the
+-- jumplist holds a node in that direction, which is true at nearly every
+-- position inside a snippet -- including backwards from the first tabstop
+-- and forwards from the last -- so both arrows would always be lit.
+--
+-- Which frame to count in is not obvious either. Dynamic and choice nodes
+-- generate their own frames, so neither extreme works: counting in the
+-- node's immediate frame reports 1/1 for `:defn` (whose tabstops are each
+-- wrapped in a `d()`), while counting in the snippet root reports 1/1 for
+-- a matrix (whose cells all live inside one `d()`). Walk up to the nearest
+-- frame that actually holds more than one tabstop, falling back to the
+-- root, which gives 4 for `:defn`, 9 for a 3x3 matrix, and 1 for `kk`.
+local function snippet_state()
+  local ok, ls = pcall(require, "luasnip")
+  if not ok then return nil end
+  local node = ls.session.current_nodes[vim.api.nvim_get_current_buf()]
+  if not node then return nil end
+
+  local function max_tabstop(frame)
+    local m = 0
+    for k in pairs((frame and frame.insert_nodes) or {}) do
+      if type(k) == "number" and k > m then m = k end
+    end
+    return m
+  end
+
+  local frame, level = node.parent, 0
+  local total = 0
+  while frame do
+    total = max_tabstop(frame)
+    if total > 1 or frame == frame.snippet then break end
+    frame = frame.parent
+    level = level + 1
+  end
+  if not frame or total == 0 then return nil end
+
+  -- `absolute_insert_position` is the tabstop path from the root down to
+  -- this node, with each generated frame contributing a 0 and an index --
+  -- so the entry for the frame `level` steps up is 2*level from the end.
+  local path = node.absolute_insert_position
+  local current
+  if type(path) == "table" and #path > 0 then
+    current = path[#path - 2 * level]
+    -- Nil here means the stride above did not describe this snippet's
+    -- shape; hide rather than invent a number.
+    if type(current) ~= "number" then return nil end
+  else
+    -- No insert position at all: the exit node of a snippet nested inside
+    -- another, where LuaSnip rests on the way out. Every tabstop is behind
+    -- you, so report it filled instead of blinking the indicator off.
+    current = total
+  end
+
+  if current == 0 then current = total end
+  if current < 1 or current > total then return nil end
+
+  return {
+    current   = current,
+    total     = total,
+    backward  = current > 1,
+    remaining = total - current,
+  }
+end
+
 M.Jumpable = {
-  condition = function()
-    return vim.tbl_contains({ "s", "i" }, vim.fn.mode())
+  condition = function(self)
+    self.snip = snippet_state()
+    return self.snip ~= nil
   end,
-  provider = function()
-    local forward = require("luasnip").jumpable(1) and " " or ""
-    local backward = require("luasnip").jumpable(-1) and " " or ""
-    return backward .. forward
+  provider = function(self)
+    local st = self.snip
+    return table.concat({
+      " ",
+      st.backward and icons.arrowleft or " ",
+      string.format(" %d/%d ", st.current, st.total),
+      st.remaining > 0 and icons.arrowright or " ",
+    })
   end,
-  hl = { fg = "green", bold = true },
+  hl = function() return { fg = ctx.colors.green, bold = true } end,
 }
 
 -- Recording macro

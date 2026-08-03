@@ -132,6 +132,10 @@ local M = {
 	-- for UFO (folding)
 	downleftarrow = '󰁂',
 
+	-- for the snippet jump indicator
+	arrowleft = '',
+	arrowright = '',
+
 	-- for showing a file is unsaved
 	pencil = '',
 

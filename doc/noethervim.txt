@@ -1293,6 +1293,26 @@ VimTeX compile indicator (latex bundle): ~
     compile duration is sent to fidget under the `vimtex` group; the
     statusline shows a persistent `compiled ✓` until the next compile.
 
+Snippet jump indicator: ~
+
+    While a LuaSnip snippet is active, the statusline shows which
+    tabstop you are on out of how many, flanked by arrows for the
+    directions that lead to another tabstop: a left arrow when an
+    earlier tabstop exists, a right arrow when a later one does. So
+    `1/3` with only a right arrow means two tabstops still to fill.
+    The indicator disappears once the snippet is finished or left.
+
+    The count describes the innermost group that actually holds more
+    than one tabstop. Dynamic and choice nodes build groups of their
+    own, so this is what you want in both directions: `:defn`, whose
+    four tabstops are each wrapped in a dynamic node, reads `1/4`
+    through `4/4`, and a `mat:3*3` matrix, whose nine cells all live
+    inside a single dynamic node, reads `1/9` through `9/9`.
+
+    Expanding a second snippet inside a tabstop of the first switches
+    the indicator to the inner snippet's own count while you fill it,
+    then returns to the outer snippet's numbering when you jump out.
+
 Customizing the statusline: ~
 
 These keys apply to the default heirline statusline; if you replace the
