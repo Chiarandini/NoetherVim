@@ -1141,6 +1141,11 @@ Shadowed defaults: ~
     `<C-w><C-q>`    Open quickfix
                     (default: close window: use `<C-w>q` or `:q`)
     `<C-w>Q`        Toggle Trouble diagnostics panel
+    `<C-w>t`        Toggle a 12-line terminal along the bottom. Reuses
+                    the same terminal buffer each time rather than
+                    opening a new one, and drops you straight into
+                    terminal mode. `<Esc><Esc>` leaves terminal mode.
+                    (default: go to top window: use `1<C-w>w`)
                                                     *noethervim-resize-arrows*
     `<Arrow>`       Resize current window: push the near edge in the
                     arrow direction (grow). Falls back to `hjkl` cursor

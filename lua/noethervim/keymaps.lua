@@ -85,17 +85,33 @@ vim.keymap.set("n", "<c-w><c-q>", "<cmd>copen<cr>",  { desc = "open quickfix" })
 -- CursorMoved.
 vim.keymap.set("n", "<c-w><c-u>", "<cmd>UndotreeToggle<cr>", { desc = "toggle undo tree" })
 
--- Open a small terminal at the bottom of the screen.  This shadows Vim's
--- builtin <C-w>t (go to top-left window); <C-w>k reaches the same window.
+-- Toggle a 12-line terminal along the bottom, reusing the same terminal
+-- buffer every time rather than stacking a new one per press.  This
+-- shadows Vim's builtin <C-w>t (go to the top window); `1<C-w>w` does
+-- that instead.
+local term_buf
 vim.keymap.set("n", "<c-w>t", function()
-  vim.cmd.new()
-  vim.cmd.wincmd("J")
+  local wins = vim.api.nvim_tabpage_list_wins(0)
+  for _, win in ipairs(wins) do
+    if vim.api.nvim_win_get_buf(win) == term_buf then
+      if #wins > 1 then vim.api.nvim_win_close(win, false) end
+      return
+    end
+  end
+  vim.cmd("botright split")
   vim.api.nvim_win_set_height(0, 12)
   vim.wo.winfixheight = true
-  vim.cmd.term()
-end, { desc = "open terminal" })
+  if term_buf and vim.api.nvim_buf_is_valid(term_buf) then
+    vim.api.nvim_win_set_buf(0, term_buf)
+  else
+    vim.cmd.term()
+    term_buf = vim.api.nvim_get_current_buf()
+  end
+end, { desc = "toggle terminal" })
 
--- <Esc><Esc> leaves terminal mode; a single <Esc> still reaches the program.
+-- <Esc><Esc> leaves terminal mode.  A single <Esc> still reaches the
+-- program, and autocmds.lua shortens 'timeoutlen' while terminal mode is
+-- active so it is not held back for the full default second.
 vim.keymap.set("t", "<esc><esc>", "<c-\\><c-n>", { desc = "exit terminal mode" })
 
 -- Toggle the quickfix window.  A one-shot action rather than a search, so it

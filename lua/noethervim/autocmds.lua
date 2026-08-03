@@ -160,13 +160,46 @@ vim.api.nvim_create_autocmd({ "BufWritePost", "BufReadPost" }, {
 --  Terminal window tweaks
 -- ──────────────────────────────────────────────────────────────
 
+local term_group = vim.api.nvim_create_augroup("noethervim_term", { clear = true })
+
 vim.api.nvim_create_autocmd("TermOpen", {
-  group = vim.api.nvim_create_augroup("noethervim_term", { clear = true }),
+  group = term_group,
+  callback = function(ev)
+    -- Terminals can be created in a buffer that is not on screen yet
+    -- (betterTerm, Snacks.terminal), so stamp the windows actually showing
+    -- this buffer instead of whichever window happens to be current.
+    for _, win in ipairs(vim.fn.win_findbuf(ev.buf)) do
+      vim.wo[win].number         = false
+      vim.wo[win].relativenumber = false
+      vim.wo[win].scrolloff      = 0
+    end
+    if vim.api.nvim_get_current_buf() == ev.buf then
+      vim.cmd.startinsert()
+    end
+  end,
+})
+
+-- 'timeoutlen' is global and defaults to a full second, so the <Esc><Esc>
+-- exit mapping would hold a single <Esc> back that long before passing it
+-- to whatever is running in the terminal.  Shorten it for the duration of
+-- terminal mode; <Esc><Esc> is the only multi-key mapping there.
+local saved_timeoutlen
+
+vim.api.nvim_create_autocmd("TermEnter", {
+  group = term_group,
   callback = function()
-    local o = vim.opt_local
-    o.number         = false
-    o.relativenumber = false
-    o.scrolloff      = 0
+    saved_timeoutlen = saved_timeoutlen or vim.o.timeoutlen
+    vim.o.timeoutlen = 150
+  end,
+})
+
+vim.api.nvim_create_autocmd("TermLeave", {
+  group = term_group,
+  callback = function()
+    if saved_timeoutlen then
+      vim.o.timeoutlen = saved_timeoutlen
+      saved_timeoutlen = nil
+    end
   end,
 })
 
