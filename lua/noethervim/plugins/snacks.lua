@@ -30,6 +30,10 @@ end
 --- File yanked for paste in the browse picker (persists across opens).
 local _browse_yanked = nil
 
+--- Title for the picker's key-list overlay, which has no other affordance
+--- telling you how to get rid of it again.
+local help_title = " <F1> or <Esc> to close "
+
 --- Navigate the browse picker into a new directory.
 --- Used by the `browse` source defined in opts.picker.sources below.
 local function browse_navigate(picker, dir)
@@ -281,6 +285,24 @@ return {
 			-- If a floating Oil window is already open, navigates it there instead of
 			-- opening a new buffer -- keeps the float as the "active" Oil pane.
 			actions = {
+				-- The help overlay is not focusable, so <Esc> is still handled by the
+				-- input window and would close the whole picker out from under it.
+				dismiss_help = function(picker)
+					for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+						if vim.bo[vim.api.nvim_win_get_buf(win)].filetype == "snacks_win_help" then
+							return vim.api.nvim_win_close(win, true)
+						end
+					end
+					picker:close()
+				end,
+				-- The overlay's dismiss keys are not written down anywhere else, and
+				-- its "top" border can carry a title but not a footer.
+				help_input = function(picker)
+					picker.input.win:toggle_help({ win = { title = help_title, title_pos = "center" } })
+				end,
+				help_list = function(picker)
+					picker.list.win:toggle_help({ win = { title = help_title, title_pos = "center" } })
+				end,
 				open_oil_dir = function(picker)
 					local item = picker:current()
 					if not item then return end
@@ -310,7 +332,14 @@ return {
 				input = {
 					keys = {
 						["<c-o>"] = { "open_oil_dir", mode = { "i", "n" }, desc = "open Oil in file dir" },
-						["<esc>"] = { "close",         mode = { "i", "n" }, desc = "close picker" },
+						["<esc>"] = { "dismiss_help",  mode = { "i", "n" }, desc = "close help, else picker" },
+						["<f1>"]  = { "help_input", mode = { "i", "n" }, desc = "toggle picker keys" },
+					},
+				},
+				list = {
+					keys = {
+						["<esc>"] = { "dismiss_help",      desc = "close help, else picker" },
+						["<f1>"]  = { "help_list",  desc = "toggle picker keys" },
 					},
 				},
 			},

@@ -670,6 +670,10 @@ by hand. Open `:NoetherVim bundles` (or SearchLeader+cb) and:
     <C-x>     Disable bundle. Re-comments the active `import` line,
               again behind a diff prompt.
     <CR>      Open the bundle source file (unchanged).
+    <F1>      List every key the picker binds. Press <F1> or <Esc> to
+              dismiss it; <Esc> only closes the picker itself once the
+              list is gone. Works in every snacks picker, not just this
+              one -- see |noethervim-picker-help|.
 
 If `init.lua` has been restructured beyond recognition (multi-file
 specs, no detectable `spec = {` block), <C-y> falls back to copying the
@@ -906,6 +910,24 @@ active bundles, user additions, and buffer-local LSP keymaps.
 
 Press `q` to close. Press `<CR>` on any keymap line to jump to its
 source definition in the distribution or user config.
+
+                                                   *noethervim-picker-help*
+Picker key list: ~
+
+Every snacks picker binds `<F1>` to a list of the keys it defines. Snacks
+binds this to `?` as well, but only in normal mode, and pickers open with
+the prompt in insert mode where `?` is just a character in the query.
+`<F1>` is Neovim's help key in both modes (see |<F1>| and |i_<F1>|), so it
+works wherever the cursor is.
+
+Dismiss the list with `<F1>` again or with `<Esc>`. `<Esc>` closes the
+picker itself only once the list is gone, so with the list open it takes
+two presses to leave.
+
+The list shows normal-mode and insert-mode mappings together, and where a
+key exists in both the normal-mode entry is the one displayed. Entries
+like `q`, `j`, `k`, `gg`, `G`, `/` and `<C-w>H/J/K/L` therefore apply to
+the results window rather than the prompt; reach it with `<A-w>`.
 
 ==============================================================================
 7. COMPARISON                                                *noethervim-diff*

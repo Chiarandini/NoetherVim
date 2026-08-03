@@ -74,15 +74,25 @@ end
 --- Build a snacks footer listing the picker's non-obvious keys.
 ---
 --- Snacks draws this on the input window's bottom border, which spans the
---- list column only -- about half the layout, so 36 usable columns on an
---- 80-column terminal.  Neovim clips anything wider without warning, so
---- keep the assembled text at or under 34 characters and leave the full
---- key list to `?` (snacks' help overlay).
----@param hints [string, string][]  { key, label } pairs
+--- list column only -- half the layout, measuring 38 columns on an
+--- 80-column terminal.  Neovim truncates a longer footer without warning,
+--- so hints are dropped from the front (the most obvious keys) until the
+--- assembled text fits, and the full key list stays one `<F1>` away.
+---@param hints [string, string][]  { key, label } pairs, least important first
 ---@return snacks.picker.Highlight[]
 local function hint_footer(hints)
+  local budget = 36
+  local width = 2 -- the leading and trailing pad below
+  local kept = {}
+  for i = #hints, 1, -1 do
+    local cost = #hints[i][1] + 1 + #hints[i][2] + (#kept > 0 and 2 or 0)
+    if width + cost > budget then break end
+    width = width + cost
+    table.insert(kept, 1, hints[i])
+  end
+
   local footer = { { " ", "SnacksFooter" } }
-  for i, hint in ipairs(hints) do
+  for i, hint in ipairs(kept) do
     if i > 1 then footer[#footer + 1] = { "  ", "SnacksFooter" } end
     footer[#footer + 1] = { hint[1], "SnacksFooterKey" }
     footer[#footer + 1] = { " " .. hint[2], "SnacksFooterDesc" }
@@ -256,7 +266,7 @@ function M.bundles()
     },
     win = {
       input = {
-        footer     = hint_footer({ { "<cr>", "open" }, { "<c-y>", "enable" }, { "?", "keys" } }),
+        footer     = hint_footer({ { "<cr>", "open" }, { "<c-y>", "enable" }, { "<f1>", "keys" } }),
         footer_pos = "center",
         keys = {
           ["<CR>"]  = { "confirm",        mode = { "i", "n" }, desc = "open bundle source (readonly)" },
@@ -324,7 +334,7 @@ function M.templates()
     },
     win = {
       input = {
-        footer     = hint_footer({ { "<cr>", "open" }, { "<c-y>", "install" }, { "?", "keys" } }),
+        footer     = hint_footer({ { "<cr>", "open" }, { "<c-y>", "stamp" }, { "<f1>", "keys" } }),
         footer_pos = "center",
         keys = {
           ["<CR>"]  = { "confirm",        mode = { "i", "n" }, desc = "open template (readonly)" },
@@ -1266,7 +1276,7 @@ function M.diff_keymaps()
     items  = items,
     layout = { preset = "select", preview = "main" },
     win = { input = {
-      footer     = hint_footer({ { "<cr>", "source" }, { "<c-q>", "qflist" }, { "?", "keys" } }),
+      footer     = hint_footer({ { "<cr>", "source" }, { "<c-q>", "qf" }, { "<f1>", "keys" } }),
       footer_pos = "center",
       keys = {
         -- Space inserts ␣ so the search matches the visible display
@@ -1343,7 +1353,7 @@ function M.diff_options()
     items  = items,
     layout = { preset = "select", preview = "main" },
     win = { input = {
-      footer     = hint_footer({ { "<cr>", "source" }, { "?", "keys" } }),
+      footer     = hint_footer({ { "<cr>", "source" }, { "<f1>", "keys" } }),
       footer_pos = "center",
     } },
     format = function(item)
@@ -1890,7 +1900,7 @@ function M.diff_autocmds()
     items  = items,
     layout = { preset = "select", preview = "main" },
     win = { input = {
-      footer     = hint_footer({ { "<cr>", "source" }, { "?", "keys" } }),
+      footer     = hint_footer({ { "<cr>", "source" }, { "<f1>", "keys" } }),
       footer_pos = "center",
     } },
     format = function(item)
