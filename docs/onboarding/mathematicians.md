@@ -22,7 +22,7 @@ You know, or can tolerate, Vim basics: modes, `hjkl`, `:w`, `:q`,
 `/search`. If `hjkl` means nothing to you, start with section 2 first.
 
 You write math (papers, notes, thesis chapters, problem sets) in
-LaTeX, Typst, Markdown, or some mix of them. You want to get to a
+LaTeX, Markdown, or some mix of them. You want to get to a
 working setup quickly and iterate from there, rather than read every
 manual before opening a file.
 
@@ -46,13 +46,13 @@ That said, three resources are worth keeping open the first week:
 - **[learnvim](https://learnvim.irian.to/)**: a free book on modal
   editing intuition. Skim the first few chapters to internalize why, for example,
   `ci"` is better than selecting and retyping.
-- **`:help user-manual`**: the canonical reference. Not for reading cover to cover (it
-  will take ~9 hours, see [this link][https://www.youtube.com/watch?v=rT-fbLFOCy0]); look
-  into when you want to understand something properly.
+- **`:help user-manual`**: the canonical reference. Not for reading cover to cover
+  ([roughly nine hours if you try](https://www.youtube.com/watch?v=rT-fbLFOCy0));
+  look into it when you want to understand something properly.
 
 If you hit a specific motion or command you don't know, `:help <thing>`
 almost always has an answer. Neovim's help system is one of the most reliable
-piece of documentation in the entire ecosystem.
+pieces of documentation in the entire ecosystem.
 
 ## 3. Installation
 
@@ -68,7 +68,7 @@ highlighting for a mathematician coming from another editor:
 - **Let the first launch finish.** Lazy.nvim bootstraps itself, pulls
   plugins, compiles treesitter parsers, and (if you enable the LaTeX
   bundle) installs the language server through Mason. First launch
-  takes at most minute or two. Subsequent launches are fast (usually <50ms).
+  takes a minute or two at most. Subsequent launches are fast (usually <50ms).
 
 Once `nvim` opens without errors and the dashboard appears, you're
 ready.
@@ -134,7 +134,8 @@ knowing day one:
 - `:NoetherVim files`: picker of NoetherVim's own source files.
 - `:NoetherVim user`: picker of your `lua/user/` files.
 - `:NoetherVim override`: from any NoetherVim source file, open the
-  matching user override file in a split. Creates it if missing. One of the more useful command for customization.
+  matching user override file in a split. Creates it if missing. One of
+  the more useful commands for customization.
 
 `<Space>fk` searches all keymaps by description. `:NoetherVim diff
 keymaps` (or `<space>ck`) shows what you've personally changed.
@@ -149,7 +150,6 @@ and uncomment the bundles you want. Each one is a single line in the
 -- Core math + writing
 { import = "noethervim.bundles.languages.latex" },
 { import = "noethervim.bundles.languages.latex-zotero" },  -- needs Zotero running
-{ import = "noethervim.bundles.typst" },                   -- may still be stabilizing
 { import = "noethervim.bundles.writing.markdown" },
 
 -- Optional, depending on your note-taking habit
@@ -161,10 +161,9 @@ Save the file, quit, and reopen Neovim. Lazy.nvim picks up the changes
 and installs what's new on next launch.
 
 After the install settles, run `:checkhealth noethervim`. It reports on
-required dependencies (TeX distribution, `latexmk`, `tinymist` for
-Typst, Zotero translator if you enabled zotero, `uv`/Python for image
-tooling) and tells you exactly which command to run if something is
-missing.
+required dependencies (TeX distribution, `latexmk`, Zotero translator if
+you enabled zotero, `uv`/Python for image tooling) and tells you exactly
+which command to run if something is missing.
 
 ## 6. Writing a LaTeX paper
 
@@ -230,28 +229,34 @@ they make sense.
 At the start of a line in the preamble (above `\begin{document}`),
 type `@` and press `<Tab>` to get a picker of `.tex` files from your
 preamble folder; useful if you maintain shared macros across
-documents. Set the folder via `lua/user/config.lua`:
+documents. The folder defaults to `preamble/` inside your config
+directory. Point it elsewhere with an `opts` override on the
+`NoetherVim-Tex` spec:
 
 ```lua
+-- ~/.config/nvim/lua/user/plugins/noethervim-tex.lua
 return {
-    preamble_folder = "~/Documents/LaTeX/preamble/",
+    { "Chiarandini/NoetherVim-Tex",
+      opts = { preamble_folder = "~/Documents/LaTeX/preamble/" },
+    },
 }
 ```
 
-### Textobjects: editing by theorem
+### Motions: navigating by theorem
 
-The bundle adds treesitter-powered textobjects for LaTeX structure.
-These work with any operator (`d`, `y`, `c`, `v`):
+The bundle adds treesitter-powered normal-mode motions for LaTeX
+structure, in the `[` / `]` pairing the rest of the distribution uses:
 
 - `]g` / `[g` - next / previous theorem (or any theorem-like env)
-- `]p` / `[p` - next / previous proof
-- `]x` / `[x` - next / previous example
+- `]p` / `[p` - next / previous proof, `]P` / `[P` for its `\end`
+- `]x` / `[x` - next / previous example, `]X` / `[X` for its `\end`
 - `]c` / `[c` - next / previous chapter
 
-Combined with VimTeX's own `ie` / `ae` (inside / around environment)
-and `i$` / `a$` (inline math): `dae` deletes a whole environment,
-`ci$` replaces the contents of `$...$`, `vag` selects a theorem with
-its surrounding delimiters.
+These move the cursor; they are not operator-pending textobjects, so
+`d]g` does not work. For operating on a region, use VimTeX's own
+textobjects: `ie` / `ae` (inside / around environment) and `i$` / `a$`
+(inline math). `dae` deletes a whole environment and `ci$` replaces the
+contents of `$...$`.
 
 ### Spell checking that knows math
 
@@ -283,36 +288,11 @@ from a colleague) and press `<LocalLeader>P`. A `figure` environment
 is inserted at the cursor with a caption stub, the image saved to a
 nearby directory, and the path wired up.
 
-## 7. Writing with Typst
+## 7. Notes, references, and research workflow
 
-Typst is an alternative to LaTeX: faster compilation, cleaner syntax,
-Lua-like scripting.
-
-With the typst bundle enabled and `tinymist` + `typst` on your `$PATH`
-(`brew install tinymist typst` on macOS), opening a `.typ` file gives
-you:
-
-- Live preview via markview rendering inline.
-- Language server features via `tinymist`: completion, diagnostics,
-  goto-definition on `@label` references.
-- A parallel set of snippets for math and environments. The trigger
-  conventions mirror the LaTeX bundle where it makes sense
-  (`:thm`, `:defn`, `:prop`) so muscle memory transfers.
-
-Compile output lives alongside the source. For most single-document
-work the live preview is enough; for larger projects, `typst compile
-file.typ` from the shell produces a PDF.
-
-My two cents on picking LaTeX vs Typst: Picking Typst is good if you want fast incremental compilation,
-you aren't locked into a LaTeX journal template, you'd rather write
-`$ a^2 + b^2 = c^2 $` than `\begin{equation} a^2 + b^2 = c^2
-\end{equation}`, and you're willing to live with a smaller package
-ecosystem (though this is a shrinking concern as Typst matures).
-
-## 8. Notes, references, and research workflow
-
- NoetherVim gives
-you three paths; pick the one that matches how you already think.
+Mathematical notes tend to outlive the paper they were taken for, so it
+is worth picking a home for them early. NoetherVim gives you three
+paths; pick the one that matches how you already think.
 
 **Plain Markdown + `markdown` bundle.** The lightest option.
 Render-markdown.nvim concealed formatting in-buffer (headings, bold,
@@ -339,14 +319,14 @@ for thesis-style hierarchical notes or long-running research journals.
 Default workspace is `~/neorg/`. Key openers:
 
 - `<Leader>ww` - open the wiki index.
-- `<Space>wt` / `<Space>wv` - index in a new tab / vertical split.
+- `<Leader>wt` / `<Leader>wv` - index in a new tab / vertical split.
 - `<LocalLeader>nc` - table of contents for the current norg file.
 
 Neorg has a steeper learning curve than Markdown but pays off if you
 want outlined, exportable, linked notes as a system rather than a
 folder of files.
 
-## 9. Extending NoetherVim
+## 8. Extending NoetherVim
 
 You will eventually want to change something: a keymap, a color, a
 plugin option. NoetherVim's override system is designed so you never
@@ -381,7 +361,7 @@ For the full override system (loading order, how `opts` tables merge,
 how to disable a plugin from a bundle) see `:help
 noethervim-user-config`.
 
-## 10. When things break
+## 9. When things break
 
 Four commands, in order, will diagnose almost any problems:
 
@@ -401,7 +381,7 @@ If all four come back clean but something is still off, open an issue:
 `:checkhealth noethervim` output and the specific file / keymap / bundle
 that's misbehaving.
 
-## 11. Going deeper
+## 10. Going deeper
 
 You do not have to read any of the following to use NoetherVim well. These are further
 documentation to improve your knowledge of Neovim:
@@ -415,8 +395,6 @@ documentation to improve your knowledge of Neovim:
   LaTeX workflow has far more depth than this guide covers (custom
   compilers, remote compilation, inverse search tuning,
   language-specific features).
-- **[Typst documentation](https://typst.app/docs/)** - Typst as a
-  language is still evolving; official docs are the source of truth.
 - **[lazy.nvim spec reference](https://lazy.folke.io/spec)** - read
   before writing a plugin override so your `keys` / `event` / `ft` /
   `opts` table actually behaves the way you expect.

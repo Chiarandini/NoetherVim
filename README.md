@@ -144,7 +144,7 @@ NoetherVim.
 > keybinding prefixes, the commands worth running first, and a tour of the
 > defaults you can change.
 >
-> **Coming in primarily for LaTeX / Typst work?** Continue with the
+> **Coming in primarily for LaTeX work?** Continue with the
 > [onboarding guide for mathematicians](docs/onboarding/mathematicians.md): the math
 > bundles, snippets, citations, and how to extend the setup.
 

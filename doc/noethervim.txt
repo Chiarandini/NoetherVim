@@ -80,7 +80,7 @@ The keymap prefixes are the fastest thing to learn: |noethervim-keymaps|.
 A longer walkthrough for a first session, including the prefixes and the
 defaults worth reviewing, lives in `docs/onboarding/README.md` in the
 project root; `docs/onboarding/mathematicians.md` continues it for LaTeX
-and Typst work.
+work.
 
 ==============================================================================
 4. USER CONFIGURATION                                  *noethervim-user-config*

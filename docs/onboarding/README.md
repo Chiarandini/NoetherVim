@@ -7,7 +7,7 @@ Nothing here is required reading. If you would rather explore, the two
 commands worth knowing before you close this page are `<Space>?` (the keymap
 guide) and `:checkhealth noethervim`.
 
-If you are here primarily for LaTeX or Typst, read this page first for the
+If you are here primarily for LaTeX, read this page first for the
 general layout, then continue with
 [onboarding for mathematicians](mathematicians.md).
 
