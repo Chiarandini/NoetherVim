@@ -28,7 +28,7 @@ export default defineConfig({
       editLink: {
         baseUrl: 'https://github.com/Chiarandini/NoetherVim/edit/main/docs-site/',
       },
-      customCss: ['./src/styles/custom.css'],
+      customCss: ['./src/styles/custom.css', './src/styles/palettes.css'],
       // TEMPORARY: adds the accent-palette picker beside the GitHub icon.
       // Remove this override once a palette is chosen; see PaletteSwitcher.
       components: {

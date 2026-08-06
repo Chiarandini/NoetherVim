@@ -1,0 +1,163 @@
+/* TEMPORARY: candidate colourschemes for the header picker.
+ *
+ * Each block re-themes the whole surface, not just the accent: background,
+ * nav and sidebar surfaces, the text ramp, inline code, and the code-block
+ * background. An accent-only swap changed too little to judge a scheme by.
+ *
+ * Values are taken from each Neovim colourscheme's own palette, so picking
+ * one here can be matched by the distro's shipped default.
+ *
+ * Scoped to dark mode. Light mode keeps Starlight's defaults; this is a
+ * comparison tool, not a finished dual-mode theme.
+ *
+ * To remove: delete this file, drop it from customCss in astro.config.mjs,
+ * delete src/components/PaletteSwitcher.astro and its components override,
+ * then fold the winner into custom.css.
+ */
+
+/* ── Catppuccin Mocha ─────────────────────────────────────────── */
+:root[data-theme='dark'][data-palette='catppuccin'] {
+  --sl-color-white: #cdd6f4;
+  --sl-color-gray-1: #cdd6f4;
+  --sl-color-gray-2: #bac2de;
+  --sl-color-gray-3: #a6adc8;
+  --sl-color-gray-4: #7f849c;
+  --sl-color-gray-5: #45475a;
+  --sl-color-gray-6: #313244;
+  --sl-color-black: #181825;
+  --sl-color-bg: #1e1e2e;
+  --sl-color-bg-nav: #181825;
+  --sl-color-bg-sidebar: #181825;
+  --sl-color-bg-inline-code: #313244;
+  --sl-color-accent-low: #302a44;
+  --sl-color-accent: #cba6f7;
+  --sl-color-accent-high: #ddc4ff;
+  --ec-codeBg: #181825;
+  --ec-frm-edBg: #181825;
+}
+
+/* ── Tokyo Night ──────────────────────────────────────────────── */
+:root[data-theme='dark'][data-palette='tokyonight'] {
+  --sl-color-white: #c0caf5;
+  --sl-color-gray-1: #c0caf5;
+  --sl-color-gray-2: #a9b1d6;
+  --sl-color-gray-3: #9aa5ce;
+  --sl-color-gray-4: #565f89;
+  --sl-color-gray-5: #292e42;
+  --sl-color-gray-6: #1f2335;
+  --sl-color-black: #16161e;
+  --sl-color-bg: #1a1b26;
+  --sl-color-bg-nav: #16161e;
+  --sl-color-bg-sidebar: #16161e;
+  --sl-color-bg-inline-code: #292e42;
+  --sl-color-accent-low: #1f2a4a;
+  --sl-color-accent: #7aa2f7;
+  --sl-color-accent-high: #b4c8ff;
+  --ec-codeBg: #1f2335;
+  --ec-frm-edBg: #1f2335;
+}
+
+/* ── Kanagawa Wave ────────────────────────────────────────────── */
+:root[data-theme='dark'][data-palette='kanagawa'] {
+  --sl-color-white: #dcd7ba;
+  --sl-color-gray-1: #dcd7ba;
+  --sl-color-gray-2: #c8c093;
+  --sl-color-gray-3: #9e9b93;
+  --sl-color-gray-4: #727169;
+  --sl-color-gray-5: #363646;
+  --sl-color-gray-6: #2a2a37;
+  --sl-color-black: #16161d;
+  --sl-color-bg: #1f1f28;
+  --sl-color-bg-nav: #16161d;
+  --sl-color-bg-sidebar: #16161d;
+  --sl-color-bg-inline-code: #2a2a37;
+  --sl-color-accent-low: #252d42;
+  --sl-color-accent: #7e9cd8;
+  --sl-color-accent-high: #b8cbf0;
+  --ec-codeBg: #16161d;
+  --ec-frm-edBg: #16161d;
+}
+
+/* ── Rose Pine ────────────────────────────────────────────────── */
+:root[data-theme='dark'][data-palette='rosepine'] {
+  --sl-color-white: #e0def4;
+  --sl-color-gray-1: #e0def4;
+  --sl-color-gray-2: #c4c1d8;
+  --sl-color-gray-3: #908caa;
+  --sl-color-gray-4: #6e6a86;
+  --sl-color-gray-5: #403d52;
+  --sl-color-gray-6: #26233a;
+  --sl-color-black: #16141f;
+  --sl-color-bg: #191724;
+  --sl-color-bg-nav: #1f1d2e;
+  --sl-color-bg-sidebar: #1f1d2e;
+  --sl-color-bg-inline-code: #26233a;
+  --sl-color-accent-low: #2e2843;
+  --sl-color-accent: #c4a7e7;
+  --sl-color-accent-high: #e0cdf5;
+  --ec-codeBg: #1f1d2e;
+  --ec-frm-edBg: #1f1d2e;
+}
+
+/* ── Everforest Dark ──────────────────────────────────────────── */
+:root[data-theme='dark'][data-palette='everforest'] {
+  --sl-color-white: #d3c6aa;
+  --sl-color-gray-1: #d3c6aa;
+  --sl-color-gray-2: #9da9a0;
+  --sl-color-gray-3: #859289;
+  --sl-color-gray-4: #7a8478;
+  --sl-color-gray-5: #475258;
+  --sl-color-gray-6: #3d484d;
+  --sl-color-black: #232a2e;
+  --sl-color-bg: #2d353b;
+  --sl-color-bg-nav: #232a2e;
+  --sl-color-bg-sidebar: #232a2e;
+  --sl-color-bg-inline-code: #3d484d;
+  --sl-color-accent-low: #333f2e;
+  --sl-color-accent: #a7c080;
+  --sl-color-accent-high: #cbdcb0;
+  --ec-codeBg: #232a2e;
+  --ec-frm-edBg: #232a2e;
+}
+
+/* ── Gruvbox Dark ─────────────────────────────────────────────── */
+:root[data-theme='dark'][data-palette='gruvbox'] {
+  --sl-color-white: #fbf1c7;
+  --sl-color-gray-1: #ebdbb2;
+  --sl-color-gray-2: #d5c4a1;
+  --sl-color-gray-3: #bdae93;
+  --sl-color-gray-4: #928374;
+  --sl-color-gray-5: #504945;
+  --sl-color-gray-6: #3c3836;
+  --sl-color-black: #1d2021;
+  --sl-color-bg: #282828;
+  --sl-color-bg-nav: #1d2021;
+  --sl-color-bg-sidebar: #1d2021;
+  --sl-color-bg-inline-code: #3c3836;
+  --sl-color-accent-low: #422a12;
+  --sl-color-accent: #fe8019;
+  --sl-color-accent-high: #ffb87c;
+  --ec-codeBg: #32302f;
+  --ec-frm-edBg: #32302f;
+}
+
+/* ── Nord ─────────────────────────────────────────────────────── */
+:root[data-theme='dark'][data-palette='nord'] {
+  --sl-color-white: #eceff4;
+  --sl-color-gray-1: #e5e9f0;
+  --sl-color-gray-2: #d8dee9;
+  --sl-color-gray-3: #aeb8c8;
+  --sl-color-gray-4: #6d7a90;
+  --sl-color-gray-5: #3b4252;
+  --sl-color-gray-6: #353c4a;
+  --sl-color-black: #242933;
+  --sl-color-bg: #2e3440;
+  --sl-color-bg-nav: #272c36;
+  --sl-color-bg-sidebar: #272c36;
+  --sl-color-bg-inline-code: #3b4252;
+  --sl-color-accent-low: #2b3a45;
+  --sl-color-accent: #88c0d0;
+  --sl-color-accent-high: #b8dce8;
+  --ec-codeBg: #272c36;
+  --ec-frm-edBg: #272c36;
+}
