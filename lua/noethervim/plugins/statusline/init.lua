@@ -7,7 +7,7 @@ return {
     event = 'UIEnter',
     -- Hard opt-out: user.config.statusline_enabled = false skips heirline
     -- entirely so a replacement plugin (lualine, mini.statusline, etc.)
-    -- can take over without conflict.  Bundle-level toggles still go
+    -- can take over without conflict. Bundle-level toggles still go
     -- through `enabled = function() ... end`; this one uses `cond`
     -- because lazy evaluates cond at spec resolution -- if the plugin
     -- is gone, none of its UIEnter wiring runs in the first place.
@@ -66,7 +66,7 @@ return {
 
       -- ── Assembly ─────────────────────────────────────────────
 
-      -- Mode-aware bottom-statusline background.  See ctx.mode_bg /
+      -- Mode-aware bottom-statusline background. See ctx.mode_bg /
       -- ctx.with_mode_bg in context.lua for the helpers components can
       -- call directly when they need to embed this bg in their own hl
       -- (heirline's parent->child bg merge isn't always reliable when
@@ -84,6 +84,7 @@ return {
       end, {
         fallthrough = false,
         misc.MacroRec,
+        filename.MissingFileFlag,
         filename.ReadOnlyFlag,
         filename.ScratchFlag,
         filename.ChangeFlag,

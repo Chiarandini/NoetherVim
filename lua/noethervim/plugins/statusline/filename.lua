@@ -7,30 +7,97 @@ local utils = require("heirline.utils")
 
 local M = {}
 
-local save_warning = "Not saving in same directory!"
+-- ── Buffer directory vs. working directory ───────────────────────────────
+--
+-- Neovim's working directory belongs to the window (falling back to the tab,
+-- then to the global one), never to the buffer. Editing `docs/a.md` from a
+-- cwd of the project root leaves cwd at the root, so a *relative* write
+-- argument goes to the root rather than next to the file on screen:
+--
+--     :e docs/a.md        cwd stays at the project root
+--     :w draft.md         writes <root>/draft.md, not <root>/docs/draft.md
+--
+-- `:w` with no argument is never affected. Neovim expands a buffer's name
+-- to an absolute path when the buffer is created -- confirmed for `:edit`,
+-- `:file` and `nvim_buf_set_name()` alike -- so a plain write always goes
+-- back to the file it read, whatever cwd has done since.
+--
+-- Two tiers, because the two cases are not equally surprising:
+--
+--   inside   the file sits somewhere under cwd. Ordinary project
+--            navigation; rendered dimmed, as orientation rather than alarm.
+--   outside  the file is not under cwd at all. Rare, and the case where a
+--            relative `:w` or `:e` most likely lands somewhere unrelated to
+--            anything visible; rendered in the warning colour.
+--
+-- The two tiers are what keep this readable as signal. Under Neovim's
+-- default of 'noautochdir', "buffer directory differs from cwd" is true of
+-- every file in a subdirectory, which is most of them; a single undifferentiated
+-- marker would be lit almost always and mean almost nothing.
 
-local function warning_popup(text)
+---Classify the current buffer's directory against the window's cwd.
+---@return "inside"|"outside"|nil  nil when they agree, or there is no file
+local function cwd_state()
+  if vim.bo.buftype ~= "" then return nil end
+  local name = vim.api.nvim_buf_get_name(0)
+  if name == "" then return nil end
+
+  local dir = vim.fs.normalize(vim.fn.fnamemodify(name, ":p:h"))
+  local cwd = vim.fs.normalize(vim.fn.getcwd())
+  if dir == cwd then return nil end
+
+  local prefix = cwd == "/" and "/" or (cwd .. "/")
+  return vim.startswith(dir .. "/", prefix) and "inside" or "outside"
+end
+
+---Explain the divergence and offer the window-local fix.
+---
+---`:lcd` rather than `:cd` on purpose: `:cd` from a window holding a
+---window-local or tab-local directory silently discards both.
+local function cwd_popup()
+  local dir = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ":p:h")
+  local lines = {
+    " cwd:  " .. vim.fn.fnamemodify(vim.fn.getcwd(), ":~"),
+    " file: " .. vim.fn.fnamemodify(dir, ":~"),
+    " Relative :w and :e resolve against cwd. ",
+    " [L] :lcd to the file's directory   [C]ancel ",
+  }
+  local width = 0
+  for _, l in ipairs(lines) do
+    if #l > width then width = #l end
+  end
+
   local mouse_pos = vim.fn.getmousepos()
   local opts = {
     relative = "editor",
-    row = mouse_pos.screenrow,
-    col = mouse_pos.screencol,
-    width = string.len(text) + 2,
-    height = 1,
-    style = "minimal",
-    border = "rounded",
+    row      = math.max(0, mouse_pos.screenrow - #lines - 2),
+    col      = mouse_pos.screencol,
+    width    = width,
+    height   = #lines,
+    style    = "minimal",
+    border   = "rounded",
   }
 
   local buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, { text })
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
   vim.api.nvim_set_option_value("modifiable", false, { scope = "local", buf = buf })
-  vim.api.nvim_set_option_value("bufhidden", "wipe", { scope = "local", buf = buf })
+  vim.api.nvim_set_option_value("bufhidden",  "wipe",  { scope = "local", buf = buf })
 
-  local win = vim.api.nvim_open_win(buf, false, opts)
+  local win = vim.api.nvim_open_win(buf, true, opts)
 
-  vim.keymap.set("n", "q", "<cmd>q<CR>", { buf = buf, noremap = true, silent = true })
+  local function close() pcall(vim.api.nvim_win_close, win, true) end
+  local function lcd()
+    close()
+    vim.cmd("lcd " .. vim.fn.fnameescape(dir))
+    vim.cmd.redrawstatus()
+  end
 
-  vim.api.nvim_set_current_win(win)
+  local km = { buffer = buf, noremap = true, silent = true, nowait = true }
+  vim.keymap.set("n", "l",     lcd,   km)
+  vim.keymap.set("n", "<CR>",  lcd,   km)
+  vim.keymap.set("n", "c",     close, km)
+  vim.keymap.set("n", "q",     close, km)
+  vim.keymap.set("n", "<Esc>", close, km)
 end
 
 local function out_of_sync_popup()
@@ -96,10 +163,17 @@ local function OilRelativeFilename()
   return vim.api.nvim_buf_get_name(0)
 end
 
+-- The directory half of the split path, toggled by `<C-w>sP`.
+--
+-- It reports the buffer's own directory relative to the project root, derived
+-- from the buffer rather than from the working directory. That makes the
+-- toggle mean one thing whatever 'autochdir' is set to: `FileName` drops to
+-- the bare filename while this component carries the directory, so together
+-- they spell the project-relative path exactly once.
 local WorkDir = {
   init = function(self)
     self.icon = " "
-    self.cwd = vim.fs.normalize(ProjRelativeFilename())
+    self.dir = vim.fs.normalize(ProjRelativeFilename())
   end,
   condition = function()
     return vim.g.heirline_directory_show
@@ -111,16 +185,16 @@ local WorkDir = {
   {
     -- evaluates to the full-length path
     provider = function(self)
-      local trail = self.cwd:sub(-1) == "/" and "" or "/"
-      return self.icon .. self.cwd .. trail
+      local trail = self.dir:sub(-1) == "/" and "" or "/"
+      return self.icon .. self.dir .. trail
     end,
   },
   {
     -- evaluates to the shortened path
     provider = function(self)
-      local cwd = vim.fn.pathshorten(self.cwd)
-      local trail = self.cwd:sub(-1) == "/" and "" or "/"
-      return self.icon .. cwd .. trail
+      local dir = vim.fn.pathshorten(self.dir)
+      local trail = self.dir:sub(-1) == "/" and "" or "/"
+      return self.icon .. dir .. trail
     end,
   },
   {
@@ -144,20 +218,27 @@ M.FileIcon = {
   end,
 }
 
-local BufNotCwdWarning = {
-  condition = function()
-    local relativeFilename = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ":.")
-    local filename = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ":t")
-    return relativeFilename ~= filename
+local BufDirMismatch = {
+  -- Classified in `condition`, not `init`: heirline evaluates condition
+  -- first and skips init entirely when it returns false, so a state set in
+  -- init is still nil by the time condition reads it.
+  condition = function(self)
+    self.state = cwd_state()
+    return self.state ~= nil
   end,
   on_click = {
-    callback = function()
-      warning_popup(save_warning)
-    end,
-    name = "heirline_save_warning",
+    callback = cwd_popup,
+    name = "heirline_cwd_mismatch",
   },
-  provider = " " .. icons.warning .. " ",
-  hl = function() return { fg = ctx.colors.red } end,
+  provider = function(self)
+    return self.state == "outside" and (" " .. icons.warning .. " ") or " " .. icons.folder .. " "
+  end,
+  hl = function(self)
+    if self.state == "outside" then
+      return { fg = ctx.colors.yellow }
+    end
+    return { fg = ctx.colors.text_unselected }
+  end,
 }
 
 M.FileName = {
@@ -174,19 +255,85 @@ M.FileName = {
     name = "heirline_file_explorer",
   },
   provider = function(self)
+    local name = vim.api.nvim_buf_get_name(0)
+    if name == "" then
+      return "[No Name]"
+    end
+    -- WorkDir is showing the project-relative directory, so render the bare
+    -- filename here. Otherwise the directory appears twice under
+    -- 'noautochdir', where `:.` already carries it.
+    if vim.g.heirline_directory_show then
+      return vim.fn.fnamemodify(name, ":t")
+    end
     -- either get filename or get it relative to project:
     if vim.g.heirline_proj_relative_dir_show then
       return ProjRelativeFilename()
     end
-    -- first, trim the pattern relative to the current directory.
-    -- For other options, see :h filename-modifers
-    local filename = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ":.")
-    if filename == "" then
-      return "[No Name]"
-    end
-    return filename
+    -- trim the path relative to the working directory.
+    -- For other options, see :h filename-modifiers
+    return vim.fn.fnamemodify(name, ":.")
   end,
   hl = function() return { fg = ctx.colors.text_gray } end,
+}
+
+--- Offer to put a deleted file back from the buffer still holding it.
+local function missing_file_popup()
+  local name = vim.api.nvim_buf_get_name(0)
+  local lines = {
+    " The file behind this buffer is gone from disk. ",
+    " " .. vim.fn.fnamemodify(name, ":~") .. " ",
+    " The buffer still holds its contents. ",
+    " [W] write it back   [C]ancel ",
+  }
+  local width = 0
+  for _, l in ipairs(lines) do
+    if #l > width then width = #l end
+  end
+
+  local mouse_pos = vim.fn.getmousepos()
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  vim.api.nvim_set_option_value("modifiable", false, { scope = "local", buf = buf })
+  vim.api.nvim_set_option_value("bufhidden",  "wipe",  { scope = "local", buf = buf })
+
+  local win = vim.api.nvim_open_win(buf, true, {
+    relative = "editor",
+    row      = math.max(0, mouse_pos.screenrow - #lines - 2),
+    col      = mouse_pos.screencol,
+    width    = width,
+    height   = #lines,
+    style    = "minimal",
+    border   = "rounded",
+  })
+
+  local function close() pcall(vim.api.nvim_win_close, win, true) end
+  local function restore()
+    close()
+    vim.cmd("write")
+  end
+
+  local km = { buffer = buf, noremap = true, silent = true, nowait = true }
+  vim.keymap.set("n", "w",     restore, km)
+  vim.keymap.set("n", "<CR>",  restore, km)
+  vim.keymap.set("n", "c",     close,   km)
+  vim.keymap.set("n", "q",     close,   km)
+  vim.keymap.set("n", "<Esc>", close,   km)
+end
+
+--- The buffer's file has been deleted from disk while the buffer stayed open.
+--- Ranked ahead of the read-only and modified flags in the statusline: the
+--- buffer now holds the only copy of the contents, which outranks anything
+--- else those flags report.
+M.MissingFileFlag = {
+  condition = function()
+    return vim.b.noethervim_file_missing == true
+  end,
+  hl = function() return { force = true, fg = ctx.colors.red, bg = ctx.colors.light_gray } end,
+  on_click = {
+    callback = missing_file_popup,
+    name = "heirline_file_missing",
+  },
+  provider = icons.error .. " ",
 }
 
 M.ReadOnlyFlag = {
@@ -250,7 +397,7 @@ M.FileNameBlock = {
 
   WorkDir,
   {
-    BufNotCwdWarning,
+    BufDirMismatch,
     utils.insert(FileNameModifer, M.FileName), -- a new table where FileName is a child of FileNameModifier
     { provider = "%<" },                       -- statusline is cut here when there's not enough space
   },

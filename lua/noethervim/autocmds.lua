@@ -6,7 +6,7 @@
 --  with a single `q` keypress (no macro-recording concern there).
 -- ──────────────────────────────────────────────────────────────
 -- The list lives in noethervim.util.filetypes and already includes
--- whatever `q_close_filetypes` in lua/user/config.lua adds to it.  To drop
+-- whatever `q_close_filetypes` in lua/user/config.lua adds to it. To drop
 -- one of the distro's entries instead, clear this augroup and recreate the
 -- autocmd -- see templates/user/autocmds.example.lua.
 
@@ -55,7 +55,7 @@ vim.api.nvim_create_autocmd("FileType", {
 --  Closing one half of a `:diffthis` pair (or `:Gdiff`, gitsigns'
 --  diffthis, `:DiffOrig`, etc.) leaves the surviving window with
 --  &diff still set, which silently changes wrap/foldmethod/cursor-bind
---  for the rest of the session.  We listen on BufHidden / BufWipeout
+--  for the rest of the session. We listen on BufHidden / BufWipeout
 --  (NOT BufWinLeave) so simply switching tabs or windows while the
 --  diff buffer is still on screen doesn't tear the diff down.
 --  BufHidden fires only when the buffer has no remaining windows
@@ -63,9 +63,9 @@ vim.api.nvim_create_autocmd("FileType", {
 -- ──────────────────────────────────────────────────────────────
 
 -- Track which buffers are participating in a diff so we can detect when
--- a hidden one was the trigger.  `diff` is a window-local option (per
+-- a hidden one was the trigger. `diff` is a window-local option (per
 -- `:h 'diff'`), so we can't read it off the buffer at BufHidden time -
--- the window has already gone.  We mark `b:noethervim_was_diff = true`
+-- the window has already gone. We mark `b:noethervim_was_diff = true`
 -- whenever any window shows that buffer in diff mode (OptionSet on
 -- `diff` fires for the affected window) and consume the flag below.
 vim.api.nvim_create_autocmd("OptionSet", {
@@ -81,7 +81,7 @@ vim.api.nvim_create_autocmd("OptionSet", {
 vim.api.nvim_create_autocmd({ "BufHidden", "BufWipeout" }, {
   group = vim.api.nvim_create_augroup("noethervim_diff_cleanup", { clear = true }),
   callback = function(ev)
-    -- Only act for buffers we've seen participating in a diff.  Cheaper
+    -- Only act for buffers we've seen participating in a diff. Cheaper
     -- and avoids running diffoff on every random hide event.
     if not vim.b[ev.buf].noethervim_was_diff then return end
     vim.b[ev.buf].noethervim_was_diff = nil
@@ -104,11 +104,11 @@ vim.api.nvim_create_autocmd({ "BufHidden", "BufWipeout" }, {
 -- ──────────────────────────────────────────────────────────────
 -- The trigger set fires rapidly during workflows that thrash focus or
 -- buffer enters -- e.g. a VimTeX continuous compile that bounces between
--- the tex source, log/aux scratch buffers, and the PDF viewer.  Each
+-- the tex source, log/aux scratch buffers, and the PDF viewer. Each
 -- bare `:checktime` walks every loaded buffer, and the resulting UI churn
--- (tab modified flags, statusline redraws) shows up as flicker.  Coalesce
+-- (tab modified flags, statusline redraws) shows up as flicker. Coalesce
 -- bursts into a single trailing-edge call so checktime runs at most once
--- per ~100ms.  Legitimate reloads still feel instant; the cost is a tiny
+-- per ~100ms. Legitimate reloads still feel instant; the cost is a tiny
 -- delay before an externally-edited file pops back in.
 
 do
@@ -138,10 +138,20 @@ end
 --  Cleared on next successful write or read.
 -- ──────────────────────────────────────────────────────────────
 
+-- Deleting the file behind a buffer leaves the buffer intact, still holding
+-- the path and the only remaining copy of the contents, with nothing on
+-- screen to say so. `checktime` above reports it as `v:fcs_reason ==
+-- "deleted"`, so the detection is already paid for; latch it onto the buffer
+-- for the statusline to read. Cleared by the next write, which recreates
+-- the file, or by a re-read.
+
 vim.api.nvim_create_autocmd("FileChangedShell", {
   group = vim.api.nvim_create_augroup("noethervim_out_of_sync_set", { clear = true }),
   callback = function(ev)
-    if vim.bo[ev.buf].modified then
+    if vim.v.fcs_reason == "deleted" then
+      vim.b[ev.buf].noethervim_file_missing = true
+      vim.cmd.redrawstatus()
+    elseif vim.bo[ev.buf].modified then
       vim.b[ev.buf].noethervim_out_of_sync = true
       vim.cmd.redrawstatus()
     end
@@ -152,6 +162,7 @@ vim.api.nvim_create_autocmd({ "BufWritePost", "BufReadPost" }, {
   group = vim.api.nvim_create_augroup("noethervim_out_of_sync_clear", { clear = true }),
   callback = function(ev)
     vim.b[ev.buf].noethervim_out_of_sync = nil
+    vim.b[ev.buf].noethervim_file_missing = nil
     vim.cmd.redrawstatus()
   end,
 })
@@ -181,7 +192,7 @@ vim.api.nvim_create_autocmd("TermOpen", {
 
 -- 'timeoutlen' is global and defaults to a full second, so the <Esc><Esc>
 -- exit mapping would hold a single <Esc> back that long before passing it
--- to whatever is running in the terminal.  Shorten it for the duration of
+-- to whatever is running in the terminal. Shorten it for the duration of
 -- terminal mode; <Esc><Esc> is the only multi-key mapping there.
 local saved_timeoutlen
 
@@ -228,19 +239,28 @@ heirline_event("HeirlinePDFModeOn",    function()
   vim.cmd.redrawstatus()
 end)
 
+-- The directory components read the window's working directory, so they go
+-- stale on any change to it. DirChanged covers all four sources: `:cd`,
+-- `:tcd`, `:lcd`, and 'autochdir' (which reports scope "window").
+vim.api.nvim_create_autocmd("DirChanged", {
+  group    = heirline_group,
+  pattern  = "*",
+  callback = function() vim.cmd.redrawstatus() end,
+})
+
 -- ──────────────────────────────────────────────────────────────
 --  Filetype profiles: writing and code
 -- ──────────────────────────────────────────────────────────────
 -- Writing buffers (tex, markdown, gitcommit, ...) get wrap + linebreak +
--- spell + conceallevel=2; list chars are hidden.  Code buffers get
+-- spell + conceallevel=2; list chars are hidden. Code buffers get
 -- whitespace visibility (list chars), and -- when spell_in_code is
 -- enabled in lua/user/config.lua -- spell turned on, scoped to comments
--- and strings via treesitter @spell captures.  Structured-text (json,
+-- and strings via treesitter @spell captures. Structured-text (json,
 -- yaml, toml) and special buffers (help, qf, oil, terminal, dashboard,
 -- ...) are left alone -- their own ftplugins / buffer settings take over.
 --
 -- FileType autocmds fire AFTER ftplugin files, so these profiles win
--- over any same-named setting in ftplugin/*.lua.  To extend the lists
+-- over any same-named setting in ftplugin/*.lua. To extend the lists
 -- (e.g. treat vimwiki as writing), set writing_filetypes /
 -- non_code_filetypes in lua/user/config.lua -- see
 -- :help noethervim-user-config-data.
@@ -271,16 +291,16 @@ local spell_in_code = ok_cfg and type(user_cfg) == "table" and user_cfg.spell_in
 -- (`:badd` then later `:b`, or a split into an existing buffer)
 -- still inherits the profile.
 
--- Wrapped-line marker.  It lives in the number column rather than in
+-- Wrapped-line marker. It lives in the number column rather than in
 -- 'showbreak' because 'showbreak' occupies a text cell, which pushes every
--- continuation line one column right of the text it continues.  v:virtnum
+-- continuation line one column right of the text it continues. v:virtnum
 -- is >0 on wrapped rows and <0 on virtual-text lines, which get a blank.
 -- %C keeps the fold column working for anyone who turns 'foldcolumn' on.
 local writing_statuscolumn =
   [[%C%s%=%{v:virtnum > 0 ? "↳" : (v:virtnum < 0 ? "" : (v:relnum == 0 ? v:lnum : v:relnum))} ]]
 
 --- Set the wrap marker unless this window already carries a 'statuscolumn'
---- the user chose.  The profile runs on every FileType/BufWinEnter, long
+--- the user chose. The profile runs on every FileType/BufWinEnter, long
 --- after lua/user/ has loaded, so without this it would win every time.
 local function set_writing_statuscolumn(win)
   local current = vim.wo[win].statuscolumn
@@ -315,7 +335,7 @@ local function apply_code_profile(buf)
   for _, win in ipairs(vim.fn.win_findbuf(buf)) do
     vim.wo[win].list = true
     -- Window-local, so the wrap marker would otherwise persist when a code
-    -- buffer is opened in a window that was showing a writing buffer.  Only
+    -- buffer is opened in a window that was showing a writing buffer. Only
     -- ours is cleared; a statuscolumn the user set stays put.
     if vim.wo[win].statuscolumn == writing_statuscolumn then
       vim.wo[win].statuscolumn = ""

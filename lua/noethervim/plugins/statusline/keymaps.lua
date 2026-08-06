@@ -25,7 +25,7 @@ function M.setup()
         pattern = "HeirlineDirectoryOff",
       })
     end
-  end, { desc = "statusline pwd toggle" })
+  end, { desc = "statusline project directory toggle" })
 
   vim.keymap.set("n", "<c-w>s<c-p>", function()
     vim.api.nvim_exec_autocmds("User", {
