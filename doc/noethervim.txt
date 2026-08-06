@@ -1140,11 +1140,20 @@ Prefixes: ~
                       (stored in stdpath("state")).
                       `[oC`/`]oC` toggle blink.cmp completion on/off
                                                         *noethervim-Z*
-    `Z`                 Buffer operations
-                      ZA(ll quit)  ZB(uffer delete)  ZD(scratch delete)
-                      ZF(orce quit)  ZG(force delete)
-                      ZS(ave and quit all)  ZW(save what you can, force-quit)
-                      ZK(ill nvim, qa!)
+    `Z`                 Closing things -- a grid, not a list of initials.
+                      Rows say how much you are willing to lose; columns
+                      say what you are closing.  Vim's own `ZZ` and `ZQ` are
+                      the bottom and top of the first column.
+
+                                    this window    everything     this buffer
+                      force         `ZQ`  :q!      `ZW`  :qa!     `ZE`  :bd!
+                      refuse dirty  `ZA`  :q       `ZS`  :qa      `ZD`  :bd
+                      save first    `ZZ`  :x       `ZX`  :wa|qa!  `ZC`  :w|bd
+
+                      `ZQ` and `ZZ` are Vim defaults, listed for the shape.
+                      `ZW` is the "kill nvim" key; `ZX` is the one that saves
+                      every buffer it can before forcing out.
+                      `ZR`(scratch sweep) deletes unnamed scratch buffers.
 
 Other notable keymaps: ~
 

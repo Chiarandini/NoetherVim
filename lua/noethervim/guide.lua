@@ -390,7 +390,7 @@ function M.open()
   end
 
   -- ═══════════════════════════════════════════════════════════════
-  --  Z  buffer management
+  --  Z  closing things
   -- ═══════════════════════════════════════════════════════════════
 
   local z_items = prefix_match(kms.n, "Z")
@@ -402,7 +402,7 @@ function M.open()
   if #z_filtered > 0 then
     B.ln()
     B.sep()
-    B.ln("  Z  --  buffer management", HL.section)
+    B.ln("  Z  --  closing things", HL.section)
     B.sep()
     B.ln()
     for _, it in ipairs(z_filtered) do

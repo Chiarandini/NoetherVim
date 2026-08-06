@@ -174,18 +174,27 @@ vim.keymap.set("n", "+", "<cmd>tabe<cr>",                      { desc = "new tab
 vim.keymap.set("n", "_", function() split_scratch("sp") end,  { desc = "horizontal split scratch" })
 
 -- ──────────────────────────────────────────────────────────────
---  Normal mode -- buffer management  (Z prefix)
+--  Normal mode -- closing things  (Z prefix)
 -- ──────────────────────────────────────────────────────────────
 
--- ZZ and ZQ are vim defaults
-vim.keymap.set("n", "ZA", "<cmd>qa<cr>",         { desc = "quit all" })
-vim.keymap.set("n", "ZS", "<cmd>wqa<cr>",          { desc = "save and quit all" })
-vim.keymap.set("n", "ZW", "<cmd>wa<bar>qa!<cr>",   { desc = "save what you can, then force-quit" })
-vim.keymap.set("n", "ZF", "<cmd>q!<cr>",         { desc = "quit force" })
-vim.keymap.set("n", "ZK", "<cmd>qa!<cr>",         { desc = "quit all! (kill nvim)" })
-vim.keymap.set("n", "ZB", "<cmd>bdelete<cr>",    { desc = "delete buffer" })
-vim.keymap.set("n", "ZG", "<cmd>bdelete!<cr>",   { desc = "delete buffer force" })
-vim.keymap.set("n", "ZD", function()
+-- A grid, not a list of initials.  Vim's own ZZ (write and leave) and ZQ
+-- (force out) are the bottom and top of the first column; the rest of the
+-- table extends that ladder.
+--
+--                 Z A Q         X S W          C D E
+--               this window   everything    this buffer
+--   top     force, discard    ZQ  :q!       ZW  :qa!        ZE  :bd!
+--   home    refuse if dirty   ZA  :q        ZS  :qa         ZD  :bd
+--   bottom  save first        ZZ  :x        ZX  :wa|qa!     ZC  :w|bd
+
+vim.keymap.set("n", "ZA", "<cmd>q<cr>",            { desc = "close window" })
+vim.keymap.set("n", "ZS", "<cmd>qa<cr>",           { desc = "quit all" })
+vim.keymap.set("n", "ZW", "<cmd>qa!<cr>",          { desc = "quit all! (kill nvim)" })
+vim.keymap.set("n", "ZX", "<cmd>wa<bar>qa!<cr>",   { desc = "save what you can, then force-quit" })
+vim.keymap.set("n", "ZD", "<cmd>bdelete<cr>",      { desc = "delete buffer" })
+vim.keymap.set("n", "ZE", "<cmd>bdelete!<cr>",     { desc = "delete buffer force" })
+vim.keymap.set("n", "ZC", "<cmd>write<bar>bdelete<cr>", { desc = "save and delete buffer" })
+vim.keymap.set("n", "ZR", function()
   for _, buf in pairs(vim.api.nvim_list_bufs()) do
     if vim.api.nvim_buf_is_loaded(buf)
       and vim.api.nvim_buf_get_name(buf) == ""
