@@ -7,9 +7,14 @@
 ---     ---@desc GitHub PRs, issues and reviews
 ---     ---@about Brings GitHub review workflow into the editor: PR lists,
 ---     ---       inline review comments, issues and gists.
----     ---@requires exe=gh label="GitHub CLI" why="every octo command"
----                  install="https://cli.github.com, then `gh auth login`"
+---     ---@requires exe=gh label="GitHub CLI"
+---     ---          why="every octo command"
+---     ---          install="https://cli.github.com, then `gh auth login`"
 --- <
+--- Any `---` line that does not open a new tag continues the previous one,
+--- rejoined with a single space. Wrap at the file's comment width rather
+--- than running past 'textwidth'; a truncated annotation is unreadable in
+--- the picker preview, which is where these are meant to be read.
 --- The annotation is the single source of truth. `:checkhealth noethervim`
 --- probes it, `:NoetherVim bundles` shows the description, and the docs site
 --- renders both. Nothing restates it.

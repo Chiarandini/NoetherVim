@@ -4,8 +4,13 @@
 ---       folding. Defaults to ~/neorg/. Wiki buffers open under <Leader>
 ---       rather than the search namespace, because they open and close rather
 ---       than search.
----@requires note="ImageMagick" why="image.nvim renders inline images through it" install="brew install imagemagick, or your package manager" optional=true
----@requires note="a terminal with the kitty graphics protocol" why="displaying those images" install="kitty, WezTerm, or Ghostty" optional=true
+---@requires note="ImageMagick"
+---          why="image.nvim renders inline images through it"
+---          install="brew install imagemagick, or your package manager"
+---          optional=true
+---@requires note="a terminal with the kitty graphics protocol"
+---          why="displaying those images"
+---          install="kitty, WezTerm, or Ghostty" optional=true
 -- NoetherVim bundle: Neorg (wiki / note-taking)
 -- Enable with: { import = "noethervim.bundles.writing.neorg" }
 --

@@ -3,7 +3,9 @@
 ---@about The neotest framework, with results shown beside the code they
 ---       cover. No adapter is enabled by default; add the one for your
 ---       language in lua/user/plugins/. neotest-python ships alongside it.
----@requires exe=python3 label="Python 3" why="neotest-python is the shipped adapter" install="then pip install pytest" optional=true
+---@requires exe=python3 label="Python 3"
+---          why="neotest-python is the shipped adapter"
+---          install="then pip install pytest" optional=true
 -- NoetherVim bundle: Test Runner
 -- Enable with: { import = "noethervim.bundles.tools.test" }
 --

@@ -3,7 +3,8 @@
 ---@about :StartupTime benchmarks startup averaged over ten runs, :Luapad
 ---       gives a live Lua scratchpad, and the vimls server provides
 ---       completion and diagnostics for legacy .vim files.
----@requires exe=node label="Node.js" why="the vimls server Mason installs" install="https://nodejs.org/" optional=true
+---@requires exe=node label="Node.js" why="the vimls server Mason installs"
+---          install="https://nodejs.org/" optional=true
 -- NoetherVim bundle: Neovim Developer Tools
 -- Enable with: { import = "noethervim.bundles.tools.nvim-dev" }
 --

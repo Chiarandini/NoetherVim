@@ -34,6 +34,8 @@ Requires:
 
 - **Go toolchain**: building, testing and every go.nvim command
   <br />https://go.dev/dl/
+- **Delve** *(optional)*: stepping through Go, when the debug bundle is also enabled
+  <br />go install github.com/go-delve/delve/cmd/dlv@latest
 
 ### `java`
 
@@ -82,7 +84,7 @@ Requires:
 
 ### `python`
 
-:VenvSelect finds .venv, venv, conda and poetry environments, points the language server at whichever you pick, and exports VIRTUAL_ENV so terminal commands agree. :VenvSelectCached restores the last choice per project.
+:VenvSelect finds .venv, venv, conda and poetry environments, points the language server at whichever you pick, and exports VIRTUAL_ENV so terminal commands agree. :VenvSelectCached restores the last choice per project. With the debug bundle also enabled, registers the debugpy adapter against that same environment.
 
 ```lua
 { import = "noethervim.bundles.languages.python" }
@@ -92,6 +94,8 @@ Requires:
 
 - **Python 3**: virtual-environment discovery
   <br />https://www.python.org/downloads/
+- **debugpy** *(optional)*: stepping through Python, when the debug bundle is also enabled
+  <br />pip install debugpy, into the environment you debug
 
 ### `rust`
 
@@ -120,6 +124,8 @@ Requires:
 
 - **Node.js**: the ts_ls, cssls and eslint servers Mason installs
   <br />https://nodejs.org/
+- **npm** *(optional)*: building vscode-js-debug, when the debug bundle is also enabled
+  <br />ships with Node.js
 
 ## Tools
 
@@ -157,18 +163,11 @@ Requires:
 
 ### `debug`
 
-nvim-dap with a multi-panel sidebar and inline virtual text for variable values, plus snacks pickers over commands, breakpoints, variables and frames. Adapters are registered per project from lua/user/plugins/.
+nvim-dap with a multi-panel sidebar and inline virtual text for variable values, plus snacks pickers over commands, breakpoints, variables and frames. The debugger itself is language-agnostic and needs nothing installed; each language bundle registers its own adapter when this bundle is also enabled.
 
 ```lua
 { import = "noethervim.bundles.tools.debug" }
 ```
-
-Requires:
-
-- **Python 3**: the Python adapter
-  <br />then pip install debugpy
-- **Node.js** *(optional)*: the JavaScript and TypeScript adapter
-  <br />https://nodejs.org/
 
 ### `git`
 

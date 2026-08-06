@@ -116,7 +116,6 @@ header.
 - `remote-dev` needs distant, distant on the remote host
 - `tmux` needs tmux
 - `ai` needs curl
-- `debug` needs Python 3
 - `git` needs libgit2
 - `http` needs curl
 - `octo` needs GitHub CLI

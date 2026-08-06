@@ -3,8 +3,12 @@
 ---@about A citation picker that reads your local Zotero database directly,
 ---       for LaTeX, Markdown, Quarto, Typst and Org. Zotero must be running.
 ---       Enable it alongside the latex bundle rather than instead of it.
----@requires app=Zotero label="Zotero" why="the citation picker reads its local database" install="https://www.zotero.org/"
----@requires exe=sqlite3 label="sqlite3" why="sqlite.lua opens the Zotero database through it" install="preinstalled on macOS and most Linux distributions"
+---@requires app=Zotero label="Zotero"
+---          why="the citation picker reads its local database"
+---          install="https://www.zotero.org/"
+---@requires exe=sqlite3 label="sqlite3"
+---          why="sqlite.lua opens the Zotero database through it"
+---          install="preinstalled on macOS and most Linux distributions"
 -- NoetherVim bundle: LaTeX-Zotero
 -- Enable with: { import = "noethervim.bundles.languages.latex-zotero" }
 --

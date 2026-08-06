@@ -4,7 +4,12 @@
 ---       adds two editing aids: strings convert to template literals as soon
 ---       as you interpolate, and CSS, hex, rgb, hsl and Tailwind colors
 ---       preview inline.
----@requires exe=node label="Node.js" why="the ts_ls, cssls and eslint servers Mason installs" install="https://nodejs.org/"
+---@requires exe=node label="Node.js"
+---          why="the ts_ls, cssls and eslint servers Mason installs"
+---          install="https://nodejs.org/"
+---@requires exe=npm label="npm"
+---          why="building vscode-js-debug, when the debug bundle is also enabled"
+---          install="ships with Node.js" optional=true
 -- NoetherVim bundle: Web development
 -- Enable with: { import = "noethervim.bundles.languages.web-dev" }
 --
@@ -13,6 +18,9 @@
 --   • nvim-highlight-colors:   inline color preview for CSS/hex/rgb/hsl/tailwind
 --   • ts_ls, cssls, eslint:    TypeScript / CSS / ESLint LSPs (Mason-installed
 --                              only when this bundle is enabled)
+--
+-- Also registers the JavaScript/TypeScript DAP adapter, but only when
+-- tools/debug.lua is enabled too -- see the `optional = true` fragment below.
 
 return {
 	-- ── Web LSPs (Mason install scoped to this bundle) ─────────────────────
@@ -56,6 +64,56 @@ return {
 			enable_tailwind       = true,
 			exclude_filetypes     = { "lazy" },
 			exclude_buftypes      = {},
+		},
+	},
+
+	-- ── JavaScript / TypeScript debug adapter ─────────────────────────────
+	-- `optional = true` means lazy.nvim drops this whole fragment unless
+	-- nvim-dap is required by something else, i.e. unless tools/debug.lua is
+	-- enabled. That gating is the point: vscode-js-debug is ~430 MB and its
+	-- `build` step runs `npm i` at install time, which the debug bundle used
+	-- to impose on everyone who enabled it, including people who never touch
+	-- JavaScript.
+	{
+		"mfussenegger/nvim-dap",
+		optional = true,
+		dependencies = {
+			{
+				"microsoft/vscode-js-debug",
+				lazy    = true,
+				version = "1.x",
+				build   = "npm i && npm run compile vsDebugServerBundle && mv dist out",
+			},
+			{
+				"mxsdev/nvim-dap-vscode-js",
+				lazy = true,
+				opts = {
+					debugger_path = vim.fn.stdpath("data") .. "/lazy/vscode-js-debug",
+					adapters = { "pwa-node", "pwa-chrome", "pwa-msedge", "node-terminal", "pwa-extensionHost" },
+				},
+				config = function(_, opts)
+					require("dap-vscode-js").setup(opts)
+
+					-- `${workspaceFolder}` is resolved by nvim-dap per session.
+					-- The previous version baked `vim.fn.getcwd()` in at plugin
+					-- load time, freezing the directory the debuggee ran from.
+					local dap = require("dap")
+					for _, ft in ipairs({ "javascript", "typescript", "javascriptreact", "typescriptreact" }) do
+						dap.configurations[ft] = {
+							{
+								type = "pwa-node", name = "Launch file", request = "launch",
+								program = "${file}", cwd = "${workspaceFolder}",
+								sourceMaps = true, protocol = "inspector", console = "integratedTerminal",
+							},
+							{
+								type = "pwa-node", name = "Attach to process", request = "attach",
+								processId = require("dap.utils").pick_process, cwd = "${workspaceFolder}",
+								sourceMaps = true, protocol = "inspector", console = "integratedTerminal",
+							},
+						}
+					end
+				end,
+			},
 		},
 	},
 }

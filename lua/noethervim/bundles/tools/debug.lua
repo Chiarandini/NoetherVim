@@ -2,25 +2,28 @@
 ---@desc step debugging with a multi-panel UI
 ---@about nvim-dap with a multi-panel sidebar and inline virtual text for
 ---       variable values, plus snacks pickers over commands, breakpoints,
----       variables and frames. Adapters are registered per project from
----       lua/user/plugins/.
----@requires exe=python3 label="Python 3" why="the Python adapter" install="then pip install debugpy"
----@requires exe=node label="Node.js" why="the JavaScript and TypeScript adapter" install="https://nodejs.org/" optional=true
+---       variables and frames. The debugger itself is language-agnostic and
+---       needs nothing installed; each language bundle registers its own
+---       adapter when this bundle is also enabled.
+---@requires none
 -- NoetherVim bundle: Debug (DAP)
 -- Enable with: { import = "noethervim.bundles.tools.debug" }
 --
 -- Provides:
---   • nvim-dap + nvim-dap-ui (multi-panel sidebar), virtual text,
---     language adapters (Python, Neovim Lua, JS/TS via vscode-js-debug, Go)
+--   • nvim-dap + nvim-dap-ui (multi-panel sidebar), virtual text
 --   • inline snacks pickers: SearchLeader+D* for commands/breakpoints/variables/frames
+--   • the Neovim Lua adapter, which needs no external tooling
+--
+-- Language adapters live with their language, and activate only when both
+-- that bundle and this one are enabled (lazy.nvim `optional = true`):
+--   • languages/python.lua:  debugpy, via nvim-dap-python
+--   • languages/go.lua:      delve, via nvim-dap-go
+--   • languages/web-dev.lua: vscode-js-debug, for JavaScript and TypeScript
 --
 -- Related bundles (enable separately):
 --   • test.lua:        neotest test runner
 --   • repl.lua:        iron.nvim REPL
 --   • task-runner.lua: overseer + compiler.nvim
---
--- Per-project adapter setup (add to ~/.config/<appname>/lua/user/plugins/):
---   require('dap-python').setup('/path/to/python3')
 local SearchLeader = require("noethervim.util").search_leader
 
 -- ─── DAP snacks pickers ────────────────────────────────────────────────────
@@ -311,7 +314,6 @@ return {
 					require("nvim-dap-virtual-text").setup()
 				end,
 			},
-			{ "mfussenegger/nvim-dap-python", lazy = true },
 			{
 				"jbyuki/one-small-step-for-vimkind",
 				keys = { {
@@ -319,20 +321,6 @@ return {
 					function() require("osv").launch({ port = 8086 }) end,
 					desc = "DAP: attach Lua",
 				} },
-			},
-			{
-				"mxsdev/nvim-dap-vscode-js",
-				lazy = true,
-				opts = {
-					debugger_path = vim.fn.stdpath("data") .. "/lazy/vscode-js-debug",
-					adapters = { "pwa-node", "pwa-chrome", "pwa-msedge", "node-terminal", "pwa-extensionHost" },
-				},
-			},
-			{
-				"microsoft/vscode-js-debug",
-				lazy = true,
-				version = "1.x",
-				build   = "npm i && npm run compile vsDebugServerBundle && mv dist out",
 			},
 		},
 		keys = {
@@ -454,26 +442,16 @@ return {
 				end,
 			})
 
-			dap.configurations = {
-				go = {
-					{ type = "go", name = "Debug",               request = "launch", program = "${file}" },
-					{ type = "go", name = "Debug test (go.mod)", request = "launch", mode = "test", program = "./${relativeFileDirname}" },
-					{ type = "go", name = "Attach (Pick)",       mode = "local",  request = "attach", processId = require("dap.utils").pick_process },
-					{ type = "go", name = "Attach (remote)",     mode = "remote", request = "attach", port = "9080" },
-				},
-				javascript = {
-					{ type = "pwa-node", name = "Launch", request = "launch", program = "${file}", cwd = vim.fn.getcwd(), sourceMaps = true, protocol = "inspector", console = "integratedTerminal" },
-					{ type = "pwa-node", name = "Attach", request = "attach", program = "${file}", cwd = vim.fn.getcwd(), sourceMaps = true, protocol = "inspector", console = "integratedTerminal" },
-				},
-				lua = {
-					{ type = "nlua", request = "attach", name = "Attach to running Neovim instance" },
-				},
-			}
-
-			-- Lua DAP adapter (one-small-step-for-vimkind)
+			-- Lua DAP adapter (one-small-step-for-vimkind). Assigned per key,
+			-- never as a whole table: language bundles register their own
+			-- adapters from dependency specs, which lazy.nvim loads before this
+			-- config runs, so `dap.configurations = {...}` would erase them.
 			dap.adapters.nlua = function(callback, config)
 				callback({ type = "server", host = config.host or "127.0.0.1", port = config.port or 8086 })
 			end
+			dap.configurations.lua = {
+				{ type = "nlua", request = "attach", name = "Attach to running Neovim instance" },
+			}
 		end,
 	},
 

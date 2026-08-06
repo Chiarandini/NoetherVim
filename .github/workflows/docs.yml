@@ -59,6 +59,22 @@ jobs:
             grep -q '^---@about' "$f"    || { echo "no @about: $f";    missing=$((missing + 1)); }
           done
           echo "bundles missing annotations: $missing"
+
+          # Annotations are read in the `:NoetherVim bundles` preview, where
+          # a line past 'textwidth' is silently truncated behind a marker
+          # that is easy to miss. Continuation lines exist; use them.
+          #
+          # awk over the files directly, not `grep -Hn | awk`: grep prefixes
+          # each line with its path, which awk would then count as part of
+          # the line and flag every annotation in a deeply nested file.
+          over=$(awk '/^---/ && length > 100 { print FILENAME ":" FNR " (" length " cols)" }' \
+                   lua/noethervim/bundles/*/*.lua)
+          if [ -n "$over" ]; then
+            echo "annotation lines over 100 columns:"
+            echo "$over"
+            missing=$((missing + $(echo "$over" | wc -l)))
+          fi
+
           exit "$missing"
 
       # Astro 7 declares engines.node >=22.12.0.

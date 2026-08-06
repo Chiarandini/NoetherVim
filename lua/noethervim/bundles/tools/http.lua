@@ -3,7 +3,8 @@
 ---@about kulala.nvim runs requests written in a .http or .rest file and shows
 ---       the response in the editor. Covers HTTP, gRPC, GraphQL, WebSocket
 ---       and streaming, using JetBrains HTTP Client syntax.
----@requires exe=curl label="curl" why="kulala sends every request through it" install="preinstalled on macOS and most Linux distributions"
+---@requires exe=curl label="curl" why="kulala sends every request through it"
+---          install="preinstalled on macOS and most Linux distributions"
 -- NoetherVim bundle: HTTP Client
 -- Enable with: { import = "noethervim.bundles.tools.http" }
 --
