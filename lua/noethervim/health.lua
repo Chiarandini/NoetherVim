@@ -371,6 +371,24 @@ function M.check()
     end
   end
 
+  -- Colorscheme provenance. An interactive pick outlives the session that
+  -- made it and takes priority over `colorscheme` in lua/user/config.lua, so
+  -- "my colorscheme setting does nothing" has to be answerable from here.
+  local cs = require("noethervim.util.colorscheme")
+  h.info("Colorscheme: " .. cs.status())
+  if cs.missing then
+    h.warn(("colorscheme %q is not installed"):format(cs.missing),
+      { "Enable the ui.colorscheme bundle, or add the plugin to lua/user/plugins/" })
+  end
+  if cs.dropped then
+    h.warn(("saved colorscheme pick %q is no longer installed"):format(cs.dropped),
+      { "Re-enable the bundle that provided it, or pick again with SearchLeader+C" })
+  end
+  if cs.source == "persisted" then
+    h.info("The saved pick wins over `colorscheme` in lua/user/config.lua. "
+      .. "Set colorscheme_persistence = false to make the config file authoritative.")
+  end
+
   local obsidian_vault = (function()
     return ok_cfg and type(user_cfg) == "table" and user_cfg.obsidian_vault or nil
   end)()

@@ -39,8 +39,8 @@
 ---
 --- Every field is optional. Missing keys fall back to distro defaults.
 ---
----@field colorscheme? string Colorscheme applied at startup, unless the colorscheme bundle has restored a previously picked one. Defaults to `"gruvbox"`, the shipped theme; the dashboard and statusline fallback colours are chosen to match it.
----@field colorscheme_persistence? boolean If true, restore the last picked colorscheme on startup. Has no effect unless the colorscheme bundle is enabled. Default: false.
+---@field colorscheme? string Colorscheme applied at startup, unless a scheme picked interactively with SearchLeader+C has been restored over it. Defaults to `"gruvbox"`, the shipped theme; the dashboard and statusline fallback colours are chosen to match it. A name that is not installed warns and falls back to gruvbox.
+---@field colorscheme_persistence? boolean If true, restore the last interactively picked colorscheme on startup, in preference to `colorscheme`. Set false to make `colorscheme` authoritative. Default: true.
 ---@field statusline_enabled? boolean If false, skip NoetherVim's heirline statusline, tabline and winbar entirely, so a user-supplied alternative (lualine, mini.statusline) can take over with no conflict. Drop the replacement into `lua/user/plugins/`. Default: true.
 ---@field statusline? noethervim.StatuslineConfig Heirline-based statusline overrides. Ignored when `statusline_enabled = false`.
 ---@field obsidian_vault? string Absolute or `~`-prefixed path to your Obsidian vault. Required by the `obsidian` bundle, which does nothing until it is set.

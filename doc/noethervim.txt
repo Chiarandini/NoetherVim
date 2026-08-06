@@ -364,11 +364,11 @@ is applied, so your overrides are not wiped by the theme: >lua
     vim.api.nvim_set_hl(0, "SnacksDashboardHeader", { fg = "#89b4fa" })
 <
                                             *noethervim-colorscheme-tweaks*
-Highlight tweaks (colorscheme bundle): ~
+Highlight tweaks: ~
 
-Plain `nvim_set_hl` calls are lost when you switch colorschemes. If the
-`colorscheme` bundle is enabled, use the tweak helper instead; tweaks
-re-apply automatically on every colorscheme change: >lua
+Plain `nvim_set_hl` calls are lost when you switch colorschemes. Use the
+tweak helper instead; tweaks re-apply automatically on every colorscheme
+change. This is a core feature and needs no bundle: >lua
     -- lua/user/highlights.lua
     require("noethervim.util.colorscheme").tweak({
         Comment    = { italic = true },
@@ -443,11 +443,16 @@ Current keys: ~
                                   dashboard and statusline fallback
                                   colours are chosen against it, so a
                                   fresh install looks coherent without
-                                  any configuration.
-    `colorscheme_persistence`       If true, restore the last picked
-                                  colorscheme on startup. Has no effect
-                                  unless the `colorscheme` bundle is
-                                  enabled. Default: false.
+                                  any configuration. Naming a scheme that
+                                  is not installed warns on startup and
+                                  falls back to gruvbox.
+    `colorscheme_persistence`       If true, restore the colorscheme last
+                                  picked with SearchLeader+C, in
+                                  preference to `colorscheme` above. Set
+                                  false to make `colorscheme`
+                                  authoritative. Default: true.
+                                  `:checkhealth noethervim` reports which
+                                  of the two set the active scheme.
     `statusline_enabled`            Set to `false` to skip NoetherVim's
                                   heirline statusline, tabline and
                                   winbar entirely, so a replacement
@@ -783,13 +788,15 @@ Available bundles (grouped by category): ~
     `remote-dev`     distant.nvim SSH editing.
 
     ui/ ~
-    `colorscheme`    10 popular themes + persistence + highlight tweaks.
-                     Themes: gruvbox, catppuccin, tokyonight, rose-pine,
-                     kanagawa, onedark, nord, everforest, nightfox,
-                     solarized. All lazy; only the active one loads.
-                     SearchLeader+C picks persist across restarts.
-                     See |noethervim-colorscheme-tweaks| for highlight
-                     overrides that survive theme switches.
+    `colorscheme`    Nine themes beyond the gruvbox core already ships.
+                     Mainstream picks: catppuccin, tokyonight, rose-pine,
+                     kanagawa. Long tail: onedark, nord, everforest,
+                     nightfox, solarized. All lazy; only the active one
+                     loads, but the nine cost ~18MB on disk, which is why
+                     they are opt-in.
+                     Switching themes (SearchLeader+C), persistence and
+                     highlight tweaks are core features and work without
+                     this bundle. See |noethervim-colorscheme-tweaks|.
     `eye-candy`      Animations, scrollbar, code block visualizer.
     `minimap`        Sidebar minimap with diagnostics and git signs.
     `helpview`       Rendered :help pages.

@@ -129,7 +129,7 @@ require("lazy").setup({
 		-- { import = "noethervim.bundles.terminal.remote-dev" },  -- distant.nvim SSH editing
 
 		-- ui/
-		-- { import = "noethervim.bundles.ui.colorscheme" }, -- 10 popular themes + persistence
+		-- { import = "noethervim.bundles.ui.colorscheme" }, -- 9 themes beyond the shipped gruvbox
 		-- { import = "noethervim.bundles.ui.eye-candy" },   -- animations, scrollbar, block display
 		-- { import = "noethervim.bundles.ui.minimap" },     -- sidebar minimap
 		-- { import = "noethervim.bundles.ui.helpview" },    -- rendered :help pages

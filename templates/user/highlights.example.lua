@@ -13,6 +13,15 @@
 -- vim.api.nvim_set_hl(0, "CursorLine",  { bg = "#282828" })
 -- vim.api.nvim_set_hl(0, "SignColumn",   { link = "LineNr" })
 
+-- ── Overrides that survive a theme switch ────────────────────────────────────
+-- The nvim_set_hl calls above are wiped the moment you change colorscheme
+-- (<Space>C).  Register them through the tweak helper instead and they are
+-- re-applied on every switch.  See :help noethervim-colorscheme-tweaks.
+-- require("noethervim.util.colorscheme").tweak({
+--     Comment    = { italic = true },
+--     CursorLine = { bg = "#1a1a2e" },
+-- })
+
 -- ── Override Snacks dashboard colours ────────────────────────────────────────
 -- vim.api.nvim_set_hl(0, "SnacksDashboardHeader", { fg = "#89b4fa" })
 -- vim.api.nvim_set_hl(0, "SnacksDashboardFooter", { fg = "#a6e3a1" })

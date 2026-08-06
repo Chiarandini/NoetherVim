@@ -25,14 +25,17 @@
 return {
 
     -- ── Colorscheme ───────────────────────────────────────────────────────────
-    -- Colorscheme applied during setup(), unless the colorscheme bundle has
-    -- persisted a user pick from a prior session.  Defaults to "gruvbox",
-    -- which the distro ships and pins.  Enable the colorscheme bundle for
-    -- ten more themes and a picker.
+    -- Colorscheme applied during setup().  Defaults to "gruvbox", the only
+    -- scheme the distro ships and pins; enable the ui.colorscheme bundle for
+    -- nine more.  Naming one that is not installed warns on startup and falls
+    -- back to gruvbox rather than leaving you on Neovim's built-in default.
     -- colorscheme = "gruvbox",
 
-    -- If true, restore the last picked colorscheme on startup.
-    -- Has no effect unless the colorscheme bundle is enabled.
+    -- Picking a scheme with SearchLeader+C persists it across restarts, and
+    -- that pick takes priority over `colorscheme` above.  So if this file
+    -- seems to be ignored, you picked something interactively at some point:
+    -- `:checkhealth noethervim` says which of the two is in force.  Set this
+    -- to false to make `colorscheme` authoritative and drop the saved pick.
     -- colorscheme_persistence = false,
 
 

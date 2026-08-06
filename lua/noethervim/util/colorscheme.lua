@@ -1,6 +1,8 @@
 -- NoetherVim colorscheme utilities.
 -- Persistence: saves/restores the active colorscheme across sessions.
 -- Tweaks: re-applies user highlight overrides when the colorscheme changes.
+-- Provenance: records what put the active scheme on screen, so
+-- `:checkhealth noethervim` can answer "why isn't my colorscheme applying".
 
 -- vim.api.keyset.highlight is shipped in Neovim's runtime _meta directory,
 -- but standalone lua-language-server --check cannot reach a user-specific
@@ -11,6 +13,25 @@
 local M = {}
 local _file = vim.fn.stdpath("data") .. "/noethervim_colorscheme"
 local _tweaks = {} ---@type table<string, vim.api.keyset.highlight>
+
+--- The scheme the distribution ships and pins. `util.palette` hand-tunes the
+--- statusline against it and `highlights.lua` special-cases it twice, so it is
+--- also the safe landing spot when a requested scheme cannot be loaded.
+M.DEFAULT = "gruvbox"
+
+--- What put the active colorscheme on screen.
+---@type "config"|"persisted"|"default"|"fallback"|nil
+M.source = nil
+
+--- Scheme named in `lua/user/config.lua` that could not be loaded.
+---@type string|nil
+M.missing = nil
+
+--- Previously persisted pick whose plugin is no longer installed. Kept on
+--- disk rather than deleted: disabling the colorscheme bundle for one session
+--- should not destroy the choice made in the last one.
+---@type string|nil
+M.dropped = nil
 
 -- ── Persistence ─────────────────────────────────────────────────────────────
 
@@ -28,20 +49,79 @@ local function load()
 end
 
 function M.setup_persistence()
-  local group = vim.api.nvim_create_augroup("noethervim_colorscheme", { clear = true })
-
-  -- Save on every colorscheme change.
-  vim.api.nvim_create_autocmd("ColorScheme", {
-    group = group,
-    callback = function(args) save(args.match) end,
-  })
-
   -- Restore immediately (setup() runs after VimEnter, so a deferred
   -- VimEnter autocmd would never fire).
   local saved = load()
   if saved then
-    pcall(vim.cmd.colorscheme, saved)
+    if pcall(vim.cmd.colorscheme, saved) then
+      M.source = "persisted"
+    else
+      M.dropped = saved
+    end
   end
+
+  -- Arm saving only once setup has finished. Every ColorScheme event fired
+  -- during startup is distro-driven (the configured scheme, or the fallback
+  -- after a failed load); recording those would overwrite the user's pick
+  -- with a scheme they never chose.
+  vim.schedule(function()
+    vim.api.nvim_create_autocmd("ColorScheme", {
+      group = vim.api.nvim_create_augroup("noethervim_colorscheme", { clear = true }),
+      callback = function(args) save(args.match) end,
+    })
+  end)
+end
+
+-- ── Applying ────────────────────────────────────────────────────────────────
+
+--- Apply `scheme`, reporting failure instead of swallowing it. A colorscheme
+--- that is named but not installed otherwise leaves Neovim on its built-in
+--- default with no signal at all, which reads as "my config file is ignored".
+---@param scheme string
+---@param source "config"|"default"
+function M.apply(scheme, source)
+  if pcall(vim.cmd.colorscheme, scheme) then
+    M.source = source
+    return
+  end
+
+  M.missing = scheme
+  vim.notify(
+    ("colorscheme %q is not installed. Enable the ui.colorscheme bundle, or "
+      .. "add the plugin to lua/user/plugins/."):format(scheme),
+    vim.log.levels.WARN)
+
+  if scheme ~= M.DEFAULT and pcall(vim.cmd.colorscheme, M.DEFAULT) then
+    M.source = "fallback"
+  end
+end
+
+--- Human-readable account of the active scheme and what set it.
+--- Reported by `:checkhealth noethervim`.
+---@return string
+function M.status()
+  local from = ({
+    config    = "colorscheme in lua/user/config.lua",
+    persisted = "picked interactively; overrides lua/user/config.lua",
+    default   = "distribution default",
+    fallback  = "distribution default, after the requested scheme failed to load",
+  })[M.source] or "not set by NoetherVim"
+  return (vim.g.colors_name or "(Neovim built-in default)") .. " -- " .. from
+end
+
+--- Title for the colorscheme picker (SearchLeader+C). Without the
+--- ui.colorscheme bundle the picker holds gruvbox plus Neovim's built-ins,
+--- and this keymap is exactly where the intent to change themes is expressed,
+--- so it is the right place to say where the rest live.
+---@return string
+function M.picker_title()
+  local ok, lazy_cfg = pcall(require, "lazy.core.config")
+  if ok and lazy_cfg.spec and lazy_cfg.spec.modules then
+    for _, mod in ipairs(lazy_cfg.spec.modules) do
+      if mod == "noethervim.bundles.ui.colorscheme" then return "Colorschemes" end
+    end
+  end
+  return "Colorschemes (9 more in the ui.colorscheme bundle)"
 end
 
 -- ── Highlight tweaks ────────────────────────────────────────────────────────
@@ -65,12 +145,6 @@ function M.setup_tweaks()
     group = vim.api.nvim_create_augroup("noethervim_hl_tweaks", { clear = true }),
     callback = apply_tweaks,
   })
-end
-
--- ── Compat: old setup() call used by persistence bundle ─────────────────────
-
-function M.setup()
-  M.setup_persistence()
 end
 
 return M
