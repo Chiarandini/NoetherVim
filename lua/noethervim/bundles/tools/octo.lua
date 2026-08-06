@@ -1,5 +1,8 @@
 ---@bundle octo
----@desc GitHub PRs/issues/reviews via gh CLI (<C-w>O)
+---@desc GitHub PRs, issues and reviews
+---@about Review pull requests, read and write issues, and manage gists
+---       without leaving the editor, backed by the gh CLI. Pairs with the git
+---       bundle for a full GitHub workflow.
 ---@requires exe=gh label="GitHub CLI" why="every octo command" install="https://cli.github.com/, then gh auth login"
 -- NoetherVim bundle: Octo (GitHub PRs / issues / reviews)
 -- Enable with: { import = "noethervim.bundles.tools.octo" }

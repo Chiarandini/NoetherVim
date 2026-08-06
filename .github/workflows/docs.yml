@@ -56,6 +56,7 @@ jobs:
           for f in lua/noethervim/bundles/*/*.lua; do
             grep -q '^---@requires' "$f" || { echo "no @requires: $f"; missing=$((missing + 1)); }
             grep -q '^---@desc' "$f"     || { echo "no @desc: $f";     missing=$((missing + 1)); }
+            grep -q '^---@about' "$f"    || { echo "no @about: $f";    missing=$((missing + 1)); }
           done
           echo "bundles missing annotations: $missing"
           exit "$missing"

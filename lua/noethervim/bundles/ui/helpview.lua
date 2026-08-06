@@ -1,5 +1,7 @@
 ---@bundle helpview
 ---@desc rendered :help pages
+---@about Renders Neovim's help files with real formatting, headings and
+---       tables via treesitter, instead of plain fixed-width text.
 ---@requires none
 -- NoetherVim bundle: Helpview
 -- Enable with: { import = "noethervim.bundles.ui.helpview" }

@@ -1,5 +1,8 @@
 ---@bundle ai
----@desc CodeCompanion (Anthropic, OpenAI, Gemini, Ollama)
+---@desc chat and inline edits against an LLM
+---@about CodeCompanion, defaulting to Anthropic and also supporting OpenAI,
+---       Gemini and Ollama. Keys are read from lua/secrets.lua first, then
+---       from the matching environment variable.
 ---@requires exe=curl label="curl" why="all provider requests go through it" install="preinstalled on macOS and most Linux distributions"
 ---@requires env=ANTHROPIC_API_KEY label="A provider API key" why="CodeCompanion cannot talk to a model without one" install="Anthropic by default; OPENAI_API_KEY, GEMINI_API_KEY and Ollama also work" optional=true
 -- NoetherVim bundle: AI (CodeCompanion)

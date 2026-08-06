@@ -1,5 +1,7 @@
 ---@bundle refactoring
----@desc extract function/variable/block
+---@desc extract functions, variables and blocks
+---@about Language-aware extraction: pull a visual selection into its own
+---       function, variable or file, and inline variables back again.
 ---@requires none
 -- NoetherVim bundle: Refactoring
 -- Enable with: { import = "noethervim.bundles.tools.refactoring" }

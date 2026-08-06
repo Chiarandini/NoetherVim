@@ -1,5 +1,8 @@
 ---@bundle remote-dev
----@desc distant.nvim SSH editing
+---@desc edit files on remote machines over SSH
+---@about distant.nvim edits files on a remote host over SSH, with the
+---       language server running there rather than locally. The distant
+---       binary has to be present at both ends.
 ---@requires exe=distant label="distant" why="the local half of the connection" install="https://distant.dev/"
 ---@requires note="distant on the remote host" why="the remote half of the connection" install="ssh host 'curl -L https://sh.distant.dev | sh'"
 -- NoetherVim bundle: Remote development (distant.nvim)

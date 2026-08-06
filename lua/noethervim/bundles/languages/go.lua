@@ -1,5 +1,8 @@
 ---@bundle go
----@desc go.nvim -- test gen, struct tags, interface impl
+---@desc test generation, struct tags, interface implementation
+---@about Go development beyond what gopls alone gives you: generate tests,
+---       edit struct tags, implement interfaces, fill structs, and run tests
+---       by file or by function from the editor.
 ---@requires exe=go label="Go toolchain" why="building, testing and every go.nvim command" install="https://go.dev/dl/"
 -- NoetherVim bundle: Go
 -- Enable with: { import = "noethervim.bundles.languages.go" }

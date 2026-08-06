@@ -1,5 +1,9 @@
 ---@bundle git
----@desc Fugit2, diffview, git-conflict
+---@desc log graph, TUI client, diffs and conflict resolution
+---@about fugitive for :Git commands, blame and diffsplits; vim-flog for the
+---       log graph; Fugit2 as a TUI client; diffview for diffs and file
+---       history; git-conflict for resolving conflict markers; and a
+---       .gitignore generator.
 ---@requires note="libgit2" why="fugit2 links against it; the TUI will not load otherwise" install="brew install libgit2, or your package manager"
 ---@requires exe=lazygit label="lazygit" why="the <C-w><C-g> floating terminal" install="https://github.com/jesseduffield/lazygit" optional=true
 -- NoetherVim bundle: Git extras

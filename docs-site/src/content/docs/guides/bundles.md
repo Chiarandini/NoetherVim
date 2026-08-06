@@ -24,7 +24,7 @@ reads. Run that for the state of the bundles you actually have enabled.
 
 ### `go`
 
-go.nvim -- test gen, struct tags, interface impl
+Go development beyond what gopls alone gives you: generate tests, edit struct tags, implement interfaces, fill structs, and run tests by file or by function from the editor.
 
 ```lua
 { import = "noethervim.bundles.languages.go" }
@@ -37,7 +37,7 @@ Requires:
 
 ### `java`
 
-nvim-jdtls -- proper Java LSP support
+jdtls needs workspace management and jar paths that plain lspconfig cannot supply, so it gets a dedicated client. It starts on the first .java buffer. Install the server itself with :MasonInstall jdtls.
 
 ```lua
 { import = "noethervim.bundles.languages.java" }
@@ -50,7 +50,7 @@ Requires:
 
 ### `latex`
 
-VimTeX + noethervim-tex (snippets, textobjects)
+VimTeX for compilation, PDF viewing and inverse search, with texlab as the language server. On top of that: snippets, textobjects and a math spell dictionary from noethervim-tex, label and heading pickers, BibTeX citations, and clipboard image paste. Set vim.g.vimtex_view_method to choose a PDF viewer.
 
 ```lua
 { import = "noethervim.bundles.languages.latex" }
@@ -67,7 +67,7 @@ Requires:
 
 ### `latex-zotero`
 
-Zotero citation picker
+A citation picker that reads your local Zotero database directly, for LaTeX, Markdown, Quarto, Typst and Org. Zotero must be running. Enable it alongside the latex bundle rather than instead of it.
 
 ```lua
 { import = "noethervim.bundles.languages.latex-zotero" }
@@ -82,7 +82,7 @@ Requires:
 
 ### `python`
 
-venv-selector -- virtual environment switching
+:VenvSelect finds .venv, venv, conda and poetry environments, points the language server at whichever you pick, and exports VIRTUAL_ENV so terminal commands agree. :VenvSelectCached restores the last choice per project.
 
 ```lua
 { import = "noethervim.bundles.languages.python" }
@@ -95,7 +95,7 @@ Requires:
 
 ### `rust`
 
-rustaceanvim -- macro expansion, runnables, crate graph
+rustaceanvim goes past plain rust-analyzer with macro expansion, runnables and debuggables, the crate graph, hover actions and structural search-replace. It manages its own LSP client, so no lspconfig entry is needed.
 
 ```lua
 { import = "noethervim.bundles.languages.rust" }
@@ -110,7 +110,7 @@ Requires:
 
 ### `web-dev`
 
-template-string auto-conversion + color preview
+Installs the ts_ls, cssls and eslint language servers on demand, and adds two editing aids: strings convert to template literals as soon as you interpolate, and CSS, hex, rgb, hsl and Tailwind colors preview inline.
 
 ```lua
 { import = "noethervim.bundles.languages.web-dev" }
@@ -125,7 +125,7 @@ Requires:
 
 ### `ai`
 
-CodeCompanion (Anthropic, OpenAI, Gemini, Ollama)
+CodeCompanion, defaulting to Anthropic and also supporting OpenAI, Gemini and Ollama. Keys are read from lua/secrets.lua first, then from the matching environment variable.
 
 ```lua
 { import = "noethervim.bundles.tools.ai" }
@@ -140,7 +140,7 @@ Requires:
 
 ### `database`
 
-vim-dadbod + UI + SQL completion
+vim-dadbod with its interactive UI and SQL completion. Connections are driven by whichever client binary the database needs, so PostgreSQL, MySQL and SQLite each depend on their own command-line tool being installed.
 
 ```lua
 { import = "noethervim.bundles.tools.database" }
@@ -157,7 +157,7 @@ Requires:
 
 ### `debug`
 
-nvim-dap + UI (Python, Lua, JS/TS, Go)
+nvim-dap with a multi-panel sidebar and inline virtual text for variable values, plus snacks pickers over commands, breakpoints, variables and frames. Adapters are registered per project from lua/user/plugins/.
 
 ```lua
 { import = "noethervim.bundles.tools.debug" }
@@ -172,7 +172,7 @@ Requires:
 
 ### `git`
 
-Fugit2, diffview, git-conflict
+fugitive for :Git commands, blame and diffsplits; vim-flog for the log graph; Fugit2 as a TUI client; diffview for diffs and file history; git-conflict for resolving conflict markers; and a .gitignore generator.
 
 ```lua
 { import = "noethervim.bundles.tools.git" }
@@ -187,7 +187,7 @@ Requires:
 
 ### `http`
 
-kulala.nvim HTTP/REST/gRPC/GraphQL client
+kulala.nvim runs requests written in a .http or .rest file and shows the response in the editor. Covers HTTP, gRPC, GraphQL, WebSocket and streaming, using JetBrains HTTP Client syntax.
 
 ```lua
 { import = "noethervim.bundles.tools.http" }
@@ -200,7 +200,7 @@ Requires:
 
 ### `nvim-dev`
 
-StartupTime, Luapad, vimls -- Neovim config development
+:StartupTime benchmarks startup averaged over ten runs, :Luapad gives a live Lua scratchpad, and the vimls server provides completion and diagnostics for legacy .vim files.
 
 ```lua
 { import = "noethervim.bundles.tools.nvim-dev" }
@@ -213,7 +213,7 @@ Requires:
 
 ### `octo`
 
-GitHub PRs/issues/reviews via gh CLI (&lt;C-w&gt;O)
+Review pull requests, read and write issues, and manage gists without leaving the editor, backed by the gh CLI. Pairs with the git bundle for a full GitHub workflow.
 
 ```lua
 { import = "noethervim.bundles.tools.octo" }
@@ -226,7 +226,7 @@ Requires:
 
 ### `refactoring`
 
-extract function/variable/block
+Language-aware extraction: pull a visual selection into its own function, variable or file, and inline variables back again.
 
 ```lua
 { import = "noethervim.bundles.tools.refactoring" }
@@ -234,7 +234,7 @@ extract function/variable/block
 
 ### `repl`
 
-iron.nvim interactive REPL
+iron.nvim keeps a REPL beside the buffer and sends lines, selections or whole files to it. Works with any interpreter; you supply the binary for the language you are using.
 
 ```lua
 { import = "noethervim.bundles.tools.repl" }
@@ -247,7 +247,7 @@ Requires:
 
 ### `task-runner`
 
-overseer.nvim + compiler.nvim (run file)
+overseer.nvim runs and tracks tasks, compiler.nvim wraps it in a project compiler UI, and &lt;leader&gt;rf runs the current file in a way that respects filetype and version managers.
 
 ```lua
 { import = "noethervim.bundles.tools.task-runner" }
@@ -260,7 +260,7 @@ Requires:
 
 ### `test`
 
-neotest test runner
+The neotest framework, with results shown beside the code they cover. No adapter is enabled by default; add the one for your language in lua/user/plugins/. neotest-python ships alongside it.
 
 ```lua
 { import = "noethervim.bundles.tools.test" }
@@ -275,7 +275,7 @@ Requires:
 
 ### `editing-extras`
 
-argmark + decorative comment boxes
+argmark marks positions inside a function's argument list so you can add, cycle and clear them without reselecting by hand. comment- box.nvim draws decorative ASCII boxes and dividers around comments.
 
 ```lua
 { import = "noethervim.bundles.navigation.editing-extras" }
@@ -283,7 +283,7 @@ argmark + decorative comment boxes
 
 ### `flash`
 
-enhanced f/t and / motions with labels
+Puts a label on every match, so a jump is one keystroke rather than a count. Augments / and ? as well as f, t, F and T, works operator- pending and visual, and adds a treesitter-scoped variant.
 
 ```lua
 { import = "noethervim.bundles.navigation.flash" }
@@ -291,7 +291,7 @@ enhanced f/t and / motions with labels
 
 ### `harpoon`
 
-fast per-project file marks
+harpoon2 keeps a short ordered list of files per project, so the handful you are actually working on stay one keystroke apart instead of buried in a fuzzy finder.
 
 ```lua
 { import = "noethervim.bundles.navigation.harpoon" }
@@ -299,7 +299,7 @@ fast per-project file marks
 
 ### `projects`
 
-project switcher via snacks.picker
+Browses recently used project directories, changes into the one you pick, and immediately opens a file picker scoped to it.
 
 ```lua
 { import = "noethervim.bundles.navigation.projects" }
@@ -307,7 +307,7 @@ project switcher via snacks.picker
 
 ### `yanky`
 
-yank ring -- cycle through paste history (&lt;C-p&gt;/&lt;C-n&gt;)
+Keeps a rolling history of every yank and delete, so you can paste, realise it was the wrong one, and cycle back through earlier yanks instead of re-yanking or pre-tagging named registers. A fuzzy picker covers the full history.
 
 ```lua
 { import = "noethervim.bundles.navigation.yanky" }
@@ -317,7 +317,7 @@ yank ring -- cycle through paste history (&lt;C-p&gt;/&lt;C-n&gt;)
 
 ### `markdown`
 
-render, preview, tables, math, image paste
+In-editor rendering and concealment, a live browser preview, smart table editing, inline math, and clipboard image paste.
 
 ```lua
 { import = "noethervim.bundles.writing.markdown" }
@@ -332,7 +332,7 @@ Requires:
 
 ### `neorg`
 
-.norg wiki / note-taking
+Neorg's structured note-taking format, with workspaces, linking and folding. Defaults to ~/neorg/. Wiki buffers open under &lt;Leader&gt; rather than the search namespace, because they open and close rather than search.
 
 ```lua
 { import = "noethervim.bundles.writing.neorg" }
@@ -347,7 +347,7 @@ Requires:
 
 ### `obsidian`
 
-Obsidian vault integration (pair with markdown bundle)
+obsidian.nvim over an existing Obsidian vault: follow and create links, search notes, and manage frontmatter. Set the vault path in lua/user/config.lua. Enable the markdown bundle alongside it for rendering, preview, tables, math and image paste.
 
 ```lua
 { import = "noethervim.bundles.writing.obsidian" }
@@ -360,7 +360,7 @@ Requires:
 
 ### `wrapsearch`
 
-search across hard-wrapped lines (/ and ?)
+Hard-wrapped prose breaks search: a phrase that reads as one line on screen has a newline in the middle, so /brown fox finds nothing when the wrap falls between the two words. This rewrites the pattern so a space also matches a line break and the next line's indentation. n, N, search offsets and the search register are unaffected, because the rewritten pattern is what runs.
 
 ```lua
 { import = "noethervim.bundles.writing.wrapsearch" }
@@ -370,7 +370,7 @@ search across hard-wrapped lines (/ and ?)
 
 ### `better-term`
 
-named/numbered terminal windows
+Terminals you can name, number and return to, rather than one anonymous split. Includes a floating terminal, and bindings to toggle the primary terminal or select one by number from both normal and terminal mode.
 
 ```lua
 { import = "noethervim.bundles.terminal.better-term" }
@@ -378,7 +378,7 @@ named/numbered terminal windows
 
 ### `remote-dev`
 
-distant.nvim SSH editing
+distant.nvim edits files on a remote host over SSH, with the language server running there rather than locally. The distant binary has to be present at both ends.
 
 ```lua
 { import = "noethervim.bundles.terminal.remote-dev" }
@@ -393,7 +393,7 @@ Requires:
 
 ### `tmux`
 
-automatic tmux window naming
+&lt;C-h/j/k/l&gt; moves between Neovim splits and tmux panes without caring which is which, and tmux window names follow the Neovim session automatically.
 
 ```lua
 { import = "noethervim.bundles.terminal.tmux" }
@@ -408,7 +408,7 @@ Requires:
 
 ### `colorscheme`
 
-9 themes beyond the shipped gruvbox
+Breadth only. The theming machinery lives in core and keeps working without this bundle: SearchLeader+C picks the active scheme and the choice survives restarts, and colorscheme.tweak() carries highlight overrides across switches. All nine are lazy, so only the active one loads.
 
 ```lua
 { import = "noethervim.bundles.ui.colorscheme" }
@@ -416,7 +416,7 @@ Requires:
 
 ### `eye-candy`
 
-animations, scrollbar, block display
+Optional visual extras: a scrollbar carrying LSP diagnostic marks, seasonal falling animations, a code block visualizer, and CellularAutomaton for when a file deserves to be dissolved.
 
 ```lua
 { import = "noethervim.bundles.ui.eye-candy" }
@@ -424,7 +424,7 @@ animations, scrollbar, block display
 
 ### `helpview`
 
-rendered :help pages
+Renders Neovim's help files with real formatting, headings and tables via treesitter, instead of plain fixed-width text.
 
 ```lua
 { import = "noethervim.bundles.ui.helpview" }
@@ -432,7 +432,7 @@ rendered :help pages
 
 ### `minimap`
 
-sidebar minimap with git/diagnostic markers
+A minimap down the side of the window carrying diagnostics, git signs and search highlights. On by default when the bundle loads; toggle it globally or per window.
 
 ```lua
 { import = "noethervim.bundles.ui.minimap" }
@@ -440,7 +440,7 @@ sidebar minimap with git/diagnostic markers
 
 ### `tableaux`
 
-noethervim-tableaux -- animated mathematical dashboard scenes
+Thirty-one dashboard scenes for snacks.nvim: number-theoretic processes such as the Sieve of Eratosthenes, Collatz and pi convergents; dynamical systems including Conway's Game of Life and the Lorenz attractor; topological objects; and contemplative time- of-day scenes.
 
 ```lua
 { import = "noethervim.bundles.ui.tableaux" }
@@ -450,7 +450,7 @@ noethervim-tableaux -- animated mathematical dashboard scenes
 
 ### `hardtime`
 
-motion habit trainer
+Warns on, or outright blocks, repeated hjkl and other low-value motions so you reach for a real motion instead. Starts disabled; run :Hardtime to switch it on.
 
 ```lua
 { import = "noethervim.bundles.practice.hardtime" }
@@ -458,7 +458,7 @@ motion habit trainer
 
 ### `presentation`
 
-presenting.nvim + showkeys
+presenting.nvim turns a Markdown, Org or AsciiDoc file into a slide deck without leaving the editor. showkeys puts your keypresses on screen, which is what you want when screensharing or recording.
 
 ```lua
 { import = "noethervim.bundles.practice.presentation" }
@@ -466,7 +466,7 @@ presenting.nvim + showkeys
 
 ### `training`
 
-vim-be-good, speedtyper, typr
+Three games, each lazy-loaded by its own command: vim-be-good for motions, speedtyper for typing speed, and typr for typing practice with statistics.
 
 ```lua
 { import = "noethervim.bundles.practice.training" }

@@ -1,5 +1,8 @@
 ---@bundle eye-candy
----@desc animations, scrollbar, block display
+---@desc animations, scrollbar and block visualizer
+---@about Optional visual extras: a scrollbar carrying LSP diagnostic marks,
+---       seasonal falling animations, a code block visualizer, and
+---       CellularAutomaton for when a file deserves to be dissolved.
 ---@requires none
 -- NoetherVim bundle: Eye Candy
 -- Enable with: { import = "noethervim.bundles.ui.eye-candy" }

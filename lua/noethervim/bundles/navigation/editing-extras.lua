@@ -1,5 +1,8 @@
 ---@bundle editing-extras
----@desc argmark + decorative comment boxes
+---@desc argument-position marks and comment boxes
+---@about argmark marks positions inside a function's argument list so you can
+---       add, cycle and clear them without reselecting by hand. comment-
+---       box.nvim draws decorative ASCII boxes and dividers around comments.
 ---@requires none
 -- NoetherVim bundle: Editing Extras
 -- Enable with: { import = "noethervim.bundles.navigation.editing-extras" }

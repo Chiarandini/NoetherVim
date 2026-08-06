@@ -1,5 +1,10 @@
 ---@bundle colorscheme
----@desc 9 themes beyond the shipped gruvbox
+---@desc nine themes beyond the shipped gruvbox
+---@about Breadth only. The theming machinery lives in core and keeps working
+---       without this bundle: SearchLeader+C picks the active scheme and the
+---       choice survives restarts, and colorscheme.tweak() carries highlight
+---       overrides across switches. All nine are lazy, so only the active one
+---       loads.
 ---@requires none
 -- NoetherVim bundle: Colorscheme Collection
 -- Enable with: { import = "noethervim.bundles.ui.colorscheme" }

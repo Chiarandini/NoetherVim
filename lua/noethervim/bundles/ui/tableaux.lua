@@ -1,5 +1,10 @@
 ---@bundle tableaux
----@desc noethervim-tableaux -- animated mathematical dashboard scenes
+---@desc animated mathematical dashboard scenes
+---@about Thirty-one dashboard scenes for snacks.nvim: number-theoretic
+---       processes such as the Sieve of Eratosthenes, Collatz and pi
+---       convergents; dynamical systems including Conway's Game of Life and
+---       the Lorenz attractor; topological objects; and contemplative time-
+---       of-day scenes.
 ---@requires none
 -- NoetherVim bundle: Tableaux
 -- Enable with: { import = "noethervim.bundles.ui.tableaux" }

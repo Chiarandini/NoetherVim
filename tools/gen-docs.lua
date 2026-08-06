@@ -41,6 +41,7 @@ for _, m in ipairs(metas) do
     name = m.name,
     category = m.category,
     desc = m.desc,
+    about = m.about,
     import = ('noethervim.bundles.%s.%s'):format(m.category, m.name),
     requires = requires,
   }
@@ -126,8 +127,12 @@ for _, cat in ipairs(CATEGORIES) do
     for _, b in ipairs(list) do
       page[#page + 1] = ('### `%s`'):format(b.name)
       page[#page + 1] = ''
-      if b.desc then
-        page[#page + 1] = md(b.desc)
+      -- `@about` is prose written for this page; `@desc` is the one-liner
+      -- sized for the picker column. Prefer the former, fall back to the
+      -- latter so a bundle without prose still says something.
+      local blurb = b.about or b.desc
+      if blurb then
+        page[#page + 1] = md(blurb)
         page[#page + 1] = ''
       end
       page[#page + 1] = '```lua'

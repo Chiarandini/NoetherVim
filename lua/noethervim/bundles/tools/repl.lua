@@ -1,5 +1,8 @@
 ---@bundle repl
----@desc iron.nvim interactive REPL
+---@desc send code to an interactive interpreter
+---@about iron.nvim keeps a REPL beside the buffer and sends lines, selections
+---       or whole files to it. Works with any interpreter; you supply the
+---       binary for the language you are using.
 ---@requires note="a REPL for your language" why="iron.nvim drives an external interpreter" install="python3, ipython, ghci, node, ... whichever you send code to"
 -- NoetherVim bundle: REPL
 -- Enable with: { import = "noethervim.bundles.tools.repl" }

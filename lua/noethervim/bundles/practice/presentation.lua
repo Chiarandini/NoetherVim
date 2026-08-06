@@ -1,5 +1,8 @@
 ---@bundle presentation
----@desc presenting.nvim + showkeys
+---@desc markdown slide decks and on-screen keypresses
+---@about presenting.nvim turns a Markdown, Org or AsciiDoc file into a slide
+---       deck without leaving the editor. showkeys puts your keypresses on
+---       screen, which is what you want when screensharing or recording.
 ---@requires none
 -- NoetherVim bundle: Presentation / Screensharing
 -- Enable with: { import = "noethervim.bundles.practice.presentation" }

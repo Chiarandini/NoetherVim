@@ -1,5 +1,7 @@
 ---@bundle projects
----@desc project switcher via snacks.picker
+---@desc jump between recent projects
+---@about Browses recently used project directories, changes into the one you
+---       pick, and immediately opens a file picker scoped to it.
 ---@requires none
 -- NoetherVim bundle: Projects
 -- Enable with: { import = "noethervim.bundles.navigation.projects" }

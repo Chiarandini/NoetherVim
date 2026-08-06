@@ -4,7 +4,9 @@
 --- bundle is and what it needs from outside Neovim:
 --- >lua
 ---     ---@bundle octo
----     ---@desc GitHub PRs / issues / reviews via gh CLI
+---     ---@desc GitHub PRs, issues and reviews
+---     ---@about Brings GitHub review workflow into the editor: PR lists,
+---     ---       inline review comments, issues and gists.
 ---     ---@requires exe=gh label="GitHub CLI" why="every octo command"
 ---                  install="https://cli.github.com, then `gh auth login`"
 --- <
@@ -29,7 +31,7 @@ local M = {}
 
 --- Number of header lines scanned for the annotation block. The block sits
 --- at the very top of every bundle; reading further just wastes IO.
-local MAX_HEADER_LINES = 40
+local MAX_HEADER_LINES = 60
 
 ---@class noethervim.BundleRequirement
 ---@field kind "exe"|"env"|"app"|"note"  how to verify it
@@ -49,7 +51,8 @@ local MAX_HEADER_LINES = 40
 ---@field name string
 ---@field category string
 ---@field path string
----@field desc? string
+---@field desc? string   one line for the bundles picker
+---@field about? string  prose for the docs site; falls back to `desc`
 ---@field declared_name? string  the `@bundle` value, checked against the filename
 ---@field requires noethervim.BundleRequirement[]
 ---@field errors string[]  malformed annotation lines, reported by health
@@ -116,15 +119,20 @@ function M.parse(path, name, category)
   end
 
   local declared = false
-  -- `@requires` values are long enough to wrap; a continuation is any
-  -- following `---` line that does not open a new tag.
-  local pending_requires, pending_lnum = nil, 0
+  -- `@about` and `@requires` values are long enough to wrap; a continuation
+  -- is any following `---` line that does not open a new tag.
+  local pending = nil ---@type {tag: string, text: string, lnum: integer}?
 
   local function flush()
-    if pending_requires then
-      parse_requires(pending_requires, pending_lnum, acc)
-      pending_requires = nil
+    if not pending then return end
+    if pending.tag == 'requires' then
+      parse_requires(pending.text, pending.lnum, acc)
+    elseif pending.tag == 'desc' then
+      acc.desc = vim.trim(pending.text)
+    elseif pending.tag == 'about' then
+      acc.about = vim.trim(pending.text)
     end
+    pending = nil
   end
 
   for lnum, line in ipairs(lines) do
@@ -137,16 +145,13 @@ function M.parse(path, name, category)
         flush()
         declared = true
         acc.declared_name = vim.trim(rest)
-      elseif tag == 'desc' then
+      elseif tag == 'desc' or tag == 'about' or tag == 'requires' then
         flush()
-        acc.desc = vim.trim(rest)
-      elseif tag == 'requires' then
-        flush()
-        pending_requires, pending_lnum = rest, lnum
+        pending = { tag = tag, text = rest, lnum = lnum }
       elseif tag then
         flush()
-      elseif pending_requires then
-        pending_requires = pending_requires .. ' ' .. vim.trim(body)
+      elseif pending then
+        pending.text = pending.text .. ' ' .. vim.trim(body)
       end
     end
   end

@@ -1,5 +1,9 @@
 ---@bundle database
----@desc vim-dadbod + UI + SQL completion
+---@desc query databases from a buffer
+---@about vim-dadbod with its interactive UI and SQL completion. Connections
+---       are driven by whichever client binary the database needs, so
+---       PostgreSQL, MySQL and SQLite each depend on their own command-line
+---       tool being installed.
 ---@requires exe=psql label="psql" why="PostgreSQL connections; dadbod shells out to the client" install="part of postgresql" optional=true
 ---@requires exe=mysql label="mysql" why="MySQL and MariaDB connections" install="part of mysql-client" optional=true
 ---@requires exe=sqlite3 label="sqlite3" why="SQLite connections" install="preinstalled on macOS and most Linux distributions" optional=true

@@ -1,5 +1,9 @@
 ---@bundle yanky
----@desc yank ring -- cycle through paste history (<C-p>/<C-n>)
+---@desc yank history you can cycle after pasting
+---@about Keeps a rolling history of every yank and delete, so you can paste,
+---       realise it was the wrong one, and cycle back through earlier yanks
+---       instead of re-yanking or pre-tagging named registers. A fuzzy picker
+---       covers the full history.
 ---@requires none
 -- NoetherVim bundle: Yank ring
 -- Enable with: { import = "noethervim.bundles.navigation.yanky" }

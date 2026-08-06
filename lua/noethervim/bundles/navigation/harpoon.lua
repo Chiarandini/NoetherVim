@@ -1,5 +1,8 @@
 ---@bundle harpoon
 ---@desc fast per-project file marks
+---@about harpoon2 keeps a short ordered list of files per project, so the
+---       handful you are actually working on stay one keystroke apart instead
+---       of buried in a fuzzy finder.
 ---@requires none
 -- NoetherVim bundle: Harpoon
 -- Enable with: { import = "noethervim.bundles.navigation.harpoon" }

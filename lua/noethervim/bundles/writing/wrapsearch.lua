@@ -1,5 +1,11 @@
 ---@bundle wrapsearch
----@desc search across hard-wrapped lines (/ and ?)
+---@desc search across hard-wrapped lines
+---@about Hard-wrapped prose breaks search: a phrase that reads as one line on
+---       screen has a newline in the middle, so /brown fox finds nothing when
+---       the wrap falls between the two words. This rewrites the pattern so a
+---       space also matches a line break and the next line's indentation. n,
+---       N, search offsets and the search register are unaffected, because
+---       the rewritten pattern is what runs.
 ---@requires none
 -- NoetherVim bundle: Wrap-aware search
 -- Enable with: { import = "noethervim.bundles.writing.wrapsearch" }

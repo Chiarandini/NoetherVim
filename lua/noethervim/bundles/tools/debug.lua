@@ -1,5 +1,9 @@
 ---@bundle debug
----@desc nvim-dap + UI (Python, Lua, JS/TS, Go)
+---@desc step debugging with a multi-panel UI
+---@about nvim-dap with a multi-panel sidebar and inline virtual text for
+---       variable values, plus snacks pickers over commands, breakpoints,
+---       variables and frames. Adapters are registered per project from
+---       lua/user/plugins/.
 ---@requires exe=python3 label="Python 3" why="the Python adapter" install="then pip install debugpy"
 ---@requires exe=node label="Node.js" why="the JavaScript and TypeScript adapter" install="https://nodejs.org/" optional=true
 -- NoetherVim bundle: Debug (DAP)

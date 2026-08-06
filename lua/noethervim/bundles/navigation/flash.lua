@@ -1,5 +1,8 @@
 ---@bundle flash
----@desc enhanced f/t and / motions with labels
+---@desc labelled jump targets for search and f/t
+---@about Puts a label on every match, so a jump is one keystroke rather than
+---       a count. Augments / and ? as well as f, t, F and T, works operator-
+---       pending and visual, and adds a treesitter-scoped variant.
 ---@requires none
 -- NoetherVim bundle: Flash (enhanced motion)
 -- Enable with: { import = "noethervim.bundles.navigation.flash" }

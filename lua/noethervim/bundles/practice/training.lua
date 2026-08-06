@@ -1,5 +1,8 @@
 ---@bundle training
----@desc vim-be-good, speedtyper, typr
+---@desc typing and motion practice games
+---@about Three games, each lazy-loaded by its own command: vim-be-good for
+---       motions, speedtyper for typing speed, and typr for typing practice
+---       with statistics.
 ---@requires none
 -- NoetherVim bundle: Training
 -- Enable with: { import = "noethervim.bundles.practice.training" }

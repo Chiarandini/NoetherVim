@@ -1,5 +1,7 @@
 ---@bundle markdown
----@desc render, preview, tables, math, image paste
+---@desc rendering, preview, tables, math and image paste
+---@about In-editor rendering and concealment, a live browser preview, smart
+---       table editing, inline math, and clipboard image paste.
 ---@requires exe=node label="Node.js" why="markdown-preview builds its viewer with it, and mdmath renders through it" install="https://nodejs.org/" optional=true
 ---@requires note="a terminal with the kitty graphics protocol" why="inline math rendering by mdmath" install="kitty, WezTerm, or Ghostty" optional=true
 -- NoetherVim bundle: Markdown

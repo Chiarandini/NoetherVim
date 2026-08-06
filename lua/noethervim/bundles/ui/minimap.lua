@@ -1,5 +1,8 @@
 ---@bundle minimap
----@desc sidebar minimap with git/diagnostic markers
+---@desc sidebar minimap with git and diagnostic marks
+---@about A minimap down the side of the window carrying diagnostics, git
+---       signs and search highlights. On by default when the bundle loads;
+---       toggle it globally or per window.
 ---@requires none
 -- NoetherVim bundle: Minimap
 -- Enable with: { import = "noethervim.bundles.ui.minimap" }

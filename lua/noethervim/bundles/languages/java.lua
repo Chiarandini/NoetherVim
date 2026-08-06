@@ -1,5 +1,8 @@
 ---@bundle java
----@desc nvim-jdtls -- proper Java LSP support
+---@desc Java language server with proper workspace handling
+---@about jdtls needs workspace management and jar paths that plain lspconfig
+---       cannot supply, so it gets a dedicated client. It starts on the first
+---       .java buffer. Install the server itself with :MasonInstall jdtls.
 ---@requires exe=java label="a JDK" why="jdtls will not start without one" install="JDK 17 or newer; jdtls itself installs via Mason"
 -- NoetherVim bundle: Java
 -- Enable with: { import = "noethervim.bundles.languages.java" }

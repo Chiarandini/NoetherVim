@@ -1,5 +1,9 @@
 ---@bundle python
----@desc venv-selector -- virtual environment switching
+---@desc virtual environment switching
+---@about :VenvSelect finds .venv, venv, conda and poetry environments, points
+---       the language server at whichever you pick, and exports VIRTUAL_ENV
+---       so terminal commands agree. :VenvSelectCached restores the last
+---       choice per project.
 ---@requires exe=python3 label="Python 3" why="virtual-environment discovery" install="https://www.python.org/downloads/"
 -- NoetherVim bundle: Python
 -- Enable with: { import = "noethervim.bundles.languages.python" }
