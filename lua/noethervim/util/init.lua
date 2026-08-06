@@ -103,6 +103,85 @@ function M.scan_bundles(bundles_dir)
   return result
 end
 
+--- Map each lazy plugin name to every spec file that declares it, in scan
+--- order (distro `plugins/`, then `lua/user/plugins/`, then bundles).
+---
+--- A plugin is matched by finding its lazy name as a quoted string in a
+--- spec file, which handles both the common `"user/repo"` form and dev
+--- specs like `"KeyboardMode.nvim"` that carry no slash. Mentions inside
+--- a `dependencies = { ... }` block are skipped: the file that lists a
+--- plugin as someone else's dependency is not the file that configures it.
+---
+--- Memoized. The scan reads every spec file, and spec files do not change
+--- within a session.
+---
+---@return table<string, string[]> by_plugin  plugin name -> spec file paths
+function M.plugin_spec_files()
+  if M._plugin_spec_files then return M._plugin_spec_files end
+
+  local by_plugin = {}
+  local init = vim.api.nvim_get_runtime_file("lua/noethervim/init.lua", false)[1]
+  local root = init and vim.fn.fnamemodify(init, ":h:h:h")
+  if not root then return by_plugin end
+
+  -- Collect files: plugins/ (flat), user/plugins/ (flat), bundles/ (category subdirs).
+  local files = {}
+  for _, dir in ipairs({ root .. "/lua/noethervim/plugins",
+                         vim.fn.stdpath("config") .. "/lua/user/plugins" }) do
+    local handle = vim.uv.fs_scandir(dir)
+    if handle then
+      while true do
+        local name, ftype = vim.uv.fs_scandir_next(handle)
+        if not name then break end
+        if (ftype == "file" or ftype == "link") and name:match("%.lua$") then
+          files[#files + 1] = vim.fs.joinpath(dir, name)
+        end
+      end
+    end
+  end
+  for _, entry in ipairs(M.scan_bundles(root .. "/lua/noethervim/bundles")) do
+    files[#files + 1] = entry.path
+  end
+
+  local plugin_names = {}
+  local ok_cfg, lazy_cfg = pcall(require, "lazy.core.config")
+  if ok_cfg and lazy_cfg.plugins then
+    for name, _ in pairs(lazy_cfg.plugins) do plugin_names[name] = true end
+  end
+
+  for _, filepath in ipairs(files) do
+    local deps_depth = nil
+    local depth = 0
+    local seen_in_file = {}
+    for _, line in ipairs(vim.fn.readfile(filepath)) do
+      if line:find("dependencies") and line:find("{") then
+        deps_depth = depth
+      end
+      for c in line:gmatch("[{}]") do
+        depth = depth + (c == "{" and 1 or -1)
+      end
+      if deps_depth and depth <= deps_depth then
+        deps_depth = nil
+      end
+      if not deps_depth then
+        for token in line:gmatch('"([^"]+)"') do
+          local tail = token:match("([^/]+)$") or token
+          local name = plugin_names[token] and token
+                    or plugin_names[tail] and tail
+          if name and not seen_in_file[name] then
+            seen_in_file[name] = true
+            by_plugin[name] = by_plugin[name] or {}
+            by_plugin[name][#by_plugin[name] + 1] = filepath
+          end
+        end
+      end
+    end
+  end
+
+  M._plugin_spec_files = by_plugin
+  return by_plugin
+end
+
 --- Map resolved keymap lhs values to the spec file that defines them.
 --- Combines lazy.nvim's key handler data (key_id -> plugin_name) with a
 --- scan of NoetherVim spec files (plugin_name -> file path).
@@ -127,77 +206,7 @@ function M.keymap_sources()
   local root = init and vim.fn.fnamemodify(init, ":h:h:h")
   if not root then return sources, managed end
 
-  local plugin_files = {}
-  local user_plugins = vim.fn.stdpath("config") .. "/lua/user/plugins"
-
-  -- Collect files: plugins/ (flat), bundles/ (category subdirs), user/plugins/ (flat).
-  local files = {}
-  for _, dir in ipairs({ root .. "/lua/noethervim/plugins", user_plugins }) do
-    local handle = vim.uv.fs_scandir(dir)
-    if handle then
-      while true do
-        local name, ftype = vim.uv.fs_scandir_next(handle)
-        if not name then break end
-        if (ftype == "file" or ftype == "link") and name:match("%.lua$") then
-          files[#files + 1] = vim.fs.joinpath(dir, name)
-        end
-      end
-    end
-  end
-  for _, entry in ipairs(M.scan_bundles(root .. "/lua/noethervim/bundles")) do
-    files[#files + 1] = entry.path
-  end
-
-  -- Build the set of plugin names lazy knows about. We scan spec files
-  -- for exactly these names (as quoted strings), which handles both the
-  -- common `"user/repo"` form and dev specs like `"KeyboardMode.nvim"`
-  -- that do not carry a slash.
-  local plugin_names = {}
-  local ok_cfg_pre, lazy_cfg_pre = pcall(require, "lazy.core.config")
-  if ok_cfg_pre and lazy_cfg_pre.plugins then
-    for name, _ in pairs(lazy_cfg_pre.plugins) do
-      plugin_names[name] = true
-    end
-  end
-
-  -- `plugin_files_all[name]` holds every spec file that mentions the
-  -- plugin, in scan order (distro first, then user plugins, then
-  -- bundles). The legacy `plugin_files[name]` keeps only the first hit
-  -- for backwards-compat; attribution below consults the full list to
-  -- pick the file that actually contains each specific lhs.
-  local plugin_files_all = {}
-  for _, filepath in ipairs(files) do
-    local deps_depth = nil
-    local depth = 0
-    local seen_in_file = {}
-    for _, line in ipairs(vim.fn.readfile(filepath)) do
-      if line:find("dependencies") and line:find("{") then
-        deps_depth = depth
-      end
-      for c in line:gmatch("[{}]") do
-        depth = depth + (c == "{" and 1 or -1)
-      end
-      if deps_depth and depth <= deps_depth then
-        deps_depth = nil
-      end
-      if not deps_depth then
-        -- Any quoted string on this line that matches a known plugin name.
-        for token in line:gmatch('"([^"]+)"') do
-          local tail = token:match("([^/]+)$") or token
-          local name = plugin_names[token] and token
-                    or plugin_names[tail] and tail
-          if name then
-            if not plugin_files[name] then plugin_files[name] = filepath end
-            if not seen_in_file[name] then
-              seen_in_file[name] = true
-              plugin_files_all[name] = plugin_files_all[name] or {}
-              plugin_files_all[name][#plugin_files_all[name] + 1] = filepath
-            end
-          end
-        end
-      end
-    end
-  end
+  local plugin_files_all = M.plugin_spec_files()
 
   -- File-content cache for attribution-by-lhs.
   local _content = {}

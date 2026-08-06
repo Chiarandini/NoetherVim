@@ -790,7 +790,8 @@ function M.diff_keymaps(opts)
       -- jump_to_keymap consults the registry first, so USER/OVERRIDE
       -- items land in the exact user file+line that registered them --
       -- not just user/keymaps.lua.
-      M.jump_to_keymap(item.mode, item.lhs, { source = item.source })
+      M.jump_to_keymap(item.mode, item.lhs,
+        { source = item.source, origin = item.origin })
     end,
   })
 end

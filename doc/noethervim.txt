@@ -990,9 +990,15 @@ Compare your user overrides against NoetherVim defaults.
                     Keymaps set by third-party plugins (surround, mini.ai,
                     marks, ...) are hidden by default, since they are not
                     NoetherVim's to explain; `<C-x>` toggles them in and
-                    out. Neovim's own defaults and `<Plug>` handles are
-                    never listed. Use SearchLeader+fk for a plain search
-                    over every key currently mapped.
+                    out. On one of those, `<CR>` opens the spec file that
+                    installs the plugin rather than the plugin's own
+                    source: the spec is where you add `opts` or `keys` to
+                    change or disable the key, and the plugin's tree is
+                    overwritten on update. When the plugin cannot be
+                    identified, `<CR>` says so instead of guessing.
+                    Neovim's own defaults and `<Plug>` handles are never
+                    listed. Use SearchLeader+fk for a plain search over
+                    every key currently mapped.
                     Buffer-local keymaps, marked `(buffer)`, are those of
                     the buffer the picker was opened from, so LSP keymaps
                     appear only when a server is attached there.

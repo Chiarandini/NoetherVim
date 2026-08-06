@@ -120,6 +120,66 @@ function M.origin_of_file(path)
   return nil
 end
 
+--- Name of the lazy plugin whose tree contains `path`, or nil.
+--- In a released install NoetherVim itself lives under the lazy root, so
+--- a plain "is it under lazy/" test would call the distro a third-party
+--- plugin; `origin_of_file` is consulted first to rule that out.
+---@param path? string
+---@return string? plugin_name
+function M.plugin_of_file(path)
+  if not path or path == "" then return nil end
+  if M.origin_of_file(path) then return nil end
+  local p = vim.fs.normalize(path)
+  local root = vim.fs.normalize(vim.fn.stdpath("data") .. "/lazy") .. "/"
+  if not vim.startswith(p, root) then return nil end
+  local name = p:sub(#root + 1):match("^([^/]+)")
+  -- lazy.nvim is the loader, never the answer to "who defines this key".
+  if name == "lazy.nvim" then return nil end
+  return name
+end
+
+--- Name the plugin behind a `<Plug>`-based rhs, or nil.
+---
+--- Rescues rhs-only plugin keymaps, which have no callback to introspect
+--- and so leave the file-based cascade with nothing to go on. Their rhs
+--- almost always names the plugin: nvim-surround maps `<C-g>s` to
+--- `<Plug>(nvim-surround-insert)`. The payload is matched against lazy's
+--- plugin names, longest first so `nvim-surround` beats a shorter plugin
+--- that happens to share a prefix.
+---@param rhs? string
+---@return string? plugin_name
+function M.plugin_from_rhs(rhs)
+  if not rhs or rhs == "" then return nil end
+  local payload = rhs:match("<[Pp]lug>%((.-)%)") or rhs:match("<[Pp]lug>([%w_%-%.]+)")
+  if not payload then return nil end
+  payload = payload:lower()
+  local ok, lazy_cfg = pcall(require, "lazy.core.config")
+  if not ok or not lazy_cfg.plugins then return nil end
+  local best
+  for name in pairs(lazy_cfg.plugins) do
+    for _, stem in ipairs({ name, (name:gsub("%.nvim$", "")) }) do
+      if stem ~= "" and vim.startswith(payload, stem:lower())
+         and (not best or #stem > #best.stem) then
+        best = { name = name, stem = stem }
+      end
+    end
+  end
+  return best and best.name or nil
+end
+
+--- The NoetherVim or user spec file that declares `plugin_name`, or nil.
+--- This is the file a user edits to change or disable one of the plugin's
+--- keymaps, which makes it the useful destination for a key the distro
+--- installs but does not itself define.
+---@param plugin_name? string
+---@return string? spec_file
+function M.spec_file_for_plugin(plugin_name)
+  if not plugin_name then return nil end
+  local by_plugin = require("noethervim.util").plugin_spec_files()
+  local files = by_plugin[plugin_name]
+  return files and files[1] or nil
+end
+
 --- Best-effort owning file for a keymap, without opening any buffer.
 --- Consults the registry, then the lazy spec hint, then the callback.
 --- Deliberately does NOT run the project-wide scan: this is called once
@@ -703,6 +763,10 @@ end
 ---@field source? string  Lazy handler source hint (path to the spec file
 ---                       that registered the keymap), used as a fallback
 ---                       when keymap_registry can't resolve the call site.
+---@field origin? string  Ownership label from the diff picker. `"plugin"`
+---                       suppresses the project-wide scan, which would
+---                       otherwise land on a coincidental text match in
+---                       distro source for a key the distro never defined.
 
 --- Jump to the source definition of a keymap.
 --- Opens the file containing the definition (readonly in non-dev mode)
@@ -749,43 +813,115 @@ function M.jump(mode, lhs, opts)
   if opts.source then
     candidates[#candidates + 1] = { file = opts.source, hint = "lazy spec" }
   end
+  -- The normal-mode pass is a fallback for keys registered for several
+  -- modes in one `vim.keymap.set` call. It is marked `cross_mode` because
+  -- it can equally pick up an unrelated key that merely shares an lhs --
+  -- a `c`-mode `<Left>` from a completion plugin against an `n`-mode
+  -- `<Left>` of the distro's -- and ownership must not be inferred from
+  -- that. Good enough to open as a last resort, not to reason about.
   for _, m in ipairs(mode == "n" and { "n" } or { mode, "n" }) do
     for _, km in ipairs(vim.api.nvim_get_keymap(m)) do
       if km.lhs == lhs then
-        local f = M.callback_file(km.callback)
+        -- A lazy loading stub points at lazy.nvim, not at whoever declared
+        -- the key. Taking it as a candidate would attribute every
+        -- not-yet-loaded plugin keymap to lazy.nvim itself.
+        local f = not M.is_lazy_stub(km) and M.callback_file(km.callback) or nil
         if f then
-          candidates[#candidates + 1] = { file = f, hint = "callback file" }
+          candidates[#candidates + 1] =
+            { file = f, hint = "callback file", cross_mode = m ~= mode }
           break
         end
       end
     end
   end
 
+  -- Third-party keymaps get redirected, not chased. The plugin's own
+  -- source is not the user's to edit and is overwritten on update; the
+  -- spec file that installs the plugin is where a key gets changed or
+  -- disabled, so that is where we land.
+  --
+  -- Skipping the project scan here matters as much as the redirect. The
+  -- scan walks the distro and user trees first and returns the first
+  -- textual match, which for a short lhs like `<C-E>` or `<Tab>` is
+  -- essentially always a coincidence in an unrelated file.
+  -- Only when nothing we own claims the key: a distro or user candidate,
+  -- even one that fails to pinpoint a line, outranks any plugin source.
+  local plugin, owned = nil, false
+  for _, c in ipairs(candidates) do
+    if not c.cross_mode then
+      if M.origin_of_file(c.file) then owned = true end
+      plugin = plugin or M.plugin_of_file(c.file)
+    end
+  end
+  if not plugin then
+    -- rhs-only plugin keymaps reach here with no candidates at all.
+    for _, m in ipairs(mode == "n" and { "n" } or { mode, "n" }) do
+      for _, km in ipairs(vim.api.nvim_get_keymap(m)) do
+        if km.lhs == lhs then
+          plugin = plugin or M.plugin_from_rhs(km.rhs)
+          break
+        end
+      end
+    end
+  end
+  if not owned and (plugin or opts.origin == "plugin") then
+    local spec = plugin and M.spec_file_for_plugin(plugin)
+    if spec and open_file(spec) then
+      -- The spec may itself declare the key (a lazy `keys = {...}` entry);
+      -- prefer that line, else park on the line that names the plugin.
+      -- Match the quoted repo string rather than the bare name: with
+      -- 'ignorecase' the bare name also hits prose like the "Blink.cmp"
+      -- in a file's header comment, which is a useless landing.
+      if locate_in_buffer(lhs, mode) == 0 then
+        local quoted = "[\"'][^\"']*" .. vim.fn.escape(plugin, "/\\.*$^~[]") .. "[\"']"
+        if pcall(vim.fn.search, quoted, "w") then vim.cmd("norm! zzzv") end
+      end
+      return vim.notify(string.format(
+        "NoetherVim: [%s] %s comes from %s; opened the spec that installs it.",
+        mode, lhs, plugin), vim.log.levels.INFO)
+    end
+    return vim.notify(plugin
+      and string.format("NoetherVim: [%s] %s comes from %s, which no spec file claims.",
+                        mode, lhs, plugin)
+      or string.format("NoetherVim: [%s] %s is defined by a plugin, not by NoetherVim or your config.",
+                       mode, lhs), vim.log.levels.INFO)
+  end
+
   -- Final fallback: project-wide text scan. Catches lazy `keys = {...}`
   -- entries in spec files whose plugin name we couldn't resolve and
   -- rhs-only keymaps with no callback to introspect. Mode-aware so an
   -- `n`-mode `<C-V>` does not land on the `i`-mode definition.
-  local scanned = M.scan_project_for(lhs, mode)
-  if scanned then
-    candidates[#candidates + 1] = { file = scanned, hint = "project scan" }
+  --
+  -- Suppressed for plugin-owned keys even when a distro candidate exists:
+  -- the spec that lazy-declares a key can legitimately fail to pinpoint
+  -- it, and the scan's consolation prize is a coincidence in an unrelated
+  -- file. "Opened X, could not pinpoint" beats a confident wrong answer.
+  if opts.origin ~= "plugin" then
+    local scanned = M.scan_project_for(lhs, mode)
+    if scanned then
+      candidates[#candidates + 1] = { file = scanned, hint = "project scan" }
+    end
   end
 
   -- Try each candidate. Registry hits win outright; for the others we
   -- open the file and run the locate cascade. First hit returns.
-  local first_opened
+  -- Tracks the last candidate opened, not the first: when several open
+  -- without pinpointing, the buffer left on screen is the last one, and a
+  -- message naming a different file reads as a bug.
+  local last_opened
   for _, c in ipairs(candidates) do
     if c.line then
       if open_file(c.file, c.line) then return end
     elseif open_file(c.file) then
-      first_opened = first_opened or { file = c.file, hint = c.hint }
+      last_opened = { file = c.file, hint = c.hint }
       if locate_in_buffer(lhs, mode) > 0 then return end
     end
   end
 
-  if first_opened then
+  if last_opened then
     vim.notify(string.format(
       "NoetherVim: opened %s (%s) but could not pinpoint [%s] %s -- try /-searching.",
-      vim.fn.fnamemodify(first_opened.file, ":~:."), first_opened.hint, mode, lhs),
+      vim.fn.fnamemodify(last_opened.file, ":~:."), last_opened.hint, mode, lhs),
       vim.log.levels.INFO)
   else
     vim.notify(
