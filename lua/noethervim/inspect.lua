@@ -74,14 +74,18 @@ end
 --- Build a snacks footer listing the picker's non-obvious keys.
 ---
 --- Snacks draws this on the input window's bottom border, which spans the
---- list column only -- half the layout, measuring 38 columns on an
---- 80-column terminal.  Neovim truncates a longer footer without warning,
---- so hints are dropped from the front (the most obvious keys) until the
---- assembled text fits, and the full key list stays one `<F1>` away.
+--- list column only -- roughly 45% of the screen. Neovim truncates a longer
+--- footer without warning, so hints are dropped from the front (the most
+--- obvious keys) until the assembled text fits, and the full key list stays
+--- one `<F1>` away.
+---
+--- The budget scales with the terminal rather than assuming 80 columns, so a
+--- wide window shows every hint instead of silently dropping the ones a
+--- narrow window could not have fitted either way.
 ---@param hints [string, string][]  { key, label } pairs, least important first
 ---@return snacks.picker.Highlight[]
 local function hint_footer(hints)
-  local budget = 36
+  local budget = math.max(20, math.floor(vim.o.columns * 0.45))
   local width = 2 -- the leading and trailing pad below
   local kept = {}
   for i = #hints, 1, -1 do
@@ -103,11 +107,11 @@ end
 
 -- ── Bundle catalog ──────────────────────────────────────────────
 -- Bundle descriptions come from each bundle file's `@desc` annotation, via
--- util.bundle_meta.  The filesystem layout (bundles/<category>/<name>.lua)
+-- util.bundle_meta. The filesystem layout (bundles/<category>/<name>.lua)
 -- remains authoritative for which bundles exist and their category.
 --
 -- Parsed rather than listed here so there is one authored copy: the same
--- annotation feeds :checkhealth and the docs site.  A bundle whose header
+-- annotation feeds :checkhealth and the docs site. A bundle whose header
 -- lacks @desc shows "(no description)".
 
 -- Display order and human-readable labels for filesystem category names.
@@ -218,22 +222,34 @@ function M.bundles()
         picker:close()
         require("noethervim.util.bundle_toggle").disable(item.category, item.bundle_name)
       end,
+      -- Seeding an override is the step that follows reading a bundle, so the
+      -- affordance belongs where that decision gets made. `:NoetherVim
+      -- override` maps from the current buffer, hence the edit first.
+      override_bundle = function(picker)
+        local item = picker:current()
+        if not item or not item.file then return end
+        picker:close()
+        vim.cmd("edit " .. vim.fn.fnameescape(item.file))
+        M.override()
+      end,
     },
     win = {
       input = {
-        footer     = hint_footer({ { "<cr>", "open" }, { "<c-y>", "enable" }, { "<f1>", "keys" } }),
+        footer     = hint_footer({ { "<cr>", "open" }, { "<c-o>", "override" }, { "<c-y>", "enable" }, { "<f1>", "keys" } }),
         footer_pos = "center",
         keys = {
-          ["<CR>"]  = { "confirm",        mode = { "i", "n" }, desc = "open bundle source (readonly)" },
-          ["<C-y>"] = { "enable_bundle",  mode = { "i", "n" }, desc = "enable bundle"  },
-          ["<C-x>"] = { "disable_bundle", mode = { "i", "n" }, desc = "disable bundle" },
+          ["<CR>"]  = { "confirm",         mode = { "i", "n" }, desc = "open bundle source (readonly)" },
+          ["<C-y>"] = { "enable_bundle",   mode = { "i", "n" }, desc = "enable bundle"  },
+          ["<C-x>"] = { "disable_bundle",  mode = { "i", "n" }, desc = "disable bundle" },
+          ["<C-o>"] = { "override_bundle", mode = { "i", "n" }, desc = "seed a user override for this bundle" },
         },
       },
       list = {
         keys = {
-          ["<CR>"]  = { "confirm",        desc = "open bundle source (readonly)" },
-          ["<C-y>"] = { "enable_bundle",  desc = "enable bundle"  },
-          ["<C-x>"] = { "disable_bundle", desc = "disable bundle" },
+          ["<CR>"]  = { "confirm",         desc = "open bundle source (readonly)" },
+          ["<C-y>"] = { "enable_bundle",   desc = "enable bundle"  },
+          ["<C-x>"] = { "disable_bundle",  desc = "disable bundle" },
+          ["<C-o>"] = { "override_bundle", desc = "seed a user override for this bundle" },
         },
       },
     },
@@ -351,7 +367,7 @@ end
 -- ── Keymap source helpers ────────────────────────────────────────
 --
 -- Source attribution, line location, and jump-to-definition all live in
--- `noethervim.util.keymap_source`.  This module only consumes them: the
+-- `noethervim.util.keymap_source`. This module only consumes them: the
 -- pickers below need the classifiers (`same_mapping`, `is_nvim_default`)
 -- to build their item lists, and the file/line resolvers to turn an item
 -- into a quickfix entry.
@@ -366,7 +382,7 @@ local _file_lines      = keymap_source.file_lines
 -- ── Shared: jump to keymap source definition ────────────────────
 -- Used by diff_keymaps (confirm handler) and the guide (<CR>).
 
---- Jump to the source definition of a keymap.  Delegates to
+--- Jump to the source definition of a keymap. Delegates to
 --- `util.keymap_source.jump`; kept under this name because `guide.lua`
 --- and the keymap-landing test suite call it here.
 ---
@@ -525,10 +541,10 @@ function M.diff_keymaps(opts)
     end
   end
 
-  -- Live merge.  The snapshots are taken inside setup(), so every keymap
+  -- Live merge. The snapshots are taken inside setup(), so every keymap
   -- registered later is invisible to the diff above: plugin `config` and
   -- `opts` bodies, ftplugins, and anything a lazy-loaded plugin sets when
-  -- it finally loads.  Walk the live keymap tables and add what is
+  -- it finally loads. Walk the live keymap tables and add what is
   -- missing, keeping only keys the distro or the user actually owns --
   -- `<Plug>` handles and Neovim's own defaults are noise here, and
   -- plugin-internal keymaps belong to <SearchLeader>fk unless the user
@@ -571,7 +587,7 @@ function M.diff_keymaps(opts)
   end
 
   -- Origin for the snapshot-derived items, and the search text for all of
-  -- them.  Origin is the bundle stem for bundle-owned keys so an opt-in
+  -- them. Origin is the bundle stem for bundle-owned keys so an opt-in
   -- bundle's contributions stand out; everything else in the distro is
   -- "core", which renders blank because it is the overwhelming majority.
   local ORIGIN_MAX = 12
@@ -933,7 +949,33 @@ local function scan_lua_modules(dir)
   return modules
 end
 
---- Open a side-by-side split for a specific module (direct call path).
+--- Open upstream and the user override side by side, in diff mode.
+---
+--- `diffthis` on both windows is the point of the command: without it this
+--- is two files next to each other and the reader does the comparing, which
+--- is exactly the work `:NoetherVim diff` exists to save. Falls back to a
+--- lone upstream window when there is no override to compare against.
+---
+--- Upstream opens readonly outside dev mode, matching every other picker
+--- that surfaces distribution source.
+---@param upstream string
+---@param user_file string?
+local function open_pair(upstream, user_file)
+  if vim.g.noethervim_dev then
+    vim.cmd("edit " .. vim.fn.fnameescape(upstream))
+  else
+    vim.cmd("view " .. vim.fn.fnameescape(upstream))
+    vim.bo.readonly = true
+    vim.bo.modifiable = false
+  end
+  if not user_file then return end
+
+  vim.cmd("diffthis")
+  vim.cmd("vsplit " .. vim.fn.fnameescape(user_file))
+  vim.cmd("diffthis")
+end
+
+--- Open a side-by-side diff for a specific module (direct call path).
 --- Used by :NoetherVim diff <name> when a name is provided.
 local function open_diff_split(module_name)
   local root = effective_root()
@@ -980,17 +1022,8 @@ local function open_diff_split(module_name)
     end
   end
 
-  local readonly = not vim.g.noethervim_dev
-  if readonly then
-    vim.cmd("view " .. vim.fn.fnameescape(upstream))
-    vim.bo.readonly = true
-    vim.bo.modifiable = false
-  else
-    vim.cmd("edit " .. vim.fn.fnameescape(upstream))
-  end
-  if user_file then
-    vim.cmd("vsplit " .. vim.fn.fnameescape(user_file))
-  else
+  open_pair(upstream, user_file)
+  if not user_file then
     vim.notify("NoetherVim: no user override for '" .. module_name .. "' (showing upstream only)", vim.log.levels.INFO)
   end
 end
@@ -1112,17 +1145,8 @@ function M.diff_file(module_name)
     end,
     confirm = function(picker, item)
       picker:close()
-      local readonly = not vim.g.noethervim_dev
-      if readonly then
-        vim.cmd("view " .. vim.fn.fnameescape(item.upstream))
-        vim.bo.readonly = true
-        vim.bo.modifiable = false
-      else
-        vim.cmd("edit " .. vim.fn.fnameescape(item.upstream))
-      end
-      if item.user_file then
-        vim.cmd("vsplit " .. vim.fn.fnameescape(item.user_file))
-      else
+      open_pair(item.upstream, item.user_file)
+      if not item.user_file then
         vim.notify("NoetherVim: no user override for '" .. item.name .. "' (showing upstream only)", vim.log.levels.INFO)
       end
     end,
@@ -1420,13 +1444,56 @@ local function map_to_user_path(bufpath)
   return nil, nil
 end
 
---- Minimal seed content for a new override file.
-local function seed_content(rel_path, category)
+--- Every distinct `owner/repo` string in a spec file, in source order.
+---
+--- Used to seed a plugin or bundle override with the keys that actually
+--- merge. The quotes are part of the pattern, so a path like
+--- `"lua/user/plugins"` cannot match -- only a string whose entire contents
+--- are two slash-separated segments.
+---@param path string
+---@return string[]
+local function spec_repos(path)
+  local ok, lines = pcall(vim.fn.readfile, path)
+  if not ok or type(lines) ~= "table" then return {} end
+  local out, seen = {}, {}
+  for _, line in ipairs(lines) do
+    for repo in line:gmatch('"([%w%-%._]+/[%w%-%._]+)"') do
+      if not seen[repo] then
+        seen[repo] = true
+        out[#out + 1] = repo
+      end
+    end
+  end
+  return out
+end
+
+--- Seed content for a new override file.
+---
+--- Plugin and bundle overrides get the upstream spec's repo strings as
+--- commented stubs. `return {}` on its own is technically enough but says
+--- nothing about *how* an override attaches: lazy.nvim merges by repo
+--- string, and that is the one thing a reader has to know before the file is
+--- useful.
+---@param rel_path string       upstream path, relative to the distribution root
+---@param category string? nil only when the caller ignored map_to_user_path
+---@param upstream_path string  absolute path to the upstream file
+local function seed_content(rel_path, category, upstream_path)
   local name = vim.fn.fnamemodify(rel_path, ":t:r")
   local lines = { "-- Override: " .. rel_path }
+
   if category == "plugin" or category == "bundle" then
+    lines[#lines + 1] = "-- Specs merge with the upstream file by repo string."
     lines[#lines + 1] = "-- See :help noethervim-user-plugins"
-    lines[#lines + 1] = "return {}"
+    lines[#lines + 1] = "return {"
+    local repos = spec_repos(upstream_path)
+    if #repos == 0 then
+      lines[#lines + 1] = "  -- { \"owner/repo\", opts = {} },"
+    else
+      for _, repo in ipairs(repos) do
+        lines[#lines + 1] = ('  -- { "%s", opts = {} },'):format(repo)
+      end
+    end
+    lines[#lines + 1] = "}"
   elseif category == "lsp" then
     lines[#lines + 1] = "-- See :help noethervim-user-lsp"
     lines[#lines + 1] = 'vim.lsp.config("' .. name .. '", {'
@@ -1443,7 +1510,33 @@ local function seed_content(rel_path, category)
   return table.concat(lines, "\n")
 end
 
-function M.override()
+--- Header prepended to a full copy, explaining why it is usually the wrong
+--- shape. Written into the file rather than shown as a toast: whoever opens
+--- this file in six months is the reader who needs it.
+local function copy_header(rel_path)
+  return table.concat({
+    "-- Full copy of " .. rel_path,
+    "--",
+    "-- This shadows every spec in the upstream file, not just the ones you",
+    "-- meant to change: upstream edits to any of them stop reaching you, and",
+    "-- a copied `config = function()` no longer deep-merges the way `opts`",
+    "-- does.  Prefer `:NoetherVim override` (no bang), which seeds a file",
+    "-- holding only the keys you want to touch.",
+    "--",
+    "-- `:checkhealth noethervim` reports when the upstream file moves on.",
+    "",
+  }, "\n")
+end
+
+--- Open the user override file for the current buffer, creating it if it
+--- does not exist.
+---
+--- Everything written here is a starting point, not a format: the baseline
+--- used by the drift check lives in NoetherVim's state directory, so the file
+--- can be rewritten from scratch without breaking anything.
+---
+---@param bang boolean? copy the upstream file wholesale instead of seeding
+function M.override(_, bang)
   local bufpath = vim.api.nvim_buf_get_name(0)
   if bufpath == "" then
     return vim.notify("NoetherVim: current buffer has no file", vim.log.levels.WARN)
@@ -1460,28 +1553,52 @@ function M.override()
     vim.fn.mkdir(parent, "p")
   end
 
-  -- Seed the file with a minimal template if it's new
+  -- Seed the file if it's new. An existing override is never rewritten --
+  -- including under `!`, which would otherwise discard work on the way to
+  -- doing something already discouraged.
+  local base = require("noethervim.util.override_base")
+  local root = vim.fs.normalize(effective_root())
+  local rel  = vim.fs.normalize(bufpath):sub(#root + 2)
+
   local is_new = not vim.uv.fs_stat(user_path)
   if is_new then
-    local root = vim.fs.normalize(effective_root())
-    local rel = vim.fs.normalize(bufpath):sub(#root + 2)
-    local content = seed_content(rel, category)
+    local content
+    if bang then
+      local ok, lines = pcall(vim.fn.readfile, bufpath)
+      content = copy_header(rel) .. (ok and table.concat(lines, "\n") or "") .. "\n"
+    else
+      content = seed_content(rel, category, bufpath)
+    end
+
     local fd = vim.uv.fs_open(user_path, "w", 420) -- 0644
     if fd then
       vim.uv.fs_write(fd, content)
       vim.uv.fs_close(fd)
     end
+  elseif bang then
+    vim.notify("NoetherVim: " .. vim.fn.fnamemodify(user_path, ":~")
+      .. " already exists -- opening it rather than overwriting", vim.log.levels.WARN)
   end
+
+  -- Record what this override is being written against. Re-running the
+  -- command on an existing override re-baselines it, which is how you clear a
+  -- drift warning once you have read the upstream change.
+  base.record(user_path, rel, bufpath)
 
   vim.cmd("vsplit " .. vim.fn.fnameescape(user_path))
   if is_new then
-    vim.notify("NoetherVim: created " .. vim.fn.fnamemodify(user_path, ":~"), vim.log.levels.INFO)
+    vim.notify(("NoetherVim: created %s%s"):format(
+      vim.fn.fnamemodify(user_path, ":~"),
+      bang and " (full copy)" or ""), vim.log.levels.INFO)
+  else
+    vim.notify(("NoetherVim: baseline for %s set to the current %s"):format(
+      vim.fn.fnamemodify(user_path, ":t"), rel), vim.log.levels.INFO)
   end
 end
 
 -- ── Command dispatcher ───────────────────────────────────────────
 
--- One-liner per subcommand.  Surfaced in the no-arg help printout.
+-- One-liner per subcommand. Surfaced in the no-arg help printout.
 local subcommand_descriptions = {
   files             = "Browse NoetherVim source files",
   grep              = "Live grep over NoetherVim source",
@@ -1492,10 +1609,12 @@ local subcommand_descriptions = {
   ["keymap-guide"]  = "Keymap namespace reference buffer",
   status            = "Show which user override files are loaded",
   diff              = "Compare overrides vs distro defaults (keymaps / options / autocmds / module)",
-  override          = "Open the user override file matching the current buffer",
+  override          = "Open the user override file matching the current buffer (! copies it wholesale)",
   ["debug-keymaps"] = "Trace where each keymap was registered",
 }
 
+--- Each entry receives (arg, bang). Only `override` reads the bang so far;
+--- passing it to all of them keeps the dispatcher from growing a special case.
 local subcommands = {
   files             = M.files,
   grep              = M.grep,
@@ -1534,7 +1653,7 @@ function M.setup()
     end
     local fn = subcommands[cmd]
     if fn then
-      fn(args[2])
+      fn(args[2], opts.bang)
     else
       vim.notify("NoetherVim: unknown subcommand '" .. cmd .. "'", vim.log.levels.ERROR)
     end
@@ -1542,6 +1661,7 @@ function M.setup()
 
   local noethervim_cmd_opts = {
     nargs = "*",
+    bang  = true,
     complete = function(_, cmdline)
       -- No `trimempty`: a trailing space has to survive as an empty final
       -- element, otherwise `:NoetherVim diff <Tab>` is indistinguishable

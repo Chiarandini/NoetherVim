@@ -51,7 +51,7 @@ local function walk(dir)
 end
 
 ---Pick a one-line description from the first informational comment in a
----template.  Skips separator lines (`-- ──...`) and blank lines.
+---template. Skips separator lines (`-- ──...`) and blank lines.
 local function extract_description(content)
   for line in content:gmatch("([^\n]*)\n?") do
     local body = line:match("^%-%-%s*(.+)$")
@@ -66,7 +66,7 @@ local function extract_description(content)
 end
 
 ---Translate a path under templates/ to the matching destination under
----<config>/lua/.  Drops the `.example` suffix from the filename.
+---<config>/lua/. Drops the `.example` suffix from the filename.
 ---  templates/user/options.example.lua  ->  user/options.lua
 ---  templates/user/plugins/example.lua   ->  user/plugins/example.lua
 local function dest_relative(rel)
@@ -105,8 +105,8 @@ function M.list(root)
   return items
 end
 
----Stamp `src` -> `dest`, gated by a unified-diff confirmation.  Creates
----the parent directory if missing.  Notifies on completion.
+---Stamp `src` -> `dest`, gated by a unified-diff confirmation. Creates
+---the parent directory if missing. Notifies on completion.
 ---@param src  string
 ---@param dest string
 function M.stamp(src, dest)
@@ -143,6 +143,14 @@ function M.stamp(src, dest)
         return vim.notify("NoetherVim: " .. werr, vim.log.levels.ERROR)
       end
       vim.notify(("NoetherVim: wrote %s"):format(vim.fn.fnamemodify(dest, ":~")), vim.log.levels.INFO)
+
+      -- Open what was just written. The point of stamping a template is to
+      -- edit it, and closing the confirmation returns to whatever was on
+      -- screen before -- the dashboard, most often, since this is a first-run
+      -- step. Scheduled so the modal's window has finished closing.
+      vim.schedule(function()
+        vim.cmd("edit " .. vim.fn.fnameescape(dest))
+      end)
     end,
   })
 end

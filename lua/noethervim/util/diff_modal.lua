@@ -1,5 +1,5 @@
 -- diff_modal.lua -- floating-window y/n confirmation that displays a unified
--- diff body.  Used by bundle_toggle.lua and intended to be reused by future
+-- diff body. Used by bundle_toggle.lua and intended to be reused by future
 -- file-rewriting features (e.g. template stamping).
 
 local M = {}
@@ -20,7 +20,7 @@ function M.confirm(opts)
   -- the prompt sits flush with the diff body.
   if lines[#lines] == "" then table.remove(lines) end
   table.insert(lines, "")
-  table.insert(lines, "[y]es / [n]o   (Esc / q to cancel)")
+  table.insert(lines, "[y]es / <CR>   [n]o   (Esc / q to cancel)")
 
   local buf = vim.api.nvim_create_buf(false, true)
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
@@ -60,7 +60,9 @@ function M.confirm(opts)
     vim.keymap.set("n", key, function() close(accepted) end,
       { buffer = buf, nowait = true, silent = true })
   end
-  map("y", true);  map("Y", true)
+  -- `<CR>` accepts, as the affirmative default a prompt is expected to have.
+  -- Rejection needs a deliberate key, so nothing is bound to it by accident.
+  map("y", true);  map("Y", true);  map("<CR>", true)
   map("n", false); map("N", false)
   map("q", false); map("<Esc>", false)
 

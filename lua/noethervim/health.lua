@@ -293,6 +293,45 @@ function M.check()
     h.ok("Loaded user imperative overrides: " .. table.concat(nv._user_overrides, ", "))
   end
 
+  -- ── Override drift ───────────────────────────────────────────────────
+  -- An override keeps winning after the file it shadows changes, and nothing
+  -- else in the system would say so: an upstream fix simply never arrives,
+  -- and the resulting bug reproduces on one machine only.
+  --
+  -- Only overrides created through `:NoetherVim override` have a recorded
+  -- baseline. One written by hand has nothing to compare against, and
+  -- reporting it would be noise rather than information.
+  do
+    h.start("Override drift")
+    local init = vim.api.nvim_get_runtime_file("lua/noethervim/init.lua", false)[1]
+    local root = init and vim.fn.fnamemodify(init, ":h:h:h")
+
+    if not root then
+      h.info("Skipped -- cannot locate the NoetherVim source directory")
+    else
+      local base    = require("noethervim.util.override_base")
+      local tracked = vim.tbl_count(base.load())
+      local drifted = base.scan(root)
+
+      if tracked == 0 then
+        h.info("No overrides are tracked yet (created by `:NoetherVim override`)")
+      elseif #drifted == 0 then
+        h.ok(("%d tracked override(s), all current"):format(tracked))
+      end
+
+      for _, d in ipairs(drifted) do
+        local name = vim.fn.fnamemodify(d.user_path, ":t:r")
+        if d.current == nil then
+          h.warn(("%s overrides %s, which no longer exists upstream"):format(
+            vim.fn.fnamemodify(d.user_path, ":~"), d.rel))
+        else
+          h.warn(("%s changed since you overrode it -- compare with `:NoetherVim diff %s`, "
+            .. "then re-run `:NoetherVim override` from it to clear this"):format(d.rel, name))
+        end
+      end
+    end
+  end
+
   -- ── Template version ─────────────────────────────────────────────────
   -- Skip in dev mode: the local-testing init.lua is a wrapper, not a
   -- user-template instance, so it intentionally has no version marker.
