@@ -96,10 +96,14 @@ sudo dnf install neovim ripgrep fd-find
 
 </details>
 
+<br>
 Some bundles need tools you install yourself. Optional extras are left out
 here; `:checkhealth noethervim` reports the full picture for the bundles you
 actually enabled, and every bundle file lists its own requirements in its
 header.
+
+<details>
+<summary>Bundles: extra tooling</summary>
 
 <!-- BEGIN GENERATED: bundle-requirements -->
 - `go` needs Go toolchain
@@ -120,6 +124,7 @@ header.
 - `task-runner` needs your project build tool
 - `obsidian` needs a vault path
 <!-- END GENERATED: bundle-requirements -->
+</details>
 
 ## Installation
 
