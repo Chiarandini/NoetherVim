@@ -17,11 +17,14 @@
   --sl-font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
 }
 
-/* Starlight constrains `.hero > img` and `.hero > .hero-html`, but an <img>
- * nested inside the raw-html variant inherits nothing and renders at its
- * natural size, overflowing to the right. The hero is also a wide terminal
- * capture rather than a logo, so it wants more room than the 20rem default
- * that rule caps at. */
+/* Starlight's hero is sized for a logo: the image column is `4fr` and capped
+ * at 25rem, and an <img> inside the raw-html variant inherits neither, so it
+ * rendered at natural size and overflowed.
+ *
+ * The hero here is a wide terminal capture whose whole point is the text
+ * inside it, which is illegible at 400px. Give the image the larger half of
+ * the row and drop the cap. The copy is capped at 50ch regardless, so it
+ * loses nothing. */
 .hero > .hero-html {
   width: 100%;
   max-width: 100%;
@@ -32,6 +35,24 @@
   width: 100%;
   height: auto;
   border-radius: 0.5rem;
+}
+
+@media (min-width: 50rem) {
+  /* The hero sits in the same 45rem container as prose, which is the right
+   * measure for reading and far too narrow for the capture. Widen only the
+   * panel holding the hero; the body below keeps its reading width. */
+  .content-panel:has(.hero) .sl-container {
+    max-width: 85rem;
+  }
+
+  .hero {
+    grid-template-columns: 5fr 7fr;
+  }
+
+  .hero > .hero-html {
+    width: 100%;
+    max-width: none;
+  }
 }
 
 /* Bundle reference, generated from the @requires annotations. Each entry is

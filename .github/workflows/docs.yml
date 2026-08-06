@@ -83,17 +83,49 @@ jobs:
     # token is mapped into `env` here and the step tests that instead.
     env:
       TOKEN: ${{ secrets.DOCS_DISPATCH_TOKEN }}
+
+      # Repos to rebuild. `cs-ghi` is the one that currently holds
+      # `cname: nathanaelsrawley.com`, so it is what actually serves the live
+      # site; `Chiarandini` is the cutover target and is kept warm alongside
+      # it. Dispatching to both means the docs are correct either side of the
+      # switch.
+      #
+      # AFTER THE CUTOVER: drop `cs-ghi/website-nate` from this list. That is
+      # the only change needed here; see DOMAIN-CUTOVER.md.
+      TARGETS: cs-ghi/website-nate Chiarandini/website-nate
+
+      # workflow_dispatch, not repository_dispatch. The latter only runs
+      # workflows sitting on a repo's *default* branch, and cs-ghi's default
+      # is `gh-pages`, which carries no workflows at all, so a
+      # repository_dispatch there would be accepted and then silently do
+      # nothing. workflow_dispatch takes an explicit ref.
+      WORKFLOW: deploy.yml
+      REF: archive
     steps:
       # GITHUB_TOKEN cannot trigger workflows in another repository, so this
-      # needs a PAT with `contents: write` on Chiarandini/website-nate, stored
-      # here as the DOCS_DISPATCH_TOKEN secret. If that secret is absent the
-      # step is skipped rather than failing the run; website-nate also
-      # rebuilds on its own pushes, so docs are never stranded for long.
-      - name: Dispatch to website-nate
+      # needs a PAT with `actions: write` on the target repos, stored here as
+      # DOCS_DISPATCH_TOKEN. Without the secret the step is skipped rather
+      # than failed: the sites also rebuild on their own pushes, so docs are
+      # never stranded for long.
+      - name: Rebuild the sites that serve the docs
         if: env.TOKEN != ''
         run: |
-          curl -fsSL -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer $TOKEN" \
-            https://api.github.com/repos/Chiarandini/website-nate/dispatches \
-            -d '{"event_type":"noethervim-docs"}'
+          ok=0
+          for repo in $TARGETS; do
+            if curl -fsS -X POST \
+                 -H "Accept: application/vnd.github+json" \
+                 -H "Authorization: Bearer $TOKEN" \
+                 "https://api.github.com/repos/$repo/actions/workflows/$WORKFLOW/dispatches" \
+                 -d "{\"ref\":\"$REF\"}"; then
+              echo "dispatched: $repo"
+              ok=$((ok + 1))
+            else
+              echo "FAILED: $repo (token may lack access, or $REF/$WORKFLOW is missing)"
+            fi
+          done
+          # One target succeeding is enough; the other may legitimately be
+          # out of the token's reach. All of them failing is a real problem.
+          if [ "$ok" -eq 0 ]; then
+            echo "no target accepted the dispatch"
+            exit 1
+          fi
