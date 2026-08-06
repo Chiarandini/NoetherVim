@@ -1,0 +1,68 @@
+name: docs
+
+# The docs site lives in docs-site/ but is *served* from the personal site at
+# nathanaelsrawley.com/noethervim/, built there by Chiarandini/website-nate's
+# deploy workflow. This workflow does two things: prove the site still builds
+# from this commit, and tell website-nate to rebuild.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "docs-site/**"
+      - "README.md"
+      - ".github/workflows/docs.yml"
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    name: build docs site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # Astro 7 declares engines.node >=22.12.0.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: docs-site/package-lock.json
+
+      - name: Build
+        working-directory: docs-site
+        run: |
+          npm ci
+          npm run build
+
+      # sync-docs.mjs regenerates src/content/docs/{start,guides} from the
+      # repo's canonical markdown on every build. Those paths are gitignored,
+      # so a clean tree here means the sync did not try to write anywhere it
+      # should not have.
+      - name: No stray generated files
+        run: git diff --exit-code
+
+  notify:
+    name: trigger site rebuild
+    needs: build
+    runs-on: ubuntu-latest
+    # Only the real repo should poke the deploy; forks would fail on the
+    # missing secret anyway.
+    if: github.repository == 'Chiarandini/NoetherVim'
+    # The `secrets` context is not available in a step-level `if`, so the
+    # token is mapped into `env` here and the step tests that instead.
+    env:
+      TOKEN: ${{ secrets.DOCS_DISPATCH_TOKEN }}
+    steps:
+      # GITHUB_TOKEN cannot trigger workflows in another repository, so this
+      # needs a PAT with `contents: write` on Chiarandini/website-nate, stored
+      # here as the DOCS_DISPATCH_TOKEN secret. If that secret is absent the
+      # step is skipped rather than failing the run; website-nate also
+      # rebuilds on its own pushes, so docs are never stranded for long.
+      - name: Dispatch to website-nate
+        if: env.TOKEN != ''
+        run: |
+          curl -fsSL -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $TOKEN" \
+            https://api.github.com/repos/Chiarandini/website-nate/dispatches \
+            -d '{"event_type":"noethervim-docs"}'

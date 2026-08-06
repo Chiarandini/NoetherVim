@@ -1,0 +1,54 @@
+/* NoetherVim docs theme.
+ *
+ * Deliberately does not inherit nathanaelsrawley.com's Angular styling --
+ * that palette is built for an academic PDF library. Shared authorship is
+ * signalled by the footer link, not by the type.
+ *
+ * Accent is a muted violet, picked to sit against terminal screenshots
+ * without competing with them. Revisit once the shipped colorscheme is
+ * settled. */
+
+:root {
+  --sl-color-accent-low: #21193a;
+  --sl-color-accent: #7c5cbf;
+  --sl-color-accent-high: #c9b8f0;
+
+  --sl-font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --sl-font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+}
+
+/* Dark is the default for a terminal-tool audience; light stays available. */
+:root[data-theme='dark'] {
+  --sl-color-bg: #16161d;
+  --sl-color-bg-nav: #1a1a22;
+  --sl-color-bg-sidebar: #1a1a22;
+}
+
+/* Reference pages are generated from doc/noethervim.txt, which is
+ * fixed-width by construction. Reflowing it breaks the ASCII tables, so
+ * those pages opt into monospace body text wholesale. */
+.vimdoc-reference .sl-markdown-content {
+  font-family: var(--sl-font-mono);
+  font-size: 0.875rem;
+}
+
+.vimdoc-reference .sl-markdown-content pre {
+  white-space: pre;
+  overflow-x: auto;
+}
+
+/* Help tags become linkable anchors. Keep them visible but quiet. */
+.vimdoc-tag {
+  color: var(--sl-color-accent-high);
+  scroll-margin-top: 6rem;
+}
+
+/* Build provenance in the footer -- load-bearing while the docs track main
+ * and there is no release to pin to. */
+.build-provenance {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--sl-color-gray-5);
+  font-size: var(--sl-text-xs);
+  color: var(--sl-color-gray-3);
+}

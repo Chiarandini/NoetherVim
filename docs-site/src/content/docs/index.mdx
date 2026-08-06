@@ -1,0 +1,77 @@
+---
+title: NoetherVim
+description: A Neovim distribution with a minimal abstraction layer. LaTeX first-class, opt-in bundles, override anything in plain Lua.
+template: splash
+hero:
+  tagline: A Neovim distribution with a minimal abstraction layer. LaTeX gets the same first-class treatment as LSP and treesitter, and anything can be overridden in plain Lua.
+  # Served straight from public/ rather than src/assets/: Astro's image
+  # pipeline re-encodes GIFs to a still webp, which loses the animation.
+  image:
+    html: |
+      <img src="/noethervim/assets/hero.gif" loading="eager" decoding="async"
+           alt="Dashboard, file picker, a LaTeX buffer, the which-key prefix panel, the keymap diff, and the label picker" />
+  actions:
+    - text: Install
+      link: /noethervim/start/install/
+      icon: right-arrow
+    - text: View on GitHub
+      link: https://github.com/Chiarandini/NoetherVim
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Why another distribution?
+
+[LazyVim](https://www.lazyvim.org/), [AstroNvim](https://docs.astronvim.com/),
+[NvChad](https://nvchad.com/) and [LunarVim](https://www.lunarvim.org/) are all
+mature and actively maintained, and [kickstart.nvim](https://github.com/nvim-lua/kickstart.nvim)
+is the standard launch-pad. **If you want a distribution without strong
+preferences about keymaps or workflows, LazyVim is probably the right pick**:
+it shares the same "use Neovim primitives, no DSL" principle and has the biggest
+community.
+
+NoetherVim exists for the cases where a different set of opinions was wanted.
+
+<CardGrid>
+  <Card title="Native prefix conventions">
+    `<C-w>` for windows, `[`/`]` for directional navigation, `[o`/`]o` for
+    option toggles, `g` for goto and LSP actions. `<Leader>` and
+    `<LocalLeader>` stay separated. Vim muscle memory transfers intact.
+  </Card>
+  <Card title="Inspection is built in">
+    `:NoetherVim diff keymaps` shows every distro keymap your config has
+    overridden; `diff options` does the same for options. "What does this
+    distro actually change?" is a one-command question.
+  </Card>
+  <Card title="LaTeX is first-class">
+    VimTeX, custom Snacks-based label and heading pickers, preamble snippets,
+    BibTeX and Zotero citation tooling, and 1000+ mathematical terms added to
+    the dictionary.
+  </Card>
+  <Card title="Bundles cover non-coding work">
+    `writing/` (obsidian, neorg, markdown), `practice/` (training, hardtime,
+    presentation) and `terminal/` (tmux, remote-dev) are first-class
+    categories alongside `languages/` and `tools/`.
+  </Card>
+</CardGrid>
+
+## Get going
+
+```bash
+mkdir -p ~/.config/nvim
+curl -fLo ~/.config/nvim/init.lua https://raw.githubusercontent.com/Chiarandini/NoetherVim/main/init.lua.example
+nvim
+```
+
+:::caution
+If you already have a Neovim config, [back it up
+first](/noethervim/start/install/). The command above writes to
+`~/.config/nvim/init.lua`.
+:::
+
+Then read [your first session](/noethervim/start/first-session/), or jump
+straight to the [onboarding guide for
+mathematicians](/noethervim/start/mathematicians/) if that is what brought you
+here.

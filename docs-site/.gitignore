@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.astro/
+public/assets/
+# Synced from the repo's canonical markdown by scripts/sync-docs.mjs.
+# Never edit these by hand -- edit the upstream file and re-run.
+src/content/docs/start/
+src/content/docs/guides/
