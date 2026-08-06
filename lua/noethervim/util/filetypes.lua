@@ -1,5 +1,5 @@
 --- Filetype lists the distro keys behaviour off, with the `lua/user/config.lua`
---- extensions already folded in.  Requiring this module is the only supported
+--- extensions already folded in. Requiring this module is the only supported
 --- way to read them; the tables are built once at load time.
 
 local M = {}
@@ -25,11 +25,11 @@ M.non_code = {
   dapui_stacks = true, dapui_watches = true, dapui_console = true,
 }
 
---- Filetypes where a bare `q` closes the window.  A list rather than a set,
+--- Filetypes where a bare `q` closes the window. A list rather than a set,
 --- because it is handed straight to an autocmd `pattern`.
 ---
 --- Editable filetypes are deliberately absent: `q` would shadow macro
---- recording in a buffer you might actually type into.  `qf` is handled by
+--- recording in a buffer you might actually type into. `qf` is handled by
 --- ftplugin/qf.lua instead.
 M.q_close = {
   "help", "man", "lspinfo", "checkhealth",

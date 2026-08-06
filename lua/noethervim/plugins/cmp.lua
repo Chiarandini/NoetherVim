@@ -27,7 +27,7 @@ return {
 
 			-- ── Keymaps ────────────────────────────────────────────────────────
 			-- Tab philosophy: set completion_style in lua/user/config.lua to
-			-- "snippet" (default), "supertab", or "navigate".  See
+			-- "snippet" (default), "supertab", or "navigate". See
 			-- :help noethervim-completion-style for behaviour and AI-completion notes.
 			keymap = (function()
 				local ok_user, user = pcall(require, "user.config")
@@ -50,20 +50,20 @@ return {
 						-- snippet_forward runs FIRST so an expandable LuaSnip
 						-- trigger at the cursor (e.g. `:defn` in tex) wins over
 						-- whatever the menu is currently showing (vimtex, lsp,
-						-- buffer words).  Without this, Tab accepts the menu's
+						-- buffer words). Without this, Tab accepts the menu's
 						-- first match and the snippet never gets a chance.
 						"snippet_forward",
 						function(cmp)
 							if not cmp.is_visible() then return end
 							-- blink's select_and_accept / accept schedule the
 							-- text-edit asynchronously and expose a `callback`
-							-- option that fires AFTER the edit lands.  Using
+							-- option that fires AFTER the edit lands. Using
 							-- vim.schedule for the trailing space races with
 							-- that internal schedule -- the space gets fed
 							-- first, the accept then replaces the typed keyword
 							-- *plus* the inserted space at the wrong cursor
 							-- position, producing "pro progress" instead of
-							-- "progress ".  Hand the space to the post-accept
+							-- "progress ". Hand the space to the post-accept
 							-- callback so order is guaranteed.
 							local function append_space()
 								vim.api.nvim_feedkeys(" ", "n", false)
@@ -77,7 +77,7 @@ return {
 					}
 				elseif style == "navigate" then
 					-- Tab cycles forward through the menu without accepting; an
-					-- explicit C-y or <CR> commits.  S-Tab cycles backward (already
+					-- explicit C-y or <CR> commits. S-Tab cycles backward (already
 					-- shadowed below to drop snippet_backward in this style).
 					base["<Tab>"]   = { "select_next", "snippet_forward",  "fallback" }
 					base["<S-Tab>"] = { "select_prev", "snippet_backward", "fallback" }
@@ -165,10 +165,10 @@ return {
 					snippets = {
 						max_items = 8, -- large LuaSnip set; cap what reaches the renderer
 						-- Hide LuaSnip regex-trigger (regTrig) snippets from the
-						-- menu.  blink's adapter sets `insertText = snip.trigger`
+						-- menu. blink's adapter sets `insertText = snip.trigger`
 						-- on these items, so the regex pattern itself gets pasted
 						-- when the user accepts -- e.g. `:defn` would yield
-						-- `:defn%s?([:%w-...])` in the buffer.  They stay
+						-- `:defn%s?([:%w-...])` in the buffer. They stay
 						-- expandable: typing the trigger and pressing Tab routes
 						-- through snippet_forward -> luasnip's expand_or_jump.
 						transform_items = function(_, items)
@@ -293,7 +293,7 @@ return {
 
 			-- Monkey-patch undo_preview: when the cursor has moved since the
 			-- preview was applied (user typed/deleted), commit the preview
-			-- instead of reverting it.  Without this, the cursor-compensation
+			-- instead of reverting it. Without this, the cursor-compensation
 			-- in the undo text-edit sweeps up the user's keystrokes and
 			-- corrupts the cmdline text.
 			local cmp_list    = require("blink.cmp.completion.list")
@@ -349,7 +349,7 @@ return {
 			vim.api.nvim_create_autocmd({ "BufEnter", "FileType" },
 				{ group = grp, callback = set_keyword_trigger })
 			-- In cmdline mode, always enable show_on_keyword so typing command names
-			-- triggers completions.  (Our conservative show_on_keyword=false for tex
+			-- triggers completions. (Our conservative show_on_keyword=false for tex
 			-- buffers is a buffer-level setting; we don't want it to bleed into ':'.)
 			-- On leave, set_keyword_trigger restores the per-buffer value.
 			vim.api.nvim_create_autocmd("CmdlineEnter", {

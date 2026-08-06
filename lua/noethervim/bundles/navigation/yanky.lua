@@ -26,12 +26,12 @@
 --                      picker yanky discovers; Snacks is supported).
 --
 -- Note on <C-p> / <C-n>: vanilla Vim binds these in normal mode to
--- "previous/next line" (rarely used; j / k cover this).  Yanky overrides
+-- "previous/next line" (rarely used; j / k cover this). Yanky overrides
 -- them only in normal mode, and they only fire usefully right after a
 -- paste -- elsewhere they behave like before.
 --
 -- Storage: the ring is persisted in shada by default, so yank history
--- survives restarts.  To make it session-only, override `ring.storage =
+-- survives restarts. To make it session-only, override `ring.storage =
 -- "memory"` in lua/user/plugins/yanky.lua.
 
 local SearchLeader = require("noethervim.util").search_leader

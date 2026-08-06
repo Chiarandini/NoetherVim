@@ -12,7 +12,7 @@ local _busy_overrides = {}
 --
 -- Naming convention: a "_left" glyph is an OPENING endcap whose colored
 -- (filled) half sits on the right side of its cell, so it transitions
--- the section bg INTO the content that follows.  A "_right" glyph is a
+-- the section bg INTO the content that follows. A "_right" glyph is a
 -- CLOSING endcap whose colored half sits on the left side, transitioning
 -- the section bg OUT into the surrounding bar.
 local function utf8(b1, b2, b3) return string.char(b1, b2, b3) end

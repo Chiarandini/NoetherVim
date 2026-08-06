@@ -19,7 +19,7 @@ end
 -- ──────────────────────────────────────────────────────────────
 --  Snacks dashboard header colour
 --  Set a fallback immediately so the header has colour even before
---  the colorscheme loads.  Then re-derive from DiagnosticWarn on
+--  the colorscheme loads. Then re-derive from DiagnosticWarn on
 --  every ColorScheme event (fires synchronously before VimEnter,
 --  so the dashboard renders with correct colours from the start).
 --  (Footer is handled in snacks.lua via a custom highlight group.)
@@ -91,7 +91,7 @@ vim.api.nvim_create_autocmd("ColorScheme", {
 -- ──────────────────────────────────────────────────────────────
 --  Blink.cmp completion highlights
 --  Derive all colors from the active colorscheme so the completion
---  menu adapts to any theme.  Re-applied on ColorScheme changes.
+--  menu adapts to any theme. Re-applied on ColorScheme changes.
 -- ──────────────────────────────────────────────────────────────
 
 local function apply_blink_highlights()
@@ -156,7 +156,7 @@ vim.api.nvim_create_autocmd("ColorScheme", {
 --  Many colorschemes (gruvbox in particular -- it explicitly does
 --  `LspInlayHint = { link = "comment" }`) render virtual text in the
 --  same dim grey as surrounding comments, so inferred types and inlay
---  parameter names disappear visually.  We force every "informational
+--  parameter names disappear visually. We force every "informational
 --  virtual text" group to a hand-picked accent that's clearly distinct
 --  from Comment in the active theme:
 --    LspInlayHint(.Type|.Parameter)   -- typed inline LSP hints
@@ -165,18 +165,18 @@ vim.api.nvim_create_autocmd("ColorScheme", {
 --
 --  Gruvbox uses the palette's bright orange #fe8019 -- it's loud
 --  enough not to be confused with grey comments while still belonging
---  in the earthy palette.  Other schemes fall back to DiagnosticHint
+--  in the earthy palette. Other schemes fall back to DiagnosticHint
 --  (intentionally distinct from Comment in nearly every modern theme).
 -- ──────────────────────────────────────────────────────────────
 
 local function pick_hint_fg()
   local cs = vim.g.colors_name or ""
   if cs:match("gruvbox") then
-    -- A calm muted teal -- gruvbox-material's "aqua" tone.  Sits between
+    -- A calm muted teal -- gruvbox-material's "aqua" tone. Sits between
     -- bright_aqua (#8ec07c, used by DiagnosticHint -- too neon, blends with
     -- hints) and bright_blue (#83a598, used by DiagnosticInfo -- would conflict
-    -- with info-severity virtual text).  Reads as "informational, distinct
-    -- from code" without competing with diagnostics.  Light variant uses
+    -- with info-severity virtual text). Reads as "informational, distinct
+    -- from code" without competing with diagnostics. Light variant uses
     -- gruvbox's faded teal so the contrast pops the same way.
     return vim.o.background == "light" and "#427b58" or "#7daea3"
   end
@@ -185,7 +185,7 @@ local function pick_hint_fg()
   return get_hl_fg("NonText") or fg or "#83a598"
 end
 
--- Pick a "just changed" accent for nvim-dap-virtual-text.  This is the
+-- Pick a "just changed" accent for nvim-dap-virtual-text. This is the
 -- transient flash that fires when a variable's value updates in the
 -- debugger -- it should be loud enough to grab the eye for one redraw,
 -- then revert to the calm hint colour on the next step.
@@ -223,7 +223,7 @@ local function apply_hint_highlights()
   -- the flash differs from the steady-state inlay shape, not just colour.
   vim.api.nvim_set_hl(0, "NvimDapVirtualTextChanged",
     { fg = pick_changed_fg(), bold = true })
-  -- Errors during debug variable resolution stay theme-red.  Linking
+  -- Errors during debug variable resolution stay theme-red. Linking
   -- (rather than setting fg directly) means colorscheme changes flow
   -- through automatically.
   vim.api.nvim_set_hl(0, "NvimDapVirtualTextError",
@@ -238,12 +238,12 @@ vim.api.nvim_create_autocmd("ColorScheme", {
 })
 
 -- Diagnosis helper: `:NoetherVimHintColors` prints the resolved fg of
--- every group we touch and how it compares to Comment.  Run it if the
+-- every group we touch and how it compares to Comment. Run it if the
 -- inlay hints still look like comments -- the answer reveals whether
 -- the override didn't take, or whether the source is a different
 -- highlight group than we override.
 -- :NoetherVimHighlightUnderCursor -- print every highlight (extmark, syntax,
--- treesitter, semantic-token) covering the position under the cursor.  Run
+-- treesitter, semantic-token) covering the position under the cursor. Run
 -- this with the cursor sitting on the offending grey blob: the output names
 -- the exact group, which we can then add to `apply_hint_highlights` above.
 vim.api.nvim_create_user_command("NoetherVimHighlightUnderCursor", function()

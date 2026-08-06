@@ -62,8 +62,8 @@ function M.find_active_import(lines, module_path)
   return nil
 end
 
----Locate the closing `}` of the first `spec = { ... }` table.  Walks lines
----with a brace counter starting at the `spec = {` opener.  Returns the line
+---Locate the closing `}` of the first `spec = { ... }` table. Walks lines
+---with a brace counter starting at the `spec = {` opener. Returns the line
 ---index of the closing brace, or nil if the structure is unrecognizable.
 ---@param lines string[]
 ---@return integer | nil
@@ -160,7 +160,7 @@ function M.unified_diff(before, after, path)
 end
 
 ---Split file content into lines, dropping the trailing empty element produced
----by a final `\n`.  Returns the lines and a flag indicating whether the
+---by a final `\n`. Returns the lines and a flag indicating whether the
 ---original ended with a newline so we can preserve it on write-back.
 local function split_lines(content)
   local lines = vim.split(content, "\n", { plain = true })
@@ -178,8 +178,8 @@ local function join_lines(lines, trailing_nl)
   return out
 end
 
----Try to enable a bundle.  Runs the ladder: uncomment-in-place ->
----spec-block insert -> fallback to copy.  Shows a diff modal for the first
+---Try to enable a bundle. Runs the ladder: uncomment-in-place ->
+---spec-block insert -> fallback to copy. Shows a diff modal for the first
 ---two; the fallback writes to registers and notifies.
 ---@param category string
 ---@param name     string

@@ -41,7 +41,7 @@ end
 
 -- ── Builder state ───────────────────────────────────────────────
 -- Accumulates lines, extmark highlights, and per-line jump data
--- for the guide buffer.  Reset before each render.
+-- for the guide buffer. Reset before each render.
 
 local B = {}
 
@@ -89,7 +89,7 @@ end
 
 --- Convert a resolved lhs to human-readable display text.
 --- keytrans converts special keys to notation (<Space>, <C-W>, etc.)
---- but also escapes literal "<" as "<lt>".  Undo that for display.
+--- but also escapes literal "<" as "<lt>". Undo that for display.
 local function display_lhs(lhs)
   return vim.fn.keytrans(lhs):gsub("<lt>", "<")
 end
@@ -141,7 +141,7 @@ local function prefix_match(mode_kms, pfx, excludes)
   return out
 end
 
---- Pair up [ / ] keymaps.  Returns (navigation_pairs, option_toggle_pairs).
+--- Pair up [ / ] keymaps. Returns (navigation_pairs, option_toggle_pairs).
 local function bracket_pairs(mode_kms)
   local open, close = {}, {}
   for lhs, d in pairs(mode_kms) do

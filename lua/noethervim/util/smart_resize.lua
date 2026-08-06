@@ -41,7 +41,7 @@ end
 --- True when there's nothing to resize against: either the current
 --- tabpage has at most one non-floating window, or the current window
 --- is itself a float (win_move_separator/statusline don't apply to
---- floats).  Lets callers fall back to plain cursor motion.
+--- floats). Lets callers fall back to plain cursor motion.
 function M.is_solo()
   if vim.api.nvim_win_get_config(0).relative ~= "" then
     return true

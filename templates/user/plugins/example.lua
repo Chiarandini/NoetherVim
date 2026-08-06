@@ -18,12 +18,12 @@
 --
 -- ── Overriding existing plugin configuration ─────────────────────────────────
 --
--- Use the EXACT same plugin repo string as NoetherVim uses.  Your spec is
--- merged with the distro's and applied last.  Three rules cover every case:
+-- Use the EXACT same plugin repo string as NoetherVim uses. Your spec is
+-- merged with the distro's and applied last. Three rules cover every case:
 --
---   1. `opts` tables merge key by key.  Name only the keys you want to
+--   1. `opts` tables merge key by key. Name only the keys you want to
 --      change; the rest of the plugin's settings stay as they were.
---   2. Lists inside `opts` are REPLACED, not appended.  To add to one, use
+--   2. Lists inside `opts` are REPLACED, not appended. To add to one, use
 --      the function form of `opts` shown below.
 --   3. `keys`, `cmd`, `event` and `ft` always append, so adding a keymap
 --      never removes an existing one.
@@ -44,7 +44,7 @@
 -- Customize completion keybindings (see :help noethervim-completion-custom).
 -- Pick the overall Tab philosophy with `completion_style` in
 -- lua/user/config.lua; use the specs below to change individual keys on top
--- of it.  Keys you do not name keep whatever that style gave them.
+-- of it. Keys you do not name keep whatever that style gave them.
 --
 -- Tab to accept, S-Tab for snippet backward:
 --   { "saghen/blink.cmp", opts = { keymap = {
@@ -65,7 +65,7 @@
 --       ["<Tab>"] = { "accept", "fallback" },
 --   } } } }
 --
--- Choose exactly which LSP servers Mason installs.  This is a list (rule 2),
+-- Choose exactly which LSP servers Mason installs. This is a list (rule 2),
 -- so it REPLACES the defaults and anything your enabled bundles added, which
 -- is what you want when you would rather not download servers you never use:
 --   { "neovim/nvim-lspconfig",

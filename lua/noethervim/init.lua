@@ -3,7 +3,7 @@
 --- Runs after lazy.nvim has resolved all specs and loaded eager plugins.
 ---
 --- User override files in lua/user/ are automatically loaded after each
---- core module.  Set NOETHERVIM_NO_USER=1 or vim.g.noethervim_no_user
+--- core module. Set NOETHERVIM_NO_USER=1 or vim.g.noethervim_no_user
 --- to skip all user overrides (useful for debugging).
 ---
 --- See init.lua.example for the recommended user setup pattern.
@@ -125,8 +125,8 @@ function M.setup()
   local keymap_registry = require("noethervim.util.keymap_registry")
   keymap_registry.install()
 
-  --- Attempt to load a user override module.  Silent no-op if the file
-  --- doesn't exist.  Tracks successfully loaded modules for health/status.
+  --- Attempt to load a user override module. Silent no-op if the file
+  --- doesn't exist. Tracks successfully loaded modules for health/status.
   local function user(mod)
     if not load_user then return end
     local ok, err = pcall(require, "user." .. mod)
@@ -317,7 +317,7 @@ function M.setup()
     callback = function()
       require("noethervim.inspect").setup()
       -- lazy.nvim generates helptags for plugins it manages, but in
-      -- dev mode (rtp:prepend) it may not.  Ensure :help noethervim
+      -- dev mode (rtp:prepend) it may not. Ensure :help noethervim
       -- works.
       local doc_dir = vim.api.nvim_get_runtime_file("doc/noethervim.txt", false)[1]
       if doc_dir then

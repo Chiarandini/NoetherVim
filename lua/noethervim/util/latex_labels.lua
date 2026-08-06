@@ -2,7 +2,7 @@
 --
 -- Label navigation and completion documentation for the latex bundle,
 -- built on the label cache maintained by snacks-latex-labels /
--- latex-nav-core.  Consumed by three wirings in the latex bundle:
+-- latex-nav-core. Consumed by three wirings in the latex bundle:
 --
 --   gd        goto label definition (cache first, LSP fallback)
 --   'tagfunc' <C-]> / <C-w>] / :tag jump to labels via the tag stack
@@ -42,7 +42,7 @@ end
 
 ---Look up `label` in the label caches: the current project first (root
 ---detection climbs `subfiles` chains, so sub-books resolve to their
----top-level root), then every other cached project.  The returned entry's
+---top-level root), then every other cached project. The returned entry's
 ---line is re-verified against the file so a stale cache still lands on
 ---the label.
 ---Cache strategy is hardcoded to "global" -- update if you override
@@ -131,10 +131,10 @@ local function read_lines(filepath, first, last)
   return lines
 end
 
----Extract the environment enclosing `lnum` as a source snippet.  The label
+---Extract the environment enclosing `lnum` as a source snippet. The label
 ---line either is the \begin line itself (\begin{thm}{Title}{label}) or
 ---sits a few lines inside the environment (\label{eq:x} in an align
----block).  Falls back to a few raw lines when no environment is found
+---block). Falls back to a few raw lines when no environment is found
 ---(e.g. a \label right after \section{...}).
 ---@param filepath string
 ---@param lnum integer
@@ -209,7 +209,7 @@ local function include_line(parent, child)
 end
 
 ---Chain of files from the top-level root down to `filepath`, following
----\documentclass[..]{subfiles} upward.  Includes `filepath` itself as the
+---\documentclass[..]{subfiles} upward. Includes `filepath` itself as the
 ---last element.
 ---@param filepath string
 ---@return string[]
@@ -234,7 +234,7 @@ end
 ---@return string|nil
 function M.documentation(entry)
   -- Heading chain: walk root -> ... -> entry file, collecting headings
-  -- above each include hand-off, then above the label itself.  One stack
+  -- above each include hand-off, then above the label itself. One stack
   -- keyed by level reproduces document order across files.
   local chain = {}
   local files = root_chain(entry.filename)

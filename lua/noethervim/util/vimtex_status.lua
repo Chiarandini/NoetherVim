@@ -1,7 +1,7 @@
 -- VimTeX statusline helpers.
 --
 -- Shared between the heirline `VimtexCompilerStatus` and `PdfFileSize`
--- components.  Resolves the most relevant vimtex state for a buffer
+-- components. Resolves the most relevant vimtex state for a buffer
 -- (handling input files and subfile parent/child split), exposes the
 -- correct PDF path for that state, and persists a single per-project
 -- baseline (last successful PDF size + compile duration) so the
@@ -13,7 +13,7 @@ local M = {}
 
 -- ── Baseline cache ────────────────────────────────────────────────────────
 -- One record per absolute main-tex path, overwritten on each
--- VimtexEventCompileSuccess.  We keep only the most recent compile --
+-- VimtexEventCompileSuccess. We keep only the most recent compile --
 -- older sizes are dead weight.
 
 local cache_dir  = vim.fn.stdpath("state") .. "/noethervim"
@@ -82,8 +82,8 @@ local function state_status(state)
 end
 
 -- Walk every known vimtex state and return the first whose source
--- list contains `path`.  Used as a last-resort fallback for orphan
--- input files that have no main-file marker.  vimtex returns sources
+-- list contains `path`. Used as a last-resort fallback for orphan
+-- input files that have no main-file marker. vimtex returns sources
 -- as paths relative to `state.root` (autoload/vimtex/state/class.vim
 -- gather_sources), so we resolve them to absolute before comparing.
 local function find_owner(path)
@@ -115,7 +115,7 @@ local function find_owner(path)
   return nil
 end
 
----Return the {parent, sub, active} states for a buffer.  Any may be nil.
+---Return the {parent, sub, active} states for a buffer. Any may be nil.
 ---`active` is whichever vimtex currently routes `b:vimtex` to.
 ---@param bufnr integer
 ---@return { parent: table | nil, sub: table | nil, active: table | nil }
@@ -133,7 +133,7 @@ function M.states(bufnr)
     }
   end
 
-  -- No subfile split.  If the active state has no compiler attached
+  -- No subfile split. If the active state has no compiler attached
   -- (orphan input file with its own auto-created state), look for a
   -- project that actually owns this file.
   if not state_has_compiler(active) then
@@ -261,8 +261,8 @@ end
 
 -- ── Progress label ────────────────────────────────────────────────────────
 
----Human label for a state currently compiling.  Returns "compiling…",
----"compiling 42%", or "compiling 102% — almost done".  Percentage is
+---Human label for a state currently compiling. Returns "compiling…",
+---"compiling 42%", or "compiling 102% — almost done". Percentage is
 ---clamped to 95 until success fires, so a stalled bar doesn't sit at 99.
 ---Returns a raw string with literal `%`; statusline consumers must
 ---escape it via `escape_percent` because vim's statusline syntax

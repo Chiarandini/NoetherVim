@@ -17,7 +17,7 @@
 -- Provides nvim-neorg for structured note-taking and personal wiki.
 -- Default workspace: ~/neorg/  (override in lua/user/plugins/)
 --
--- Key bindings.  These open or close wiki buffers rather than searching, so
+-- Key bindings. These open or close wiki buffers rather than searching, so
 -- they live under <Leader> (global actions), not the SearchLeader namespace.
 --   <Leader>ww  -- open Neorg wiki index
 --   <Leader>wt  -- open wiki in new tab

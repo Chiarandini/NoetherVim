@@ -219,9 +219,9 @@ M.FileType = {
 
 -- ── Filetype profile marker ──────────────────────────────────────────
 -- Which of the two FileType profiles (see noethervim-filetype-profiles)
--- claimed this buffer.  Off by default: enable with
+-- claimed this buffer. Off by default: enable with
 --   statusline = { filetype_profile = true }
--- in lua/user/config.lua.  Clicking reports what the profile actually
+-- in lua/user/config.lua. Clicking reports what the profile actually
 -- turned on, read from the live window so per-buffer toggles ([ow, ]os,
 -- ...) show up too.
 
@@ -299,12 +299,12 @@ M.TerminalName = {
 -- bufferline doesn't surface it, yet :qa! will silently drop the changes.
 -- This component walks every loaded, listed, real-file buffer and counts
 -- the ones that are (a) modified and (b) not visible in any window of
--- any tabpage.  A buffer that is still open in another split or tab is
--- explicitly excluded.  Cleared automatically as soon as the buffer is
+-- any tabpage. A buffer that is still open in another split or tab is
+-- explicitly excluded. Cleared automatically as soon as the buffer is
 -- saved, reopened, or wiped.
 local function count_hidden_modified()
   -- nvim_list_wins() returns ALL windows across every tabpage (excluding
-  -- floating windows), which is exactly what we want here.  We still
+  -- floating windows), which is exactly what we want here. We still
   -- iterate explicit tabpages too as a belt-and-braces defense against
   -- weird edge cases where nvim_list_wins() filters something out.
   local visible = {}
@@ -377,7 +377,7 @@ local function pick_hidden_modified()
     title = "Hidden Modified Buffers",
     items = items,
     -- The on-disk file is stale (buffer is modified-but-not-written), so
-    -- the default "file" previewer would show outdated content.  Render
+    -- the default "file" previewer would show outdated content. Render
     -- the live buffer contents into the preview pane instead.
     preview = function(pctx)
       local item = pctx.item
@@ -387,7 +387,7 @@ local function pick_hidden_modified()
       local bufnr = item.bufnr
       local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
       -- Snacks locks preview buffers as nomodifiable to keep them from
-      -- being edited.  Flip it on, paint, flip it back.
+      -- being edited. Flip it on, paint, flip it back.
       local was_modifiable = vim.bo[pctx.buf].modifiable
       vim.bo[pctx.buf].modifiable = true
       vim.api.nvim_buf_set_lines(pctx.buf, 0, -1, false, lines)
@@ -405,7 +405,7 @@ local function pick_hidden_modified()
     confirm = function(picker, item)
       picker:close()
       if not item then return end
-      -- Switch to the live buffer (the modified one).  `vim.cmd.edit`
+      -- Switch to the live buffer (the modified one). `vim.cmd.edit`
       -- on the file would re-read from disk and silently drop the
       -- unsaved changes -- we want the in-memory copy.
       if vim.api.nvim_buf_is_valid(item.bufnr) then
@@ -432,7 +432,7 @@ M.HiddenModified = {
   -- ctx.with_mode_bg embeds the active mode's statusline bg (blue in
   -- insert, grey otherwise) into every render, so the chip blends with
   -- the bottom bar even though heirline's parent->child bg merge doesn't
-  -- always reach this far.  See `ctx.mode_bg` for the rationale.
+  -- always reach this far. See `ctx.mode_bg` for the rationale.
   hl = ctx.with_mode_bg(function()
     local fg = utils.get_highlight("DiagnosticWarn").fg or ctx.colors.orange or "#fabd2f"
     return { fg = fg, italic = true }

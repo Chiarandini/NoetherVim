@@ -50,7 +50,7 @@ config = function(_, opts)
 	require("luasnip.loaders.from_lua").lazy_load({ paths = vim.fn.stdpath("config") .. "/LuaSnip/" })
 
 	-- Snippet files reach the picker from three places: your own config, plugins
-	-- that ship snippets, and `dev` checkouts of those plugins.  Ownership comes
+	-- that ship snippets, and `dev` checkouts of those plugins. Ownership comes
 	-- from lazy.nvim's registry rather than a path prefix, because a prefix test
 	-- gets it wrong in both directions: the dev config symlinks LuaSnip/ into
 	-- ~/.config/nvim, so your own files resolve outside stdpath("config"), while
@@ -58,7 +58,7 @@ config = function(_, opts)
 	-- fs_realpath, not resolve(): it collapses symlinks *and* normalises case.
 	-- Case matters because lazy names a dev directory after the repo string
 	-- ("Chiarandini/NoetherVim-Tex" -> .../NoetherVim-Tex) while the checkout on
-	-- disk may be spelled differently (.../noethervim-tex).  A case-insensitive
+	-- disk may be spelled differently (.../noethervim-tex). A case-insensitive
 	-- filesystem happily opens both, but a string compare of the two fails.
 	local function canonical(path)
 		return vim.uv.fs_realpath(path) or vim.fs.normalize(path)
@@ -112,10 +112,10 @@ config = function(_, opts)
 		-- opts, so format/edit never ran (nor did LuaSnip's own $CONFIG shortening).
 		require("luasnip.loaders").edit_snippet_files({
 			-- Every path stays listed: reading the snippets a plugin ships is half
-			-- of what this picker is for.  Label as owner + filename: the filetype
+			-- of what this picker is for. Label as owner + filename: the filetype
 			-- was chosen a prompt ago, so the LuaSnip/<ft>/ segment every entry
 			-- shares carries nothing, and the directory reduces to an identity that
-			-- lazy already knows.  Filenames alone would collide (your preamble.lua
+			-- lazy already knows. Filenames alone would collide (your preamble.lua
 			-- and the one a plugin ships), hence the owner.
 			format = function(path, _)
 				local owner = owning_plugin(path)
@@ -129,9 +129,9 @@ config = function(_, opts)
 			end,
 			-- Without this, a filetype you have no snippets for is a dead end:
 			-- LuaSnip asks which filetype, then returns silently because it has
-			-- nothing to offer.  Worse, a filetype where only a plugin ships
+			-- nothing to offer. Worse, a filetype where only a plugin ships
 			-- snippets skips the second prompt entirely and drops you into a
-			-- read-only file with no route to your own.  Offer that route.
+			-- read-only file with no route to your own. Offer that route.
 			extend = function(ft, existing)
 				-- Belt and braces against a filetype that cannot name a file: an
 				-- empty one would propose creating a file called ".lua".
@@ -175,7 +175,7 @@ config = function(_, opts)
 				-- lazy_load() scanned the directory once, so a filetype LuaSnip has
 				-- never seen stays unregistered no matter how many times the new
 				-- file is written: its BufWritePost reload only refreshes files
-				-- already in the cache.  Re-scan after the first write, so the
+				-- already in the cache. Re-scan after the first write, so the
 				-- snippets work in this session instead of after a restart.
 				if created then
 					vim.api.nvim_create_autocmd("BufWritePost", {

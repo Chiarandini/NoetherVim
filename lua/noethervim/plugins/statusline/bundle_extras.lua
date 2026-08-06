@@ -30,12 +30,12 @@ M.DAPMessages = {
 --
 -- Never call vimtex#qf#inquire from statusline code: it is not a query --
 -- it re-parses the compile log and REBUILDS the quickfix list (~36
--- `setlocal errorformat` calls + `caddfile`) on every render.  That
+-- `setlocal errorformat` calls + `caddfile`) on every render. That
 -- storms OptionSet/FileType, which redraws plugins (treesitter-context
 -- blink), which re-renders the statusline: a self-sustaining loop that
--- persists after the compiler stops, because status stays 3.  The
+-- persists after the compiler stops, because status stays 3. The
 -- rebuild also aborts in statusline context (textlock), so the count
--- never rendered anyway.  vimtex's own compile callback already ran
+-- never rendered anyway. vimtex's own compile callback already ran
 -- inquire and filled the list; just read it.
 local qf_cache = { id = -1, tick = -1, count = 0 }
 local function vimtex_qf_error_count()
@@ -128,10 +128,10 @@ M.VimtexCompilerStatus = {
 -- PDF file size.
 --
 -- Resolves the PDF through the picked vimtex state (so it works in input
--- files and respects `out_dir` / custom `-jobname`).  Reports a "stale"
+-- files and respects `out_dir` / custom `-jobname`). Reports a "stale"
 -- hint when the source tex is newer than the PDF and no compile is
 -- running.
--- Filetypes where a PDF readout is meaningful.  Limiting to TeX-family
+-- Filetypes where a PDF readout is meaningful. Limiting to TeX-family
 -- buffers prevents "no pdf" from leaking into python/lua/etc. just because
 -- vim.g.heirline_pdfsize_show happens to be true (e.g. the toggle was
 -- flipped on while editing a previous tex file).

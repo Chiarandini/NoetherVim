@@ -1,8 +1,8 @@
 --- Keymap source attribution and navigation.
 ---
 --- Answers two questions about a `(mode, resolved_lhs)` pair:
----   1. Where was it defined?  (`M.owner_file`, `M.origin`)
----   2. Take me there.         (`M.jump`)
+---   1. Where was it defined? (`M.owner_file`, `M.origin`)
+---   2. Take me there. (`M.jump`)
 ---
 --- Attribution is driven by four data sources, in priority order:
 ---
@@ -28,7 +28,7 @@ local M = {}
 
 --- Compare two keymap snapshots for equality.
 --- Callback functions from nvim_get_keymap get new references on each
---- call, so identity comparison fails for Neovim defaults.  When both
+--- call, so identity comparison fails for Neovim defaults. When both
 --- have callbacks and the same rhs, fall back to comparing `desc`: two
 --- distinct Lua mappings on the same lhs (e.g. Neovim's `:cnext` default
 --- versus NoetherVim's quickfix/Trouble wrapper) are otherwise

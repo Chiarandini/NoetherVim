@@ -78,15 +78,15 @@ vim.keymap.set("n", "<c-l>", "<c-w>l", { desc = "window right" })
 vim.keymap.set("n", "<c-w><a-h>", "<cmd>tabm -<cr>", { desc = "move tab left" })
 vim.keymap.set("n", "<c-w><a-l>", "<cmd>tabm +<cr>", { desc = "move tab right" })
 vim.keymap.set("n", "<c-w><c-q>", "<cmd>copen<cr>",  { desc = "open quickfix" })
--- Undo tree: mbbill/undotree.  Selecting a node shows the diff in a
+-- Undo tree: mbbill/undotree. Selecting a node shows the diff in a
 -- side pane WITHOUT applying it; press <CR> to actually move the
--- buffer to that state.  This is the non-destructive counterpart to
+-- buffer to that state. This is the non-destructive counterpart to
 -- Neovim's builtin nvim.undotree, which applies state on every
 -- CursorMoved.
 vim.keymap.set("n", "<c-w><c-u>", "<cmd>UndotreeToggle<cr>", { desc = "toggle undo tree" })
 
 -- Toggle a 12-line terminal along the bottom, reusing the same terminal
--- buffer every time rather than stacking a new one per press.  This
+-- buffer every time rather than stacking a new one per press. This
 -- shadows Vim's builtin <C-w>t (go to the top window); `1<C-w>w` does
 -- that instead.
 local term_buf
@@ -109,12 +109,12 @@ vim.keymap.set("n", "<c-w>t", function()
   end
 end, { desc = "toggle terminal" })
 
--- <Esc><Esc> leaves terminal mode.  A single <Esc> still reaches the
+-- <Esc><Esc> leaves terminal mode. A single <Esc> still reaches the
 -- program, and autocmds.lua shortens 'timeoutlen' while terminal mode is
 -- active so it is not held back for the full default second.
 vim.keymap.set("t", "<esc><esc>", "<c-\\><c-n>", { desc = "exit terminal mode" })
 
--- Toggle the quickfix window.  A one-shot action rather than a search, so it
+-- Toggle the quickfix window. A one-shot action rather than a search, so it
 -- lives under <Leader> and not in the SearchLeader namespace.
 vim.keymap.set("n", "<leader>q", function()
   for _, win in ipairs(vim.api.nvim_list_wins()) do
@@ -177,15 +177,15 @@ vim.keymap.set("n", "_", function() split_scratch("sp") end,  { desc = "horizont
 --  Normal mode -- closing things  (Z prefix)
 -- ──────────────────────────────────────────────────────────────
 
--- A grid, not a list of initials.  Vim's own ZZ (write and leave) and ZQ
+-- A grid, not a list of initials. Vim's own ZZ (write and leave) and ZQ
 -- (force out) are the bottom and top of the first column; the rest of the
 -- table extends that ladder.
 --
 --                 Z A Q         X S W          C D E
 --               this window   everything    this buffer
---   top     force, discard    ZQ  :q!       ZW  :qa!        ZE  :bd!
+--   top     force, discard    ZQ  :q! ZW  :qa! ZE  :bd!
 --   home    refuse if dirty   ZA  :q        ZS  :qa         ZD  :bd
---   bottom  save first        ZZ  :x        ZX  :wa|qa!     ZC  :w|bd
+--   bottom  save first        ZZ  :x        ZX  :wa|qa! ZC  :w|bd
 
 vim.keymap.set("n", "ZA", "<cmd>q<cr>",            { desc = "close window" })
 vim.keymap.set("n", "ZS", "<cmd>qa<cr>",           { desc = "quit all" })
@@ -215,7 +215,7 @@ vim.keymap.set("n", "-",
   { silent = true, desc = "highlight word under cursor" })
 
 -- Path/file utilities (cp, cm, gp) removed from core -- they shadow Vim's
--- c+p / c+m / g+p operator sequences.  See templates/user/keymaps.example.lua
+-- c+p / c+m / g+p operator sequences. See templates/user/keymaps.example.lua
 -- or add them to your lua/user/keymaps.lua
 
 -- ]f / [f: next/previous file in the same directory (alphabetical order)
@@ -285,7 +285,7 @@ vim.keymap.set({ "n", "v", "x" }, "<C-S-r>", comment_yank_paste, { desc = "comme
 -- gC (visual): per-line comment toggle.
 -- Vim's builtin `gc` operator picks one direction for the whole range
 -- (comment-everything-or-uncomment-everything based on the majority
--- state).  `gC` runs the toggle line-by-line so a mixed selection ends
+-- state). `gC` runs the toggle line-by-line so a mixed selection ends
 -- up with each line in the *opposite* state -- handy when you want to
 -- swap which lines in a block are active vs. commented.
 --
@@ -356,7 +356,7 @@ vim.keymap.set("v", "<up>",   ":m '<-2<CR>gv=gv", { desc = "move block up" })
 --  Clipboard bridges  (unnamed register != system clipboard)
 -- ──────────────────────────────────────────────────────────────
 -- NoetherVim leaves the unnamed register alone so transient edits
--- (ddp, xp, ciwp, ...) don't pollute the OS clipboard.  Reach for
+-- (ddp, xp, ciwp, ...) don't pollute the OS clipboard. Reach for
 -- these explicit bridges when you want the system clipboard:
 --
 --   <leader>y / <leader>Y       yank (motion / line) to clipboard
@@ -428,7 +428,7 @@ vim.keymap.set({ "n", "v" }, "<Esc>", function()  -- clear highlights, dismiss n
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
   vim.cmd.noh()
   -- Dismiss LSP hover/diagnostic floats spawned via util.open_floating_preview
-  -- (K, gl, vim.lsp.buf.hover, etc.).  vim.lsp.util sets b:lsp_floating_preview
+  -- (K, gl, vim.lsp.buf.hover, etc.). vim.lsp.util sets b:lsp_floating_preview
   -- on the source buffer to the float's winid.
   local lsp_float = vim.b.lsp_floating_preview
   if lsp_float and vim.api.nvim_win_is_valid(lsp_float) then
@@ -472,7 +472,7 @@ end, { desc = "context menu" })
 --  Inspection (SearchLeader+c prefix)
 -- ──────────────────────────────────────────────────────────────
 -- Registered here rather than alongside the pickers in inspect.lua, which
--- only runs at VeryLazy.  That is too late on both counts: it would land
+-- only runs at VeryLazy. That is too late on both counts: it would land
 -- after lua/user/overrides/*.lua and so beat a user override, and it is
 -- past the point where the keymap-source registry is still recording, so
 -- the diff picker and guide would have no file+line to jump to.

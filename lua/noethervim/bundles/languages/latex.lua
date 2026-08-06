@@ -30,7 +30,7 @@
 --   theorem highlighting:       treesitter-based theorem label coloring
 --   gd / <C-]>:                 jump to the label under the cursor (\cref, \ref,
 --                               \eqref, ...) via the label cache; <C-]> pushes the
---                               tag stack so <C-t> returns.  Works across subfiles
+--                               tag stack so <C-t> returns. Works across subfiles
 --                               and nested sub-books.
 --   label completion docs:      hovering a label completion shows its
 --                               part/chapter/section and LaTeX source.
@@ -73,7 +73,7 @@ return {
 
   -- ── treesitter: latex parser + theorem highlighting ───────────────────────
   -- Uses opts (merged by lazy) and init (runs before load, just registers
-  -- an autocmd).  NEVER define `config` here -- lazy overwrites the core
+  -- an autocmd). NEVER define `config` here -- lazy overwrites the core
   -- treesitter config function, breaking ensure_installed / auto_install.
   {
     "nvim-treesitter/nvim-treesitter",
@@ -86,7 +86,7 @@ return {
       -- Theorem environments in this distro use the form
       --   \begin{theorem}{label}{Human Tag}
       -- (the same \begin{env}{..}{..} convention snacks-latex-labels keys
-      -- off of below).  We colour that second curly arg -- the
+      -- off of below). We colour that second curly arg -- the
       -- human-readable "tag" -- with texRefArg.
       --
       -- A dedicated, predicate-free query is built lazily on first use.
@@ -126,7 +126,7 @@ return {
             local r1, c1, r2, c2 = node:range()
             -- pcall: a node range can momentarily outrun the buffer if the
             -- tree lags an edit, which would make set_extmark raise
-            -- "Invalid 'col': out of range".  Don't let one stale node abort
+            -- "Invalid 'col': out of range". Don't let one stale node abort
             -- the whole pass.
             pcall(vim.api.nvim_buf_set_extmark, bufnr, ns, r1, c1, {
               end_row  = r2,
@@ -240,7 +240,7 @@ let g:vimtex_compiler_latexmk_engines = {
 
           -- The heirline statusline listens for `b:vimtex.compiler.status`
           -- transitions, but vimtex doesn't emit BufEnter-style events on
-          -- transition.  Forwarding its User events into a redrawstatus +
+          -- transition. Forwarding its User events into a redrawstatus +
           -- baseline cache update keeps the statusline crisp and lets the
           -- next compile show a rough completion percentage.
           local vstatus  = require("noethervim.util.vimtex_status")
@@ -264,7 +264,7 @@ let g:vimtex_compiler_latexmk_engines = {
               end
               vstatus.invalidate()
               -- bang = refresh every window's statusline, not just the
-              -- current one.  vimtex emits these in the parent's buffer
+              -- current one. vimtex emits these in the parent's buffer
               -- context; the user is often focused elsewhere (subfile
               -- buffer, PDF viewer split) when a compile lands.
               pcall(vim.cmd.redrawstatus, { bang = true })
@@ -277,7 +277,7 @@ let g:vimtex_compiler_latexmk_engines = {
             callback = function()
               vstatus.invalidate()
               -- bang = refresh every window's statusline, not just the
-              -- current one.  vimtex emits these in the parent's buffer
+              -- current one. vimtex emits these in the parent's buffer
               -- context; the user is often focused elsewhere (subfile
               -- buffer, PDF viewer split) when a compile lands.
               pcall(vim.cmd.redrawstatus, { bang = true })
@@ -296,7 +296,7 @@ let g:vimtex_compiler_latexmk_engines = {
                 vstatus.record_success(state, elapsed)
 
                 -- Push the compile time through fidget if it's available
-                -- (loaded on LspAttach -- texlab covers tex buffers).  Fall
+                -- (loaded on LspAttach -- texlab covers tex buffers). Fall
                 -- back to vim.notify so the duration still surfaces when
                 -- fidget hasn't loaded yet.
                 local secs = string.format("%.1fs", elapsed / 1000)
@@ -313,7 +313,7 @@ let g:vimtex_compiler_latexmk_engines = {
               end
               vstatus.invalidate()
               -- bang = refresh every window's statusline, not just the
-              -- current one.  vimtex emits these in the parent's buffer
+              -- current one. vimtex emits these in the parent's buffer
               -- context; the user is often focused elsewhere (subfile
               -- buffer, PDF viewer split) when a compile lands.
               pcall(vim.cmd.redrawstatus, { bang = true })
@@ -327,7 +327,7 @@ let g:vimtex_compiler_latexmk_engines = {
           })
 
           -- Manually fire VimtexEventInitPost-equivalent: the current
-          -- buffer just opened, so refresh the statusline once.  Bang
+          -- buffer just opened, so refresh the statusline once. Bang
           -- to match the event handlers above.
           vstatus.invalidate()
           pcall(vim.cmd.redrawstatus, { bang = true })
@@ -355,11 +355,11 @@ let g:vimtex_compiler_latexmk_engines = {
 
           vim.keymap.set("n", "<localleader>vw", "<Cmd>VimtexCountWords<CR>", o("vimtex word count"))
 
-          -- Accent spell-check (noethervim-tex).  Override the
+          -- Accent spell-check (noethervim-tex). Override the
           -- built-in zg / zw / z= so they understand LaTeX accent
           -- macros: when the cursor sits on  K\"ahler  these operate
           -- on the decoded Unicode form  Kähler  and re-encode back
-          -- to LaTeX after picking a suggestion.  When there's no
+          -- to LaTeX after picking a suggestion. When there's no
           -- accent token under cursor the implementation falls
           -- through to vim's built-in zg / zw / z= via  :normal! ,
           -- so plain words still work as expected.
@@ -372,7 +372,7 @@ let g:vimtex_compiler_latexmk_engines = {
             plug_opts("spell: mark wrong (latex-aware)"))
           -- z= : on a LaTeX accent token (K\"ahler) open the custom
           -- latex-aware picker that re-encodes the chosen suggestion back to
-          -- its accent macro.  On a plain word, fall through to which-key's
+          -- its accent macro. On a plain word, fall through to which-key's
           -- spelling popup -- the global z= behaviour this buffer-local map
           -- would otherwise shadow.
           vim.keymap.set("n", "z=", function()
@@ -387,10 +387,10 @@ let g:vimtex_compiler_latexmk_engines = {
           -- Stopping: vimtex's stop() is a no-op unless a compile is
           -- mid-run, which with single-shot latexmk (continuous = 0) it
           -- almost never is, so the BufWritePost auto-compile above would
-          -- keep re-firing forever.  Wrap the stop entry points to mark the
+          -- keep re-firing forever. Wrap the stop entry points to mark the
           -- project stopped (status 0, vimtex's stopped-state); the
           -- auto-compile stands down and the next manual compile re-arms
-          -- it.  Both the commands and the <plug> mappings need wrapping:
+          -- it. Both the commands and the <plug> mappings need wrapping:
           -- <localleader>lk maps to <plug>(vimtex-stop), which calls
           -- vimtex#compiler#stop() directly, bypassing :VimtexStop.
           local function statusline_refresh()
@@ -516,7 +516,7 @@ let g:vimtex_compiler_latexmk_engines = {
   -- Spell-file shipping (en.utf-8.add math vocab + accents.utf-8.add for
   -- LaTeX-accented proper nouns) is handled inside noethervim-tex's own
   -- plugin/noethervim_tex.lua at plugin load -- this bundle no longer
-  -- needs to mkspell or append to spellfile.  The accent spell-check
+  -- needs to mkspell or append to spellfile. The accent spell-check
   -- diagnostics layer also lives there; configure via opts.accent_spell.
   {
     "Chiarandini/NoetherVim-Tex",
@@ -533,9 +533,9 @@ let g:vimtex_compiler_latexmk_engines = {
 
       -- Transitional fallback: older noethervim-tex versions don't
       -- ship plugin/noethervim_tex.lua, so vim.g.loaded_noethervim_tex
-      -- is unset and we register the math vocab spellfile here.  The
+      -- is unset and we register the math vocab spellfile here. The
       -- new plugin/ file sets the flag and handles both .add files
-      -- itself, in which case this branch is skipped.  Remove this
+      -- itself, in which case this branch is skipped. Remove this
       -- block once the upstream noethervim-tex pin is bumped.
       if vim.g.loaded_noethervim_tex ~= 1 then
         local spell_add = self.dir .. "/spell/en.utf-8.add"
@@ -554,7 +554,7 @@ let g:vimtex_compiler_latexmk_engines = {
   -- and enrich vimtex's label completions with documentation: hovering a
   -- label item in \cref{...} / \ref{...} shows the part/chapter/section it
   -- lives under and its LaTeX source (theorem statement, titled box, ...)
-  -- in the documentation window.  Labels missing from the cache resolve to
+  -- in the documentation window. Labels missing from the cache resolve to
   -- no documentation -- exactly the previous behaviour.
   {
     "saghen/blink.cmp",
@@ -569,7 +569,7 @@ let g:vimtex_compiler_latexmk_engines = {
             module = "noethervim-tex.sources.preambles",
           },
           -- Completes figure filenames inside \incfig{}, \includegraphics{}
-          -- and \import{}{}.  The list previously named a provider "images"
+          -- and \import{}{}. The list previously named a provider "images"
           -- that was never defined, so the entry did nothing.
           figures = {
             name   = "figures",
@@ -720,7 +720,7 @@ let g:vimtex_compiler_latexmk_engines = {
       -- Label extraction and cache lookup live in noethervim.util.latex_labels.
       -- gd jumps directly (LSP fallback when not on a prefixed label);
       -- 'tagfunc' routes <C-]>, <C-w>] and :tag through the same lookup while
-      -- pushing the tag stack, so <C-t> jumps back.  Both search the current
+      -- pushing the tag stack, so <C-t> jumps back. Both search the current
       -- project's cache first (subfile chains resolve to their top-level
       -- root), then every other cached project.
       local labels = require("noethervim.util.latex_labels")

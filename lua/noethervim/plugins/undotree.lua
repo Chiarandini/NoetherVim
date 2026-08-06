@@ -2,12 +2,12 @@
 --  ╔══════════════════════════════════════════════════════════╗
 --  ║                         Undotree                         ║
 --  ╚══════════════════════════════════════════════════════════╝
--- mbbill/undotree -- non-destructive preview pane.  Selecting a node
+-- mbbill/undotree -- non-destructive preview pane. Selecting a node
 -- shows a diff against current state without applying it; press <CR>
 -- (or `<` / `>` for sibling branches) to actually move the buffer.
 --
 -- This intentionally replaces Neovim's builtin nvim.undotree, which
--- applies state on every CursorMoved (no preview).  The <c-w><c-u>
+-- applies state on every CursorMoved (no preview). The <c-w><c-u>
 -- toggle in keymaps.lua dispatches to whichever is loaded.
 return {
 	{

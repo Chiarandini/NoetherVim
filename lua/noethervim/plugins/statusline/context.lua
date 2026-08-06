@@ -113,12 +113,12 @@ end
 -- ── Mode-aware statusline background ──────────────────────────────
 -- The bottom statusline shifts from default_gray (normal-ish modes) to
 -- default_blue when in insert mode, so the editor's "global state"
--- shows up in the bar as well as in the mode chip.  Heirline propagates
+-- shows up in the bar as well as in the mode chip. Heirline propagates
 -- the parent component's `hl.bg` to children that don't override it,
 -- but every once in a while a component returns a fresh hl table from
 -- a function (`hl = function() return {fg=...} end`) and the bg merge
 -- doesn't carry through cleanly -- the component renders with the
--- terminal's default bg instead of matching the bar.  Rather than
+-- terminal's default bg instead of matching the bar. Rather than
 -- chase that case-by-case, components can call `ctx.mode_bg()` (or use
 -- the `ctx.with_mode_bg` wrapper) to embed the correct bg directly.
 --
@@ -136,7 +136,7 @@ end
 
 --- Wrap a heirline `hl` value (table OR function returning a table) so
 --- the resolved table always has `bg` set to the current mode-aware
---- background.  An explicit `bg` in the wrapped spec wins, so callers
+--- background. An explicit `bg` in the wrapped spec wins, so callers
 --- can still opt out for components that want their own bg.
 ---
 ---@param hl table|fun(self?:table):table

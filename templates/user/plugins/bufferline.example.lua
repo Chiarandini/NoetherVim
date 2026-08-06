@@ -2,7 +2,7 @@
 --
 -- NoetherVim defaults to a tab-based tabline because tabs and buffers
 -- serve different purposes in Vim's model: tabs are layout viewports,
--- buffers are open files.  Reaching for a bufferline to manage open
+-- buffers are open files. Reaching for a bufferline to manage open
 -- files often signals that a fuzzy-finder or :ls would be a more
 -- effective habit - but if you prefer this workflow, just copy this
 -- file to lua/user/plugins/bufferline.lua.

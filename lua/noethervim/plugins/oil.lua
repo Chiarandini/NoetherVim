@@ -10,7 +10,7 @@
 --   gS          Create symlink in current directory
 --   gz          Zip entry under cursor (normal) or selected entries (visual)
 --   gZ          Unzip .zip entry (normal) or selected .zip entries (visual)
---   g.          Toggle hidden files
+--   g. Toggle hidden files
 --   g\          Toggle trash
 --   Y           Copy file(s) to the system clipboard. Normal yanks the
 --               entry under the cursor; visual yanks every selected entry,

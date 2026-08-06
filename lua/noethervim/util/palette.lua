@@ -2,7 +2,7 @@
 -- Returns the full color table expected by the heirline statusline config.
 --
 -- When gruvbox is active, returns the hand-tuned gruvbox palette that
--- preserves the exact current statusline appearance.  For every other
+-- preserves the exact current statusline appearance. For every other
 -- colorscheme the palette is derived from standard highlight groups so the
 -- statusline matches the active theme.
 --

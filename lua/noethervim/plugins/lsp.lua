@@ -73,7 +73,7 @@ return {
 
 	-- ── nvim-lint: linter stack ──────────────────────────────────────────
 	-- Companion to conform.nvim: conform handles formatting, nvim-lint
-	-- handles diagnostics from non-LSP linters.  Most filetypes are already
+	-- handles diagnostics from non-LSP linters. Most filetypes are already
 	-- covered by their LSP server; add entries here for tools that run
 	-- outside the LSP (shellcheck, markdownlint, vale, etc.).
 	--
@@ -328,7 +328,7 @@ return {
 					-- then run the response through vim.lsp.util.convert_input_to_markdown_lines
 					-- (the helper Neovim itself uses to render hover floats) so we
 					-- handle MarkupContent | MarkedString | string | string[]
-					-- uniformly.  We then strip code fences and the leading
+					-- uniformly. We then strip code fences and the leading
 					-- "(variable) name:" / "(parameter) name:" preamble that
 					-- pyright/lua_ls/etc. prepend, and yank whatever's after the
 					-- first ":" on the signature line.
@@ -378,7 +378,7 @@ return {
 							signature = signature or body[1]
 							-- Strip "(variable)", "(parameter)", "(method)", etc.
 							local stripped = signature:gsub("^%s*%b()%s*", "")
-							-- "name: Type" → "Type".  If no colon, yank the whole
+							-- "name: Type" → "Type". If no colon, yank the whole
 							-- signature so e.g. function signatures still copy.
 							local typ = stripped:match(":%s*(.+)$") or stripped
 							typ = typ:gsub("^%s+", ""):gsub("%s+$", "")

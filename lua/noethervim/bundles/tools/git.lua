@@ -40,7 +40,7 @@ return {
 		-- :Gitignore picker using snacks.picker via gitignore.nvim's
 		-- custom-picker contract (see its README). The default wiring
 		-- hard-depends on telescope; we override M.generate so snacks is
-		-- the only UI dependency.  Multi-select with <Tab>; <CR> writes
+		-- the only UI dependency. Multi-select with <Tab>; <CR> writes
 		-- the combined .gitignore.
 		"wintermute-cell/gitignore.nvim",
 		cmd          = "Gitignore",

@@ -61,7 +61,7 @@ return {
 	{
 		'mcauley-penney/visual-whitespace.nvim',
 		config = true,
-		-- Lazy-load on the visual-mode entry keys.  desc fields surface in
+		-- Lazy-load on the visual-mode entry keys. desc fields surface in
 		-- :NoetherVim diff keymaps so the rows are identifiable.
 		keys = {
 			{ 'v',     mode = 'n', desc = "visual char mode" },
@@ -73,9 +73,9 @@ return {
 	-- better "." feature
 	{ "tpope/vim-repeat", event = "BufReadPost" },
 
-	-- smart-enter.nvim: context dispatched <S-CR>.  Owns the global insert
+	-- smart-enter.nvim: context dispatched <S-CR>. Owns the global insert
 	-- mode <S-CR> (a newline that skips the comment leader) and continues
-	-- Markdown lists.  The latex bundle merges in LaTeX environment rules.
+	-- Markdown lists. The latex bundle merges in LaTeX environment rules.
 	{
 		"Chiarandini/smart-enter.nvim",
 		event = "InsertEnter",

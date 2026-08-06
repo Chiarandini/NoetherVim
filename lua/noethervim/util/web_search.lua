@@ -60,8 +60,8 @@ local function report_engine()
   vim.notify(table.concat(lines, "\n"), vim.log.levels.INFO, { title = "Search Engine" })
 end
 
---- :Search <query>...                 search with current default engine
---- :Search <engine> <query>...        search with the named engine
+--- :Search <query>... search with current default engine
+--- :Search <engine> <query>... search with the named engine
 --- :Search set <engine>               change the default engine
 --- :Search ?  /  :Search set          report the current engine
 local function search_cmd(o)

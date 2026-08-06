@@ -22,11 +22,11 @@ local function wk_picker(data)
 		return table.concat(parts, " ")
 	end
 
-	--- Recursively expand groups into their leaf mappings.  Returns a flat
+	--- Recursively expand groups into their leaf mappings. Returns a flat
 	--- list where every entry corresponds to an actually-executable
 	--- keystroke (groups themselves stay in the list so the user can still
 	--- "drill in" by selecting the group, but every descendant is also
-	--- searchable from the top level).  Without this, <C-f> at the root
+	--- searchable from the top level). Without this, <C-f> at the root
 	--- only searches direct children -- you'd have to navigate <leader>h
 	--- manually before "stage hunk" became findable.
 	local function flatten(items, acc, seen)
@@ -47,7 +47,7 @@ local function wk_picker(data)
 	end
 
 	--- Build a display-friendly full key path for an item, walking from the
-	--- root down to the item.  We deliberately use `item.key` segments
+	--- root down to the item. We deliberately use `item.key` segments
 	--- (already prettified by which-key, e.g. " " → "<Space>") so the chip
 	--- reads naturally: " <Space> c u" instead of just " u ".
 	local function full_key_path(item_node, root_node)

@@ -8,7 +8,7 @@
 -- NoetherVim bundle: Octo (GitHub PRs / issues / reviews)
 -- Enable with: { import = "noethervim.bundles.tools.octo" }
 --
--- GitHub PRs, issues, reviews, and gists inside Neovim.  Pairs with the
+-- GitHub PRs, issues, reviews, and gists inside Neovim. Pairs with the
 -- `git` bundle for full GitHub-flavoured git workflow without leaving
 -- the editor.
 --
@@ -19,13 +19,13 @@
 -- Default keymap:
 --   <C-w>O                 :Octo pr list -- main PR list (mirrors the
 --                          <C-w>F pattern used by the Fugit2 TUI in the
---                          git bundle).  All other actions are available
+--                          git bundle). All other actions are available
 --                          via :Octo <Tab> -- pr / issue / review /
 --                          gist / repo / search / actions.
 --
 -- Requirements:
 --   • gh CLI: install from https://cli.github.com/, then `gh auth login`
---     once.  Octo shells out to gh for every API call -- no token
+--     once. Octo shells out to gh for every API call -- no token
 --     handling on its end.
 --
 -- Picker: octo.nvim integrates with snacks.picker via `picker = "snacks"`,

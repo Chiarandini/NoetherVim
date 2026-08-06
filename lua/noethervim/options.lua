@@ -33,7 +33,7 @@ opt.swapfile     = false
 
 -- Text layout
 -- wrap is OFF globally; the writing profile (autocmds.lua) re-enables it
--- for writing filetypes.  The breakindent / linebreak / showbreak settings
+-- for writing filetypes. The breakindent / linebreak / showbreak settings
 -- only take effect when wrap is on, so they're harmless here and active
 -- in writing buffers.
 opt.wrap          = false
@@ -46,7 +46,7 @@ vim.opt.breakindentopt = "sbr,min:0,shift:0"
 vim.opt.showbreak  = ""
 
 -- listchars: makes `list = true` (set by the code profile in autocmds.lua)
--- readable.  tab shows as arrow, trailing whitespace as middle dot.
+-- readable. tab shows as arrow, trailing whitespace as middle dot.
 vim.opt.listchars = {
   tab      = "→ ",
   trail    = "·",
@@ -91,12 +91,12 @@ opt.hlsearch   = true    -- <Esc> clears; [oh/]oh toggles persistently
 -- Indentation behaviour (tabstop / shiftwidth are seeded above; ftplugins,
 -- editorconfig, and guess-indent.nvim refine them per buffer).
 -- autoindent: copy indent from the line above when starting a new line
--- (this is how `O` and `o` keep your code aligned).  The Neovim default
+-- (this is how `O` and `o` keep your code aligned). The Neovim default
 -- is already `true`, but set it explicitly so a stray ftplugin / runtime
 -- file flipping it off can be more easily debugged.
 -- copyindent + preserveindent: when re-indenting, reuse the existing
 -- whitespace structure (tabs vs spaces, mixed leading runs) instead of
--- normalising to shiftwidth.  This is what makes `O` on a deeply-indented
+-- normalising to shiftwidth. This is what makes `O` on a deeply-indented
 -- line keep its full indent run instead of snapping back to column 0.
 opt.autoindent     = true
 opt.copyindent     = true
@@ -128,10 +128,10 @@ opt.autochdir = false
 -- `localoptions` is intentionally omitted: it captures every buffer-local
 -- option at save time, which then overrides updated globals when the
 -- session reloads (e.g. spelllang stays "en_us" long after the distro
--- default moved to "en").  NoetherVim's FileType-driven writing/code
+-- default moved to "en"). NoetherVim's FileType-driven writing/code
 -- profiles re-establish the per-buffer values that matter (wrap, spell,
 -- list, conceallevel, ...) on every buffer load, so capturing them in
--- sessions is mostly redundant.  Add `localoptions` back in your personal
+-- sessions is mostly redundant. Add `localoptions` back in your personal
 -- options.lua if you depend on session-restoring buffer-local state.
 opt.sessionoptions = "blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal"
 
@@ -151,7 +151,7 @@ vim.fn.mkdir(vim.o.dir, "p")
 
 -- Spell
 -- "en" accepts all English regional dialects (US, UK, CA, AU, NZ) so the
--- default doesn't flag "colour"/"color" as wrong for either camp.  Narrow
+-- default doesn't flag "colour"/"color" as wrong for either camp. Narrow
 -- in your personal config if you want strict regional checking, e.g.
 -- vim.opt.spelllang = { "en_us" } or { "en_gb" } or { "en_us", "de_de" }.
 vim.opt.spelllang = { "en" }

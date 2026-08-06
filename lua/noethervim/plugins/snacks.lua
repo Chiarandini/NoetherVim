@@ -74,7 +74,7 @@ return {
 	opts = {
 		-- ── Dashboard ─────────────────────────────────────────────────
 		-- Disable by setting `vim.g.noethervim_dashboard = false` in init.lua
-		-- (before lazy.setup).  See :help noethervim-dashboard.
+		-- (before lazy.setup). See :help noethervim-dashboard.
 		dashboard = {
 			enabled = vim.g.noethervim_dashboard ~= false,
 			preset = {
@@ -112,7 +112,7 @@ return {
 					layout = { layout = { position = "right" } },
 				},
 				-- ── Browse: file browser source ─────────────────────────
-				-- Replaces telescope-file-browser.  Fuzzy-search one
+				-- Replaces telescope-file-browser. Fuzzy-search one
 				-- directory at a time; <CR> enters dirs or opens files.
 				-- Override any setting in a user spec via:
 				--   opts.picker.sources.browse
