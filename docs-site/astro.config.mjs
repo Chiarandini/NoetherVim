@@ -29,6 +29,11 @@ export default defineConfig({
         baseUrl: 'https://github.com/Chiarandini/NoetherVim/edit/main/docs-site/',
       },
       customCss: ['./src/styles/custom.css'],
+      // TEMPORARY: adds the accent-palette picker beside the GitHub icon.
+      // Remove this override once a palette is chosen; see PaletteSwitcher.
+      components: {
+        SocialIcons: './src/components/PaletteSwitcher.astro',
+      },
       sidebar: [
         {
           label: 'Start here',

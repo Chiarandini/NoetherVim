@@ -17,11 +17,72 @@
   --sl-font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
 }
 
+/* TEMPORARY: candidate palettes for the header picker, drawn from Neovim
+ * colourschemes so the pick can be matched by the distro's shipped default.
+ * `:root[data-palette]` outranks the plain `:root` above on specificity, so
+ * the block order here does not matter.
+ *
+ * To remove: delete this section, delete src/components/PaletteSwitcher.astro,
+ * drop the components.SocialIcons override in astro.config.mjs, and paste the
+ * winner's three values into the `:root` block above. */
+:root[data-palette='catppuccin'] {
+  --sl-color-accent-low: #2a2140;
+  --sl-color-accent: #cba6f7;
+  --sl-color-accent-high: #ddc4ff;
+}
+:root[data-palette='tokyonight'] {
+  --sl-color-accent-low: #1a2440;
+  --sl-color-accent: #7aa2f7;
+  --sl-color-accent-high: #b4c8ff;
+}
+:root[data-palette='kanagawa'] {
+  --sl-color-accent-low: #1c2438;
+  --sl-color-accent: #7e9cd8;
+  --sl-color-accent-high: #b8cbf0;
+}
+:root[data-palette='rosepine'] {
+  --sl-color-accent-low: #2a2137;
+  --sl-color-accent: #c4a7e7;
+  --sl-color-accent-high: #e0cdf5;
+}
+:root[data-palette='everforest'] {
+  --sl-color-accent-low: #232a1e;
+  --sl-color-accent: #a7c080;
+  --sl-color-accent-high: #cbdcb0;
+}
+:root[data-palette='gruvbox'] {
+  --sl-color-accent-low: #3a2312;
+  --sl-color-accent: #fe8019;
+  --sl-color-accent-high: #ffb87c;
+}
+:root[data-palette='nord'] {
+  --sl-color-accent-low: #1b2b33;
+  --sl-color-accent: #88c0d0;
+  --sl-color-accent-high: #b8dce8;
+}
+
 /* Dark is the default for a terminal-tool audience; light stays available. */
 :root[data-theme='dark'] {
   --sl-color-bg: #16161d;
   --sl-color-bg-nav: #1a1a22;
   --sl-color-bg-sidebar: #1a1a22;
+}
+
+/* Starlight constrains `.hero > img` and `.hero > .hero-html`, but an <img>
+ * nested inside the raw-html variant inherits nothing and renders at its
+ * natural size, overflowing to the right. The hero is also a wide terminal
+ * capture rather than a logo, so it wants more room than the 20rem default
+ * that rule caps at. */
+.hero > .hero-html {
+  width: 100%;
+  max-width: 100%;
+}
+
+.hero > .hero-html img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
 }
 
 /* Reference pages are generated from doc/noethervim.txt, which is
