@@ -1,3 +1,6 @@
+---@bundle nvim-dev
+---@desc StartupTime, Luapad, vimls -- Neovim config development
+---@requires exe=node label="Node.js" why="the vimls server Mason installs" install="https://nodejs.org/" optional=true
 -- NoetherVim bundle: Neovim Developer Tools
 -- Enable with: { import = "noethervim.bundles.tools.nvim-dev" }
 --

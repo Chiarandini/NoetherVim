@@ -34,6 +34,58 @@
   border-radius: 0.5rem;
 }
 
+/* Bundle reference, generated from the @requires annotations. Each entry is
+ * a card so the 38 of them scan as a list rather than a wall of headings. */
+.bundle-entry {
+  border-left: 2px solid var(--sl-color-gray-5);
+  padding: 0.25rem 0 0.25rem 1rem;
+  margin-block: 1.5rem;
+}
+
+.bundle-entry h3 {
+  margin-top: 0;
+  font-size: var(--sl-text-lg);
+}
+
+.bundle-entry p {
+  margin-block: 0.4rem;
+  color: var(--sl-color-gray-2);
+}
+
+.bundle-import {
+  font-size: var(--sl-text-xs);
+  background-color: var(--sl-color-bg-inline-code);
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.25rem;
+  overflow-x: auto;
+}
+
+.bundle-requires {
+  margin-block: 0.6rem 0;
+  font-size: var(--sl-text-sm);
+}
+
+.bundle-requires li {
+  margin-block: 0.3rem;
+}
+
+/* Optional requirements are marked rather than separated, so the list stays
+ * in one place while still distinguishing "will not work" from "degrades". */
+.req-tag {
+  margin-inline-start: 0.4rem;
+  padding: 0.05rem 0.35rem;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 0.75rem;
+  font-size: var(--sl-text-xs);
+  color: var(--sl-color-gray-3);
+}
+
+.req-install {
+  color: var(--sl-color-gray-3);
+  font-size: var(--sl-text-xs);
+  margin-top: 0.1rem;
+}
+
 /* Reference pages are generated from doc/noethervim.txt, which is
  * fixed-width by construction. Reflowing it breaks the ASCII tables, so
  * those pages opt into monospace body text wholesale. */

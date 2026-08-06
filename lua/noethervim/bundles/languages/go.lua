@@ -1,3 +1,6 @@
+---@bundle go
+---@desc go.nvim -- test gen, struct tags, interface impl
+---@requires exe=go label="Go toolchain" why="building, testing and every go.nvim command" install="https://go.dev/dl/"
 -- NoetherVim bundle: Go
 -- Enable with: { import = "noethervim.bundles.languages.go" }
 --

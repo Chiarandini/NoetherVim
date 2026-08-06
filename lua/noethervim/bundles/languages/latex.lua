@@ -1,3 +1,8 @@
+---@bundle latex
+---@desc VimTeX + noethervim-tex (snippets, textobjects)
+---@requires exe=latexmk label="latexmk" why="compiling documents through VimTeX" install="ships with TeX Live and MacTeX"
+---@requires exe=pdflatex label="pdflatex" why="the engine latexmk drives by default" install="ships with TeX Live and MacTeX" optional=true
+---@requires exe=pngpaste label="pngpaste" why="pasting images from the clipboard on macOS" install="brew install pngpaste" optional=true
 -- NoetherVim bundle: LaTeX
 -- Enable with: { import = "noethervim.bundles.languages.latex" }
 --

@@ -1,3 +1,6 @@
+---@bundle tmux
+---@desc automatic tmux window naming
+---@requires exe=tmux label="tmux" why="pane navigation and window naming" install="brew install tmux, or your package manager"
 -- NoetherVim bundle: Tmux integration
 -- Enable with: { import = "noethervim.bundles.terminal.tmux" }
 --

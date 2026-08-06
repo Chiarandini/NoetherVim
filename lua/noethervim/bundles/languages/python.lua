@@ -1,3 +1,6 @@
+---@bundle python
+---@desc venv-selector -- virtual environment switching
+---@requires exe=python3 label="Python 3" why="virtual-environment discovery" install="https://www.python.org/downloads/"
 -- NoetherVim bundle: Python
 -- Enable with: { import = "noethervim.bundles.languages.python" }
 --

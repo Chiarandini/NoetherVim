@@ -1,3 +1,8 @@
+---@bundle database
+---@desc vim-dadbod + UI + SQL completion
+---@requires exe=psql label="psql" why="PostgreSQL connections; dadbod shells out to the client" install="part of postgresql" optional=true
+---@requires exe=mysql label="mysql" why="MySQL and MariaDB connections" install="part of mysql-client" optional=true
+---@requires exe=sqlite3 label="sqlite3" why="SQLite connections" install="preinstalled on macOS and most Linux distributions" optional=true
 -- NoetherVim bundle: Database
 -- Enable with: { import = "noethervim.bundles.tools.database" }
 --

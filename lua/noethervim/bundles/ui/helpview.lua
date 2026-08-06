@@ -1,3 +1,6 @@
+---@bundle helpview
+---@desc rendered :help pages
+---@requires none
 -- NoetherVim bundle: Helpview
 -- Enable with: { import = "noethervim.bundles.ui.helpview" }
 --

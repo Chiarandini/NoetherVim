@@ -1,3 +1,6 @@
+---@bundle refactoring
+---@desc extract function/variable/block
+---@requires none
 -- NoetherVim bundle: Refactoring
 -- Enable with: { import = "noethervim.bundles.tools.refactoring" }
 --

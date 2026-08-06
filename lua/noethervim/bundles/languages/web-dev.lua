@@ -1,3 +1,6 @@
+---@bundle web-dev
+---@desc template-string auto-conversion + color preview
+---@requires exe=node label="Node.js" why="the ts_ls, cssls and eslint servers Mason installs" install="https://nodejs.org/"
 -- NoetherVim bundle: Web development
 -- Enable with: { import = "noethervim.bundles.languages.web-dev" }
 --

@@ -1,3 +1,6 @@
+---@bundle octo
+---@desc GitHub PRs/issues/reviews via gh CLI (<C-w>O)
+---@requires exe=gh label="GitHub CLI" why="every octo command" install="https://cli.github.com/, then gh auth login"
 -- NoetherVim bundle: Octo (GitHub PRs / issues / reviews)
 -- Enable with: { import = "noethervim.bundles.tools.octo" }
 --

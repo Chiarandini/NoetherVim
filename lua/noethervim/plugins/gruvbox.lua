@@ -1,8 +1,8 @@
 -- NoetherVim plugin: Gruvbox Colorscheme
--- Ships with core NoetherVim as the default theme.
--- If the colorscheme bundle is enabled, this is redundant (the bundle
--- includes gruvbox among its collection). lazy.nvim merges both specs
--- harmlessly -- no conflict.
+-- Ships with core NoetherVim as the default theme, and stays the only
+-- scheme in core: util/palette.lua hand-tunes the statusline against it and
+-- highlights.lua special-cases it, so it is the look the distribution is
+-- actually maintained against. The ui.colorscheme bundle adds the rest.
 return {
 	{
 		"ellisonleao/gruvbox.nvim",

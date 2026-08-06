@@ -259,26 +259,33 @@ function M.setup()
   })
 
   -- ── Highlights & colorscheme ───────────────────────────────────
-  -- setup_tweaks() registers the ColorScheme autocmd that re-applies
-  -- user tweaks on theme switches. It runs unconditionally so that
-  -- util.colorscheme.tweak() works whether or not the colorscheme
-  -- bundle is enabled. setup_persistence() is bundle-gated because it
-  -- overrides user_cfg.colorscheme with the saved pick.
+  -- setup_tweaks() registers the ColorScheme autocmd that re-applies user
+  -- tweaks on theme switches.
+  --
+  -- Persistence is on unless switched off. The picker that changes themes
+  -- (SearchLeader+C) is a core keymap, so a pick made there has to survive a
+  -- restart whether or not the colorscheme bundle is enabled; a picker whose
+  -- result silently evaporates is worse than no picker. The cost is that the
+  -- saved pick shadows `colorscheme` in lua/user/config.lua -- reported by
+  -- :checkhealth noethervim, and switched off with
+  -- `colorscheme_persistence = false`.
   local cs = require("noethervim.util.colorscheme")
   cs.setup_tweaks()
-  if user_cfg.colorscheme_persistence then
+  local persist = user_cfg.colorscheme_persistence ~= false
+  if persist then
     cs.setup_persistence()
   end
   -- Fall back to gruvbox when the user has not picked a scheme. It is the
   -- shipped default, and the dashboard / statusline fallback colours are
   -- chosen against it, so an unconfigured install still looks coherent.
   -- Its spec is `lazy = true`; lazy.nvim's ColorSchemePre handler loads it
-  -- on demand here.
-  local scheme = user_cfg.colorscheme or "gruvbox"
-  -- Persistence may have already applied a saved scheme; only apply the
-  -- default if no persisted choice was loaded.
-  if not user_cfg.colorscheme_persistence or vim.g.colors_name == nil then
-    pcall(vim.cmd.colorscheme, scheme)
+  -- on demand here. Skip only when persistence actually restored a saved
+  -- pick: `vim.g.colors_name` is not a safe test on its own, since lazy.nvim
+  -- applies its own `install.colorscheme` fallback while it installs missing
+  -- plugins on a first launch.
+  if cs.source ~= "persisted" then
+    cs.apply(user_cfg.colorscheme or cs.DEFAULT,
+      user_cfg.colorscheme and "config" or "default")
   end
   require("noethervim.highlights")
   user("highlights")  -- after colorscheme so user highlights are not overwritten

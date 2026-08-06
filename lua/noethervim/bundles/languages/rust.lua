@@ -1,3 +1,7 @@
+---@bundle rust
+---@desc rustaceanvim -- macro expansion, runnables, crate graph
+---@requires exe=rust-analyzer label="rust-analyzer" why="every rustaceanvim feature" install="rustup component add rust-analyzer"
+---@requires exe=cargo label="Cargo" why="building and running from the editor" install="https://rustup.rs/"
 -- NoetherVim bundle: Rust
 -- Enable with: { import = "noethervim.bundles.languages.rust" }
 --

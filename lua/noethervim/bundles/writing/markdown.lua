@@ -1,3 +1,7 @@
+---@bundle markdown
+---@desc render, preview, tables, math, image paste
+---@requires exe=node label="Node.js" why="markdown-preview builds its viewer with it, and mdmath renders through it" install="https://nodejs.org/" optional=true
+---@requires note="a terminal with the kitty graphics protocol" why="inline math rendering by mdmath" install="kitty, WezTerm, or Ghostty" optional=true
 -- NoetherVim bundle: Markdown
 -- Enable with: { import = "noethervim.bundles.writing.markdown" }
 --

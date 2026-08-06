@@ -1,3 +1,6 @@
+---@bundle editing-extras
+---@desc argmark + decorative comment boxes
+---@requires none
 -- NoetherVim bundle: Editing Extras
 -- Enable with: { import = "noethervim.bundles.navigation.editing-extras" }
 --

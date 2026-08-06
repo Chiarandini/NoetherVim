@@ -1,3 +1,6 @@
+---@bundle wrapsearch
+---@desc search across hard-wrapped lines (/ and ?)
+---@requires none
 -- NoetherVim bundle: Wrap-aware search
 -- Enable with: { import = "noethervim.bundles.writing.wrapsearch" }
 --

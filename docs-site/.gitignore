@@ -4,5 +4,9 @@ dist/
 public/assets/
 # Synced from the repo's canonical markdown by scripts/sync-docs.mjs.
 # Never edit these by hand -- edit the upstream file and re-run.
+# Listed file by file rather than by directory because guides/ also holds an
+# authored page (bundles.mdx), which must stay tracked.
 src/content/docs/start/
-src/content/docs/guides/
+src/content/docs/guides/configuration.md
+src/content/docs/guides/keybindings.md
+src/content/docs/guides/recipes.md

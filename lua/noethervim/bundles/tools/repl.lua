@@ -1,3 +1,6 @@
+---@bundle repl
+---@desc iron.nvim interactive REPL
+---@requires note="a REPL for your language" why="iron.nvim drives an external interpreter" install="python3, ipython, ghci, node, ... whichever you send code to"
 -- NoetherVim bundle: REPL
 -- Enable with: { import = "noethervim.bundles.tools.repl" }
 --

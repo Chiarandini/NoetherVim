@@ -21,8 +21,9 @@ just `:e some-file`.
 
 Three things are already true without any configuration:
 
-- The colorscheme is gruvbox. Change it with `colorscheme` in
-  `lua/user/config.lua`, or enable the `colorscheme` bundle for a picker.
+- The colorscheme is gruvbox. `<Space>C` switches it and the choice sticks
+  across restarts; `colorscheme` in `lua/user/config.lua` sets the startup
+  default. Enable the `ui.colorscheme` bundle for nine more themes.
 - LSP, completion, treesitter, formatting, and diagnostics are configured.
   Open a `.lua` or `.py` file and they attach on their own.
 - No bundles are enabled. The core is fully functional without them; bundles
@@ -93,7 +94,7 @@ Reasonable starting points: `tools.git` if you want a git UI,
 `languages.<your language>`, `navigation.harpoon` for fast file switching,
 `ui.colorscheme` if gruvbox is not for you.
 
-The [bundle catalogue](../bundles.md) lists all of them.
+The [bundle reference](https://nathanaelsrawley.com/noethervim/guides/bundles/) lists all of them.
 
 ## 6. Where the rest lives
 

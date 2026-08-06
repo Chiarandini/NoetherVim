@@ -102,59 +102,13 @@ local function hint_footer(hints)
 end
 
 -- ── Bundle catalog ──────────────────────────────────────────────
--- Short human-readable descriptions keyed by bundle name.  The filesystem
--- layout (bundles/<category>/<name>.lua) is the authoritative source for
--- which bundles exist and which category they belong to; this table just
--- adds the prose for the picker.  Adding a bundle without an entry here
--- falls back to "(no description)" -- see dev-docs/bundle-development.md.
-
-local bundle_descriptions = {
-  -- languages
-  rust            = "rustaceanvim -- macro expansion, runnables, crate graph",
-  go              = "go.nvim -- test gen, struct tags, interface impl",
-  java            = "nvim-jdtls -- proper Java LSP support",
-  python          = "venv-selector -- virtual environment switching",
-  latex           = "VimTeX + noethervim-tex (snippets, textobjects)",
-  ["latex-zotero"] = "Zotero citation picker",
-  ["web-dev"]     = "template-string auto-conversion + color preview",
-  -- tools
-  debug           = "nvim-dap + UI (Python, Lua, JS/TS, Go)",
-  test            = "neotest test runner",
-  repl            = "iron.nvim interactive REPL",
-  ["task-runner"] = "overseer.nvim + compiler.nvim (run file)",
-  database        = "vim-dadbod + UI + SQL completion",
-  http            = "kulala.nvim HTTP/REST/gRPC/GraphQL client",
-  git             = "Fugit2, diffview, git-conflict",
-  ai              = "CodeCompanion (Anthropic, OpenAI, Gemini, Ollama)",
-  refactoring     = "extract function/variable/block",
-  octo            = "GitHub PRs/issues/reviews via gh CLI (<C-w>O)",
-  -- navigation
-  harpoon         = "fast per-project file marks",
-  flash           = "enhanced f/t and / motions with labels",
-  projects        = "project switcher via snacks.picker",
-  ["editing-extras"] = "argmark + decorative comment boxes",
-  yanky           = "yank ring -- cycle through paste history (<C-p>/<C-n>)",
-  -- writing
-  markdown        = "render, preview, tables, math, image paste",
-  wrapsearch      = "search across hard-wrapped lines (/ and ?)",
-  obsidian        = "Obsidian vault integration (pair with markdown bundle)",
-  neorg           = ".norg wiki / note-taking",
-  -- terminal
-  ["better-term"] = "named/numbered terminal windows",
-  tmux            = "automatic tmux window naming",
-  ["remote-dev"]  = "distant.nvim SSH editing",
-  -- ui
-  colorscheme     = "10 popular themes + persistence",
-  ["eye-candy"]   = "animations, scrollbar, block display",
-  minimap         = "sidebar minimap with git/diagnostic markers",
-  helpview        = "rendered :help pages",
-  tableaux        = "noethervim-tableaux -- animated mathematical dashboard scenes",
-  -- practice
-  training        = "vim-be-good, speedtyper, typr",
-  ["nvim-dev"]    = "StartupTime, Luapad, vimls -- Neovim config development",
-  presentation    = "presenting.nvim + showkeys",
-  hardtime        = "motion habit trainer",
-}
+-- Bundle descriptions come from each bundle file's `@desc` annotation, via
+-- util.bundle_meta.  The filesystem layout (bundles/<category>/<name>.lua)
+-- remains authoritative for which bundles exist and their category.
+--
+-- Parsed rather than listed here so there is one authored copy: the same
+-- annotation feeds :checkhealth and the docs site.  A bundle whose header
+-- lacks @desc shows "(no description)".
 
 -- Display order and human-readable labels for filesystem category names.
 -- Any category present on disk but missing here renders as its raw name at
@@ -209,12 +163,13 @@ function M.bundles()
     end
   end
 
-  local util = require("noethervim.util")
   local icons = require("noethervim.util.icons")
+  local bundle_meta = require("noethervim.util.bundle_meta")
   local items = {}
-  for _, entry in ipairs(util.scan_bundles(root .. "/lua/noethervim/bundles")) do
+  for _, meta in ipairs(bundle_meta.scan(root .. "/lua/noethervim/bundles")) do
+    local entry = { name = meta.name, category = meta.category, path = meta.path }
     local is_enabled = enabled[entry.name] or false
-    local desc = bundle_descriptions[entry.name] or "(no description)"
+    local desc = meta.desc or "(no description)"
     local label = cat_label[entry.category] or entry.category
     table.insert(items, {
       text = label .. " " .. entry.name .. " " .. desc .. (is_enabled and " enabled" or ""),

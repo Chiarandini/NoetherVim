@@ -1,3 +1,6 @@
+---@bundle tableaux
+---@desc noethervim-tableaux -- animated mathematical dashboard scenes
+---@requires none
 -- NoetherVim bundle: Tableaux
 -- Enable with: { import = "noethervim.bundles.ui.tableaux" }
 --

@@ -1,3 +1,6 @@
+---@bundle task-runner
+---@desc overseer.nvim + compiler.nvim (run file)
+---@requires note="your project build tool" why="overseer and compiler.nvim shell out to it" install="make, cargo, latexmk, npm, ... whatever the project uses"
 -- NoetherVim bundle: Task Runner
 -- Enable with: { import = "noethervim.bundles.tools.task-runner" }
 --

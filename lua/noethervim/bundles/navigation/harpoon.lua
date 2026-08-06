@@ -1,3 +1,6 @@
+---@bundle harpoon
+---@desc fast per-project file marks
+---@requires none
 -- NoetherVim bundle: Harpoon
 -- Enable with: { import = "noethervim.bundles.navigation.harpoon" }
 --

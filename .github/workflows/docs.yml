@@ -21,6 +21,37 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      # gen-docs.lua only reads files, so a bare Neovim is enough: no plugins,
+      # no lazy sync.
+      - uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: stable
+
+      # Regenerating must be a no-op. If it is not, either an annotation
+      # changed without the generated copies being refreshed, or someone
+      # edited a generated file by hand. Both are drift, and both fail here.
+      #
+      # gen-docs.lua also exits non-zero on a malformed @requires line, so a
+      # broken annotation cannot reach the site or :checkhealth.
+      - name: Bundle reference is up to date
+        run: |
+          nvim --headless -l tools/gen-docs.lua
+          git diff --exit-code -- README.md docs-site/src/content/docs/guides/bundles.md
+
+      # Every bundle must declare its requirements, `---@requires none`
+      # included, so "reviewed and has none" is distinguishable from
+      # "nobody looked".
+      - name: Every bundle declares requirements
+        run: |
+          missing=0
+          for f in lua/noethervim/bundles/*/*.lua; do
+            grep -q '^---@requires' "$f" || { echo "no @requires: $f"; missing=$((missing + 1)); }
+            grep -q '^---@desc' "$f"     || { echo "no @desc: $f";     missing=$((missing + 1)); }
+          done
+          echo "bundles missing annotations: $missing"
+          exit "$missing"
+
       # Astro 7 declares engines.node >=22.12.0.
       - uses: actions/setup-node@v4
         with:

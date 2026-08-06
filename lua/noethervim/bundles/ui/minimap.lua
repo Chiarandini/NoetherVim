@@ -1,3 +1,6 @@
+---@bundle minimap
+---@desc sidebar minimap with git/diagnostic markers
+---@requires none
 -- NoetherVim bundle: Minimap
 -- Enable with: { import = "noethervim.bundles.ui.minimap" }
 --

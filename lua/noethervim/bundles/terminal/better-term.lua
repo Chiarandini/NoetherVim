@@ -1,3 +1,6 @@
+---@bundle better-term
+---@desc named/numbered terminal windows
+---@requires none
 -- NoetherVim bundle: Better Terminal
 -- Enable with: { import = "noethervim.bundles.terminal.better-term" }
 --

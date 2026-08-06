@@ -1,3 +1,6 @@
+---@bundle flash
+---@desc enhanced f/t and / motions with labels
+---@requires none
 -- NoetherVim bundle: Flash (enhanced motion)
 -- Enable with: { import = "noethervim.bundles.navigation.flash" }
 --

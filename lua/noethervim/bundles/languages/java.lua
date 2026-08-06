@@ -1,3 +1,6 @@
+---@bundle java
+---@desc nvim-jdtls -- proper Java LSP support
+---@requires exe=java label="A JDK" why="jdtls will not start without one" install="JDK 17 or newer; jdtls itself installs via Mason"
 -- NoetherVim bundle: Java
 -- Enable with: { import = "noethervim.bundles.languages.java" }
 --

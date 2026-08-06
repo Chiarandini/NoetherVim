@@ -1,3 +1,6 @@
+---@bundle eye-candy
+---@desc animations, scrollbar, block display
+---@requires none
 -- NoetherVim bundle: Eye Candy
 -- Enable with: { import = "noethervim.bundles.ui.eye-candy" }
 --

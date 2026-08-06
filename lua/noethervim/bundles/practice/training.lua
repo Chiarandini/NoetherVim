@@ -1,3 +1,6 @@
+---@bundle training
+---@desc vim-be-good, speedtyper, typr
+---@requires none
 -- NoetherVim bundle: Training
 -- Enable with: { import = "noethervim.bundles.practice.training" }
 --

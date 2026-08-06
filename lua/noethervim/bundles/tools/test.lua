@@ -1,3 +1,6 @@
+---@bundle test
+---@desc neotest test runner
+---@requires exe=python3 label="Python 3" why="neotest-python is the shipped adapter" install="then pip install pytest" optional=true
 -- NoetherVim bundle: Test Runner
 -- Enable with: { import = "noethervim.bundles.tools.test" }
 --

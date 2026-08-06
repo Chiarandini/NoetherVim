@@ -1,3 +1,6 @@
+---@bundle colorscheme
+---@desc 9 themes beyond the shipped gruvbox
+---@requires none
 -- NoetherVim bundle: Colorscheme Collection
 -- Enable with: { import = "noethervim.bundles.ui.colorscheme" }
 --

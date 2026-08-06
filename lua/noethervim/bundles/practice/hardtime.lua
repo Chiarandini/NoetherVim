@@ -1,3 +1,6 @@
+---@bundle hardtime
+---@desc motion habit trainer
+---@requires none
 -- NoetherVim bundle: Hardtime (vim motion trainer)
 -- Enable with: { import = "noethervim.bundles.practice.hardtime" }
 --

@@ -96,11 +96,30 @@ sudo dnf install neovim ripgrep fd-find
 
 </details>
 
-Some bundles have their own dependencies:
-- `latex` needs `latexmk` and a TeX distribution
-- `debug` needs Python 3 with `debugpy` for Python debugging
-- `ai` needs an API key (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, etc.)
-- `octo` needs the [`gh` CLI](https://cli.github.com/) and `gh auth login`
+Some bundles need tools you install yourself. Optional extras are left out
+here; `:checkhealth noethervim` reports the full picture for the bundles you
+actually enabled, and every bundle file lists its own requirements in its
+header.
+
+<!-- BEGIN GENERATED: bundle-requirements -->
+- `go` needs Go toolchain
+- `java` needs A JDK
+- `latex` needs latexmk
+- `latex-zotero` needs Zotero, SQLite
+- `python` needs Python 3
+- `rust` needs rust-analyzer, Cargo
+- `web-dev` needs Node.js
+- `remote-dev` needs distant, distant on the remote host
+- `tmux` needs tmux
+- `ai` needs curl
+- `debug` needs Python 3
+- `git` needs libgit2
+- `http` needs curl
+- `octo` needs GitHub CLI
+- `repl` needs a REPL for your language
+- `task-runner` needs your project build tool
+- `obsidian` needs a vault path
+<!-- END GENERATED: bundle-requirements -->
 
 ## Installation
 
@@ -256,17 +275,19 @@ For the full override system reference, see `:help noethervim-user-config`.
 
 ## Bundles
 
-Bundles are optional feature groups, enabled in `init.lua` (see [Enabling bundles](#enabling-bundles)). The core is fully functional with none enabled. Full descriptions and per-bundle dependencies live in [`docs/bundles.md`](docs/bundles.md).
+Bundles are optional feature groups, enabled in `init.lua` (see [Enabling bundles](#enabling-bundles)). The core is fully functional with none enabled. Full descriptions and per-bundle requirements live in [the bundle reference](https://nathanaelsrawley.com/noethervim/guides/bundles/).
 
+<!-- BEGIN GENERATED: bundle-table -->
 | Category | Bundles |
 |---|---|
-| Programming languages | [`rust`](docs/bundles.md#programming-languages), [`go`](docs/bundles.md#programming-languages), [`java`](docs/bundles.md#programming-languages), [`python`](docs/bundles.md#programming-languages), [`latex`](docs/bundles.md#programming-languages), [`latex-zotero`](docs/bundles.md#programming-languages), [`web-dev`](docs/bundles.md#programming-languages) |
-| Tools | [`debug`](docs/bundles.md#tools), [`test`](docs/bundles.md#tools), [`repl`](docs/bundles.md#tools), [`task-runner`](docs/bundles.md#tools), [`database`](docs/bundles.md#tools), [`http`](docs/bundles.md#tools), [`git`](docs/bundles.md#tools), [`ai`](docs/bundles.md#tools), [`refactoring`](docs/bundles.md#tools), [`octo`](docs/bundles.md#tools), [`nvim-dev`](docs/bundles.md#tools) |
-| Navigation & editing | [`harpoon`](docs/bundles.md#navigation--editing), [`flash`](docs/bundles.md#navigation--editing), [`projects`](docs/bundles.md#navigation--editing), [`editing-extras`](docs/bundles.md#navigation--editing), [`yanky`](docs/bundles.md#navigation--editing) |
-| Writing & notes | [`markdown`](docs/bundles.md#writing--notes), [`obsidian`](docs/bundles.md#writing--notes), [`neorg`](docs/bundles.md#writing--notes), [`wrapsearch`](docs/bundles.md#writing--notes) |
-| Terminal & environment | [`better-term`](docs/bundles.md#terminal--environment), [`tmux`](docs/bundles.md#terminal--environment), [`remote-dev`](docs/bundles.md#terminal--environment) |
-| UI & appearance | [`colorscheme`](docs/bundles.md#ui--appearance), [`eye-candy`](docs/bundles.md#ui--appearance), [`minimap`](docs/bundles.md#ui--appearance), [`helpview`](docs/bundles.md#ui--appearance), [`tableaux`](docs/bundles.md#ui--appearance) |
-| Practice & utilities | [`training`](docs/bundles.md#practice--utilities), [`presentation`](docs/bundles.md#practice--utilities), [`hardtime`](docs/bundles.md#practice--utilities) |
+| Programming languages | [`go`](https://nathanaelsrawley.com/noethervim/guides/bundles/#go), [`java`](https://nathanaelsrawley.com/noethervim/guides/bundles/#java), [`latex`](https://nathanaelsrawley.com/noethervim/guides/bundles/#latex), [`latex-zotero`](https://nathanaelsrawley.com/noethervim/guides/bundles/#latex-zotero), [`python`](https://nathanaelsrawley.com/noethervim/guides/bundles/#python), [`rust`](https://nathanaelsrawley.com/noethervim/guides/bundles/#rust), [`web-dev`](https://nathanaelsrawley.com/noethervim/guides/bundles/#web-dev) |
+| Tools | [`ai`](https://nathanaelsrawley.com/noethervim/guides/bundles/#ai), [`database`](https://nathanaelsrawley.com/noethervim/guides/bundles/#database), [`debug`](https://nathanaelsrawley.com/noethervim/guides/bundles/#debug), [`git`](https://nathanaelsrawley.com/noethervim/guides/bundles/#git), [`http`](https://nathanaelsrawley.com/noethervim/guides/bundles/#http), [`nvim-dev`](https://nathanaelsrawley.com/noethervim/guides/bundles/#nvim-dev), [`octo`](https://nathanaelsrawley.com/noethervim/guides/bundles/#octo), [`refactoring`](https://nathanaelsrawley.com/noethervim/guides/bundles/#refactoring), [`repl`](https://nathanaelsrawley.com/noethervim/guides/bundles/#repl), [`task-runner`](https://nathanaelsrawley.com/noethervim/guides/bundles/#task-runner), [`test`](https://nathanaelsrawley.com/noethervim/guides/bundles/#test) |
+| Navigation & editing | [`editing-extras`](https://nathanaelsrawley.com/noethervim/guides/bundles/#editing-extras), [`flash`](https://nathanaelsrawley.com/noethervim/guides/bundles/#flash), [`harpoon`](https://nathanaelsrawley.com/noethervim/guides/bundles/#harpoon), [`projects`](https://nathanaelsrawley.com/noethervim/guides/bundles/#projects), [`yanky`](https://nathanaelsrawley.com/noethervim/guides/bundles/#yanky) |
+| Writing & notes | [`markdown`](https://nathanaelsrawley.com/noethervim/guides/bundles/#markdown), [`neorg`](https://nathanaelsrawley.com/noethervim/guides/bundles/#neorg), [`obsidian`](https://nathanaelsrawley.com/noethervim/guides/bundles/#obsidian), [`wrapsearch`](https://nathanaelsrawley.com/noethervim/guides/bundles/#wrapsearch) |
+| Terminal & environment | [`better-term`](https://nathanaelsrawley.com/noethervim/guides/bundles/#better-term), [`remote-dev`](https://nathanaelsrawley.com/noethervim/guides/bundles/#remote-dev), [`tmux`](https://nathanaelsrawley.com/noethervim/guides/bundles/#tmux) |
+| UI & appearance | [`colorscheme`](https://nathanaelsrawley.com/noethervim/guides/bundles/#colorscheme), [`eye-candy`](https://nathanaelsrawley.com/noethervim/guides/bundles/#eye-candy), [`helpview`](https://nathanaelsrawley.com/noethervim/guides/bundles/#helpview), [`minimap`](https://nathanaelsrawley.com/noethervim/guides/bundles/#minimap), [`tableaux`](https://nathanaelsrawley.com/noethervim/guides/bundles/#tableaux) |
+| Practice & utilities | [`hardtime`](https://nathanaelsrawley.com/noethervim/guides/bundles/#hardtime), [`presentation`](https://nathanaelsrawley.com/noethervim/guides/bundles/#presentation), [`training`](https://nathanaelsrawley.com/noethervim/guides/bundles/#training) |
+<!-- END GENERATED: bundle-table -->
 
 ---
 

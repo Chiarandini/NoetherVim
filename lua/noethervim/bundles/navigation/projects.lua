@@ -1,3 +1,6 @@
+---@bundle projects
+---@desc project switcher via snacks.picker
+---@requires none
 -- NoetherVim bundle: Projects
 -- Enable with: { import = "noethervim.bundles.navigation.projects" }
 --

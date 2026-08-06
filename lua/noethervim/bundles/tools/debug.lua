@@ -1,3 +1,7 @@
+---@bundle debug
+---@desc nvim-dap + UI (Python, Lua, JS/TS, Go)
+---@requires exe=python3 label="Python 3" why="the Python adapter" install="then pip install debugpy"
+---@requires exe=node label="Node.js" why="the JavaScript and TypeScript adapter" install="https://nodejs.org/" optional=true
 -- NoetherVim bundle: Debug (DAP)
 -- Enable with: { import = "noethervim.bundles.tools.debug" }
 --

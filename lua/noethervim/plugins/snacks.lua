@@ -463,7 +463,7 @@ return {
 		-- find [t]odo's
 		{ SearchLeader .. "ft", function() Snacks.picker.todo_comments({ title = "Todo Comments" }) end, desc = "[f]ind [t]odo's" },
 		-- [C]olorscheme
-		{ SearchLeader .. "C",  function() Snacks.picker.colorschemes({ title = "Colorschemes" }) end, desc = "[C]olorscheme" },
+		{ SearchLeader .. "C",  function() Snacks.picker.colorschemes({ title = require("noethervim.util.colorscheme").picker_title() }) end, desc = "[C]olorscheme" },
 		-- [R]esume last picker
 		{ SearchLeader .. "r",  function() Snacks.picker.resume()   end, desc = "[R]esume" },
 

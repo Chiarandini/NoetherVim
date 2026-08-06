@@ -1,3 +1,6 @@
+---@bundle yanky
+---@desc yank ring -- cycle through paste history (<C-p>/<C-n>)
+---@requires none
 -- NoetherVim bundle: Yank ring
 -- Enable with: { import = "noethervim.bundles.navigation.yanky" }
 --

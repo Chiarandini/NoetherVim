@@ -1,3 +1,6 @@
+---@bundle presentation
+---@desc presenting.nvim + showkeys
+---@requires none
 -- NoetherVim bundle: Presentation / Screensharing
 -- Enable with: { import = "noethervim.bundles.practice.presentation" }
 --

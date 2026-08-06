@@ -1,3 +1,6 @@
+---@bundle obsidian
+---@desc Obsidian vault integration (pair with markdown bundle)
+---@requires note="a vault path" why="obsidian.nvim has nothing to open without one" install="set it in lua/user/config.lua; see :help noethervim-user-config-data"
 -- NoetherVim bundle: Obsidian
 -- Enable with: { import = "noethervim.bundles.writing.obsidian" }
 --
