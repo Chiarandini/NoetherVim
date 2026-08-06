@@ -9,4 +9,8 @@ public/assets/
 src/content/docs/start/
 src/content/docs/guides/configuration.md
 src/content/docs/guides/keybindings.md
+src/content/docs/guides/managing.md
 src/content/docs/guides/recipes.md
+
+# The landing page's pitch, generated from README.md by the same script.
+src/components/

@@ -1,30 +1,29 @@
 # Onboarding for mathematicians
 
-This guide is for mathematicians who have seen Neovim from a distance -
-maybe used it for LaTeX with a minimal `init.vim`, maybe watched a
-colleague fly through a paper in it - and want to make the jump to a
-fully-configured setup without spending a month reading help files.
+This guide is for mathematicians who have minimally used Neovim
+(ex. used it for LaTeX with a minimal `init.vim`) and want to make the jump to a
+fully-configured setup without spending too much time reading help files.
 
 This document is not a Vim tutorial and not an argument for switching editors. It is
 targeting people who already want to. The goal is to shorten the path from install to
 a setup where you can actually write a paper, take notes, manage references, etc.
 
-It builds on [your first session](README.md), which covers the parts that are
-not specific to mathematics: the keybinding prefixes, the commands worth
-running first, and the defaults you can change. Sections 4 and 5 below repeat
-just enough of it to stay self-contained.
+It builds on [your first session](first-session.md), which covers everything
+not specific to mathematics: minimal Vim literacy, the keybinding prefixes,
+the commands worth running first, and the defaults you can change. Do that one
+first; this guide assumes it.
 
 ---
 
 ## 1. Who this guide is for
 
-You know, or can tolerate, Vim basics: modes, `hjkl`, `:w`, `:q`,
-`/search`. If `hjkl` means nothing to you, start with section 2 first.
+You know, or can tolerate, Vim basics: modes, `hjkl`, `:w`, `:q`, `/search`.
+If `hjkl` means nothing to you, start with the Vim literacy section of
+[your first session](first-session.md).
 
 You write math (papers, notes, thesis chapters, problem sets) in
 LaTeX, Markdown, or some mix of them. You want to get to a
-working setup quickly and iterate from there, rather than read every
-manual before opening a file.
+working setup quickly and iterate from there.
 
 What you will find below: concrete keymaps, a walkthrough for writing a
 LaTeX paper, pointers to the deeper documentation when you need it.
@@ -32,115 +31,13 @@ What you will not find: a re-derivation of Vim motions,
 a complete reference (can be found at `:help noethervim`), and the
 plugin docs this guide links to.
 
-## 2. Before you start: minimal Vim literacy
+One thing worth knowing before the first launch: lazy.nvim bootstraps itself,
+pulls plugins, compiles treesitter parsers, and installs the LaTeX language
+server through Mason once you enable the bundle below. The first launch takes
+at most a minute, usually no more than 5 seconds, and subsequent ones are
+usually under 50ms.
 
-You do not need to master Vim before using NoetherVim. The distribution
-is usable with surface-level knowledge and actively teaches you more
-through the which-key popup (see section 4).
-
-That said, three resources are worth keeping open the first week:
-
-- **`:Tutor`**: run inside any Neovim install. About 30 minutes. Teaches
-  modes, basic motions, `dd`/`yy`/`p`, search, and writing buffers.
-  This is the single best use of your time as a new Vim user.
-- **[learnvim](https://learnvim.irian.to/)**: a free book on modal
-  editing intuition. Skim the first few chapters to internalize why, for example,
-  `ci"` is better than selecting and retyping.
-- **`:help user-manual`**: the canonical reference. Not for reading cover to cover
-  ([roughly nine hours if you try](https://www.youtube.com/watch?v=rT-fbLFOCy0));
-  look into it when you want to understand something properly.
-
-If you hit a specific motion or command you don't know, `:help <thing>`
-almost always has an answer. Neovim's help system is one of the most reliable
-pieces of documentation in the entire ecosystem.
-
-## 3. Installation
-
-Installation lives in the main README: see
-[Installation](../../README.md#installation). Two things worth
-highlighting for a mathematician coming from another editor:
-
-- **Don't wipe your existing config blindly.** If you already have
-  `~/.config/nvim/`, use the `NVIM_APPNAME=noethervim` (or any other name besides
-  `noethervim`) pattern from the
-  README's install section. You can run NoetherVim and your old setup
-  side by side with no interference.
-- **Let the first launch finish.** Lazy.nvim bootstraps itself, pulls
-  plugins, compiles treesitter parsers, and (if you enable the LaTeX
-  bundle) installs the language server through Mason. First launch
-  takes a minute or two at most. Subsequent launches are fast (usually <50ms).
-
-Once `nvim` opens without errors and the dashboard appears, you're
-ready.
-
-## 4. Orientation: your first session
-
-When Neovim opens with no file, you land on the **Snacks dashboard** - a
-NoetherVim ASCII header with a short menu:
-
-```
-New File (insert)  [i]
-New File (normal)  [e]
-Find File          [f]
-Old Files          [o]
-Restore Session    [r]
-Sessions           [s]
-Config             [c]
-Quit               [q]
-```
-
-Press the letter in brackets. `f` opens the fuzzy file picker in your
-current directory; `c` jumps to your config.
-
-### Keybinding prefixes
-
-NoetherVim builds on Vim's own prefix conventions rather than funneling
-everything through one leader. The prefixes you will actually use:
-
-| Prefix | Meaning |
-|---|---|
-| `<Space>` (SearchLeader) | Fuzzy finding: files, grep, buffers, keymaps, help |
-| `<Leader>` (`\` by default) | Global actions: format, open tools |
-| `<LocalLeader>` (`,` by default) | Filetype-specific: compile LaTeX, run a script |
-| `<C-w>` | Anything window-related: navigate, resize, split |
-| `[` / `]` | Previous / next: diagnostics, hunks, buffers, theorems |
-| `[o` / `]o` | Toggle options: wrap, spell, relative numbers |
-
-`q` closes non-editing windows (help, quickfix, Oil, notify). This is a
-distribution convention - use it instead of `:q` for anything that
-isn't a file buffer.
-
-### Discovery: which-key
-
-Press any prefix and wait for a second. A popup appears listing every
-key that follows, grouped by category. If you forget "how do I jump
-between hunks again?", press `[` and read. This is the habit that
-replaces memorizing the manual.
-
-### The `:NoetherVim` command
-
-`:NoetherVim <tab>` autocompletes the subcommands. The ones worth
-knowing day one:
-
-- `:NoetherVim bundles`: picker of every bundle with enable/disable
-  status. Answers "what else could I turn on?" Press `<C-y>` on a
-  bundle to enable it (edits `init.lua` behind a diff prompt), or
-  `<C-x>` to disable.
-- `:NoetherVim templates`: picker of the bundled user-config
-  templates (`options`, `keymaps`, `autocmds`, …). Press `<C-y>` to
-  stamp one into `lua/user/`, with a diff prompt before any write.
-- `:NoetherVim plugins`: picker of every installed plugin. Good for
-  reading a plugin's source when `:help` isn't enough.
-- `:NoetherVim files`: picker of NoetherVim's own source files.
-- `:NoetherVim user`: picker of your `lua/user/` files.
-- `:NoetherVim override`: from any NoetherVim source file, open the
-  matching user override file in a split. Creates it if missing. One of
-  the more useful commands for customization.
-
-`<Space>fk` searches all keymaps by description. `:NoetherVim diff
-keymaps` (or `<space>ck`) shows what you've personally changed.
-
-## 5. Enabling the math bundles
+## 2. Enabling the math bundles
 
 Open `~/.config/nvim/init.lua` (or whichever path you installed to)
 and uncomment the bundles you want. Each one is a single line in the
@@ -165,11 +62,11 @@ required dependencies (TeX distribution, `latexmk`, Zotero translator if
 you enabled zotero, `uv`/Python for image tooling) and tells you exactly
 which command to run if something is missing.
 
-## 6. Writing a LaTeX paper
+## 3. Writing a LaTeX paper
 
 The LaTeX bundle gives you the same level of support as an IDE: live
 compilation, forward/reverse PDF sync, snippet-driven math entry,
-citation picker, theorem navigation, and a 900-entry math spell
+citation picker, theorem navigation, and a 1000+ math spell
 dictionary.
 
 ### Compile and preview
@@ -252,22 +149,39 @@ structure, in the `[` / `]` pairing the rest of the distribution uses:
 - `]x` / `[x` - next / previous example, `]X` / `[X` for its `\end`
 - `]c` / `[c` - next / previous chapter
 
-These move the cursor; they are not operator-pending textobjects, so
-`d]g` does not work. For operating on a region, use VimTeX's own
-textobjects: `ie` / `ae` (inside / around environment) and `i$` / `a$`
-(inline math). `dae` deletes a whole environment and `ci$` replaces the
+These are motions, not textobjects, and they compose with operators the way
+`]m` or `]}` do: `d]g` deletes from the cursor to the start of the next
+theorem, `v]g` extends a selection there, `y]g` yanks the span.
+
+To operate on a whole environment rather than the span between two, use
+VimTeX's textobjects: `ie` / `ae` (inside / around environment) and `i$` /
+`a$` (inline math). `dae` deletes a whole environment and `ci$` replaces the
 contents of `$...$`.
 
 ### Spell checking that knows math
 
 Spell is on in `.tex` files by default. Math regions are excluded
-automatically so that something like `$\alpha + \beta$` will not flag. The distribution
+automatically so that something like `$akdjfh$` will not flag. The distribution
 ships a custom dictionary with mathematical terms (Noetherian,
 cohomology, homomorphism, tensor, manifold, ...) so real words don't
 light up.
 
-Add your own by pressing `zg` on a word in normal mode to add the word to your local vim
-dictionary, or simply edit `~/.local/share/nvim/site/spell/en.utf-8.add` directly.
+Accented words are handled too, which stock spell checking gets wrong.
+Neovim sees `Poincar\'e` as the letters that are literally there and flags it,
+because the accent is a TeX escape rather than a character. The bundle decodes
+those escapes first and spell-checks the word they spell, so `Poincar\'e` is
+checked as *Poincaré* and passes. Misspellings inside an accented word are
+still caught, and are reported as diagnostics as well as highlights.
+
+Add your own words by pressing `zg` on one in normal mode. In `.tex` buffers
+`zg` is routed: an accented word goes to the accent dictionary in its decoded
+form, a plain one to your ordinary spell file. You can also edit
+`~/.local/share/nvim/site/spell/en.utf-8.add` directly.
+
+The `:NoetherTexAccent*` commands cover the rest: `Add`, `MarkWrong`,
+`Suggest` for corrections, `Diagnostic` to control whether accent findings
+appear in the diagnostic list, and `AccentSpell` to toggle the feature per
+buffer.
 
 ### Citations
 
@@ -283,16 +197,22 @@ bibliography.
 
 ### Images
 
-Copy an image to your clipboard (screenshot, paper figure, diagram
-from a colleague) and press `<LocalLeader>P`. A `figure` environment
-is inserted at the cursor with a caption stub, the image saved to a
-nearby directory, and the path wired up.
+Copy an image to your clipboard (screenshot, paper figure, diagram from a
+colleague) and press `<LocalLeader>P`. You are prompted for a file name,
+defaulting to a timestamp, and a complete `figure` environment is inserted at
+the cursor with the caption left for you to fill in.
 
-## 7. Notes, references, and research workflow
+The image is written as a `.png` into an `images/` directory beside the
+document, created if it is not there. The `\includegraphics` path is relative
+to that document rather than absolute.
 
-Mathematical notes tend to outlive the paper they were taken for, so it
-is worth picking a home for them early. NoetherVim gives you three
-paths; pick the one that matches how you already think.
+Dragging an image onto the window does the same thing. In Markdown buffers the
+same key inserts `![caption](path)` instead.
+
+## 4. Notes, references, and research workflow
+
+To organize your non-latex notes, NoetherVim gives you three
+paths as bundles.
 
 **Plain Markdown + `markdown` bundle.** The lightest option.
 Render-markdown.nvim concealed formatting in-buffer (headings, bold,
@@ -326,25 +246,14 @@ Neorg has a steeper learning curve than Markdown but pays off if you
 want outlined, exportable, linked notes as a system rather than a
 folder of files.
 
-## 8. Extending NoetherVim
+## 5. Tuning the LaTeX setup
 
-You will eventually want to change something: a keymap, a color, a
-plugin option. NoetherVim's override system is designed so you never
-fork the distribution or edit its files.
+The general override system is covered by
+[your first session](first-session.md) and `:help noethervim-user-config`.
+What follows is the handful of places specific to
+workflows covered in this document:
 
-Your personal configuration lives in `~/.config/nvim/lua/user/`:
-
-| File | What you put there |
-|---|---|
-| `options.lua` | `vim.o.textwidth = 120`, `vim.o.tabstop = 2`, and so on |
-| `keymaps.lua` | New keymaps or reassignments of distro ones |
-| `autocmds.lua` | Autocommands (`BufWritePre`, `FileType`, etc.) |
-| `highlights.lua` | `vim.api.nvim_set_hl(...)` calls, run after colorscheme |
-| `plugins/*.lua` | New plugin specs or `opts` overrides on distro plugins |
-| `lsp/<server>.lua` | Per-server LSP settings |
-| `config.lua` | Data table: vault paths, preamble folder, feature flags |
-
-For a concrete example, to change the compile key to use `<LocalLeader>c`:
+**Change a VimTeX keymap.** The compile key, for instance:
 
 ```lua
 -- ~/.config/nvim/lua/user/keymaps.lua
@@ -352,54 +261,67 @@ vim.keymap.set("n", "<LocalLeader>c", "<Plug>(vimtex-compile)",
     { desc = "Compile (custom)" })
 ```
 
-From any core NoetherVim file opened via `:NoetherVim files`, press
-`<Leader>e` (the same keymap as `:NoetherVim override`) to open the
-matching user override file in a split. NoetherVim creates it if it
-doesn't exist and puts you at the right place.
+**Point the preamble picker somewhere else,** if you keep shared macros
+outside your config directory:
 
-For the full override system (loading order, how `opts` tables merge,
-how to disable a plugin from a bundle) see `:help
-noethervim-user-config`.
+```lua
+-- ~/.config/nvim/lua/user/plugins/noethervim-tex.lua
+return {
+    { "Chiarandini/NoetherVim-Tex",
+      opts = { preamble_folder = "~/Documents/LaTeX/preamble/" },
+    },
+}
+```
 
-## 9. When things break
+**Change where pasted figures land,** or the environment they are wrapped in,
+by overriding img-clip's `tex` filetype entry in
+`~/.config/nvim/lua/user/plugins/`.
 
-Four commands, in order, will diagnose almost any problems:
+**Add your own snippets.** LuaSnip files in `LuaSnip/tex/` inside your config
+directory are picked up alongside the bundle's. This is the usual way to grow
+a personal notation set.
 
-1. **`:checkhealth noethervim`** - reports on every dependency and
-   configuration requirement. Run this first. The output tells you
-   which external tool is missing or mis-configured.
-2. **`:Lazy`** - shows plugin state: installed, loaded, failed. Press
-   `L` (inside the Lazy UI) for recent install/update log output.
-3. **`:Mason`** - shows LSP server, formatter, and linter state. If
-   LaTeX lint stops working, a reinstall from here fixes it 90% of
-   the time.
-4. **`:messages`** - anything that scrolled past during startup. Error
-   messages often appear here and nowhere else.
+To find the file behind any of these, open `:NoetherVim bundles`, select
+`latex`, and press `<C-o>`. That seeds an override file listing every plugin
+the bundle declares, so you can uncomment the one you want to change.
 
-If all four come back clean but something is still off, open an issue:
-<https://github.com/Chiarandini/NoetherVim/issues>. Include
-`:checkhealth noethervim` output and the specific file / keymap / bundle
-that's misbehaving.
+## 6. When things break
 
-## 10. Going deeper
+Four commands, in order, diagnose almost anything:
 
-You do not have to read any of the following to use NoetherVim well. These are further
-documentation to improve your knowledge of Neovim:
+1. **`:checkhealth noethervim`** reports on every dependency and
+   configuration requirement. Run this first; the output names the external
+   tool that is missing or mis-configured.
+2. **`:Lazy`** shows plugin state: installed, loaded, failed. Press `L` inside
+   the Lazy UI for recent install and update logs.
+3. **`:Mason`** shows LSP server, formatter and linter state. If LaTeX
+   linting stops working, reinstalling from here usually fixes it.
+4. **`:messages`** holds anything that scrolled past during startup. Errors
+   often appear there and nowhere else.
 
-- **`:help user-manual`** - the Vim user manual, rendered inside your
-  editor. The single most reliable reference for modal editing.
-- **[Neovim Lua guide](https://neovim.io/doc/user/lua-guide.html)** -
-  when you want to write your own autocommand, override, or plugin
-  spec. Short and well-paced.
-- **[VimTeX documentation](https://github.com/lervag/vimtex)** - the
-  LaTeX workflow has far more depth than this guide covers (custom
-  compilers, remote compilation, inverse search tuning,
-  language-specific features).
-- **[lazy.nvim spec reference](https://lazy.folke.io/spec)** - read
-  before writing a plugin override so your `keys` / `event` / `ft` /
-  `opts` table actually behaves the way you expect.
-- **Castel, ["How I'm able to take notes in mathematics lectures using
-  LaTeX and Vim"](https://castel.dev/post/lecture-notes-1/)** - the
-  post that introduced a generation of mathematicians to snippet-based
-  real-time LaTeX. Most of the ideas behind the NoetherVim LaTeX
-  bundle trace back here.
+If all four come back clean and something is still off, open an issue at
+<https://github.com/Chiarandini/NoetherVim/issues> with the
+`:checkhealth noethervim` output and the specific file, keymap or bundle that
+is misbehaving.
+
+## 7. Going deeper on LaTeX
+
+None of this is required. It is where to look once the setup above stops being
+the limiting factor:
+
+- **`:help vimtex`** and the
+  [VimTeX documentation](https://github.com/lervag/vimtex) cover far more than
+  this guide: custom compilers, remote compilation, inverse-search tuning,
+  multi-file projects, and the full textobject set.
+- **`:help noethervim-tex`** documents the snippet engine, the accent
+  spell-checker, and the treesitter motions in detail, including how to write
+  context-aware snippets of your own.
+- **`:help luasnip`**, specifically the section on `condition` and dynamic
+  nodes, is what you need before writing snippets that fire only in math mode.
+- **VimTeX's textobjects** (`ie`/`ae` for environments, `i$`/`a$` for inline
+  math, `id`/`ad` for delimiters) compose with every operator, and repay
+  learning more than any single keymap in this guide.
+- **Castel, ["How I'm able to take notes in mathematics lectures using LaTeX
+  and Vim"](https://castel.dev/post/lecture-notes-1/)** is the post that
+  introduced a generation of mathematicians to snippet-based real-time LaTeX.
+  Most of the ideas behind the NoetherVim LaTeX bundle trace back to it.

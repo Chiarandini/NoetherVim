@@ -46,6 +46,7 @@ export default defineConfig({
             { label: 'Configuration', link: '/guides/configuration/' },
             { label: 'Keybinding philosophy', link: '/guides/keybindings/' },
             { label: 'Recipes', link: '/guides/recipes/' },
+            { label: 'Managing your install', link: '/guides/managing/' },
           ],
         },
       ],

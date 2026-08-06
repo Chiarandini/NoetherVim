@@ -78,7 +78,7 @@ Both the bundle and template flows show a diff prompt before writing.
 The keymap prefixes are the fastest thing to learn: |noethervim-keymaps|.
 
 A longer walkthrough for a first session, including the prefixes and the
-defaults worth reviewing, lives in `docs/onboarding/README.md` in the
+defaults worth reviewing, lives in `docs/onboarding/first-session.md` in the
 project root; `docs/onboarding/mathematicians.md` continues it for LaTeX
 work.
 
@@ -699,6 +699,10 @@ by hand. Open `:NoetherVim bundles` (or SearchLeader+cb) and:
     <C-x>     Disable bundle. Re-comments the active `import` line,
               again behind a diff prompt.
     <CR>      Open the bundle source file (unchanged).
+    <C-o>     Seed a user override for this bundle in
+              `user/plugins/<name>.lua`, listing the upstream spec's repo
+              strings as commented stubs. Same as opening the source and
+              running `:NoetherVim override`. See |noethervim-commands|.
     <F1>      List every key the picker binds. Press <F1> or <Esc> to
               dismiss it; <Esc> only closes the picker itself once the
               list is gone. Works in every snacks picker, not just this
@@ -735,7 +739,10 @@ Available bundles (grouped by category): ~
     `web-dev`        JS/TS template string + inline color preview.
 
     tools/ ~
-    `debug`          nvim-dap + UI (Python, Lua, JS/TS, Go).
+    `debug`          nvim-dap + UI. Language-agnostic: the Neovim Lua
+                     adapter is built in, and Python, Go and JS/TS
+                     adapters come from their own language bundles when
+                     both bundles are enabled.
     `test`           neotest test runner framework.
     `repl`           iron.nvim interactive REPL.
     `task-runner`    overseer.nvim + compiler.nvim.
@@ -928,11 +935,14 @@ Templates: ~
 Merge the bundled `templates/user/<name>.example.lua` files into your config
 as `lua/user/<name>.lua`. The picker shows each template with `[new]` or
 `[exists]` status; press `<C-y>` on a row to write it. A floating diff
-window shows the exact change before any file is created or overwritten,
-with [y]es / [n]o confirmation.
+window shows the exact change before any file is created or overwritten:
+`y` or `<CR>` accepts, `n` rejects, `q` or `<Esc>` cancels.
 
-`<CR>` opens the source template (read-only) so you can read it without
-copying anything.
+On accept the new file opens for editing, which is what you wanted the
+template for.
+
+`<CR>` in the picker opens the source template read-only, so you can read
+one without copying anything.
 
 If the destination directory does not exist (e.g. `lua/user/plugins/`),
 it is created on accept.
@@ -1322,7 +1332,8 @@ with the `<C-w>s` prefix:
     `<C-w>sg`           Toggle git component
     `<C-w>sp`           Toggle PDF size indicator
     `<C-w>sl`           Toggle LSP component
-    `<C-w>sP`           Show full file path
+    `<C-w>sP`           Split the path: project-relative directory as its
+                        own component, bare filename beside it
     `<C-w>s<C-p>`       Toggle PDF mode
 
 Clickable components: ~
@@ -1332,9 +1343,61 @@ Clickable components: ~
     Diagnostics count   Open buffer diagnostics picker
     File name           Open current directory in system file browser
     Modified indicator  Diff unsaved changes against saved version
+    Deleted-file flag   Offer to write the buffer back (see below)
+    Directory indicator Explain the cwd mismatch, offer `:lcd` (see below)
     LSP indicator       Open `:LspInfo`
     Git branch/status   Open lazygit in a terminal
     Update indicator    Open Lazy plugin manager
+
+                                        *noethervim-statusline-deleted*
+Deleted-file flag: ~
+
+    Deleting a file from under an open buffer leaves the buffer intact,
+    still holding the path and the only surviving copy of the contents.
+    Nothing in stock Neovim says so. A red marker appears in the flag
+    slot, left of the filename, when that happens -- whether the file
+    went through Oil, `rm` in a terminal, or another program.
+
+    Click it to write the buffer back and recreate the file.
+
+    Detection rides on the `:checktime` that already runs on focus and
+    buffer changes, which reports a vanished file as `v:fcs_reason` of
+    "deleted". A file you have never written is not flagged: Neovim only
+    tracks a modification time for files it has actually read.
+
+    The flag clears on the next write or re-read.
+
+                                       *noethervim-statusline-directory*
+Directory indicator: ~
+
+    A small marker appears left of the filename when the buffer's
+    directory is not the window's working directory. Dimmed when the
+    file is somewhere under cwd, which is ordinary project navigation;
+    in the warning colour when it is outside cwd entirely.
+
+    What it is warning about is relative paths, not saving in general.
+    Neovim's working directory belongs to the window (falling back to
+    the tab, then the global one), never to the buffer, so: >
+
+        :e docs/a.md        cwd stays at the project root
+        :w draft.md         writes <root>/draft.md,
+                            not <root>/docs/draft.md
+<
+    A plain `:w` is never affected. Neovim expands a buffer's name to an
+    absolute path when the buffer is created, so it always writes back
+    to the file it read, whatever cwd has done since.
+
+    Click the marker for the two paths and a `[L]` action that runs
+    `:lcd` to the buffer's directory. `:lcd` rather than `:cd` on
+    purpose: `:cd` from a window holding a window-local or tab-local
+    directory discards both. `:pwd` and `haslocaldir()` report which
+    scope is currently in force.
+
+    Setting 'autochdir' makes cwd follow the buffer, which silences this
+    marker permanently. It also makes every relative path resolve
+    against whichever file you last visited, which is its own way to
+    open or create a file somewhere unexpected. NoetherVim leaves
+    'autochdir' off, matching Neovim's default; `[oa` / `]oa` toggle it.
 
 VimTeX compile indicator (latex bundle): ~
 
@@ -1520,6 +1583,60 @@ straightforward. See the example in
                               For internal modules (util/, sources/) or files
                               outside the NoetherVim tree, a warning is shown.
 
+                              For a plugin or bundle, the seeded file lists
+                              every repo string the upstream spec declares, as
+                              commented-out stubs. lazy.nvim merges by repo
+                              string, so those are the keys an override
+                              attaches to; uncomment the one you want.
+
+                              `:NoetherVim bundles` binds `<C-o>` to the same
+                              thing, so you can seed an override straight from
+                              the catalogue without opening the source first.
+
+`:NoetherVim override!`       Copy the upstream file wholesale instead of
+                              seeding stubs. A last resort, and the file says
+                              so in its own header: a full copy shadows every
+                              spec in the original, not just the ones you meant
+                              to change, so later upstream edits to any of them
+                              stop reaching you, and a copied
+                              `config = function()` no longer deep-merges the
+                              way `opts` does. An override that already exists
+                              is never overwritten, with or without the bang.
+
+                                                        *noethervim-override-drift*
+                              Both forms record which distribution file the
+                              override was written against, and a hash of its
+                              contents at that moment. The record lives in
+                              `stdpath('state')/noethervim/override-base.json`,
+                              never in the override itself: files under
+                              `lua/user/` are yours to rewrite, reformat or
+                              strip comments from, and a marker comment would
+                              stop working the moment you did.
+
+                              `:checkhealth noethervim` rehashes the upstream
+                              file and reports overrides whose upstream has
+                              moved on since, under "Override drift". Without
+                              it an upstream fix simply never arrives: the
+                              override keeps winning, and nothing says so.
+
+                              Compare one with `:NoetherVim diff` {name},
+                              which opens upstream and your override side by
+                              side in diff mode. Once you have read the
+                              change, run `:NoetherVim override` again from
+                              the upstream file to re-baseline it and clear
+                              the warning. Deleting the override drops its
+                              record on the next health check.
+
+                              Overrides written by hand are not reported:
+                              there is no baseline to compare them against.
+                              Run `:NoetherVim override` from the upstream
+                              file to start tracking one.
+
+                              The record is per-machine. A configuration
+                              copied to a second machine arrives with no
+                              baselines, so nothing is reported there until
+                              an override is created or re-baselined on it.
+
 `:Reset[!]`                   Close all buffers, open dashboard.
                               Use ! to force (discard unsaved changes).
 
@@ -1686,6 +1803,8 @@ Run `:checkhealth noethervim` to verify your setup. Checks include:
 - Terminal: true colour, `<S-CR>` support, Nerd Font (heuristic, see below)
 - LaTeX toolchain (if latex bundle enabled)
 - Template version: warns if your init.lua is outdated
+- Override drift: warns when a file you overrode has changed upstream
+  (see |noethervim-override-drift|)
 - User override status: lists loaded user modules
 - Configuration: user config dir, plugin dir, vault paths
 - Active bundles, spec errors, option drift, override conflicts
@@ -1746,8 +1865,11 @@ A: Both are managed by Mason, the same as LSP servers. Use `:Mason`
     { "stevearc/conform.nvim",
       opts = { formatters_by_ft = { sh = { "shfmt" } } } }
 <
-   For debuggers, enable the `debug` bundle and install the adapter
-   via `:Mason`.
+   For debuggers, enable the `debug` bundle plus the bundle for the
+   language you are debugging: `languages.python` brings debugpy,
+   `languages.go` brings delve, `languages.web-dev` brings
+   vscode-js-debug. Neither half installs a debugger on its own, so
+   enabling `debug` alone costs nothing but the UI.
 
 Q: Does NoetherVim format on save?~
 A: No; auto-formatting is deliberately off. Use `<Leader>ff` for
