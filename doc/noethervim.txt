@@ -981,6 +981,23 @@ Compare your user overrides against NoetherVim defaults.
                     `[USER]`: keymap added by your user/keymaps.lua
                     `[OVERRIDE]`: core keymap you changed
                     `[DELETED]`: core keymap you removed
+                    A second column names the bundle a keymap came from
+                    (`latex`, `debug`, `yanky`, ...) and stays blank for
+                    core and user keymaps. It disappears entirely when no
+                    bundle is enabled. The bundle name is searchable, so
+                    typing `latex` narrows the list to that bundle.
+                    `<CR>` opens the file and line that defined the key.
+                    Keymaps set by third-party plugins (surround, mini.ai,
+                    marks, ...) are hidden by default, since they are not
+                    NoetherVim's to explain; `<C-x>` toggles them in and
+                    out. Neovim's own defaults and `<Plug>` handles are
+                    never listed. Use SearchLeader+fk for a plain search
+                    over every key currently mapped.
+                    Buffer-local keymaps, marked `(buffer)`, are those of
+                    the buffer the picker was opened from, so LSP keymaps
+                    appear only when a server is attached there.
+                    Plugins that have not loaded yet have not registered
+                    their keymaps, so the list grows as a session goes on.
 
     SearchLeader+co `:NoetherVim diff options`
                     Smart picker showing all tracked options (the set of

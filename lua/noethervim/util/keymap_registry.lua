@@ -1,31 +1,41 @@
---- Setup-time registry of keymap registration sites.
+--- Startup-time registry of keymap registration sites.
 ---
 --- `vim.api.nvim_get_keymap()` tells us a keymap exists, but not where it
 --- was registered. The :NoetherVim diff-keymaps picker and the guide
 --- jump-to-source handler needs file + line. There is no
 --- public Neovim API for that. We get it by a transient instrumentation.
 ---
---- During `noethervim.setup()` we replace `vim.keymap.set` with a wrapper
---- that records the callsite (via `debug.getinfo`) keyed by
+--- At the start of `noethervim.setup()` we replace `vim.keymap.set` with
+--- a wrapper that records the callsite (via `debug.getinfo`) keyed by
 --- mode|resolved_lhs, then forwards to the default implementation. The
---- wrapper is installed once at the start of setup() and uninstalled
---- before setup() returns -- nothing persists into user-time. Users
---- writing `vim.keymap.set` at runtime (ftplugin, post-load plugin
---- configs, interactive :lua) hit the default function with no wrapping.
+--- wrapper is uninstalled at VeryLazy, right after `commands.lua` (the
+--- last core module to register keymaps) loads. Distro and user keymaps
+--- registered in that window -- setup itself, plugin config bodies,
+--- ftplugins for the first buffer -- get an exact file and line.
+--- Nothing persists beyond VeryLazy: interactive `:lua` and later
+--- ftplugins hit the stock function with no wrapping. (Headless runs
+--- that never reach VeryLazy keep the wrapper for the session; it stays
+--- transparent, just slower, and `commands.lua` would not have loaded
+--- there either.)
+---
+--- Only registrations from the distro and `lua/user/` trees are recorded,
+--- and only global ones; see `in_project` and the buffer-local note in
+--- `install()` for why.
 ---
 --- WHAT IT DOESN'T COVER
 --- Lazy-managed `keys = {...}` specs do not go through `vim.keymap.set`
 --- (lazy.nvim sets the keymap directly), so they bypass this wrapper.
 --- Those keymaps are attributed through `util.keymap_sources()` instead,
 --- which scans plugin spec files and consults lazy's resolved handler
---- table.
+--- table. Plugins that load after VeryLazy fall back to callback-file
+--- introspection in `util.keymap_source`.
 ---
 --- ARCHITECTURAL NOTE
---- This wrapper exists because because (a) the wrapper is narrowly scoped
---- to setup() only, (b) it self-uninstalls, and (c) the alternative
---- (forcing every core file to call a NoetherVim wrapper API) would violate
---- the "explicit over magic" principle far more visibly than a transient
---- debug hook does. See dev-docs/architecture.md §1 for the principle list.
+--- This wrapper exists because (a) it is scoped to startup only, (b) it
+--- self-uninstalls, and (c) the alternative (forcing every core file to
+--- call a NoetherVim wrapper API) would violate the "explicit over magic"
+--- principle far more visibly than a transient debug hook does. See
+--- dev-docs/architecture.md §1 for the principle list.
 
 local M = {}
 
@@ -188,14 +198,52 @@ local function pick_frame(resolved_lhs)
   return fallback_file or "", fallback_line or 0
 end
 
+--- Distro and user config roots, resolved once. A registration site
+--- outside both belongs to a third-party plugin and is not recorded:
+--- the registry's job is to say where *this config* set a key, and a
+--- plugin-internal callsite would short-circuit the attribution cascade
+--- ahead of the lazy-spec hint that names the file which asked for it.
+--- Third-party keymaps are attributed by callback introspection instead.
+local _roots
+local function project_roots()
+  if _roots then return _roots end
+  local init = vim.api.nvim_get_runtime_file("lua/noethervim/init.lua", false)[1]
+  local distro = vim.g.noethervim_dev and vim.fn.expand(vim.g.noethervim_dev)
+    or (init and vim.fn.fnamemodify(init, ":h:h:h"))
+  _roots = { vim.fs.normalize(vim.fn.stdpath("config") .. "/lua/user") }
+  if distro then _roots[#_roots + 1] = vim.fs.normalize(distro) end
+  return _roots
+end
+
+local function in_project(file)
+  if not file or file == "" then return false end
+  local p = vim.fs.normalize(file)
+  for _, root in ipairs(project_roots()) do
+    if vim.startswith(p, root) then return true end
+  end
+  return false
+end
+
 --- Install the wrapper. Idempotent (a second call is a no-op).
 function M.install()
   if M._orig then return end
   M._orig = vim.keymap.set
   vim.keymap.set = function(mode, lhs, rhs, opts)
+    -- Buffer-local registrations are not recorded. The registry is keyed
+    -- by `mode|lhs` with no buffer dimension, so an ftplugin's
+    -- buffer-local override (obsidian's `<C-s>`, say) would clobber the
+    -- global entry and send every jump to the wrong file. Buffer-local
+    -- keymaps are attributed by callback introspection instead, which is
+    -- per-function and therefore cannot be confused this way.
+    if opts and (opts.buffer ~= nil or opts.buf ~= nil) then
+      return M._orig(mode, lhs, rhs, opts)
+    end
     local modes = type(mode) == "table" and mode or { mode }
     local resolved = resolve_lhs(lhs)
     local file, line = pick_frame(resolved)
+    if not in_project(file) then
+      return M._orig(mode, lhs, rhs, opts)
+    end
     for _, m in ipairs(modes) do
       local key = m .. "|" .. resolved
       M._registry[key] = { file = file, line = line }

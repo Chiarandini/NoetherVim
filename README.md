@@ -283,7 +283,7 @@ Bundles are optional feature groups, enabled in `init.lua` (see [Enabling bundle
 
 `q` closes non-editing windows (help, quickfix, notify, man, …)
 
-**Discovering distro keymaps:** press any prefix key and wait for which-key to show available actions. Use SearchLeader+ck (default: `<Space>ck`) or run `:NoetherVim diff keymaps` to search all keymaps in the distribution and your user files by description and to see which keymaps were over-written. To search for all active keymappings (including neovim defaults and those introduced by plugins), use SearchLeader+fk (default: `<Space>fk`).
+**Discovering distro keymaps:** press any prefix key and wait for which-key to show available actions. Use SearchLeader+ck (default: `<Space>ck`) or run `:NoetherVim diff keymaps` to search all keymaps in the distribution and your user files by description and to see which keymaps were over-written. Keymaps contributed by a bundle are labelled with the bundle's name, which is searchable: typing `latex` narrows the list to the latex bundle. To search for all active keymappings (including neovim defaults and those introduced by plugins), use SearchLeader+fk (default: `<Space>fk`).
 
 ![Searching every distro keymap by description](docs/assets/diff-keymaps.gif)
 

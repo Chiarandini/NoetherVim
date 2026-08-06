@@ -244,10 +244,18 @@ function M.setup()
   -- ── Commands ───────────────────────────────────────────────────
   -- :Reset, :DiffOrig, :Redir, etc. Deferred to keep `nvim .` fast;
   -- the commands aren't typed in the first ~100ms of a session.
+  --
+  -- commands.lua also registers keymaps (`<C-w>u`, `\s`), so the
+  -- source registry has to still be recording when it loads. The
+  -- uninstall below is therefore deferred to this callback rather than
+  -- happening at the end of setup(); see the note there.
   vim.api.nvim_create_autocmd("User", {
     pattern = "VeryLazy",
     once = true,
-    callback = function() require("noethervim.commands") end,
+    callback = function()
+      require("noethervim.commands")
+      keymap_registry.uninstall()
+    end,
   })
 
   -- ── Highlights & colorscheme ───────────────────────────────────
@@ -286,11 +294,12 @@ function M.setup()
     end
   end
 
-  -- ── Release the keymap.set wrapper ─────────────────────────────
-  -- All setup-scope keymaps have now been registered. User-time
-  -- vim.keymap.set calls (ftplugin, post-load plugin configs,
-  -- interactive :lua) run against the stock function.
-  keymap_registry.uninstall()
+  -- The keymap.set wrapper stays installed past this point: it is
+  -- released in the VeryLazy callback above, once commands.lua (the
+  -- last core module to register keymaps) has loaded. Everything that
+  -- registers in that window -- ftplugins for the first buffer, plugin
+  -- config bodies -- gets an exact file+line for the diff picker
+  -- instead of a callback-file guess.
 
   -- ── Deferred setup (inspect + helptags) ────────────────────────
   -- These register pickers/commands that aren't reachable in the first
