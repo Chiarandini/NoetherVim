@@ -97,7 +97,7 @@ require("lazy").setup({
 		-- { import = "noethervim.bundles.languages.web-dev" },      -- JS/TS template string + color preview
 
 		-- tools/
-		-- { import = "noethervim.bundles.tools.debug" },         -- nvim-dap + UI (Python, Lua, JS/TS, Go)
+		-- { import = "noethervim.bundles.tools.debug" },         -- nvim-dap + UI (language adapters come from the language bundles)
 		-- { import = "noethervim.bundles.tools.test" },          -- neotest test runner
 		-- { import = "noethervim.bundles.tools.repl" },          -- iron.nvim REPL
 		-- { import = "noethervim.bundles.tools.task-runner" },   -- overseer + compiler.nvim

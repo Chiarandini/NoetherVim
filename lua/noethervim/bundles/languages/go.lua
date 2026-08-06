@@ -49,10 +49,10 @@ return {
 	-- nvim-dap is required by something else, i.e. unless tools/debug.lua is
 	-- enabled. Enabling this bundle alone installs no debugger.
 	--
-	-- nvim-dap-go finds `dlv` on PATH and registers both the adapter and the
-	-- launch/attach/test configurations. The previous hand-written
-	-- `dap.configurations.go` in the debug bundle declared four entries with
-	-- `type = "go"` but never defined `dap.adapters.go`, so none of them ran.
+	-- nvim-dap-go finds `dlv` on PATH and registers both `dap.adapters.go`
+	-- and the launch, attach and test configurations. Both halves matter:
+	-- configurations naming an adapter that was never defined fail at the
+	-- moment you pick one.
 	{
 		"mfussenegger/nvim-dap",
 		optional = true,

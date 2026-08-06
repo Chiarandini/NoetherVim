@@ -70,10 +70,9 @@ return {
 	-- ── JavaScript / TypeScript debug adapter ─────────────────────────────
 	-- `optional = true` means lazy.nvim drops this whole fragment unless
 	-- nvim-dap is required by something else, i.e. unless tools/debug.lua is
-	-- enabled. That gating is the point: vscode-js-debug is ~430 MB and its
-	-- `build` step runs `npm i` at install time, which the debug bundle used
-	-- to impose on everyone who enabled it, including people who never touch
-	-- JavaScript.
+	-- enabled. That gating is what keeps the cost proportionate:
+	-- vscode-js-debug is ~430 MB and its `build` step runs `npm i` at install
+	-- time, which is only worth paying for by someone who writes JavaScript.
 	{
 		"mfussenegger/nvim-dap",
 		optional = true,
@@ -94,9 +93,10 @@ return {
 				config = function(_, opts)
 					require("dap-vscode-js").setup(opts)
 
-					-- `${workspaceFolder}` is resolved by nvim-dap per session.
-					-- The previous version baked `vim.fn.getcwd()` in at plugin
-					-- load time, freezing the directory the debuggee ran from.
+					-- `${workspaceFolder}` is resolved by nvim-dap per session,
+					-- so the debuggee runs from wherever the session starts.
+					-- A literal `vim.fn.getcwd()` here would be evaluated once,
+					-- at plugin load, and freeze that directory.
 					local dap = require("dap")
 					for _, ft in ipairs({ "javascript", "typescript", "javascriptreact", "typescriptreact" }) do
 						dap.configurations[ft] = {
