@@ -2,13 +2,14 @@
 -- Personal configuration for NoetherVim.
 -- The fastest way to install this template is `:NoetherVim templates` (or
 -- SearchLeader+ct, default <Space>ct): pick `user/config.example.lua` and
--- press <C-y> to stamp it into lua/user/config.lua.  You can also copy
+-- press <C-y> to stamp it into lua/user/config.lua. You can also copy
 -- it manually if you prefer.
--- lua/user/config.lua is gitignored - it never ships with the distribution.
+-- lua/user/config.lua lives in your config, not in the distribution:
+-- `git pull` and `:Lazy update` never touch it.
 --
 -- Any key left nil (or absent) falls back to the distro default.
 --
--- This file covers what the distribution itself lets you change.  Other
+-- This file covers what the distribution itself lets you change. Other
 -- settings have their own home:
 --   lua/user/options.lua   anything with a vim.o / vim.opt equivalent
 --   lua/user/plugins/      anything a plugin exposes through `opts`
@@ -17,7 +18,7 @@
 --
 -- The `---@type` annotation below tells lua-language-server (via
 -- lazydev.nvim, which ships with the distro) what the returned table
--- accepts.  With it in place, the completion popup shows per-field docs
+-- accepts. With it in place, the completion popup shows per-field docs
 -- when you type a key, hover (`K`) shows the type + description, and
 -- typos like `toggle_feedbck` get flagged by the LSP.
 
@@ -25,16 +26,17 @@
 return {
 
     -- ── Colorscheme ───────────────────────────────────────────────────────────
-    -- Colorscheme applied during setup().  Defaults to "gruvbox", the only
-    -- scheme the distro ships and pins; enable the ui.colorscheme bundle for
-    -- nine more.  Naming one that is not installed warns on startup and falls
+    -- Colorscheme applied during setup(). Defaults to "gruvbox", the only
+    -- scheme the distro ships; enable the ui.colorscheme bundle for
+    -- nine more. Alternatively, install your preferred colorscheme under /user/plugins
+    -- Setting one that is not installed warns on startup and falls
     -- back to gruvbox rather than leaving you on Neovim's built-in default.
     -- colorscheme = "gruvbox",
 
     -- Picking a scheme with SearchLeader+C persists it across restarts, and
-    -- that pick takes priority over `colorscheme` above.  So if this file
+    -- that pick takes priority over `colorscheme` above. So if the above setting
     -- seems to be ignored, you picked something interactively at some point:
-    -- `:checkhealth noethervim` says which of the two is in force.  Set this
+    -- `:checkhealth noethervim` says which of the two is in force. Set this
     -- to false to make `colorscheme` authoritative and drop the saved pick.
     -- colorscheme_persistence = false,
 
@@ -42,19 +44,19 @@ return {
     -- ── Statusline ────────────────────────────────────────────────────────────
     -- Hard opt-out for NoetherVim's built-in statusline / tabline / winbar.
     -- Set to false if you want to install lualine, mini.statusline, etc.
-    -- via lua/user/plugins/.  Default: true (heirline ships out of the box).
+    -- via lua/user/plugins/. Default: true (heirline ships out of the box).
     -- statusline_enabled = false,
     --
-    -- Heirline-based statusline overrides.  Ignored when
+    -- Heirline-based statusline overrides. Ignored when
     -- statusline_enabled = false.
     -- statusline = {
     --     -- Shape of the colored mode block at the left of the statusline
     --     -- (and, for "slant"/"pointy"/"bubbly", an opening endcap on the
-    --     -- right ruler block).  Default "round" preserves the historical
+    --     -- right ruler block). Default "round" preserves the historical
     --     -- look; "bubbly" rounds both edges; "straight" disables endcaps.
     --     edge_style = "round",  -- "round" | "slant" | "pointy" | "straight" | "bubbly"
     --
-    --     -- Override heirline color-table entries.  Keys match heirline's
+    --     -- Override heirline color-table entries. Keys match heirline's
     --     -- color names (mode_n, mode_i, git_added, ...).
     --     colors = { mode_n = "#458588" },
     --
@@ -63,17 +65,17 @@ return {
     --     extra_right = {},
     --
     --     -- Glyph shown on a tabpage that contains an unsaved buffer.
-    --     -- Default " ●".  Common alternatives: " [+]" (vim default),
+    --     -- Default " ●". Common alternatives: " [+]" (vim default),
     --     -- " *", " ", " ◉".
     --     tab_modified_indicator = " ●",
     --
     --     -- Show a marker for the filetype profile (writing or code) that
-    --     -- claimed the current buffer.  Click it to see the profile, the
+    --     -- claimed the current buffer. Click it to see the profile, the
     --     -- detected filetype, and what the profile actually turned on.
     --     -- Default: false.
     --     filetype_profile = true,
     --
-    --     -- What clicking the git branch/status block does.  The default
+    --     -- What clicking the git branch/status block does. The default
     --     -- opens lazygit when it is on PATH, and snacks' git-status
     --     -- picker otherwise -- lazygit is optional, not a prerequisite.
     --     git_click = function() vim.cmd("Git") end,
@@ -81,7 +83,7 @@ return {
 
 
     -- ── Obsidian ──────────────────────────────────────────────────────────────
-    -- Path to your Obsidian vault.  Used by the `obsidian` bundle.
+    -- Path to your Obsidian vault. Used by the `obsidian` bundle.
     -- obsidian_vault = "~/Documents/MyVault/",
 
 
@@ -93,7 +95,7 @@ return {
     -- Files larger than this (in KB) also get conservative mode, regardless of filetype.
     -- blink_conservative_size_kb = 500,
 
-    -- Tab key philosophy.  Three built-in styles -- "snippet" is the default.
+    -- Tab key philosophy. Three built-in styles -- "snippet" is the default.
     -- completion_style = "supertab",
     --
     -- ┌───────────────────────────┬───────────────┬───────────────────┬───────────────┐
@@ -116,22 +118,22 @@ return {
     --
     -- Notes on each style:
     --   "snippet"   Tab is reserved for LuaSnip; menu nav is C-n/C-p, accept is
-    --               C-y.  Snippet expansion and menu navigation never fight.
+    --               C-y. Snippet expansion and menu navigation never fight.
     --               Pick this if you live in snippets and prefer muscle memory
     --               that matches plain vim's "completion is C-n / C-y".
     --   "supertab"  Tab does the obvious thing in IDE muscle memory: snippets
     --               win when expandable, otherwise accept the menu item with
-    --               trailing space.  Best for users coming from VSCode.
+    --               trailing space. Best for users coming from VSCode.
     --   "navigate"  Tab cycles the menu (= C-n) without accepting -- the classic
-    --               nvim-cmp default.  Best for users migrating from older
+    --               nvim-cmp default. Best for users migrating from older
     --               cmp setups.
     --
     -- AI completion (Copilot / Codeium / supermaven) is NOT bundled -- each
     -- needs an account or API key, so the distro does not pick one for you.
     -- When you add one, bind its accept-word action to Tab inside
     -- lua/user/keymaps.lua AFTER blink loads; it will shadow whatever the
-    -- chosen style does for Tab.  Full spec + keymap in
-    -- docs/user-config-examples.md.  Minimal sketch:
+    -- chosen style does for Tab. Full spec + keymap in
+    -- docs/user-config-examples.md. Minimal sketch:
     --
     --     vim.keymap.set("i", "<Tab>", function()
     --       if require("copilot.suggestion").is_visible() then
@@ -156,24 +158,24 @@ return {
 
     -- ── Filetype profiles ─────────────────────────────────────────────────────
     -- Extra filetypes to treat as writing (wrap, linebreak, spell, conceallevel=2,
-    -- formatoptions+t, and a statuscolumn marking wrapped lines).  Defaults: tex,
+    -- formatoptions+t, and a statuscolumn marking wrapped lines). Defaults: tex,
     -- markdown, norg, text, gitcommit, gitsendemail, mail, rst, typst.
     -- writing_filetypes = { "vimwiki", "quarto" },
 
     -- Extra filetypes that skip BOTH the writing and code profiles -- their own
-    -- ftplugin / buffer settings take over (e.g. listchars stay off).  Defaults
+    -- ftplugin / buffer settings take over (e.g. listchars stay off). Defaults
     -- include json, yaml, toml, help, qf, oil, terminal, dashboard, dap-ui, etc.
     -- non_code_filetypes = { "csv" },
 
-    -- Extra filetypes where a bare `q` closes the window.  Defaults cover
+    -- Extra filetypes where a bare `q` closes the window. Defaults cover
     -- read-only panels (help, man, lazy, mason, checkhealth, undotree, diff,
-    -- ...).  Editable filetypes are left out on purpose: `q` there would
-    -- shadow macro recording.  Add them anyway if you never record macros in
+    -- ...). Editable filetypes are left out on purpose: `q` there would
+    -- shadow macro recording. Add them anyway if you never record macros in
     -- those buffers -- `oil` is the common case.
     -- q_close_filetypes = { "oil" },
 
-    -- Enable spellcheck in code buffers.  Scoped to comments and strings via
-    -- treesitter @spell captures (identifiers are NOT spellchecked).  `[os` /
+    -- Enable spellcheck in code buffers. Scoped to comments and strings via
+    -- treesitter @spell captures (identifiers are NOT spellchecked). `[os` /
     -- `]os` still toggle per-buffer; `zg` adds a word to your spellfile.
     -- For CamelCase-heavy languages, you can additionally set
     --   vim.opt.spelloptions:append("camel")

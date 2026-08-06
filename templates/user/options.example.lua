@@ -1,6 +1,7 @@
 -- Personal option overrides for NoetherVim.
 -- Copy this file to lua/user/options.lua and uncomment the lines you want.
--- lua/user/options.lua is gitignored - it never ships with the distribution.
+-- lua/user/options.lua lives in your config, not in the distribution:
+-- `git pull` and `:Lazy update` never touch it.
 --
 -- This file runs immediately after noethervim/options.lua, so any value
 -- you set here overwrites the distro default (last-write-wins).
@@ -15,7 +16,7 @@
 
 -- Wrapped lines are marked with an arrow in the number column, not with
 -- 'showbreak', so continuation lines stay aligned with the text they
--- continue.  To get the inline marker back, set BOTH of these -- an empty
+-- continue. To get the inline marker back, set BOTH of these -- an empty
 -- statuscolumn reads as "unset" and the writing profile refills it.
 -- See :help noethervim-wrap-marker.
 -- vim.o.showbreak    = "↳"     -- default: "" (marker lives in the gutter)
@@ -42,7 +43,7 @@
 
 -- ── Spell ────────────────────────────────────────────────────────────────────
 -- Default is { "en" } -- accepts all English regional dialects (US, UK, ...)
--- so "colour" and "color" both pass.  Narrow for stricter checking:
+-- so "colour" and "color" both pass. Narrow for stricter checking:
 -- vim.opt.spelllang = { "en_us" }            -- US only
 -- vim.opt.spelllang = { "en_gb" }            -- UK only
 -- vim.opt.spelllang = { "en_us", "de_de" }   -- bilingual

@@ -1,9 +1,10 @@
 -- Personal autocommand additions for NoetherVim.
 -- Copy this file to lua/user/autocmds.lua and uncomment/add the lines you want.
--- lua/user/autocmds.lua is gitignored - it never ships with the distribution.
+-- lua/user/autocmds.lua lives in your config, not in the distribution:
+-- `git pull` and `:Lazy update` never touch it.
 --
--- This file runs after noethervim/autocmds.lua.  New autocommands are
--- additive.  To override a core autocmd, clear its augroup first.
+-- This file runs after noethervim/autocmds.lua. New autocommands are
+-- additive. To override a core autocmd, clear its augroup first.
 --
 -- See noethervim/autocmds.lua for all defaults.
 -- See :help noethervim-user-autocmds for documentation.

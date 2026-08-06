@@ -1,9 +1,10 @@
 -- Personal keymap overrides for NoetherVim.
 -- The fastest way to install this template is `:NoetherVim templates` (or
 -- SearchLeader+ct, default <Space>ct): pick `user/keymaps.example.lua` and
--- press <C-y> to stamp it into lua/user/keymaps.lua.  You can also copy
+-- press <C-y> to stamp it into lua/user/keymaps.lua. You can also copy
 -- it manually if you prefer.
--- lua/user/keymaps.lua is gitignored -- it never ships with the distribution.
+-- lua/user/keymaps.lua lives in your config, not in the distribution:
+-- `git pull` and `:Lazy update` never touch it.
 --
 -- This file runs after noethervim/keymaps.lua AND noethervim/toggles.lua,
 -- so any keymap you set here overwrites the distro default.
@@ -20,17 +21,17 @@
 -- See :help noethervim-user-keymaps for documentation.
 
 -- ── Override a core keymap ───────────────────────────────────────────────────
--- NoetherVim maps `;` to `:` (command-line).  Revert to Vim's default
+-- NoetherVim maps `;` to `:` (command-line). Revert to Vim's default
 -- (repeat last `f` / `t` / `F` / `T` motion):
 -- vim.keymap.set("n", ";", ";")
 
 -- ── Remove a core keymap ─────────────────────────────────────────────────────
--- NoetherVim maps `<C-a>` in insert mode to "select all".  Restore
+-- NoetherVim maps `<C-a>` in insert mode to "select all". Restore
 -- Vim's default (insert previously inserted text):
 -- vim.keymap.del("i", "<C-a>")
 
 -- ── Insert-mode escape  ──────────────────────────────────────────────────────
--- NoetherVim doesn't ship `jk` -> <Esc>.  Words containing the literal
+-- NoetherVim doesn't ship `jk` -> <Esc>. Words containing the literal
 -- "jk" (e.g. "rejkindle") would stall while vim waits to see whether
 -- the next key completes the mapping; if that tradeoff is fine for you,
 -- uncomment:
@@ -55,7 +56,7 @@
 
 -- ── Smart <C-a>: increment-dial-or-select-all ────────────────────────────────
 -- Vim's <C-a> increments numbers; dial.nvim (already in NoetherVim core)
--- extends it to booleans, and/or, ==/!=, dates, semver, etc.  This wrapper
+-- extends it to booleans, and/or, ==/!=, dates, semver, etc. This wrapper
 -- delegates to dial when available, watches `changedtick` to see whether
 -- anything actually moved, and falls back to "select-all" when the cursor
 -- isn't on an incrementable token.

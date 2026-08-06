@@ -1,6 +1,7 @@
 -- Personal highlight overrides for NoetherVim.
 -- Copy this file to lua/user/highlights.lua and uncomment/add the lines you want.
--- lua/user/highlights.lua is gitignored - it never ships with the distribution.
+-- lua/user/highlights.lua lives in your config, not in the distribution:
+-- `git pull` and `:Lazy update` never touch it.
 --
 -- This file runs AFTER the colorscheme is applied, so your overrides
 -- are not wiped by the theme.
@@ -15,8 +16,8 @@
 
 -- ── Overrides that survive a theme switch ────────────────────────────────────
 -- The nvim_set_hl calls above are wiped the moment you change colorscheme
--- (<Space>C).  Register them through the tweak helper instead and they are
--- re-applied on every switch.  See :help noethervim-colorscheme-tweaks.
+-- (<Space>C). Register them through the tweak helper instead and they are
+-- re-applied on every switch. See :help noethervim-colorscheme-tweaks.
 -- require("noethervim.util.colorscheme").tweak({
 --     Comment    = { italic = true },
 --     CursorLine = { bg = "#1a1a2e" },
