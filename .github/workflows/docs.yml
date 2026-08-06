@@ -12,6 +12,14 @@ on:
       - "docs-site/**"
       - "README.md"
       - ".github/workflows/docs.yml"
+      # The bundle reference and the README's generated blocks are built from
+      # the `@desc` / `@requires` annotations, so a bundle file is a docs
+      # source. Without these, editing an annotation and pushing would skip
+      # the run entirely, and the drift gate that exists to catch exactly
+      # that would never fire.
+      - "lua/noethervim/bundles/**"
+      - "lua/noethervim/util/bundle_meta.lua"
+      - "tools/gen-docs.lua"
   workflow_dispatch: {}
 
 jobs:
