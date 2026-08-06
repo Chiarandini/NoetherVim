@@ -107,9 +107,9 @@ header.
 
 <!-- BEGIN GENERATED: bundle-requirements -->
 - `go` needs Go toolchain
-- `java` needs A JDK
+- `java` needs a JDK
 - `latex` needs latexmk
-- `latex-zotero` needs Zotero, SQLite
+- `latex-zotero` needs Zotero, sqlite3
 - `python` needs Python 3
 - `rust` needs rust-analyzer, Cargo
 - `web-dev` needs Node.js

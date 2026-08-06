@@ -1,7 +1,7 @@
 ---@bundle latex-zotero
 ---@desc Zotero citation picker
 ---@requires app=Zotero label="Zotero" why="the citation picker reads its local database" install="https://www.zotero.org/"
----@requires exe=sqlite3 label="SQLite" why="sqlite.lua opens the Zotero database through it" install="preinstalled on macOS and most Linux distributions"
+---@requires exe=sqlite3 label="sqlite3" why="sqlite.lua opens the Zotero database through it" install="preinstalled on macOS and most Linux distributions"
 -- NoetherVim bundle: LaTeX-Zotero
 -- Enable with: { import = "noethervim.bundles.languages.latex-zotero" }
 --

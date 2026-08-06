@@ -45,7 +45,7 @@ nvim-jdtls -- proper Java LSP support
 
 Requires:
 
-- **A JDK**: jdtls will not start without one
+- **a JDK**: jdtls will not start without one
   <br />JDK 17 or newer; jdtls itself installs via Mason
 
 ### `latex`
@@ -77,7 +77,7 @@ Requires:
 
 - **Zotero**: the citation picker reads its local database
   <br />https://www.zotero.org/
-- **SQLite**: sqlite.lua opens the Zotero database through it
+- **sqlite3**: sqlite.lua opens the Zotero database through it
   <br />preinstalled on macOS and most Linux distributions
 
 ### `python`
