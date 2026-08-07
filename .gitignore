@@ -4,6 +4,8 @@ tests/
 .cache
 .claude/
 dev-docs/
+# Ships at the beta cut, not in alpha: drop this line then. It carries the
+# Documentation Style section that doc/noethervim.txt is written against.
 CONTRIBUTING.md
 .keys
 README_backup.md
