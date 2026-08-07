@@ -107,17 +107,18 @@
   margin-top: 0.1rem;
 }
 
-/* Reference pages are generated from doc/noethervim.txt, which is
- * fixed-width by construction. Reflowing it breaks the ASCII tables, so
- * those pages opt into monospace body text wholesale. */
-.vimdoc-reference .sl-markdown-content {
+/* The reference page is generated from doc/noethervim.txt, which is
+ * fixed-width by construction: 174 of its rows are column-aligned tables that
+ * reflowing would break. Section bodies are emitted as blocks carrying this
+ * class and stay monospace; the headings around them do not, so the page
+ * navigation still reads as part of the site. */
+.vimdoc-reference {
   font-family: var(--sl-font-mono);
-  font-size: 0.875rem;
-}
-
-.vimdoc-reference .sl-markdown-content pre {
+  font-size: 0.8125rem;
+  line-height: 1.5;
   white-space: pre;
   overflow-x: auto;
+  margin-bottom: 1.5rem;
 }
 
 /* Help tags become linkable anchors. Keep them visible but quiet. */

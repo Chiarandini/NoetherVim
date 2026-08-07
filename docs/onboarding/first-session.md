@@ -171,7 +171,9 @@ anything wrong* (`:checkhealth noethervim`).
 ## Where to go next
 
 - `:help noethervim` is the reference manual, and the authoritative source for
-  everything summarised here.
+  everything summarised here. It is also
+  [published on the web](https://nathanaelsrawley.com/noethervim/reference/) if
+  you want to link someone to a section.
 - `:NoetherVim diff keymaps`, `diff options` and `diff autocmds` show what you
   have changed relative to the defaults. This is the fastest way to check
   whether an override took effect.

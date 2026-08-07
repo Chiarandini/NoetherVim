@@ -350,7 +350,11 @@ Bundles are optional feature groups, enabled in `init.lua` (see [Enabling bundle
 ## Reference
 
 Everything here is authoritative and lives inside Neovim, where it stays in
-step with the version you actually have installed:
+step with the version you actually have installed. The same manual is
+published at
+[nathanaelsrawley.com/noethervim/reference](https://nathanaelsrawley.com/noethervim/reference/),
+generated from the same file, for reading before you install or for linking
+to a specific section.
 
 | Command | What it answers |
 |---|---|

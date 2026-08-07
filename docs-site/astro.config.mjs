@@ -49,6 +49,15 @@ export default defineConfig({
             { label: 'Managing your install', link: '/guides/managing/' },
           ],
         },
+        {
+          // Its own group, deliberately: the guides are task-shaped and this
+          // is the manual. Folding it in with them invites a reader to treat
+          // the two as interchangeable.
+          label: 'Reference',
+          items: [
+            { label: ':help noethervim', link: '/reference/' },
+          ],
+        },
       ],
     }),
   ],
