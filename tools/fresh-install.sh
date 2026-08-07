@@ -1,24 +1,27 @@
 #!/usr/bin/env bash
-# Wipe a throwaway NoetherVim install and re-create it from this working tree.
+# Build a throwaway NoetherVim install from scratch, under its own
+# NVIM_APPNAME, leaving your real config untouched.
 #
-# Testing a change against a fresh install means deleting four XDG directories
-# and re-stamping init.lua, which is enough steps that it gets done by hand,
-# inconsistently, or not at all. tools/install.sh cannot serve here: it backs
-# existing directories up rather than removing them, so repeated runs pile up
+# Two things you may want to test, and one flag between them:
+#
+#   --local   the install loads the distribution from a checkout on disk, so
+#             your uncommitted work is what runs. Edits take effect on the
+#             next restart with no :Lazy update in between.
+#   (none)    the install clones NoetherVim from GitHub, which is exactly
+#             what a new user gets. The right test for the bootstrap path.
+#
+# Both wipe the four XDG directories for the appname first, so every run
+# starts from nothing. tools/install.sh cannot serve here: it backs existing
+# directories up rather than removing them, so repeated runs pile up
 # .bak.<timestamp> copies of state that was meant to be discarded.
 #
 # Usage:
-#   tools/dev-reset.sh                      # wipe and rebuild NVIM_APPNAME=tmpnvim
-#   tools/dev-reset.sh scratch              # ... under a different appname
-#   tools/dev-reset.sh --dev                # point the spec at this working tree
-#   tools/dev-reset.sh --dev ~/src/NoetherVim
-#   tools/dev-reset.sh --keep-state         # keep shada, undo history, sessions
-#   tools/dev-reset.sh nvim --force         # required to touch the real config
-#
-# With --dev the generated init.lua loads the distribution from a local
-# directory instead of cloning it, so edits take effect on the next restart
-# with no :Lazy update in between. Without it you get exactly what a new user
-# gets: a clone of main.
+#   tools/fresh-install.sh                    # NVIM_APPNAME=tmpnvim, clone of main
+#   tools/fresh-install.sh --local            # ... loading this checkout instead
+#   tools/fresh-install.sh --local ~/src/NoetherVim
+#   tools/fresh-install.sh scratch            # ... under a different appname
+#   tools/fresh-install.sh --keep-state       # keep shada, undo history, sessions
+#   tools/fresh-install.sh nvim --force       # required to touch the real config
 set -euo pipefail
 
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -31,8 +34,8 @@ force=0
 
 while [ $# -gt 0 ]; do
 	case "$1" in
-		--dev)
-			# Optional argument: bare --dev means this checkout.
+		--local|--dev)
+			# Optional argument: bare --local means this checkout.
 			if [ $# -ge 2 ] && [ "${2#-}" = "$2" ] && [ -d "$2" ]; then
 				dev_path="$(cd "$2" && pwd)"
 				shift
@@ -42,7 +45,7 @@ while [ $# -gt 0 ]; do
 			;;
 		--keep-state) keep_state=1 ;;
 		--force)      force=1 ;;
-		-h|--help)    sed -n '2,21p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
+		-h|--help)    sed -n '2,25p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
 		-*)           echo "unknown flag: $1" >&2; exit 2 ;;
 		*)
 			if [ -n "$appname" ]; then
@@ -66,7 +69,7 @@ if [ "$appname" = "nvim" ] && [ "$force" -ne 1 ]; then
 		Pass --force if that is genuinely what you want, or name a scratch
 		config instead:
 
-		  tools/dev-reset.sh tmpnvim
+		  tools/fresh-install.sh tmpnvim
 	EOF
 	exit 1
 fi
@@ -104,11 +107,11 @@ else
 	# Two edits, both anchored on lines that have been stable since the
 	# template existed. Anchors are verified before rewriting so a template
 	# reshuffle fails here rather than producing a config that silently
-	# tests the GitHub clone instead of the working tree.
+	# tests the GitHub clone instead of the local checkout.
 	for anchor in 'local noethervimpath = ' '"Chiarandini/NoetherVim",'; do
 		grep -qF "$anchor" "$template" || {
 			echo "init.lua.example no longer contains: $anchor" >&2
-			echo "tools/dev-reset.sh needs updating." >&2
+			echo "tools/fresh-install.sh needs updating." >&2
 			exit 1
 		}
 	done
@@ -137,5 +140,8 @@ fi
 echo
 echo "Launch with:"
 echo "  NVIM_APPNAME=$appname nvim"
+echo
+echo "Worth an alias if you do this often:"
+echo "  alias $appname='NVIM_APPNAME=$appname nvim'"
 echo
 echo "Plugins install on first launch."
