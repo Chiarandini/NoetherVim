@@ -39,7 +39,7 @@ addition is a search leader, defaulting to `<Space>`, which owns every fuzzy
 picker. See [Keybinding Philosophy](#keybinding-philosophy).
 
 - **The source is the documentation.** `:NoetherVim files` and `:NoetherVim
-grep` open the distro's own source read-only in the editor, and every plugin
+grep` open the distro's own source code read-only in the editor, and every plugin
 spec and bundle leads with a header comment describing what it configures.
 `<CR>` on a row of the keymap guide jumps to the line that defined it.
 
