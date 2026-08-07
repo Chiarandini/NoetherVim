@@ -28,6 +28,16 @@ export default defineConfig({
       editLink: {
         baseUrl: 'https://github.com/Chiarandini/NoetherVim/edit/main/docs-site/',
       },
+      // Starlight links favicon.svg on its own. The .ico is only reached by
+      // browsers that cannot render an SVG favicon, which is why it is
+      // declared here rather than replacing the SVG.
+      favicon: '/favicon.svg',
+      head: [
+        {
+          tag: 'link',
+          attrs: { rel: 'icon', href: '/noethervim/favicon.ico', sizes: '16x16 32x32 48x48' },
+        },
+      ],
       customCss: ['./src/styles/custom.css'],
       sidebar: [
         {

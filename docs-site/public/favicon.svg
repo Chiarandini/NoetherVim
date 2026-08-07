@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="NoetherVim">
+  <title>NoetherVim</title>
+  <!--
+    A transparent glyph takes its contrast from whatever the browser puts
+    behind it. Bright gruvbox orange measures 2.53:1 on a white tab and
+    1.85:1 on a light one, both under the 3:1 floor for a non-text graphic,
+    so the mark steps down to gruvbox's faded orange (6.12:1 on white) unless
+    the chrome is dark. Both values are gruvbox oranges, so the identity holds
+    either way.
+  -->
+  <style>
+    .mark { fill: #af3a03; }
+    @media (prefers-color-scheme: dark) { .mark { fill: #fe8019; } }
+  </style>
+  <!--
+    Filled geometry rather than strokes. Stroked joins at the two corners of
+    an N are acute enough that a mitre grows spikes past the glyph box and a
+    cap leaves notches; as three overlapping filled shapes in one colour every
+    vertex is explicit and the outline is exactly the 8..24 by 6..26 box.
+  -->
+  <g class="mark">
+    <rect x="8"    y="6" width="4.6" height="20"/>
+    <rect x="19.4" y="6" width="4.6" height="20"/>
+    <polygon points="8,6 12.6,6 24,26 19.4,26"/>
+  </g>
+</svg>
