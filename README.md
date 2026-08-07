@@ -50,13 +50,13 @@ and `diff autocmds` mark which entries a user config has changed, and
 `:checkhealth noethervim` flags any override whose upstream file has moved on.
 
 - **Vim's own patterns, extended.** Vim's `ZZ` and `ZQ` grow into a
-full `Z` grid across quit, write and buffer-delete. `<Esc>` leaves a mode, and
+full `Z` grid across quit, write, and buffer-delete. `<Esc>` leaves a mode, and
 now also clears search highlight, hover floats and stale notifications. Arrow
 keys duplicate `hjkl`, so they resize the window instead. `<C-]>` and the tag
 stack jump LaTeX labels across subfiles.
 
 - **LaTeX, BibTeX and VimTeX are first-class.** The distro ships custom
-Snacks-based label and heading pickers, preamble snippets, BibTeX and Zotero
+Snacks-based label and heading pickers, snippets, BibTeX and Zotero
 citation tooling, and adds 1000+ mathematical terms and names to the spell
 dictionary. See the [onboarding guide for
 mathematicians](docs/onboarding/mathematicians.md).
