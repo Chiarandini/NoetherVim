@@ -95,7 +95,7 @@ M.GitBlock = {
     name = "heirline_git",
   },
 
-  hl = { fg = "orange" },
+  hl = function() return { fg = ctx.colors.orange } end,
 
   flexible = ctx.priority.low,
 

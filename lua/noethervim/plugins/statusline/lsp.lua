@@ -22,7 +22,7 @@ M.LSPActive = {
   hl = function()
     local filetype = vim.bo.filetype
     if not ctx.lspColor[filetype] then
-      return { bold = true, fg = "white" }
+      return { bold = true, fg = ctx.colors.text_gray }
     end
     return { bold = true, fg = ctx.lspColor[filetype] }
   end,

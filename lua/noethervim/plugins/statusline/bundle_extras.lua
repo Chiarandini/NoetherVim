@@ -205,11 +205,13 @@ M.Overseer = {
       ["SUCCESS"] = "  ",
       ["RUNNING"] = " 省",
     },
+    -- Resolved at render time, not captured here: ctx.colors is rebuilt in
+    -- place when the colorscheme changes.
     colors = {
-      ["FAILURE"] = "red",
-      ["CANCELED"] = "gray",
-      ["SUCCESS"] = "green",
-      ["RUNNING"] = "yellow",
+      ["FAILURE"]  = function() return ctx.colors.red end,
+      ["CANCELED"] = function() return ctx.colors.gray end,
+      ["SUCCESS"]  = function() return ctx.colors.green end,
+      ["RUNNING"]  = function() return ctx.colors.diag_warn end,
     },
   },
   {
@@ -230,7 +232,7 @@ M.Overseer = {
         end
       end,
       hl = function(self)
-        return { fg = self.color }
+        return { fg = type(self.color) == "function" and self.color() or self.color }
       end,
     },
   },

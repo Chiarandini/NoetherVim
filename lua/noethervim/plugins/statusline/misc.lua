@@ -101,12 +101,12 @@ M.MacroRec = {
     return vim.fn.reg_recording() ~= "" -- and vim.o.cmdheight == 0
   end,
   provider = " ",
-  hl = { fg = "orange", bold = true },
+  hl = function() return { fg = ctx.colors.orange, bold = true } end,
   utils.surround({ "[", "]" }, nil, {
     provider = function()
       return vim.fn.reg_recording()
     end,
-    hl = { fg = "green", bold = true },
+    hl = function() return { fg = ctx.colors.green, bold = true } end,
   }),
   update = {
     "RecordingEnter",
@@ -198,7 +198,7 @@ M.Busy = {
   end,
   hl = function(self)
     if self.override and self.override.hl then return self.override.hl end
-    return { fg = "orange", bold = true }
+    return { fg = ctx.colors.orange, bold = true }
   end,
   on_click = {
     callback = function()
