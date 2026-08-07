@@ -85,6 +85,7 @@ return {
         fallthrough = false,
         misc.MacroRec,
         filename.MissingFileFlag,
+        filename.NewFileFlag,
         filename.ReadOnlyFlag,
         filename.ScratchFlag,
         filename.ChangeFlag,
@@ -283,7 +284,7 @@ return {
         opts = {
           -- The DiffLabel winbar is meaningful only on diff windows (its
           -- `condition` is `vim.wo.diff`), which are normal splits. Heirline
-          -- still stamps the winbar option onto every window taller than one
+          -- still sets the winbar option on every window taller than one
           -- row; on a normal window an empty (non-diff) winbar collapses, but
           -- on a floating window the reserved row stays as a blank slot -- e.g.
           -- the blank row above blink.cmp's completion menu. Skip floats so the

@@ -60,7 +60,7 @@ local function cwd_popup()
     " cwd:  " .. vim.fn.fnamemodify(vim.fn.getcwd(), ":~"),
     " file: " .. vim.fn.fnamemodify(dir, ":~"),
     " Relative :w and :e resolve against cwd. ",
-    " [L] :lcd to the file's directory   [C]ancel ",
+    " [L] :lcd to this file's directory   [C]ancel ",
   }
   local width = 0
   for _, l in ipairs(lines) do
@@ -334,6 +334,30 @@ M.MissingFileFlag = {
     name = "heirline_file_missing",
   },
   provider = icons.error .. " ",
+}
+
+--- The buffer has a name but nothing at that path on disk yet, from
+--- `:e newfile.txt`. The mirror of MissingFileFlag: there the file is gone
+--- and the buffer is the only copy, here the file does not exist yet and
+--- the buffer is still the only copy. Both say the same thing, which is
+--- that closing without writing loses everything.
+M.NewFileFlag = {
+  condition = function()
+    return vim.b.noethervim_new_file == true
+       and not vim.b.noethervim_file_missing
+  end,
+  hl = function() return { force = true, fg = ctx.colors.diag_hint, bg = ctx.colors.light_gray } end,
+  on_click = {
+    callback = function()
+      local name = vim.api.nvim_buf_get_name(0)
+      vim.notify(
+        ("%s\n\nNo file at this path yet. `:w` creates it, including any\nmissing parent directories."):format(
+          vim.fn.fnamemodify(name, ":~")),
+        vim.log.levels.INFO, { title = "NoetherVim new file" })
+    end,
+    name = "heirline_new_file",
+  },
+  provider = " ",
 }
 
 M.ReadOnlyFlag = {
