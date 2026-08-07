@@ -231,8 +231,6 @@ return {
 					{"]oH",        icon = {icon = icons.options_off, color = "yellow"}, desc = "hide deleted hunks (gitsigns)" },
 					{"[og",        icon = {icon = icons.options_on, color = "yellow"},  desc = "git blame ON (gitsigns)" },
 					{"]og",        icon = {icon = icons.options_off, color = "yellow"}, desc = "git blame OFF (gitsigns)" },
-					{"gPf",        icon = icons.plus, desc = "peek function def" },
-					{"gPC",        icon = icons.plus, desc = "peek class def" },
 					{"[oG",        icon = {icon = icons.options_on,  color = "yellow"}, desc = "deadcolumn ON (Guide)" },
 					{"]oG",        icon = {icon = icons.options_off, color = "yellow"}, desc = "deadcolumn OFF (Guide)" },
 					{"[oD",        icon = {icon = icons.options_on,  color = "yellow"}, desc = "tidy ON (remove dirty whitespace)" },
