@@ -19,6 +19,10 @@
 --   • languages/python.lua:  debugpy, via nvim-dap-python
 --   • languages/go.lua:      delve, via nvim-dap-go
 --   • languages/web-dev.lua: vscode-js-debug, for JavaScript and TypeScript
+--   • languages/c-cpp.lua:   codelldb, for C and C++
+--   • languages/rust.lua:    nothing to register -- rustaceanvim autoloads
+--                            its own configurations when rust-analyzer
+--                            attaches; it still needs codelldb or lldb
 --
 -- Related bundles (enable separately):
 --   • test.lua:        neotest test runner

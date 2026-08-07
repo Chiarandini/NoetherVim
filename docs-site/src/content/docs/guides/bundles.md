@@ -22,6 +22,21 @@ reads. Run that for the state of the bundles you actually have enabled.
 
 ## Programming languages
 
+### `c-cpp`
+
+Installs clangd on demand and adds the C and C++ treesitter parsers. With the debug bundle also enabled, registers the codelldb adapter and launch configurations for both languages.
+
+```lua
+{ import = "noethervim.bundles.languages.c-cpp" }
+```
+
+Requires:
+
+- **compile_commands.json**: clangd resolves includes and flags from it; without one it falls back to guessing and cross-file features degrade
+  <br />CMake writes it with CMAKE_EXPORT_COMPILE_COMMANDS=ON; Make users usually generate it with bear
+- **codelldb** *(optional)*: stepping through C and C++, when the debug bundle is also enabled
+  <br />:MasonInstall codelldb
+
 ### `go`
 
 Go development beyond what gopls alone gives you: generate tests, edit struct tags, implement interfaces, fill structs, and run tests by file or by function from the editor.

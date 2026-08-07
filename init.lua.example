@@ -88,6 +88,7 @@ require("lazy").setup({
 		-- their descriptions; <CR> on an entry opens that file.
 
 		-- languages/
+		-- { import = "noethervim.bundles.languages.c-cpp" },        -- clangd + codelldb (C and C++)
 		-- { import = "noethervim.bundles.languages.rust" },         -- rustaceanvim (beyond plain rust-analyzer)
 		-- { import = "noethervim.bundles.languages.go" },           -- go.nvim (test gen, struct tags, fill struct)
 		-- { import = "noethervim.bundles.languages.java" },         -- nvim-jdtls (proper Java LSP support)

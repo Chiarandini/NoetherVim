@@ -728,6 +728,8 @@ so they remain visible after the notification has disappeared.
 Available bundles (grouped by category): ~
 
     languages/ ~
+    `c-cpp`          clangd for C and C++, plus c/cpp treesitter parsers.
+                     Requires: compile_commands.json for good results.
     `rust`           rustaceanvim: enhanced Rust beyond rust-analyzer.
     `go`             go.nvim: Go test gen, struct tags, interface impl.
     `java`           nvim-jdtls: proper Java LSP (requires special setup).
@@ -740,9 +742,9 @@ Available bundles (grouped by category): ~
 
     tools/ ~
     `debug`          nvim-dap + UI. Language-agnostic: the Neovim Lua
-                     adapter is built in, and Python, Go and JS/TS
-                     adapters come from their own language bundles when
-                     both bundles are enabled.
+                     adapter is built in, and the Python, Go, JS/TS and
+                     C/C++ adapters come from their own language bundles
+                     when both bundles are enabled.
     `test`           neotest test runner framework.
     `repl`           iron.nvim interactive REPL.
     `task-runner`    overseer.nvim + compiler.nvim.
@@ -1868,8 +1870,9 @@ A: Both are managed by Mason, the same as LSP servers. Use `:Mason`
    For debuggers, enable the `debug` bundle plus the bundle for the
    language you are debugging: `languages.python` brings debugpy,
    `languages.go` brings delve, `languages.web-dev` brings
-   vscode-js-debug. Neither half installs a debugger on its own, so
-   enabling `debug` alone costs nothing but the UI.
+   vscode-js-debug, `languages.c-cpp` brings codelldb. Neither half
+   installs a debugger on its own, so enabling `debug` alone costs
+   nothing but the UI.
 
 Q: Does NoetherVim format on save?~
 A: No; auto-formatting is deliberately off. Use `<Leader>ff` for
