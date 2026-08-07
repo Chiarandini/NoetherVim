@@ -33,11 +33,18 @@ const FILES = [
     sidebar: 3,
   },
   {
+    src: 'docs/notable-keybindings.md',
+    dest: 'guides/notable-keybindings.md',
+    title: 'Notable keybindings',
+    description: 'The individual key choices worth an argument, and the snippet for each.',
+    sidebar: 4,
+  },
+  {
     src: 'docs/user-config-examples.md',
     dest: 'guides/recipes.md',
     title: 'Recipes',
     description: 'Copy-paste specs for plugins deliberately left out of the distribution.',
-    sidebar: 4,
+    sidebar: 5,
   },
 ];
 
@@ -62,7 +69,7 @@ const SECTIONS = [
     dest: 'guides/managing.md',
     title: 'Managing your install',
     description: 'Updating, migrating an existing config, and uninstalling.',
-    sidebar: 5,
+    sidebar: 6,
     subsections: ['Updating', 'Migrating from an existing config', 'Uninstalling'],
   },
   {
@@ -93,6 +100,11 @@ const LINKS = [
   [/\]\(docs\/onboarding\/mathematicians\.md\)/g, '](/noethervim/start/mathematicians/)'],
   [/\]\(\.\.\/\.\.\/README\.md#installation\)/g, '](/noethervim/start/install/)'],
   [/\]\(\.\.\/\.\.\/README\.md#keybinding-philosophy\)/g, '](/noethervim/guides/keybindings/)'],
+  // docs/notable-keybindings.md sits one level up from docs/onboarding/, so
+  // its link to the README is `../`, not `../../`. Both forms are live.
+  [/\]\(\.\.\/README\.md#keybinding-philosophy\)/g, '](/noethervim/guides/keybindings/)'],
+  [/\]\(docs\/notable-keybindings\.md\)/g, '](/noethervim/guides/notable-keybindings/)'],
+  [/\]\(\.\.\/notable-keybindings\.md\)/g, '](/noethervim/guides/notable-keybindings/)'],
   [/\]\(\.\.\/\.\.\/README\.md(#[a-z0-9-]*)?\)/g, '](https://github.com/Chiarandini/NoetherVim)'],
   [/\]\(first-session\.md(#[a-z0-9-]*)?\)/g, '](/noethervim/start/first-session/)'],
   [/\]\(mathematicians\.md(#[a-z0-9-]*)?\)/g, '](/noethervim/start/mathematicians/)'],

@@ -1141,6 +1141,11 @@ NoetherVim groups keymaps by prefix. Press any prefix and wait for
 which-key to show available actions, or use SearchLeader+fk to search
 all keymaps interactively.
 
+This section is the complete list. The bindings that replaced a Vim
+default are argued for individually, with a standalone snippet for
+each, at:
+    https://nathanaelsrawley.com/noethervim/guides/notable-keybindings/
+
 The which-key popup appears after a 1500 ms delay by default. To
 change this, add to `lua/user/plugins/whichkey.lua`: >lua
     return {

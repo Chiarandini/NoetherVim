@@ -174,6 +174,9 @@ anything wrong* (`:checkhealth noethervim`).
   everything summarised here. It is also
   [published on the web](https://nathanaelsrawley.com/noethervim/reference/) if
   you want to link someone to a section.
+- [Notable keybindings](../notable-keybindings.md) argues for the individual
+  bindings that displaced a Vim default, and gives the snippet for each. Read
+  it if a default here surprised you and you want to know what it bought.
 - `:NoetherVim diff keymaps`, `diff options` and `diff autocmds` show what you
   have changed relative to the defaults. This is the fastest way to check
   whether an override took effect.

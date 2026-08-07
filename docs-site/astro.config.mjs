@@ -55,6 +55,7 @@ export default defineConfig({
             { label: 'Bundles', link: '/guides/bundles/' },
             { label: 'Configuration', link: '/guides/configuration/' },
             { label: 'Keybinding philosophy', link: '/guides/keybindings/' },
+            { label: 'Notable keybindings', link: '/guides/notable-keybindings/' },
             { label: 'Recipes', link: '/guides/recipes/' },
             { label: 'Managing your install', link: '/guides/managing/' },
           ],

@@ -345,6 +345,10 @@ Bundles are optional feature groups, enabled in `init.lua` (see [Enabling bundle
 
 ![Searching every distro keymap by description](docs/assets/diff-keymaps.gif)
 
+The table above is the scheme. For the individual bindings that displaced a Vim
+default, why each trade was made, and a copy-paste snippet for taking any of
+them into a config that is not this one, see [notable
+keybindings](docs/notable-keybindings.md).
 
 ---
 

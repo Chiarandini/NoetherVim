@@ -56,3 +56,58 @@ jobs:
           configpath: ".luarc.json"
           checklevel: Warning
           directories: "."
+
+  keymap-citations:
+    name: notable keybindings still exist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # docs/notable-keybindings.md is prose about specific keys, so unlike
+      # the generated docs it cannot be diffed against its source. This is the
+      # cheap half of that gate: every key the page shows a snippet for must
+      # still be bound somewhere in lua/. It catches a binding being deleted
+      # or moved to a different lhs, which is the drift that actually happens.
+      # It cannot catch a binding whose behaviour changed while keeping its
+      # key, and single-character keys are weak (another mapping can satisfy
+      # the grep). Both are accepted: the alternative is no gate at all.
+      #
+      # Braces are stripped from both sides so that a `{ "n", "v" }` mode list
+      # cannot be mistaken for the lhs, and so that the `, "<lhs>"` haystack
+      # pattern matches on argument position rather than anywhere on the line.
+      #
+      # Matching is case-SENSITIVE, with one normalisation: the inside of
+      # `<...>` is lowercased, because the page writes `<Right>` where the
+      # source writes `<right>`. A blanket `grep -i` was tried first and is
+      # wrong, since it lets `zx` (scroll view) satisfy a citation of `ZX`
+      # (save-then-force-quit), and the Z grid is nine keys that all have a
+      # lowercase homograph.
+      - name: Every cited keymap is still bound
+        run: |
+          set -euo pipefail
+          page=docs/notable-keybindings.md
+
+          # perl rather than `sed \L`: same behaviour on the runner and on a
+          # BSD-sed machine, so this is verifiable locally before it is pushed.
+          # Runs of spaces after a comma collapse to one, because several core
+          # keymap.set calls are column-aligned and would otherwise never match
+          # the single-space `, "<lhs>"` needle.
+          norm() {
+            sed 's/{[^}]*}//g' | perl -pe 's/(<[^>]*>)/lc($1)/ge; s/,\s+/, /g'
+          }
+
+          haystack=$(grep -rh 'keymap\.set' lua/ | norm)
+
+          missing=0
+          while IFS= read -r lhs; do
+            [ -n "$lhs" ] || continue
+            if ! printf '%s\n' "$haystack" | grep -qF -- ", \"$lhs\""; then
+              echo "cited in $page but not bound in lua/: $lhs"
+              missing=$((missing + 1))
+            fi
+          done < <(norm < "$page" |
+                     sed -nE 's/.*vim\.keymap\.set\([^,]*,[[:space:]]*"([^"]+)".*/\1/p' |
+                     sort -u)
+
+          echo "unbound citations: $missing"
+          exit "$missing"
