@@ -139,6 +139,10 @@ local M = {
 	-- for showing a file is unsaved
 	pencil = '',
 
+	-- for the statusline's filetype-profile marker; `pencil` above is its
+	-- writing counterpart. U+F121 (nf-fa-code).
+	code = '',
+
 	-- for showing a file is readonly
 	lock = '',
 

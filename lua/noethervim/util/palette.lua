@@ -118,6 +118,12 @@ local function from_highlights()
     -- Terminal
     terminal_blue = purple,
 
+    -- Filetype-profile marker (statusline). Kept off the mode colours: the
+    -- mode block is the loudest thing on the bar, and a marker sharing its
+    -- hue reads as part of the same signal.
+    profile_writing = hl("DiagnosticInfo", "fg") or blue,
+    profile_code    = purple,
+
     -- Git
     git_add    = hl("Added", "fg")   or hl("GitSignsAdd", "fg")    or green,
     git_change = hl("Changed", "fg") or hl("GitSignsChange", "fg") or cyan,
@@ -195,6 +201,12 @@ local function gruvbox_palette()
 
     -- Terminal
     terminal_blue = "#B16286",
+
+    -- Filetype-profile marker (statusline). Literal gruvbox blue and purple
+    -- rather than the `blue` / `purple` keys below: those track Function and
+    -- Statement, which gruvbox paints green and red.
+    profile_writing = "#83a598",
+    profile_code    = "#d3869b",
 
     -- Git
     git_add    = "#B9BB25",

@@ -234,7 +234,16 @@ local function current_profile()
   return fts.writing[ft] and "writing" or "code"
 end
 
-local profile_glyph = { writing = icons.pencil, code = icons.text }
+-- `icons.text` is the LSP completion-kind glyph for Text, so the code
+-- profile used to wear the writing symbol. Angle brackets read as code at
+-- a glance and leave the pencil unambiguous.
+local profile_glyph = { writing = icons.pencil, code = icons.code }
+
+-- Blue for prose, purple for code, via palette keys that hold those hues
+-- outright. The marker used to be `colors.green`, which is also the
+-- normal-mode colour, so the two bracketed the bar in one colour for most
+-- of a session.
+local profile_hl = { writing = "profile_writing", code = "profile_code" }
 
 M.FiletypeProfile = {
   condition = function()
@@ -244,7 +253,7 @@ M.FiletypeProfile = {
     return " " .. profile_glyph[current_profile()] .. " "
   end,
   hl = function()
-    return { fg = current_profile() == "writing" and ctx.colors.blue or ctx.colors.green }
+    return { fg = ctx.colors[profile_hl[current_profile()]] }
   end,
   on_click = {
     callback = function()
