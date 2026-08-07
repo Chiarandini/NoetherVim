@@ -49,7 +49,7 @@ upstream spec's repo strings as commented stubs. `diff keymaps`, `diff options`
 and `diff autocmds` mark which entries a user config has changed, and
 `:checkhealth noethervim` flags any override whose upstream file has moved on.
 
-- **Vim's own patterns, carried to their end.** Vim's `ZZ` and `ZQ` grow into a
+- **Vim's own patterns, extended.** Vim's `ZZ` and `ZQ` grow into a
 full `Z` grid across quit, write and buffer-delete. `<Esc>` leaves a mode, and
 now also clears search highlight, hover floats and stale notifications. Arrow
 keys duplicate `hjkl`, so they resize the window instead. `<C-]>` and the tag
