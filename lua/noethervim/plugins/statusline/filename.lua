@@ -328,7 +328,7 @@ M.MissingFileFlag = {
   condition = function()
     return vim.b.noethervim_file_missing == true
   end,
-  hl = function() return { force = true, fg = ctx.colors.red, bg = ctx.colors.light_gray } end,
+  hl = function() return { force = true, fg = ctx.colors.red, bg = ctx.flag_bg() } end,
   on_click = {
     callback = missing_file_popup,
     name = "heirline_file_missing",
@@ -346,7 +346,7 @@ M.NewFileFlag = {
     return vim.b.noethervim_new_file == true
        and not vim.b.noethervim_file_missing
   end,
-  hl = function() return { force = true, fg = ctx.colors.diag_hint, bg = ctx.colors.light_gray } end,
+  hl = function() return { force = true, fg = ctx.colors.diag_hint, bg = ctx.flag_bg() } end,
   on_click = {
     callback = function()
       local name = vim.api.nvim_buf_get_name(0)
@@ -364,7 +364,7 @@ M.ReadOnlyFlag = {
   condition = function()
     return not vim.bo.modifiable or vim.bo.readonly
   end,
-  hl = function() return { force = true, fg = ctx.colors.light_red, bg = ctx.colors.light_gray } end,
+  hl = function() return { force = true, fg = ctx.colors.light_red, bg = ctx.flag_bg() } end,
   provider = icons.lock .. " ",
 }
 
@@ -372,10 +372,7 @@ M.ScratchFlag = {
   condition = function()
     return vim.api.nvim_buf_get_name(0) == "" and vim.bo.buftype == "" and vim.bo.filetype == ""
   end,
-  hl = function()
-    local bg = vim.fn.mode(1):sub(1, 1) == "i" and ctx.colors.medium_blue or ctx.colors.light_gray
-    return { force = true, fg = ctx.colors.blue, bg = bg }
-  end,
+  hl = function() return { force = true, fg = ctx.colors.blue, bg = ctx.flag_bg() } end,
   provider = "󰎞 ",
 }
 

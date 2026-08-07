@@ -50,6 +50,10 @@ return {
       vim.g.heirline_lsp_show = true
       vim.g.heirline_proj_relative_dir_show = false
       vim.g.toggle_name_or_project_relative = true
+      -- Seeded from `statusline.filetype_profile`, then owned by `<C-w>sf`.
+      -- A build-time gate would leave the key with nothing to toggle for
+      -- anyone who had not already opted in.
+      vim.g.heirline_filetype_profile_show = nv_sl.show_filetype_profile()
 
       -- ── Component modules ────────────────────────────────────
 
@@ -75,13 +79,7 @@ return {
         return { bg = ctx.mode_bg() }
       end
 
-      local CircleComponent = utils.surround(ctx.semiCircles, function()
-        local mode = vim.fn.mode(1):sub(1, 1)
-        if mode == "i" then
-          return ctx.colors.medium_blue
-        end
-        return ctx.colors.light_gray
-      end, {
+      local CircleComponent = utils.surround(ctx.semiCircles, ctx.flag_bg, {
         fallthrough = false,
         misc.MacroRec,
         filename.MissingFileFlag,
@@ -113,9 +111,7 @@ return {
         misc.Space,
         git.GitBlock,
       }
-      if nv_sl.show_filetype_profile() then
-        table.insert(MainComponent, misc.FiletypeProfile)
-      end
+      table.insert(MainComponent, misc.FiletypeProfile)
       for _, c in ipairs(nv_sl.get_extra_right()) do
         table.insert(MainComponent, c)
       end

@@ -134,6 +134,17 @@ function M.mode_bg()
   return M.colors.default_gray
 end
 
+--- Background of the endcapped flag block at the left of the bar: the pill
+--- holding the deleted / new / read-only / scratch / modified markers.
+---
+--- Shared by the `utils.surround` that draws the pill and by every flag
+--- inside it. A flag that hardcodes its own bg looks right in normal mode
+--- and wrong the moment you enter insert, because the pill moves and the
+--- flag does not.
+function M.flag_bg()
+  return vim.fn.mode(1):sub(1, 1) == "i" and M.colors.medium_blue or M.colors.light_gray
+end
+
 --- Wrap a heirline `hl` value (table OR function returning a table) so
 --- the resolved table always has `bg` set to the current mode-aware
 --- background. An explicit `bg` in the wrapped spec wins, so callers
