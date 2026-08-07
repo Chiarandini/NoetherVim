@@ -163,6 +163,15 @@ M.TabPages = {
   condition = function()
     return #vim.api.nvim_list_tabpages() >= 1
   end,
+  -- The tab separators are drawn by `utils.surround`, which colours the
+  -- glyph with the tab's own background and leaves the glyph's background
+  -- to the parent. Without one here that fell through to the theme's
+  -- TabLineFill, while the filler below paints `default_gray` -- two
+  -- colours that happen to agree under gruvbox and visibly do not under
+  -- other themes, leaving a lighter block at each tab edge.
+  hl = function()
+    return { bg = ctx.colors.default_gray }
+  end,
   TabLineOffset,
   utils.make_tablist(Tab),
   TablineFill,
