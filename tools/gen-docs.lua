@@ -232,10 +232,29 @@ end
 
 write(readme_path, readme .. '\n')
 
+-- The vimdoc's bundle count, which drifted to 37 while there were 39.
+--
+-- Vim help has no comment syntax, so a BEGIN/END marker pair would render as
+-- visible junk in `:help noethervim`. The count is rewritten in place
+-- instead, which means the phrase itself is the contract: reword it and the
+-- pattern stops matching. That is why a miss exits non-zero rather than
+-- warning. A silent miss would restore exactly the drift this replaces.
+local vimdoc_path = root .. '/doc/noethervim.txt'
+local vimdoc = table.concat(vim.fn.readfile(vimdoc_path), '\n')
+local vimdoc_new, hits = vimdoc:gsub('%d+ opt%-in bundles',
+  ('%d opt-in bundles'):format(#bundles))
+if hits ~= 1 then
+  io.stderr:write(('doc/noethervim.txt: expected one "<n> opt-in bundles", found %d.\n')
+    :format(hits))
+  io.stderr:write('  Restore the phrase or update the pattern in tools/gen-docs.lua.\n')
+  os.exit(1)
+end
+write(vimdoc_path, vimdoc_new .. '\n')
+
 io.write(('wrote docs-site bundle reference (%d bundles, %d requirements)\n'):format(
   #bundles, (function()
     local n = 0
     for _, b in ipairs(bundles) do n = n + #b.requires end
     return n
   end)()))
-io.write(('rewrote %d README block(s)\n'):format(replaced))
+io.write(('rewrote %d README block(s), and the vimdoc bundle count\n'):format(replaced))

@@ -20,6 +20,10 @@ on:
       - "lua/noethervim/bundles/**"
       - "lua/noethervim/util/bundle_meta.lua"
       - "tools/gen-docs.lua"
+      # The vimdoc is published as the site's reference manual by
+      # sync-docs.mjs, and gen-docs.lua writes its bundle count. A change to
+      # it has to rebuild the site and re-run the drift gate.
+      - "doc/noethervim.txt"
   workflow_dispatch: {}
 
 jobs:
@@ -45,7 +49,7 @@ jobs:
       - name: Bundle reference is up to date
         run: |
           nvim --headless -l tools/gen-docs.lua
-          git diff --exit-code -- README.md docs-site/src/content/docs/guides/bundles.md
+          git diff --exit-code -- README.md docs-site/src/content/docs/guides/bundles.md doc/noethervim.txt
 
       # Every bundle must declare its requirements, `---@requires none`
       # included, so "reviewed and has none" is distinguishable from
