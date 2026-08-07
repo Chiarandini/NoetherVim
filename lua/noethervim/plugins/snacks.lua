@@ -61,6 +61,58 @@ local function browse_open(cmd)
 	end
 end
 
+--- Read one notification's full text in a float. Sized to the message and
+--- capped at 60% of the editor, with the border and title carrying the
+--- notifier's own per-level colours. Takes a `snacks.notifier.Notif`, whose
+--- type is only resolvable when snacks is installed.
+local function open_notification(notif)
+	local lines = vim.split(notif.msg, "\n", { plain = true })
+	local width = math.floor(vim.o.columns * 0.7)
+
+	-- Wrapped lines still cost a row each, so measure the display width
+	-- rather than counting newlines.
+	local rows = 0
+	for _, line in ipairs(lines) do
+		rows = rows + math.max(1, math.ceil(vim.fn.strdisplaywidth(line) / width))
+	end
+
+	local Level = notif.level:sub(1, 1):upper() .. notif.level:sub(2)
+	local title = vim.tbl_filter(function(part) return part ~= "" end, {
+		vim.trim(notif.icon),
+		(notif.title and notif.title ~= "") and notif.title or Level,
+		os.date("%H:%M", notif.added),
+	})
+
+	Snacks.win({
+		text       = lines,
+		-- `ft` only drives treesitter here; `scratch_ft` is the real
+		-- filetype, so markdown highlighting costs us no ftplugin.
+		ft         = notif.ft or "markdown",
+		scratch_ft = "noethervim-notification",
+		title      = " " .. table.concat(title, "  ") .. " ",
+		title_pos  = "center",
+		border     = "rounded",
+		enter      = true,
+		width      = width,
+		height     = math.min(rows, math.floor(vim.o.lines * 0.6)),
+		wo = {
+			wrap           = true,
+			linebreak      = true,
+			spell          = false,
+			number         = false,
+			relativenumber = false,
+			signcolumn     = "no",
+			conceallevel   = 3,
+			winhighlight   = table.concat({
+				"Normal:SnacksNormal",
+				"NormalNC:SnacksNormalNC",
+				"FloatBorder:SnacksNotifierBorder" .. Level,
+				"FloatTitle:SnacksNotifierTitle" .. Level,
+			}, ","),
+		},
+	})
+end
+
 local SearchLeader = require("noethervim.util").search_leader
 
 return {
@@ -279,6 +331,17 @@ return {
 							},
 						},
 					},
+				},
+				-- ── Notifications ───────────────────────────────────────
+				-- snacks' <CR> only closes the picker, so anything longer
+				-- than the preview pane is gone the moment you act on it.
+				-- Open the message in a float instead.
+				notifications = {
+					confirm = function(picker, item)
+						picker:close()
+						if not item then return end
+						vim.schedule(function() open_notification(item.item) end)
+					end,
 				},
 			},
 			-- <c-o> on any file in any picker opens Oil in that file's parent dir.

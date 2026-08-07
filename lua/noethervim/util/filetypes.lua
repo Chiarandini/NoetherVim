@@ -17,6 +17,7 @@ M.non_code = {
   snacks_dashboard = true, snacks_picker_input = true,
   snacks_layout_box = true, snacks_notif = true,
   snacks_terminal = true,
+  ["noethervim-notification"] = true,
   lazy = true, mason = true, checkhealth = true,
   notify = true, TelescopePrompt = true,
   Trouble = true, trouble = true,
@@ -39,6 +40,7 @@ M.q_close = {
   "DressingInput", "cmp_menu",
   "typr", "snacks_notif", "snacks_terminal",
   "nvim-undotree", "undotree", "diff",
+  "noethervim-notification",
 }
 
 local ok_cfg, user_cfg = pcall(require, "user.config")
