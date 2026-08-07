@@ -296,26 +296,26 @@ function M.templates()
       return ret
     end,
     actions = {
-      stamp_template = function(picker)
+      write_template = function(picker)
         local item = picker:current()
         if not item or not item.src or not item.dest then return end
         picker:close()
-        require("noethervim.util.templates").stamp(item.src, item.dest)
+        require("noethervim.util.templates").write(item.src, item.dest)
       end,
     },
     win = {
       input = {
-        footer     = hint_footer({ { "<cr>", "open" }, { "<c-y>", "stamp" }, { "<f1>", "keys" } }),
+        footer     = hint_footer({ { "<cr>", "open" }, { "<c-y>", "write" }, { "<f1>", "keys" } }),
         footer_pos = "center",
         keys = {
           ["<CR>"]  = { "confirm",        mode = { "i", "n" }, desc = "open template (readonly)" },
-          ["<C-y>"] = { "stamp_template", mode = { "i", "n" }, desc = "stamp template into lua/user/" },
+          ["<C-y>"] = { "write_template", mode = { "i", "n" }, desc = "write template into lua/user/" },
         },
       },
       list = {
         keys = {
           ["<CR>"]  = { "confirm",        desc = "open template (readonly)" },
-          ["<C-y>"] = { "stamp_template", desc = "stamp template into lua/user/" },
+          ["<C-y>"] = { "write_template", desc = "write template into lua/user/" },
         },
       },
     },
@@ -1605,7 +1605,7 @@ local subcommand_descriptions = {
   user              = "Browse files in lua/user/",
   plugins           = "Browse installed plugins",
   bundles           = "Bundle picker (<C-y> enable, <C-x> disable)",
-  templates         = "Stamp user-config templates into lua/user/ (<C-y>)",
+  templates         = "Write user-config templates into lua/user/ (<C-y>)",
   ["keymap-guide"]  = "Keymap namespace reference buffer",
   status            = "Show which user override files are loaded",
   diff              = "Compare overrides vs distro defaults (keymaps / options / autocmds / module)",

@@ -1,7 +1,7 @@
 -- Personal keymap overrides for NoetherVim.
 -- The fastest way to install this template is `:NoetherVim templates` (or
 -- SearchLeader+ct, default <Space>ct): pick `user/keymaps.example.lua` and
--- press <C-y> to stamp it into lua/user/keymaps.lua. You can also copy
+-- press <C-y> to write it into lua/user/keymaps.lua. You can also copy
 -- it manually if you prefer.
 -- lua/user/keymaps.lua lives in your config, not in the distribution:
 -- `git pull` and `:Lazy update` never touch it.

@@ -1,6 +1,6 @@
 -- diff_modal.lua -- floating-window y/n confirmation that displays a unified
 -- diff body. Used by bundle_toggle.lua and intended to be reused by future
--- file-rewriting features (e.g. template stamping).
+-- file-rewriting features (e.g. writing a template out).
 
 local M = {}
 

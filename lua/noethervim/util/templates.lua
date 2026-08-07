@@ -1,4 +1,4 @@
--- templates.lua -- enumerate the files in templates/ and stamp them into
+-- templates.lua -- enumerate the files in templates/ and write them into
 -- the user's config dir with diff confirmation. Pairs with the
 -- :NoetherVim templates picker.
 
@@ -105,11 +105,11 @@ function M.list(root)
   return items
 end
 
----Stamp `src` -> `dest`, gated by a unified-diff confirmation. Creates
+---Write `src` -> `dest`, gated by a unified-diff confirmation. Creates
 ---the parent directory if missing. Notifies on completion.
 ---@param src  string
 ---@param dest string
-function M.stamp(src, dest)
+function M.write(src, dest)
   local template, terr = read_file(src)
   if not template then
     return vim.notify("NoetherVim: " .. terr, vim.log.levels.ERROR)
@@ -134,7 +134,7 @@ function M.stamp(src, dest)
     diff    = diff,
     on_done = function(accepted)
       if not accepted then
-        vim.notify("NoetherVim: template stamp cancelled", vim.log.levels.INFO)
+        vim.notify("NoetherVim: template write cancelled", vim.log.levels.INFO)
         return
       end
       vim.fn.mkdir(vim.fn.fnamemodify(dest, ":h"), "p")
@@ -144,7 +144,7 @@ function M.stamp(src, dest)
       end
       vim.notify(("NoetherVim: wrote %s"):format(vim.fn.fnamemodify(dest, ":~")), vim.log.levels.INFO)
 
-      -- Open what was just written. The point of stamping a template is to
+      -- Open what was just written. The point of writing a template out is to
       -- edit it, and closing the confirmation returns to whatever was on
       -- screen before -- the dashboard, most often, since this is a first-run
       -- step. Scheduled so the modal's window has finished closing.
