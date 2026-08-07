@@ -71,7 +71,15 @@ return {
     "iamcco/markdown-preview.nvim",
     cmd   = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
     ft    = { "markdown" },
-    build = "cd app && npx --yes yarn install",
+    -- Fetch the prebuilt binary rather than build the node app. mkdp runs
+    -- app/bin/markdown-preview-<platform> when it exists and only falls back
+    -- to `node app/index.js`, which needs app/node_modules. Building those
+    -- needs node and yarn on PATH at build time, and node here comes from
+    -- mise, so any shell that has not sourced the user's init lacks it; the
+    -- build then fails quietly and the plugin dies on a missing tslib. The
+    -- binary is self-contained, and install() no-ops once its version matches
+    -- package.json, so re-running the build is cheap.
+    build = function() vim.fn["mkdp#util#install"]() end,
   },
   {
     "Kicamon/markdown-table-mode.nvim",
