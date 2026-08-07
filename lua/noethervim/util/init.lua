@@ -40,6 +40,50 @@ end
 --- is already an orphan and the replacement is exactly who we want to
 --- replay the queue through.
 ---
+--- The key that opens init.lua, read from the live keymap table rather than
+--- hardcoded, so a rebind is reflected and an unmapped one is noticed.
+---
+--- More than one key can open it -- the distribution binds `<leader>i`, and
+--- a user config may bind its own -- and `nvim_get_keymap` has no meaningful
+--- order, so take the shortest. That is both deterministic and the one worth
+--- telling someone about. Returned in press-it form (`\i`, `<Space>ev`).
+--- nil when nothing opens init.lua any more.
+local function init_lua_key()
+  local best
+  for _, km in ipairs(vim.api.nvim_get_keymap("n")) do
+    if (km.rhs or ""):find("MYVIMRC", 1, true) then
+      if not best or #km.lhs < #best or (#km.lhs == #best and km.lhs < best) then
+        best = km.lhs
+      end
+    end
+  end
+  return best and vim.fn.keytrans(
+    vim.api.nvim_replace_termcodes(best, true, true, true))
+end
+
+--- Footer for a notification that will not time out. A toast that stays
+--- until dismissed has to say how to dismiss it, or it reads as a hang.
+--- Spec errors additionally get the key that opens the file to fix, since
+--- that is the whole of the remedy.
+local function persistent_hint(msg)
+  local parts = {}
+  if msg:find("specs found for module", 1, true) then
+    local key = init_lua_key()
+    parts[#parts + 1] = key and (key .. "  open init.lua")
+      or ("edit " .. vim.fn.fnamemodify(vim.env.MYVIMRC or "", ":~"))
+  end
+  parts[#parts + 1] = "<Esc>  dismiss"
+  return table.concat(parts, "     ")
+end
+
+--- Errors in the queue are replayed without a timeout, so they stay on
+--- screen until dismissed. Everything replayed here happened before the
+--- session was usable and cannot be scrolled back to; a stale bundle import
+--- that flashes for three seconds while plugins are still settling is a
+--- message nobody reads. Warnings and below keep the notifier's own timeout.
+--- Only the timeout is set, so a caller that asked for something specific
+--- keeps it.
+---
 --- Idempotent: repeated calls do nothing after the first.
 function M.buffer_notify()
   if M._notify_buffered then return end
@@ -59,7 +103,12 @@ function M.buffer_notify()
       end
       vim.schedule(function()
         for _, n in ipairs(pending) do
-          vim.notify(n[1], n[2], n[3])
+          local msg, level, opts = n[1], n[2], n[3]
+          if level == vim.log.levels.ERROR then
+            opts = vim.tbl_extend("keep", opts or {}, { timeout = 0 })
+            msg = msg .. "\n\n" .. persistent_hint(msg)
+          end
+          vim.notify(msg, level, opts)
         end
       end)
     end,

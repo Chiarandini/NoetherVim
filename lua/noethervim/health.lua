@@ -483,9 +483,98 @@ function M.check()
     if #errors == 0 then
       h.ok("No spec errors")
     else
-      for _, msg in ipairs(errors) do h.error(msg) end
+      -- A missing module whose leaf name still matches a shipped bundle was
+      -- renamed rather than deleted, and the new path is the fix. Saying so
+      -- turns the error from a search into an edit.
+      local by_leaf = {}
+      local init_path = vim.api.nvim_get_runtime_file("lua/noethervim/init.lua", false)[1]
+      local tree = init_path and vim.fn.fnamemodify(init_path, ":h:h:h")
+      if tree then
+        for _, entry in ipairs(require("noethervim.util").scan_bundles(
+              tree .. "/lua/noethervim/bundles")) do
+          by_leaf[entry.name] = entry.category .. "." .. entry.name
+        end
+      end
+      for _, msg in ipairs(errors) do
+        h.error(msg)
+        local module = msg:match('No specs found for module "([^"]+)"')
+        local leaf = module and module:match("([^.]+)$")
+        local moved = leaf and by_leaf[leaf]
+        if moved and module ~= "noethervim.bundles." .. moved then
+          h.info(("`%s` still ships, as `noethervim.bundles.%s`. "):format(leaf, moved)
+            .. "Update the import in init.lua.")
+        end
+      end
       h.info("Most common cause: a bundle imported in init.lua was "
         .. "removed or renamed upstream. Remove the stale import.")
+    end
+  end
+
+  -- ── Stranded overrides ───────────────────────────────────────────────
+  -- An override in lua/user/plugins/ supplies `opts` and leaves the rest to
+  -- the bundle it extends. Disable or rename that bundle and the override
+  -- becomes the only spec for the plugin -- now with no `dependencies`, no
+  -- lazy-load trigger and no `config`. lazy.nvim loads it during startup and
+  -- runs its default `require(<main>).setup(opts)`, which fails on the first
+  -- dependency the bundle used to declare.
+  --
+  -- The test is that combination, not "declared only here": a new plugin
+  -- added in lua/user/plugins/ is declared only there too, and is the normal
+  -- way to add one. What marks a spec as stranded is that it configures a
+  -- plugin without saying how to load it.
+  h.start("Stranded overrides")
+  do
+    local util = require("noethervim.util")
+    local lazy_ok, lazy_plugins = pcall(require, "lazy.core.config")
+    local user_dir = vim.fn.stdpath("config") .. "/lua/user/plugins"
+    local stranded = {}
+
+    if lazy_ok then
+      for name, files in pairs(util.plugin_spec_files()) do
+        local user_file, live_spec, dormant_bundle
+        for _, path in ipairs(files) do
+          if path:find(user_dir, 1, true) then
+            user_file = path
+          else
+            -- Every bundle file on disk mentions its plugins whether or not
+            -- init.lua imports it, so a shipped-but-disabled bundle is not a
+            -- spec that runs. Name it: it is almost always the answer.
+            local cat, leaf = path:match("/bundles/([^/]+)/([^/]+)%.lua$")
+            if cat and not active_bundles[cat .. "." .. leaf] then
+              dormant_bundle = cat .. "." .. leaf
+            else
+              live_spec = true
+            end
+          end
+        end
+        local p = lazy_plugins.plugins[name]
+        if user_file and not live_spec and p
+            and p.opts and not p.config and not p.dependencies
+            and not (p.ft or p.cmd or p.event or p.keys) and p.lazy == false then
+          stranded[#stranded + 1] =
+            { name = name, file = user_file, bundle = dormant_bundle }
+        end
+      end
+    end
+
+    table.sort(stranded, function(a, b) return a.name < b.name end)
+    if not lazy_ok then
+      h.info("Skipped (lazy.nvim not initialised)")
+    elseif #stranded == 0 then
+      h.ok("No overrides left without a spec to extend")
+    else
+      for _, s in ipairs(stranded) do
+        h.warn(("%s: %s sets `opts`, and nothing says how to load it"):format(
+          s.name, vim.fn.fnamemodify(s.file, ":~")))
+        if s.bundle then
+          h.info(("The `%s` bundle declares it, and is not enabled. "):format(s.bundle)
+            .. "Enable it in init.lua, or move its `dependencies`, `ft` and "
+            .. "`config` into the override.")
+        else
+          h.info("Give the override the `dependencies`, `ft` and `config` the "
+            .. "spec it used to extend supplied, or it loads at startup with none.")
+        end
+      end
     end
   end
 
