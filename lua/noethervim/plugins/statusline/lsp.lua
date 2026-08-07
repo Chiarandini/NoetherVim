@@ -12,8 +12,14 @@ M.LSPActive = {
   end,
   on_click = {
     callback = function()
+      -- `:LspInfo` was a nvim-lspconfig command and is gone; the built-in
+      -- report replaced it. Fall back only if something still defines it.
       vim.defer_fn(function()
-        vim.cmd("LspInfo")
+        if vim.fn.exists(":LspInfo") == 2 then
+          vim.cmd("LspInfo")
+        else
+          vim.cmd("checkhealth vim.lsp")
+        end
       end, 100)
     end,
     name = "heirline_LSP",
