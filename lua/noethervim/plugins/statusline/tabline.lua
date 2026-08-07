@@ -152,10 +152,20 @@ end, {
   end,
 })
 
+-- The bar behind the tabs, and what the tab separators carve against. It is
+-- the editor background rather than `default_gray` so the three levels stay
+-- distinct: bar at `bg`, inactive tab at `default_gray`, active tab at
+-- `light_gray`. With the bar and the inactive tabs both `default_gray` an
+-- unselected tab had no edge at all -- its body matched the bar and its
+-- separators, drawn in the tab's own colour, matched it too.
+local function tabline_bg()
+  return ctx.colors.bg
+end
+
 local TablineFill = {
   provider = "%=",
   hl = function()
-    return { bg = ctx.colors.default_gray }
+    return { bg = tabline_bg() }
   end,
 }
 
@@ -166,11 +176,10 @@ M.TabPages = {
   -- The tab separators are drawn by `utils.surround`, which colours the
   -- glyph with the tab's own background and leaves the glyph's background
   -- to the parent. Without one here that fell through to the theme's
-  -- TabLineFill, while the filler below paints `default_gray` -- two
-  -- colours that happen to agree under gruvbox and visibly do not under
-  -- other themes, leaving a lighter block at each tab edge.
+  -- TabLineFill, which agrees with the bar under gruvbox and visibly does
+  -- not under other themes.
   hl = function()
-    return { bg = ctx.colors.default_gray }
+    return { bg = tabline_bg() }
   end,
   TabLineOffset,
   utils.make_tablist(Tab),
