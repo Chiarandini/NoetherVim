@@ -133,6 +133,34 @@ local function decorate_oil_buffer(bufnr)
 	end
 end
 
+-- Title for the directory-scoped pickers `gf` and `gG` launch.
+--
+-- `action` names which one is running: both used to render a bare path, so
+-- a files picker and a grep picker were indistinguishable once open. The
+-- scope is the path relative to the enclosing git repo, the repo's own name
+-- at its root (a bare "." said nothing), and a `~`-shortened absolute path
+-- outside a repo. Long paths keep their tail, which is the part that
+-- locates you.
+--
+-- Title rather than a footer: snacks re-renders titles on every cwd change
+-- and every layout provides one, whereas a footer needs the input window to
+-- carry a bottom border. `ivy` puts the title on the enclosing box and
+-- leaves the input bare, so a footer would silently vanish for anyone who
+-- switches layout -- and the `browse` picker already runs `ivy`.
+local function picker_title(dir, action)
+	local scope
+	local git_root = vim.fn.systemlist("git -C " .. vim.fn.shellescape(dir) .. " rev-parse --show-toplevel")[1]
+	if git_root and not git_root:match("^fatal") then
+		scope = dir:sub(#git_root + 2) -- strip root + trailing /
+		if scope == "" then scope = vim.fn.fnamemodify(git_root, ":t") end
+	else
+		scope = vim.fn.fnamemodify(dir, ":~")
+	end
+	scope = scope:gsub("(.)/$", "%1") -- oil dirs always end in "/"; "/" itself keeps it
+	if #scope > 40 then scope = "…" .. scope:sub(-39) end
+	return ("Oil %s (%s)"):format(action, scope)
+end
+
 -- Yank the entry under the cursor. `mods` is a |fnamemodify()| mods string
 -- (e.g. ":h", ":t"), or nil for the full path. `reg` is the target register
 -- ("+" for system clipboard, "" for unnamed).
@@ -575,17 +603,9 @@ return {
 					callback = function()
 						local dir = require("oil").get_current_dir()
 						if not dir then return end
-						local title
-						local git_root = vim.fn.systemlist("git -C " .. vim.fn.shellescape(dir) .. " rev-parse --show-toplevel")[1]
-						if git_root and not git_root:match("^fatal") then
-							title = dir:sub(#git_root + 2) -- strip root + trailing /
-							if title == "" then title = "." end
-						else
-							title = vim.fn.fnamemodify(dir, ":~")
-						end
 						require("snacks").picker.files({
 							cwd = dir,
-							title = title,
+							title = picker_title(dir, "Files"),
 							hidden = require("oil.config").view_options.show_hidden,
 							ignored = true,
 						})
@@ -596,17 +616,9 @@ return {
 					callback = function()
 						local dir = require("oil").get_current_dir()
 						if not dir then return end
-						local title
-						local git_root = vim.fn.systemlist("git -C " .. vim.fn.shellescape(dir) .. " rev-parse --show-toplevel")[1]
-						if git_root and not git_root:match("^fatal") then
-							title = dir:sub(#git_root + 2) -- strip root + trailing /
-							if title == "" then title = "." end
-						else
-							title = vim.fn.fnamemodify(dir, ":~")
-						end
 						require("snacks").picker.grep({
 							cwd = dir,
-							title = title,
+							title = picker_title(dir, "Grep"),
 							hidden = require("oil.config").view_options.show_hidden,
 							ignored = true,
 						})
