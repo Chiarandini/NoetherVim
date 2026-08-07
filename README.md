@@ -38,10 +38,21 @@ maplocalleader`), so Vim-flavoured muscle memory transfers intact. The one
 addition is a search leader, defaulting to `<Space>`, which owns every fuzzy
 picker. See [Keybinding Philosophy](#keybinding-philosophy).
 
-- **Inspection is built in.** `:NoetherVim diff keymaps` shows every distro
-keymap your config has overridden, and `:NoetherVim diff options` does the same
-for options. "What does this distro actually change?" should be a one-command
-question, even after you layer your own config on top. Furthermore, `:NoetherVim files` and `:NoetherVim grep` open source files (read-only) inside the editor with lua-doc comments for documenation.
+- **Inspection is built in.** `:NoetherVim diff keymaps`, `diff options` and
+`diff autocmds` list what the distro sets, with overridden entries marked.
+`:NoetherVim files` and `:NoetherVim grep` open the distro's own source
+read-only in the editor; each plugin spec and bundle carries a header comment
+describing what it configures.
+
+- **Overrides are tracked.** `:NoetherVim override` seeds a user file with the
+upstream spec's repo strings as commented stubs. `:checkhealth noethervim`
+flags any override whose upstream file has since changed.
+
+- **Vim's own patterns, carried to their end.** Vim's `ZZ` and `ZQ` grow into a
+full `Z` grid across quit, write and buffer-delete. `<Esc>` leaves a mode, and
+now also clears search highlight, hover floats and stale notifications. Arrow
+keys duplicate `hjkl`, so they resize the window instead. `<C-]>` and the tag
+stack jump LaTeX labels across subfiles.
 
 - **LaTeX, BibTeX and VimTeX are first-class.** The distro ships custom
 Snacks-based label and heading pickers, preamble snippets, BibTeX and Zotero
