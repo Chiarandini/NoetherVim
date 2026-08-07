@@ -47,7 +47,7 @@ M.colors = {}
 M.mode_colors = {}
 
 function M.make_mode_colors(colors)
-  return {
+  local modes = {
     -- Base modes
     n = colors.green,
     i = colors.light_blue,
@@ -98,6 +98,20 @@ function M.make_mode_colors(colors)
     ["r?"] = colors.light_orange,
     ["!"] = colors.yellow,
   }
+
+  -- `statusline.colors` in user config can name a mode directly, as
+  -- `mode_n`, `mode_i`, `mode_R` and so on. Without this the only way to
+  -- move the normal-mode indicator was to move `green`, which also moves
+  -- everything else green on the bar.
+  --
+  -- Applied to whatever key matches, so the variations are reachable too:
+  -- `mode_niI` for normal-pending-insert, `mode_cv` for Ex.
+  for mode in pairs(modes) do
+    local override = colors["mode_" .. mode]
+    if override then modes[mode] = override end
+  end
+
+  return modes
 end
 
 -- Cache git root lookups by directory path: finddir(".git/..") is a
@@ -125,10 +139,17 @@ end
 -- Both helpers read live state from `vim.fn.mode()` / `M.colors`, so
 -- they pick up theme changes and mode switches automatically.
 
+--- Whether the bar shifts background in insert mode at all. Read through a
+--- function rather than captured, so `statusline.mode_background = false`
+--- takes effect without rebuilding the components.
+local function mode_shift()
+  local ok, sl = pcall(require, "noethervim.statusline")
+  return not ok or sl.mode_background()
+end
+
 --- Current statusline background colour for the active mode.
 function M.mode_bg()
-  local mode = vim.fn.mode(1):sub(1, 1)
-  if mode == "i" then
+  if mode_shift() and vim.fn.mode(1):sub(1, 1) == "i" then
     return M.colors.default_blue
   end
   return M.colors.default_gray
@@ -142,7 +163,10 @@ end
 --- and wrong the moment you enter insert, because the pill moves and the
 --- flag does not.
 function M.flag_bg()
-  return vim.fn.mode(1):sub(1, 1) == "i" and M.colors.medium_blue or M.colors.light_gray
+  if mode_shift() and vim.fn.mode(1):sub(1, 1) == "i" then
+    return M.colors.medium_blue
+  end
+  return M.colors.light_gray
 end
 
 --- Wrap a heirline `hl` value (table OR function returning a table) so

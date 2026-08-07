@@ -107,6 +107,16 @@ function M.get_tab_modified_indicator()
 end
 
 --- True when the filetype-profile marker should be rendered. Off unless
+--- True unless `statusline.mode_background = false` in `lua/user/config.lua`.
+---
+--- The bar shifts to a blue background in insert mode, so the editor's most
+--- consequential hidden state is legible from the shape of the bar rather
+--- than only from reading the mode chip. It is on by default for that
+--- reason, and off in one line for anyone who finds the movement noisy.
+function M.mode_background()
+  return _opts.mode_background ~= false
+end
+
 --- `statusline.filetype_profile = true` in `lua/user/config.lua`.
 function M.show_filetype_profile()
   return _opts.filetype_profile == true

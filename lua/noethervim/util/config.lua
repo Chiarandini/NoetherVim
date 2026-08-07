@@ -66,6 +66,7 @@ local STATUSLINE_SCHEMA = {
   edge_style             = "string",
   tab_modified_indicator = "string",
   filetype_profile       = "boolean",
+  mode_background        = "boolean",
   git_click              = "function",
 }
 

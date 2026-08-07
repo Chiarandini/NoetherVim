@@ -29,6 +29,7 @@
 ---@field extra_right? table[] Extra heirline component specs appended to the right side of the main statusline, after the git block.
 ---@field edge_style? "round"|"slant"|"pointy"|"straight"|"bubbly" Shape of the colored mode block at the left of the statusline, and (for "bubbly", "slant", "pointy") an opening endcap on the right ruler block. Default "round" preserves the historical look; "bubbly" rounds both edges; "straight" disables endcaps entirely.
 ---@field tab_modified_indicator? string Glyph shown on a tab containing unsaved changes. Default `" ●"`. Common alternatives: `" [+]"` (vim default), `" *"`, `" "`, `" ◉"`. A leading space is recommended -- it separates the indicator from the tab's filename.
+---@field mode_background? boolean If false, the statusline keeps one background in every mode instead of shifting to blue in insert. The mode chip still changes colour. Default: true.
 ---@field filetype_profile? boolean If true, render a marker showing which filetype profile (writing or code) claimed the current buffer. Clicking it reports the profile, the detected filetype, and the live values of the options the profile sets. Default: false.
 ---@field git_click? fun() Called when the git branch/status block is clicked. The default opens lazygit when it is on PATH and falls back to snacks' git-status picker otherwise; lazygit is optional, not a prerequisite.
 
