@@ -50,95 +50,70 @@ local function cwd_state()
   return vim.startswith(dir .. "/", prefix) and "inside" or "outside"
 end
 
+--- A small float anchored at the mouse, for the popups the flag markers open
+--- when clicked. Every one of them is the same shape: a few lines ending in
+--- a `[K]ey action` line, a key per action, and `c` / `q` / `<Esc>` to
+--- dismiss -- which is the active-discoverability rule applied to a window
+--- that has no other place to advertise itself.
+---
+---@param lines string[]  body, last line conventionally the action legend
+---@param actions table<string, fun()>  key -> action; each closes first
+local function flag_popup(lines, actions)
+  local width = 0
+  for _, l in ipairs(lines) do
+    if #l > width then width = #l end
+  end
+
+  local mouse_pos = vim.fn.getmousepos()
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  vim.api.nvim_set_option_value("modifiable", false, { scope = "local", buf = buf })
+  vim.api.nvim_set_option_value("bufhidden",  "wipe",  { scope = "local", buf = buf })
+
+  local win = vim.api.nvim_open_win(buf, true, {
+    relative = "editor",
+    row      = math.max(0, mouse_pos.screenrow - #lines - 2),
+    col      = mouse_pos.screencol,
+    width    = width,
+    height   = #lines,
+    style    = "minimal",
+    border   = "rounded",
+  })
+
+  local function close() pcall(vim.api.nvim_win_close, win, true) end
+  local km = { buffer = buf, noremap = true, silent = true, nowait = true }
+  for key, action in pairs(actions) do
+    vim.keymap.set("n", key, function() close(); action() end, km)
+  end
+  for _, key in ipairs({ "c", "q", "<Esc>" }) do
+    if not actions[key] then vim.keymap.set("n", key, close, km) end
+  end
+end
+
 ---Explain the divergence and offer the window-local fix.
 ---
 ---`:lcd` rather than `:cd` on purpose: `:cd` from a window holding a
 ---window-local or tab-local directory silently discards both.
 local function cwd_popup()
   local dir = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ":p:h")
-  local lines = {
+  flag_popup({
     " cwd:  " .. vim.fn.fnamemodify(vim.fn.getcwd(), ":~"),
     " file: " .. vim.fn.fnamemodify(dir, ":~"),
     " Relative :w and :e resolve against cwd. ",
     " [L] :lcd to this file's directory   [C]ancel ",
-  }
-  local width = 0
-  for _, l in ipairs(lines) do
-    if #l > width then width = #l end
-  end
-
-  local mouse_pos = vim.fn.getmousepos()
-  local opts = {
-    relative = "editor",
-    row      = math.max(0, mouse_pos.screenrow - #lines - 2),
-    col      = mouse_pos.screencol,
-    width    = width,
-    height   = #lines,
-    style    = "minimal",
-    border   = "rounded",
-  }
-
-  local buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-  vim.api.nvim_set_option_value("modifiable", false, { scope = "local", buf = buf })
-  vim.api.nvim_set_option_value("bufhidden",  "wipe",  { scope = "local", buf = buf })
-
-  local win = vim.api.nvim_open_win(buf, true, opts)
-
-  local function close() pcall(vim.api.nvim_win_close, win, true) end
-  local function lcd()
-    close()
-    vim.cmd("lcd " .. vim.fn.fnameescape(dir))
-    vim.cmd.redrawstatus()
-  end
-
-  local km = { buffer = buf, noremap = true, silent = true, nowait = true }
-  vim.keymap.set("n", "l",     lcd,   km)
-  vim.keymap.set("n", "<CR>",  lcd,   km)
-  vim.keymap.set("n", "c",     close, km)
-  vim.keymap.set("n", "q",     close, km)
-  vim.keymap.set("n", "<Esc>", close, km)
+  }, {
+    ["l"] = function()
+      vim.cmd("lcd " .. vim.fn.fnameescape(dir))
+      vim.cmd.redrawstatus()
+    end,
+  })
 end
 
 local function out_of_sync_popup()
-  local lines = {
+  flag_popup({
     " Buffer and disk file are out of sync. ",
     " [D]iff   [C]ancel ",
-  }
-  local width = 0
-  for _, l in ipairs(lines) do
-    if #l > width then width = #l end
-  end
-
-  local mouse_pos = vim.fn.getmousepos()
-  local opts = {
-    relative = "editor",
-    row      = math.max(0, mouse_pos.screenrow - #lines - 2),
-    col      = mouse_pos.screencol,
-    width    = width,
-    height   = #lines,
-    style    = "minimal",
-    border   = "rounded",
-  }
-
-  local buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-  vim.api.nvim_set_option_value("modifiable", false, { scope = "local", buf = buf })
-  vim.api.nvim_set_option_value("bufhidden",  "wipe",  { scope = "local", buf = buf })
-
-  local win = vim.api.nvim_open_win(buf, true, opts)
-
-  local function close() pcall(vim.api.nvim_win_close, win, true) end
-  local function diff() close(); vim.cmd("DiffOrig") end
-
-  local km = { buffer = buf, noremap = true, silent = true, nowait = true }
-  vim.keymap.set("n", "d",     diff,  km)
-  vim.keymap.set("n", "y",     diff,  km)
-  vim.keymap.set("n", "<CR>",  diff,  km)
-  vim.keymap.set("n", "c",     close, km)
-  vim.keymap.set("n", "n",     close, km)
-  vim.keymap.set("n", "q",     close, km)
-  vim.keymap.set("n", "<Esc>", close, km)
+  }, { ["d"] = function() vim.cmd("DiffOrig") end })
 end
 
 local function ProjRelativeFilename()
@@ -178,7 +153,7 @@ local WorkDir = {
   condition = function()
     return vim.g.heirline_directory_show
   end,
-  hl = { fg = "orange", bold = true },
+  hl = function() return { fg = ctx.colors.orange, bold = true } end,
 
   flexible = ctx.priority.high,
 
@@ -278,46 +253,12 @@ M.FileName = {
 
 --- Offer to put a deleted file back from the buffer still holding it.
 local function missing_file_popup()
-  local name = vim.api.nvim_buf_get_name(0)
-  local lines = {
+  flag_popup({
     " The file behind this buffer is gone from disk. ",
-    " " .. vim.fn.fnamemodify(name, ":~") .. " ",
+    " " .. vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ":~") .. " ",
     " The buffer still holds its contents. ",
     " [W] write it back   [C]ancel ",
-  }
-  local width = 0
-  for _, l in ipairs(lines) do
-    if #l > width then width = #l end
-  end
-
-  local mouse_pos = vim.fn.getmousepos()
-  local buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-  vim.api.nvim_set_option_value("modifiable", false, { scope = "local", buf = buf })
-  vim.api.nvim_set_option_value("bufhidden",  "wipe",  { scope = "local", buf = buf })
-
-  local win = vim.api.nvim_open_win(buf, true, {
-    relative = "editor",
-    row      = math.max(0, mouse_pos.screenrow - #lines - 2),
-    col      = mouse_pos.screencol,
-    width    = width,
-    height   = #lines,
-    style    = "minimal",
-    border   = "rounded",
-  })
-
-  local function close() pcall(vim.api.nvim_win_close, win, true) end
-  local function restore()
-    close()
-    vim.cmd("write")
-  end
-
-  local km = { buffer = buf, noremap = true, silent = true, nowait = true }
-  vim.keymap.set("n", "w",     restore, km)
-  vim.keymap.set("n", "<CR>",  restore, km)
-  vim.keymap.set("n", "c",     close,   km)
-  vim.keymap.set("n", "q",     close,   km)
-  vim.keymap.set("n", "<Esc>", close,   km)
+  }, { ["w"] = function() vim.cmd("write") end })
 end
 
 --- The buffer's file has been deleted from disk while the buffer stayed open.
@@ -368,11 +309,35 @@ M.ReadOnlyFlag = {
   provider = icons.lock .. " ",
 }
 
+--- No name and no file: the `|`, `_` and `+` scratches, and `:enew`. The
+--- other flags in this slot all answer "how do I get this onto disk"; this
+--- one has no path to write back to, so it asks for one.
 M.ScratchFlag = {
   condition = function()
     return vim.api.nvim_buf_get_name(0) == "" and vim.bo.buftype == "" and vim.bo.filetype == ""
   end,
   hl = function() return { force = true, fg = ctx.colors.blue, bg = ctx.flag_bg() } end,
+  on_click = {
+    callback = function()
+      flag_popup({
+        " Scratch buffer -- nothing on disk, and no name to write to. ",
+        " It is wiped when it stops being displayed. ",
+        " [S]ave it under a name   [C]ancel ",
+      }, {
+        ["s"] = function()
+          vim.ui.input({ prompt = "Save scratch as: ", completion = "file" }, function(name)
+            if not name or name == "" then return end
+            vim.cmd("write " .. vim.fn.fnameescape(vim.fn.fnamemodify(name, ":p")))
+            -- The buffer keeps `bufhidden=wipe` from the split that made it,
+            -- which would throw the file away the moment you looked elsewhere.
+            vim.bo.bufhidden = ""
+            vim.cmd.redrawstatus()
+          end)
+        end,
+      })
+    end,
+    name = "heirline_scratch",
+  },
   provider = "󰎞 ",
 }
 
@@ -381,7 +346,7 @@ M.ChangeFlag = {
     return vim.bo.modified
   end,
   hl = function()
-    return { fg = vim.b.noethervim_out_of_sync and ctx.colors.red or "orange" }
+    return { fg = vim.b.noethervim_out_of_sync and ctx.colors.red or ctx.colors.orange }
   end,
   on_click = {
     callback = function()
@@ -452,7 +417,7 @@ M.OilBuffer = {
       end
       return string.sub(path, #oil_prefix + 1)
     end,
-    hl = { fg = "orange", bold = true },
+    hl = function() return { fg = ctx.colors.orange, bold = true } end,
   },
   {
     provider = function(self)
