@@ -79,7 +79,17 @@ return {
     -- build then fails quietly and the plugin dies on a missing tslib. The
     -- binary is self-contained, and install() no-ops once its version matches
     -- package.json, so re-running the build is cheap.
-    build = function() vim.fn["mkdp#util#install"]() end,
+    --
+    -- The runtimepath line is what makes that callable. lazy.nvim runs `build`
+    -- straight after fetching, with the plugin still off the runtimepath --
+    -- it is `ft`-loaded and nothing has triggered it yet -- so Vim cannot
+    -- find autoload/mkdp/util.vim and the call dies with E117. lazy adds the
+    -- directory again when the plugin really loads; a duplicate entry costs
+    -- nothing.
+    build = function(plugin)
+      vim.opt.runtimepath:append(plugin.dir)
+      vim.fn["mkdp#util#install"]()
+    end,
   },
   {
     "Kicamon/markdown-table-mode.nvim",
