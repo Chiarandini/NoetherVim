@@ -3,7 +3,8 @@
 ---@about Installs the ts_ls, cssls and eslint language servers on demand, and
 ---       adds two editing aids: strings convert to template literals as soon
 ---       as you interpolate, and CSS, hex, rgb, hsl and Tailwind colors
----       preview inline.
+---       preview inline. With the test bundle also enabled, registers the
+---       Jest and Vitest adapters.
 ---@requires exe=node label="Node.js"
 ---          why="the ts_ls, cssls and eslint servers Mason installs"
 ---          install="https://nodejs.org/"
@@ -19,8 +20,9 @@
 --   • ts_ls, cssls, eslint:    TypeScript / CSS / ESLint LSPs (Mason-installed
 --                              only when this bundle is enabled)
 --
--- Also registers the JavaScript/TypeScript DAP adapter, but only when
--- tools/debug.lua is enabled too -- see the `optional = true` fragment below.
+-- Also registers the JavaScript/TypeScript DAP adapter and the Jest and
+-- Vitest test adapters, but only when tools/debug.lua and tools/test.lua are
+-- enabled too -- see the `optional = true` fragments below.
 
 return {
 	-- ── Web LSPs (Mason install scoped to this bundle) ─────────────────────
@@ -115,5 +117,28 @@ return {
 				end,
 			},
 		},
+	},
+
+	-- ── JavaScript / TypeScript test adapters ─────────────────────────────
+	-- Same `optional = true` gating, against tools/test.lua. Both adapters
+	-- are registered rather than one: Jest and Vitest are the two runners in
+	-- common use, each detects its own project layout and stays quiet in a
+	-- project that is not using it, so picking one here would be choosing a
+	-- test runner on the user's behalf for no gain.
+	--
+	-- Built in an `opts` function so the `require` runs after the adapter
+	-- plugin loads; see tools/test.lua for why `adapters` merges as it does.
+	{
+		"nvim-neotest/neotest",
+		optional = true,
+		dependencies = {
+			"nvim-neotest/neotest-jest",
+			"marilari88/neotest-vitest",
+		},
+		opts = function(_, opts)
+			opts.adapters = opts.adapters or {}
+			table.insert(opts.adapters, require("neotest-jest")({}))
+			table.insert(opts.adapters, require("neotest-vitest"))
+		end,
 	},
 }

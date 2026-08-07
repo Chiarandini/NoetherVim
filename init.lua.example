@@ -99,7 +99,7 @@ require("lazy").setup({
 
 		-- tools/
 		-- { import = "noethervim.bundles.tools.debug" },         -- nvim-dap + UI (language adapters come from the language bundles)
-		-- { import = "noethervim.bundles.tools.test" },          -- neotest test runner
+		-- { import = "noethervim.bundles.tools.test" },          -- neotest (language adapters come from the language bundles)
 		-- { import = "noethervim.bundles.tools.repl" },          -- iron.nvim REPL
 		-- { import = "noethervim.bundles.tools.task-runner" },   -- overseer + compiler.nvim
 		-- { import = "noethervim.bundles.tools.database" },      -- vim-dadbod + UI + SQL completion

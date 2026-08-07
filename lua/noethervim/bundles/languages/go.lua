@@ -2,7 +2,8 @@
 ---@desc test generation, struct tags, interface implementation
 ---@about Go development beyond what gopls alone gives you: generate tests,
 ---       edit struct tags, implement interfaces, fill structs, and run tests
----       by file or by function from the editor.
+---       by file or by function from the editor. With the test bundle also
+---       enabled, registers the neotest-golang adapter.
 ---@requires exe=go label="Go toolchain"
 ---          why="building, testing and every go.nvim command"
 ---          install="https://go.dev/dl/"
@@ -28,8 +29,9 @@
 --
 -- Requires: go toolchain installed.
 --
--- Also registers the DAP adapter, but only when tools/debug.lua is enabled
--- too -- see the `optional = true` fragment below.
+-- Also registers the DAP and neotest adapters, but only when tools/debug.lua
+-- and tools/test.lua are enabled too -- see the `optional = true` fragments
+-- below.
 
 return {
 	{
@@ -63,5 +65,26 @@ return {
 				opts = {},
 			},
 		},
+	},
+
+	-- ── Go test adapter ───────────────────────────────────────────────────
+	-- Same `optional = true` gating, against tools/test.lua.
+	--
+	-- Built in an `opts` function so the `require` runs after the adapter
+	-- plugin loads; see tools/test.lua for why `adapters` merges as it does.
+	--
+	-- neotest-golang 2.x tracks the Go parser from nvim-treesitter's `main`
+	-- branch and does not support the frozen `master` branch. Core is on
+	-- `main`, so the current release line is the right one to track.
+	{
+		"nvim-neotest/neotest",
+		optional = true,
+		dependencies = {
+			{ "fredrikaverpil/neotest-golang", version = "*" },
+		},
+		opts = function(_, opts)
+			opts.adapters = opts.adapters or {}
+			table.insert(opts.adapters, require("neotest-golang")({}))
+		end,
 	},
 }

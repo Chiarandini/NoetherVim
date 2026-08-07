@@ -39,7 +39,7 @@ Requires:
 
 ### `go`
 
-Go development beyond what gopls alone gives you: generate tests, edit struct tags, implement interfaces, fill structs, and run tests by file or by function from the editor.
+Go development beyond what gopls alone gives you: generate tests, edit struct tags, implement interfaces, fill structs, and run tests by file or by function from the editor. With the test bundle also enabled, registers the neotest-golang adapter.
 
 ```lua
 { import = "noethervim.bundles.languages.go" }
@@ -54,7 +54,7 @@ Requires:
 
 ### `java`
 
-jdtls needs workspace management and jar paths that plain lspconfig cannot supply, so it gets a dedicated client. It starts on the first .java buffer. Install the server itself with :MasonInstall jdtls.
+jdtls needs workspace management and jar paths that plain lspconfig cannot supply, so it gets a dedicated client. It starts on the first .java buffer. Install the server itself with :MasonInstall jdtls. With the test bundle also enabled, registers the JUnit adapter.
 
 ```lua
 { import = "noethervim.bundles.languages.java" }
@@ -64,6 +64,8 @@ Requires:
 
 - **a JDK**: jdtls will not start without one
   <br />JDK 17 or newer; jdtls itself installs via Mason
+- **Maven or Gradle** *(optional)*: neotest-java builds and runs through the project's own tool, when the test bundle is also enabled
+  <br />whichever your project already uses
 
 ### `latex`
 
@@ -99,7 +101,7 @@ Requires:
 
 ### `python`
 
-:VenvSelect finds .venv, venv, conda and poetry environments, points the language server at whichever you pick, and exports VIRTUAL_ENV so terminal commands agree. :VenvSelectCached restores the last choice per project. With the debug bundle also enabled, registers the debugpy adapter against that same environment.
+:VenvSelect finds .venv, venv, conda and poetry environments, points the language server at whichever you pick, and exports VIRTUAL_ENV so terminal commands agree. :VenvSelectCached restores the last choice per project. With the debug bundle also enabled, registers the debugpy adapter against that same environment; with the test bundle, the neotest-python adapter.
 
 ```lua
 { import = "noethervim.bundles.languages.python" }
@@ -111,10 +113,12 @@ Requires:
   <br />https://www.python.org/downloads/
 - **debugpy** *(optional)*: stepping through Python, when the debug bundle is also enabled
   <br />pip install debugpy, into the environment you debug
+- **pytest** *(optional)*: running Python tests, when the test bundle is also enabled
+  <br />pip install pytest, into the environment you test
 
 ### `rust`
 
-rustaceanvim goes past plain rust-analyzer with macro expansion, runnables and debuggables, the crate graph, hover actions and structural search-replace. It manages its own LSP client, so no lspconfig entry is needed.
+rustaceanvim goes past plain rust-analyzer with macro expansion, runnables and debuggables, the crate graph, hover actions and structural search-replace. It manages its own LSP client, so no lspconfig entry is needed. With the test bundle also enabled, it supplies its own neotest adapter.
 
 ```lua
 { import = "noethervim.bundles.languages.rust" }
@@ -126,10 +130,12 @@ Requires:
   <br />rustup component add rust-analyzer
 - **Cargo**: building and running from the editor
   <br />https://rustup.rs/
+- **codelldb or lldb** *(optional)*: stepping through Rust, when the debug bundle is also enabled
+  <br />:MasonInstall codelldb
 
 ### `web-dev`
 
-Installs the ts_ls, cssls and eslint language servers on demand, and adds two editing aids: strings convert to template literals as soon as you interpolate, and CSS, hex, rgb, hsl and Tailwind colors preview inline.
+Installs the ts_ls, cssls and eslint language servers on demand, and adds two editing aids: strings convert to template literals as soon as you interpolate, and CSS, hex, rgb, hsl and Tailwind colors preview inline. With the test bundle also enabled, registers the Jest and Vitest adapters.
 
 ```lua
 { import = "noethervim.bundles.languages.web-dev" }
@@ -274,16 +280,11 @@ Requires:
 
 ### `test`
 
-The neotest framework, with results shown beside the code they cover. No adapter is enabled by default; add the one for your language in lua/user/plugins/. neotest-python ships alongside it.
+The neotest framework, with results shown beside the code they cover. The runner itself is language-agnostic; each language bundle registers its own adapter when this bundle is also enabled.
 
 ```lua
 { import = "noethervim.bundles.tools.test" }
 ```
-
-Requires:
-
-- **Python 3** *(optional)*: neotest-python is the shipped adapter
-  <br />then pip install pytest
 
 ## Navigation & editing
 

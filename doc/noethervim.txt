@@ -745,7 +745,10 @@ Available bundles (grouped by category): ~
                      adapter is built in, and the Python, Go, JS/TS and
                      C/C++ adapters come from their own language bundles
                      when both bundles are enabled.
-    `test`           neotest test runner framework.
+    `test`           neotest test runner. Language-agnostic in the same
+                     way: Python, Go, Rust, Java, Jest and Vitest adapters
+                     come from their own language bundles when both
+                     bundles are enabled. See |noethervim-test-adapters|.
     `repl`           iron.nvim interactive REPL.
     `task-runner`    overseer.nvim + compiler.nvim.
     `database`       vim-dadbod + UI + SQL completion via blink.cmp.
@@ -821,6 +824,52 @@ Each bundle file contains full documentation (plugins, keymaps,
 commands, and requirements) in its header comment. Browse them with
 `:NoetherVim bundles` or SearchLeader+cb.
 
+                                                  *noethervim-test-adapters*
+Test bundle: ~
+
+Keymaps live under `<Leader>t`, the sibling of `<Leader>d` for debug: ~
+
+    `<Leader>tt`   run the nearest test
+    `<Leader>tf`   run the current file
+    `<Leader>ta`   run every test under the working directory
+    `<Leader>tl`   re-run the last test
+    `<Leader>tq`   stop the running test
+    `<Leader>ts`   toggle the summary tree
+    `<Leader>to`   show output for the nearest test
+    `<Leader>tO`   toggle the output panel
+    `<Leader>tw`   toggle watch mode on the current file
+    `<Leader>td`   debug the nearest test (needs the `debug` bundle too)
+
+Testing binds no function keys: `debug` owns that tier for stepping. It
+also puts nothing under SearchLeader, which is for pickers only, and
+neotest's surfaces are panels rather than searchable lists.
+
+Adapters: ~
+
+The `test` bundle installs neotest and no adapters. An adapter arrives
+from its language bundle, and only when both bundles are enabled:
+
+    `languages/python`   pytest / unittest, via neotest-python
+    `languages/go`       go test, via neotest-golang
+    `languages/rust`     cargo test, via rustaceanvim's own adapter
+    `languages/java`     JUnit, via neotest-java
+    `languages/web-dev`  Jest and Vitest
+
+So `test` on its own gives you the UI and nothing to run: `:Neotest run`
+finds no tests. This is the same arrangement the `debug` bundle uses, for
+the same reason -- an adapter is only useful to someone who already opted
+into the language.
+
+For a language with no bundle, append to `adapters` from `user/plugins/`,
+using the function form of `opts`. An adapter is an object its plugin
+constructs, so the `require` has to run when neotest loads, not while specs
+are being collected: >lua
+    { "nvim-neotest/neotest",
+      dependencies = { "some/neotest-adapter" },
+      opts = function(_, opts)
+        table.insert(opts.adapters, require("neotest-adapter")({}))
+      end }
+<
 Configuring noethervim-tex (latex bundle): ~
 
 The `latex` bundle includes `noethervim-tex`, which provides LaTeX snippets,
@@ -1119,7 +1168,8 @@ Prefixes: ~
                                                         *noethervim-leader*
     `<Leader>` (\)      Global actions
                       y/Y/p/P (clipboard)  f(ormat)  h(unk)  d(ebug)
-                      R(EPL)  r(efactor)  m(inimap)  b(ox)  a(i)  z(en)
+                      t(est)  r(un/REPL)  R(efactor)  m(inimap)  b(ox)
+                      a(i)  z(en)
                                                         *noethervim-localleader*
     `<LocalLeader>` (,) Filetype-specific actions
                       LaTeX: vimtex commands, image paste
@@ -1873,6 +1923,8 @@ A: Both are managed by Mason, the same as LSP servers. Use `:Mason`
    vscode-js-debug, `languages.c-cpp` brings codelldb. Neither half
    installs a debugger on its own, so enabling `debug` alone costs
    nothing but the UI.
+
+   Test adapters pair the same way -- see |noethervim-test-adapters|.
 
 Q: Does NoetherVim format on save?~
 A: No; auto-formatting is deliberately off. Use `<Leader>ff` for

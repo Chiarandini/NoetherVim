@@ -4,12 +4,17 @@
 ---       the language server at whichever you pick, and exports VIRTUAL_ENV
 ---       so terminal commands agree. :VenvSelectCached restores the last
 ---       choice per project. With the debug bundle also enabled, registers
----       the debugpy adapter against that same environment.
+---       the debugpy adapter against that same environment; with the test
+---       bundle, the neotest-python adapter.
 ---@requires exe=python3 label="Python 3" why="virtual-environment discovery"
 ---          install="https://www.python.org/downloads/"
 ---@requires note="debugpy"
 ---          why="stepping through Python, when the debug bundle is also enabled"
 ---          install="pip install debugpy, into the environment you debug"
+---          optional=true
+---@requires note="pytest"
+---          why="running Python tests, when the test bundle is also enabled"
+---          install="pip install pytest, into the environment you test"
 ---          optional=true
 -- NoetherVim bundle: Python
 -- Enable with: { import = "noethervim.bundles.languages.python" }
@@ -21,8 +26,9 @@
 -- Automatically reconfigures the LSP (pyright/basedpyright) to use the
 -- selected environment and sets VIRTUAL_ENV for terminal commands.
 --
--- Also registers the DAP adapter, but only when tools/debug.lua is enabled
--- too -- see the `optional = true` fragment below.
+-- Also registers the DAP and neotest adapters, but only when tools/debug.lua
+-- and tools/test.lua are enabled too -- see the `optional = true` fragments
+-- below.
 
 return {
 	{
@@ -54,5 +60,25 @@ return {
 				end,
 			},
 		},
+	},
+
+	-- ── Python test adapter ───────────────────────────────────────────────
+	-- Same `optional = true` gating against tools/test.lua.
+	--
+	-- Built in an `opts` function so the `require` runs after the adapter
+	-- plugin loads; see tools/test.lua for why `adapters` merges as it does.
+	--
+	-- neotest-python resolves the interpreter from $VIRTUAL_ENV first, then
+	-- a project-local venv, which is exactly what :VenvSelect above exports.
+	-- It memoises that answer per project root, so switching venv mid-session
+	-- needs a restart before tests follow the new one.
+	{
+		"nvim-neotest/neotest",
+		optional = true,
+		dependencies = { "nvim-neotest/neotest-python" },
+		opts = function(_, opts)
+			opts.adapters = opts.adapters or {}
+			table.insert(opts.adapters, require("neotest-python")({}))
+		end,
 	},
 }

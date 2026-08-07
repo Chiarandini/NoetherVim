@@ -77,10 +77,20 @@
 --       vim.list_extend(opts.ensure_installed, { "gopls", "rust_analyzer" })
 --     end }
 --
--- Treesitter parsers are the exception to rule 2: this ADDS `gleam` and
+-- Treesitter parsers are an exception to rule 2: this ADDS `gleam` and
 -- keeps the parsers already installed.
 --   { "nvim-treesitter/nvim-treesitter",
 --     opts = { ensure_installed = { "gleam" } } }
+--
+-- neotest adapters are the other exception, so your adapter joins the ones
+-- your language bundles registered. Use the function form regardless: the
+-- adapter object has to be built after its plugin loads, which a table value
+-- would be too early for. See :help noethervim-test-adapters.
+--   { "nvim-neotest/neotest",
+--     dependencies = { "some/neotest-adapter" },
+--     opts = function(_, opts)
+--       table.insert(opts.adapters, require("neotest-adapter")({}))
+--     end }
 --
 -- ── Disabling a plugin ──────────────────────────────────────────────────────
 --
