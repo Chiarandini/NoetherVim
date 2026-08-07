@@ -57,8 +57,13 @@ return {
 						["aC"] = "@class.outer",
 						["av"] = "@parameter.outer",
 						["iv"] = "@parameter.inner",
-						["al"] = "@loop.outer",
-						["il"] = "@loop.inner",
+						-- Loop sits on aL/iL, not al/il: `il` is the inner-line
+						-- text object from keymaps.lua, which is language-agnostic
+						-- and used far more often than a loop body. Whichever
+						-- loaded last used to win, so `vil` worked in tex (where
+						-- these keymaps are disabled) and nowhere else.
+						["aL"] = "@loop.outer",
+						["iL"] = "@loop.inner",
 						["ai"] = "@conditional.outer",
 						["ii"] = "@conditional.inner",
 						["ar"] = "@return.outer",

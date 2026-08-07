@@ -30,7 +30,23 @@ return {
 		"echasnovski/mini.ai",
 		version = false,
 		event = "BufReadPost",
-		opts = {},
+		opts = {
+			-- mini.ai's search modifiers default to `an`/`in` for the next
+			-- textobject and `al`/`il` for the last one, and `il` is the
+			-- inner-line object from keymaps.lua -- documented, older, and
+			-- reached far more often than "inside the previous quote".
+			--
+			-- Last moves to the capitalised form of next, which is the
+			-- relationship `n` and `N` already have in search. That also
+			-- leaves `al`/`il` free for treesitter's loop objects to stay
+			-- off, which they now are (they sit on `aL`/`iL`).
+			mappings = {
+				around_next  = "an",
+				inside_next  = "in",
+				around_last  = "aN",
+				inside_last  = "iN",
+			},
+		},
 	},
 
 	-- For pop-up
