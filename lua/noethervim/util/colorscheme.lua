@@ -124,6 +124,42 @@ function M.picker_title()
   return "Colorschemes (9 more in the ui.colorscheme bundle)"
 end
 
+--- Every colorscheme that could be applied right now, installed or not yet
+--- loaded.
+---
+--- `getcompletion("", "color")` is not enough: lazy.nvim keeps a plugin off
+--- the runtimepath until something loads it, so a theme from the
+--- ui.colorscheme bundle is invisible until you open the picker once. That
+--- makes the answer depend on what you happen to have done this session,
+--- which is the worst property a list of choices can have.
+---
+--- lazy exposes the unloaded paths, and globbing `colors/` across both is
+--- what its own pickers do, so this agrees with `SearchLeader+C` by
+--- construction.
+--- Sorted and de-duplicated.
+---@return string[] names
+function M.list()
+  local rtp = vim.o.runtimepath
+  local ok, lazy_util = pcall(require, "lazy.core.util")
+  if ok then
+    rtp = rtp .. "," .. table.concat(lazy_util.get_unloaded_rtp(""), ",")
+  end
+
+  local seen, names = {}, {}
+  for _, file in ipairs(vim.fn.globpath(rtp, "colors/*", false, true)) do
+    local ext = file:match("%.(%w+)$")
+    if ext == "vim" or ext == "lua" then
+      local name = vim.fn.fnamemodify(file, ":t:r")
+      if not seen[name] then
+        seen[name] = true
+        names[#names + 1] = name
+      end
+    end
+  end
+  table.sort(names)
+  return names
+end
+
 -- ── Highlight tweaks ────────────────────────────────────────────────────────
 
 local function apply_tweaks()

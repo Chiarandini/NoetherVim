@@ -16,7 +16,7 @@
 ---@type table<string, fun(): string[]>
 local fields = {
   colorscheme = function()
-    return vim.fn.getcompletion("", "color")
+    return require("noethervim.util.colorscheme").list()
   end,
   edge_style = function()
     return require("noethervim.statusline").list_edge_styles()
