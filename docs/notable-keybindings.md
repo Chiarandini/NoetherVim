@@ -2,9 +2,8 @@
 
 The [keybinding philosophy](../README.md#keybinding-philosophy) covers how the
 keyspace is organised, and `:help noethervim-keymaps` lists every binding the
-distribution sets. This page is neither. It is the handful of individual
-choices that are worth an argument: what each one displaced, why the trade was
-worth making, and the ten lines you need to take it with you.
+distribution sets. This page covers a handful of individual
+choices that are interesting to single out and make copiable.
 
 Every snippet here is standalone. None of it depends on NoetherVim, and none of
 it depends on a plugin unless the entry says so.
@@ -43,10 +42,9 @@ of lines you can cross without losing your place.
 ## `n` always goes forward
 
 After `/pattern`, `n` goes down. After `?pattern`, `n` goes up. This is
-consistent behaviour and it is still the wrong default, because by the time you
-press `n` you have usually forgotten which key opened the search. The direction
-of the key should be a property of the key, not of a decision you made two
-seconds ago.
+consistent behaviour, but if you work on something else and then
+press `n` you often forget which key opened the search. This keymaps makes the direction
+of the key be a property of the key:
 
 ```lua
 vim.keymap.set({ "n", "v" }, "n",
@@ -57,16 +55,15 @@ vim.keymap.set({ "n", "v" }, "N",
   { expr = true, silent = true })
 ```
 
-`?` is still worth using: it starts the search upward. It just no longer
+`?` still searches backward, namely it starts the search upward. It just no longer
 inverts the two keys you press afterwards.
 
-## `Z` is a grid, not a list of initials
+## Extending `Z` to a grid of keys
 
 Vim ships `ZZ` (write and quit) and `ZQ` (quit, discarding changes). Two keys
-that read as arbitrary until you notice they are the two corners of a table
-nobody finished.
+that read as arbitrary until you notice they are the two corners of a table:
+- Rows are how much you are willing to lose. Columns are what you are closing.
 
-Rows are how much you are willing to lose. Columns are what you are closing.
 
 |                        | this window | everything      | this buffer |
 |------------------------|-------------|-----------------|-------------|
@@ -74,8 +71,7 @@ Rows are how much you are willing to lose. Columns are what you are closing.
 | refuse if dirty        | `ZA` `:q`   | `ZS` `:qa`      | `ZD` `:bd`  |
 | save first             | `ZZ` `:x`   | `ZX` `:wa\|qa!` | `ZC` `:w\|bd` |
 
-Filling in the other seven costs nothing, and the shape is what makes it
-learnable: you do not recall the letter, you recall the cell.
+Concretely:
 
 ```lua
 vim.keymap.set("n", "ZA", "<cmd>q<cr>")
@@ -87,23 +83,22 @@ vim.keymap.set("n", "ZE", "<cmd>bdelete!<cr>")
 vim.keymap.set("n", "ZC", "<cmd>write<bar>bdelete<cr>")
 ```
 
-`ZX` is the one that earns its place: save every buffer that can be saved, then
-force out past the ones that cannot. `ZW` is the panic key.
 
 ## Arrow keys resize the window they are in
 
-The arrow keys duplicate `hjkl` and are far enough from home row that nobody
-uses them for motion. That makes them four free keys, plus four more with
-shift.
+The arrow keys duplicate `hjkl` and sit far enough from home row that they see
+little use as motions. That leaves four keys free, and four more with shift.
 
-The part worth copying is not "arrows resize" but the direction rule. Vim's own
-`:resize` grows the current window by preferring its right or bottom border and
-silently flipping to the other side when the window is against the screen edge,
-which makes arrow bindings feel inverted in exactly the case where you notice.
-Instead, bind the arrow to the direction the border moves: `<Right>` pushes the
-right edge rightward, `<S-Right>` pulls the left edge rightward. Every
-operation is a no-op when there is no neighbour on the moving edge, rather than
-secretly resizing the opposite side.
+The direction rule matters more than the binding. Vim's own `:resize` grows the
+current window by preferring its right or bottom border, and falls back to the
+opposite border once the window is against the screen edge, so an arrow binding
+built on it reverses direction in that case. These bind the arrow to the
+direction the border moves instead:
+
+- `<Right>` pushes the right edge rightward, `<S-Right>` pulls the left edge
+  rightward, and the same for the other three axes.
+- Each operation is a no-op when there is no neighbour on the moving edge,
+  rather than resizing the opposite side.
 
 ```lua
 local function neighbor(dir)
@@ -129,22 +124,21 @@ end)
 
 `win_move_separator()` and `win_move_statusline()` treat the resize as a drag
 of the border between two windows, which is why the neighbour check is
-required: on the bottom-most window, `win_move_statusline()` will happily eat
-rows from `'cmdheight'`.
+required: on the bottom-most window, `win_move_statusline()` takes its rows
+from `'cmdheight'` instead.
 
-NoetherVim adds one more branch. When the tab has a single non-floating window,
-or the cursor is inside a float, there is nothing to resize, so the arrows fall
-through to `hjkl` motion instead of doing nothing. A key that is dead in the
-common case does not survive as muscle memory.
+NoetherVim adds one branch on top. When the tab holds a single non-floating
+window, or the cursor is inside a float, there is nothing to resize against, so
+the arrows fall through to `hjkl` motion. Counts pass through with them, so
+`5<Down>` still moves five lines.
 
-## `<Esc>` means stop showing me things
+## `<Esc>` dismisses what is on screen
 
-`<Esc>` already means "get out of this mode". Extending it to "get rid of
-whatever is on screen" costs nothing, because in normal mode it otherwise does
-nothing at all.
+`<Esc>` leaves the current mode. In normal mode it does nothing, so it is free
+to carry a second meaning: clear whatever the screen is still holding.
 
-Search highlighting, notification toasts, and LSP hover floats each ship their
-own dismissal, and remembering three of them is two too many.
+Search highlighting, notification toasts and LSP hover floats each have their
+own way out. This routes all of them through one key.
 
 ```lua
 vim.keymap.set({ "n", "v" }, "<Esc>", function()
@@ -162,21 +156,21 @@ vim.keymap.set({ "n", "v" }, "<Esc>", function()
 end, { silent = true })
 ```
 
-The rule that keeps this from becoming a junk drawer: `<Esc>` may dismiss
-things, and may not change the buffer. Everything it closes has to be
-recoverable by doing the thing again.
+One constraint keeps the list from growing without bound: `<Esc>` may dismiss
+things and may not change the buffer, so anything it closes can be brought back
+by repeating whatever opened it.
 
-## The unnamed register is not the clipboard
+## Keeping the unnamed register off the clipboard
 
-Setting `clipboard=unnamedplus` makes every yank reach the system clipboard,
-and also makes `x`, `dd`, `c` and every delete-shaped operation reach it. Copy
-something in the browser, delete a line in Neovim to make room for it, and the
+Setting `clipboard=unnamedplus` sends every yank to the system clipboard, and
+sends `x`, `dd`, `c` and every other delete-shaped operation there too. Copy
+something in a browser, delete a line in Neovim to make room for it, and the
 paste is gone.
 
-Neovim's default is already correct (`'clipboard'` is empty). The work is
-building explicit bridges so that reaching the clipboard on purpose is one key
-rather than a three-key register prefix, and stopping transient edits from
-clobbering the unnamed register too.
+Neovim leaves `'clipboard'` empty by default. What is left is to build explicit
+bridges, so that reaching the clipboard on purpose takes one key rather than a
+register prefix, and to stop transient edits from overwriting the unnamed
+register:
 
 ```lua
 -- Transient edits should not cost you the register
@@ -192,83 +186,66 @@ vim.keymap.set("v", "Y", '"*y')
 vim.keymap.set("v", "P", '"_d"*P')  -- clipboard in, both registers intact
 ```
 
-Visual `p` is the one people notice first. Selecting a word and pasting over it
-normally swaps the paste into the unnamed register, so pasting the same text
-over a second word does something different than it did the first time.
+Visual `p` shows the difference most directly. Selecting a word and pasting
+over it normally moves the replaced text into the unnamed register, so pasting
+over a second word inserts the word that was just overwritten.
 
 ## `;` opens the command line
 
-`:` is on the shifted layer of a key you press dozens of times an hour. `;`
-repeats the last `f` / `t` motion, which is genuinely useful and which most
-people replace with `f` again anyway.
+`:` and `;` are the same physical key, one shifted and one not. `;` repeats the
+last `f` / `t` motion.
 
 ```lua
 vim.keymap.set({ "n", "v" }, ";", ":")
 ```
 
-Whether this is worth it depends entirely on how much you lean on `f{char}`
-with `;` to repeat. If you do, keep `;` and remap `:` from somewhere else. If
-you do not, this is the highest-frequency keystroke saving available in Vim,
-and the habit sticks within a day.
+The trade depends on how much you use `f{char}` with `;` to repeat: if you use
+it often, keep `;` and put `:` somewhere else. NoetherVim ships this mapping,
+and `:help noethervim-semicolon` gives the one-line revert.
 
 ## The smaller ones
 
-**`gC` inverts comments line by line (visual).** The builtin `gc` operator
-picks one direction for the whole range based on the majority state, so a
-half-commented block becomes fully commented or fully uncommented. `gC` toggles
-each line independently, which is what you want when you are swapping which
-lines in a block are live.
-
-**`|`, `_` and `+` for splits.** The keys are shaped like the thing they make:
-`|` splits vertically, `_` splits horizontally, `+` opens a tab. They displace
-"go to screen column", "down N-1 lines to first non-blank", and "down one line
-to first non-blank", none of which anyone will miss. NoetherVim opens a scratch
-buffer in the new split rather than duplicating the current one.
-
-**`-` counts the word under the cursor.** Highlights every instance of the word
-under the cursor and reports the count, without moving the cursor. `*` moves;
-this does not, which makes it usable as a question rather than a motion.
-
-**`[f` and `]f` walk the directory.** Previous and next file in the current
-directory, alphabetically, wrapping at the ends. Worth more than it sounds for
-numbered files: chapters, dated notes, migrations.
-
-**`il` is the inner-line text object.** From the first non-blank character to
-the last, so `dil` clears a line's content without touching its indentation and
-`cil` retypes it in place. Vim ships no text object for this.
-
-**`zv` and `zx` scroll the view, not the cursor.** Ten lines of scroll with the
-cursor held in place, for reading past the bottom of the window without losing
-where you were.
-
-**`<C-w>t` reuses one terminal.** A twelve-line terminal along the bottom that
-toggles rather than stacking a new buffer per press, so the shell you started
-five minutes ago is still there. `<Esc><Esc>` leaves terminal mode. The detail
-that makes it usable: `'timeoutlen'` is global and defaults to a full second,
-which would hold a single `<Esc>` back for that long before passing it to
-whatever is running. NoetherVim drops it to 150ms on `TermEnter` and restores
-it on `TermLeave`.
-
-**Case encodes the destination in Oil.** `yp` / `yd` / `yn` yank the full path,
-the parent directory and the bare filename; `Yp` / `Yd` / `Yn` do the same into
-the system clipboard. One sub-scheme, learned once.
-
-**`yc` and `yC` replace `yss` and `ySS`.** nvim-surround's line-wise mappings
-are the only ones in the plugin that double a letter, which makes them slow to
-type and hard to recall. `yc` is `yss` and `yC` is `ySS`.
-
-**Command-line `<C-o>` captures output.** Jumps to the start of the line,
-prefixes it with `Redir`, and returns to the end, so `:hi<C-o><CR>` sends the
-output to a scratch buffer instead of a paged wall you cannot search. The
-keymap is one line (`"<c-b>Redir <c-e>"`); the work is the `:Redir` command
-behind it, which NoetherVim defines to cover both `:commands` and `!shell`.
-`<C-l>` inserts the current file's directory, and `<C-y>` copies the command
-line itself to the clipboard.
-
-**Select mode accepts typing.** In select mode (which is what you land in after
-a snippet placeholder), letters replace the selection instead of running
-commands, `<Esc>` twice returns to normal, and `<C-a>` jumps past the end of
-what was selected.
+- **`gC`**: inverts comments line by line in visual mode. The builtin `gc`
+  operator picks one direction for the whole range based on the majority state,
+  so a half-commented block becomes fully commented or fully uncommented. `gC`
+  toggles each line on its own, leaving a mixed selection with every line in the
+  opposite state.
+- **`|`, `_` and `+`**: splits shaped like what they make. `|` splits
+  vertically, `_` splits horizontally, `+` opens a tab. They displace "go to
+  screen column", "down N-1 lines to first non-blank" and "down one line to
+  first non-blank". NoetherVim opens a scratch buffer in the new split rather
+  than a second view of the current one.
+- **`-`**: highlights every instance of the word under the cursor and reports
+  how many there are, leaving the cursor where it was. `*` does the highlight
+  but moves to the next match.
+- **`[f` and `]f`**: previous and next file in the current directory,
+  alphabetically, wrapping at the ends. Useful for numbered or dated files:
+  chapters, notes, migrations.
+- **`il`**: the inner-line text object, from the first non-blank character to
+  the last. `dil` clears a line's contents without touching its indentation and
+  `cil` retypes it in place. Vim ships no text object for this.
+- **`zv` and `zx`**: `zz10<C-e>` and `zz10<C-y>`. Centre the cursor line, then
+  scroll the window ten lines, leaving the cursor on the same buffer line.
+- **`<C-w>t`**: a twelve-line terminal along the bottom that toggles rather
+  than stacking a new buffer per press, so the shell from five minutes ago is
+  still there. `<Esc><Esc>` leaves terminal mode. `'timeoutlen'` is global and
+  defaults to a full second, which would hold a single `<Esc>` back for that
+  long before passing it to the program in the terminal, so NoetherVim drops it
+  to 150ms on `TermEnter` and restores it on `TermLeave`.
+- **Oil's yank family**: case picks the destination. `yp` / `yd` / `yn` yank
+  the full path, the parent directory and the bare filename; `Yp` / `Yd` / `Yn`
+  do the same into the system clipboard.
+- **`yc` and `yC`**: nvim-surround's `yss` and `ySS` under single letters.
+  Those two are the only mappings in the plugin that double a letter.
+- **Command-line `<C-o>`**: jumps to the start of the line, prefixes it with
+  `Redir`, and returns to the end, so `:hi<C-o><CR>` puts the output in a
+  scratch buffer rather than the pager. The keymap is `"<c-b>Redir <c-e>"`; the
+  `:Redir` command behind it is NoetherVim's, and covers both `:commands` and
+  `!shell`. `<C-l>` inserts the current file's directory, and `<C-y>` copies
+  the command line itself to the clipboard.
+- **Select mode**: letters replace the selection instead of running commands,
+  `<Esc>` twice returns to normal, and `<C-a>` jumps past the end of what was
+  selected. Select mode is where a snippet placeholder leaves you.
 
 ## Everything else
 
