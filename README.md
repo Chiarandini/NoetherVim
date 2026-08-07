@@ -44,9 +44,10 @@ picker. See [Keybinding Philosophy](#keybinding-philosophy).
 read-only in the editor; each plugin spec and bundle carries a header comment
 describing what it configures.
 
-- **Overrides are tracked.** `:NoetherVim override` seeds a user file with the
-upstream spec's repo strings as commented stubs. `:checkhealth noethervim`
-flags any override whose upstream file has since changed.
+- **Overrides keep their link upstream.** `:NoetherVim override` seeds a user
+file with the upstream spec's repo strings as commented stubs. `:checkhealth
+noethervim` flags any override whose upstream file has since changed, so a fix
+upstream cannot pass unnoticed behind a stale copy.
 
 - **Vim's own patterns, carried to their end.** Vim's `ZZ` and `ZQ` grow into a
 full `Z` grid across quit, write and buffer-delete. `<Esc>` leaves a mode, and
