@@ -47,6 +47,38 @@ local function snapshot_options()
   return snap
 end
 
+--- Apply the configured window-local options to windows already open.
+---
+--- `vim.o.number = true` sets two things: the current window's value, and
+--- the value new windows will inherit. Windows already open are left alone.
+---
+--- That is harmless most of the time, because the startup window is the
+--- current one while options load. Not on a first launch: lazy.nvim is busy
+--- installing plugins, so its progress window is current instead, and the
+--- startup window is the one window that misses out -- the very window the
+--- dashboard and then your first file appear in. The symptom is a session
+--- with no line numbers, 'wrap' on and folds closed, that comes back
+--- correct on the next launch.
+---
+--- So bring those windows up to date: give each one the value a window
+--- opened right now would inherit. Windows a plugin owns (any 'buftype':
+--- the lazy view, oil, the dashboard) are left out, since they set their
+--- own. Runs once, over ten-odd options and usually one window.
+local function apply_win_local_defaults()
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    if vim.bo[vim.api.nvim_win_get_buf(win)].buftype == "" then
+      for name, info in pairs(vim.api.nvim_get_all_options_info()) do
+        if info.scope == "win" and not info.global_local then
+          local inherited = vim.api.nvim_get_option_value(name, { scope = "global" })
+          if vim.api.nvim_get_option_value(name, { win = win }) ~= inherited then
+            vim.api.nvim_set_option_value(name, inherited, { win = win })
+          end
+        end
+      end
+    end
+  end
+end
+
 ---@class noethervim.KeymapSnapshot
 ---@field mode string
 ---@field lhs string
@@ -151,6 +183,7 @@ function M.setup()
   if load_user then M._snapshots.options_before = snapshot_options() end
   user("options")
   if load_user then M._snapshots.options_after = snapshot_options() end
+  apply_win_local_defaults()
 
   -- Lazy management keymaps (under <C-w>l prefix, Window namespace)
   vim.keymap.set("n", "<c-w>ll", "<cmd>Lazy<cr>",             { desc = "Lazy" })
