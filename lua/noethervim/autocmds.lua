@@ -331,13 +331,27 @@ local wrap_statuscolumn =
 --- our own expression -- a 'statuscolumn' from `lua/user/options.lua` is
 --- left alone, which matters because the profiles run on every
 --- FileType/BufWinEnter, long after user config has loaded.
-local function set_wrap_marker(win)
+---
+--- `writing` also hands 'list' over, for the other half of the same
+--- problem. A line that runs off the right edge is marked by 'listchars'
+--- `extends`, which only draws while 'list' is on, and the writing profile
+--- turns 'list' off to keep tabs and trailing space out of prose. That is
+--- safe exactly as long as the buffer wraps: turn wrap off in a `.txt` and
+--- the lines start scrolling sideways with nothing marking where they
+--- continue. Prose that scrolls horizontally is prose that has left the
+--- profile's assumption, so it gets the code layout's edge markers, and
+--- the tab and trailing-space glyphs that come with them.
+---@param win integer
+---@param writing boolean  true when the writing profile owns this window
+local function set_wrap_marker(win, writing)
+  local wrap = vim.wo[win].wrap
   local current = vim.wo[win].statuscolumn
-  if vim.wo[win].wrap then
+  if wrap then
     if current == "" then vim.wo[win].statuscolumn = wrap_statuscolumn end
   elseif current == wrap_statuscolumn then
     vim.wo[win].statuscolumn = ""
   end
+  if writing then vim.wo[win].list = not wrap end
 end
 
 local function apply_writing_profile(buf)
@@ -355,10 +369,9 @@ local function apply_writing_profile(buf)
   for _, win in ipairs(vim.fn.win_findbuf(buf)) do
     vim.wo[win].wrap         = true
     vim.wo[win].linebreak    = true
-    vim.wo[win].list         = false
     vim.wo[win].conceallevel = 2
     vim.wo[win].spell        = true
-    set_wrap_marker(win)
+    set_wrap_marker(win, true)
   end
 end
 
@@ -374,7 +387,7 @@ local function apply_code_profile(buf)
     -- what makes it look intermittent.
     vim.wo[win].wrap = false
     -- Clears the marker column with it, since nothing wraps any more.
-    set_wrap_marker(win)
+    set_wrap_marker(win, false)
     if spell_in_code then
       -- Treesitter @spell captures (shipped with most parsers)
       -- restrict spellcheck to comments and string nodes; identifiers
@@ -387,25 +400,40 @@ local function apply_code_profile(buf)
   end
 end
 
+--- Which profile owns a buffer, or nil for the ones both leave alone.
+---@param buf integer
+---@return "writing"|"code"|nil
+local function profile_of(buf)
+  local ft = vim.bo[buf].filetype
+  if ft == "" or non_code_filetypes[ft] then return nil end
+  return writing_filetypes[ft] and "writing" or "code"
+end
+
 vim.api.nvim_create_autocmd({ "FileType", "BufWinEnter" }, {
   group    = vim.api.nvim_create_augroup("noethervim_profiles", { clear = true }),
   callback = function(ev)
-    local ft = vim.bo[ev.buf].filetype
-    if ft == "" or non_code_filetypes[ft] then return end
-    if writing_filetypes[ft] then
+    local profile = profile_of(ev.buf)
+    if profile == "writing" then
       apply_writing_profile(ev.buf)
-    else
+    elseif profile == "code" then
       apply_code_profile(ev.buf)
     end
   end,
 })
 
--- `[ow` / `]ow` flip 'wrap' between profile applications, so the marker has
--- to follow the option rather than only the filetype.
+-- `[ow` / `]ow` flip 'wrap' between profile applications, so the affordances
+-- that depend on it have to follow the option rather than only the filetype.
+-- Buffers neither profile claims are skipped here too: their own ftplugins
+-- own their window options, and this is not the place to start overruling
+-- them.
 vim.api.nvim_create_autocmd("OptionSet", {
   group    = vim.api.nvim_create_augroup("noethervim_wrap_marker", { clear = true }),
   pattern  = "wrap",
-  callback = function() set_wrap_marker(vim.api.nvim_get_current_win()) end,
+  callback = function()
+    local win = vim.api.nvim_get_current_win()
+    local profile = profile_of(vim.api.nvim_win_get_buf(win))
+    if profile then set_wrap_marker(win, profile == "writing") end
+  end,
 })
 
 -- Whether a window is the current one decides which statusline it gets, and
