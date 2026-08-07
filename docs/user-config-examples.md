@@ -1,12 +1,17 @@
 # User config examples
 
-Copy-paste snippets for features that live outside the distribution. Drop
-each file under `~/.config/nvim/lua/user/plugins/` and restart Neovim.
+Copy-paste snippets for plugins NoetherVim declined to ship. Drop each file
+under `~/.config/nvim/lua/user/plugins/` and restart Neovim.
 
-Each entry says why it is not a bundle, so you can judge whether the
-reasoning applies to you. For how `opts` merging works when you adapt
-these, see `templates/user/plugins/example.lua` or
-`:help noethervim-user-plugins`.
+Every entry names a reason the distribution will not ship the plugin, so you
+can judge whether that reasoning applies to you. That is the bar for being
+here at all: if the honest answer were "the distribution could ship this and
+just has not", the fix would be a bundle, and documenting the workaround
+would only make it permanent. Something you have to write yourself because
+the distro made no choice for you belongs in a bundle, not on this page.
+
+For how `opts` merging works when you adapt these, see
+`templates/user/plugins/example.lua` or `:help noethervim-user-plugins`.
 
 ## Translation (pantran.nvim)
 
