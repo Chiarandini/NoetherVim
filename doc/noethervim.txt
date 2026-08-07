@@ -347,6 +347,11 @@ the line numbers itself and why `]on` still turns them off, leaving the
 marker on its own. It costs no text cell, so continuation rows stay lined
 up under the text they continue. 'showbreak' is left empty.
 
+Turning wrap off in a prose buffer swaps the marker column for the code
+layout's edge markers: `›` and `‹` where a line runs past the window, which
+Vim draws only while 'list' is on, so tabs and trailing space become visible
+with them. Prose that scrolls sideways has left the profile's assumption.
+
 A 'statuscolumn' you define in `lua/user/options.lua` is never touched,
 and switches the marker off for that window: >lua
     vim.o.statuscolumn = "%l "
@@ -1416,6 +1421,7 @@ Clickable components: ~
     Modified indicator  Diff unsaved changes against saved version
     Deleted-file flag   Offer to write the buffer back (see below)
     New-file flag       Report that nothing is at that path yet (see below)
+    Scratch flag        Offer to save the buffer under a name
     Directory indicator Explain the cwd mismatch, offer `:lcd` (see below)
     LSP indicator       Open `:LspInfo`
     Git branch/status   Open lazygit in a terminal
@@ -1551,7 +1557,24 @@ Customize statusline colors and extra components in `lua/user/config.lua`: >lua
     Available color keys (from `util/palette.lua`): ~
     `mode_n`, `mode_i`, `mode_v`, `mode_c`, `mode_t`, `mode_R`,
     `green`, `blue`, `orange`, `red`, `purple`, `default_gray`,
-    `lazy_updates`, `text_gray`
+    `lazy_updates`, `text_gray`, `profile_writing`, `profile_code`
+
+                                            *noethervim-statusline-themes*
+    Every component asks the palette for a role rather than for a colour,
+    so overriding a key here moves everything that plays that role at once,
+    and the bar keeps working when you change theme.
+
+    Gruvbox is the theme the palette is tuned against, by hand, with each
+    role given a value chosen for it. Under any other colorscheme the roles
+    are derived from standard highlight groups instead: `String` for green,
+    `Function` for blue, `DiagnosticError` for red, and so on. That is a
+    best effort, and on themes that paint those groups unusually the result
+    is legible rather than considered -- gruvbox itself paints `Function`
+    green and `Statement` red, which is why the two filetype-profile roles
+    are their own keys rather than reusing `blue` and `purple`.
+
+    If a role lands badly on the theme you use, override it here; that is
+    what these keys are for.
 
     Example, changing the normal-mode indicator to blue: >lua
     -- lua/user/config.lua
@@ -1882,7 +1905,7 @@ Cmdline-only overrides (insert mode keymaps stay unchanged): >lua
 
 Custom completion sources: ~
 
-NoetherVim ships two custom blink.cmp completion sources.
+NoetherVim ships three custom blink.cmp completion sources.
 
 images ~
     Triggered when the entire line is "." in a .tex file. Lists image
@@ -1893,6 +1916,17 @@ todos ~
     Triggered by typing "@" at the start of a line. Inserts a
     language-appropriate comment prefix + keyword (TODO, FIXME, BUG, etc.).
     Supported filetypes: lua, vim, tex, python, typescript, javascript.
+
+user_config ~
+    Active only in `lua/user/config.lua`. Opening a quote after a field
+    that takes one of a fixed set of strings lists that set:
+
+        `colorscheme`    every scheme installed right now, so it grows when
+                       the ui.colorscheme bundle is enabled
+        `edge_style`     the statusline edge presets
+
+    Both are read at the moment you ask, not from a list kept here, so
+    what you are offered is what the distribution will accept.
 
 ==============================================================================
 12. HEALTH CHECK                                         *noethervim-health*
