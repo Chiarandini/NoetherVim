@@ -237,6 +237,31 @@ vim.api.nvim_create_autocmd("ColorScheme", {
   callback = apply_hint_highlights,
 })
 
+-- ──────────────────────────────────────────────────────────────
+--  Off-screen and wrap markers
+-- ──────────────────────────────────────────────────────────────
+--  NonText draws the three signals that say "there is more text than you
+--  can see": 'listchars' `extends` and `precedes` at the window edges, and
+--  'showbreak' on a soft-wrapped row. Gruvbox paints it #504945, which is
+--  its background tone two steps up -- around 1.5:1 against the editor
+--  background, so the marker is there and cannot be read.
+--
+--  Comment's foreground is the right target: every theme picks it to be
+--  legible but secondary, which is exactly the weight these want. Tabs,
+--  trailing space and nbsp keep their own dimmer Whitespace group, and the
+--  `~` past the last line keeps EndOfBuffer, so neither gets louder.
+local function apply_offscreen_marker_hl()
+  local fg = get_hl_fg("Comment") or get_hl_fg("NonText")
+  if fg then vim.api.nvim_set_hl(0, "NonText", { fg = fg }) end
+end
+
+apply_offscreen_marker_hl()
+
+vim.api.nvim_create_autocmd("ColorScheme", {
+  group    = vim.api.nvim_create_augroup("noethervim_offscreen_marker", { clear = true }),
+  callback = apply_offscreen_marker_hl,
+})
+
 -- Diagnosis helper: `:NoetherVimHintColors` prints the resolved fg of
 -- every group we touch and how it compares to Comment. Run it if the
 -- inlay hints still look like comments -- the answer reveals whether
