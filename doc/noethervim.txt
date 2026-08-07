@@ -489,7 +489,9 @@ Current keys: ~
                                   detected filetype, and the live values
                                   of the options the profile sets, so
                                   per-buffer toggles (`[ow`, `]os`, ...)
-                                  show up too. See
+                                  show up too. `<C-w>sf` turns it on and
+                                  off in a running session; this sets
+                                  where it starts. See
                                   |noethervim-filetype-profiles|.
                                   Default: `false`.
     `statusline.git_click`          Function called when the git
@@ -1398,6 +1400,9 @@ with the `<C-w>s` prefix:
     `<C-w>sg`           Toggle git component
     `<C-w>sp`           Toggle PDF size indicator
     `<C-w>sl`           Toggle LSP component
+    `<C-w>sf`           Toggle the filetype-profile marker. Starts from
+                        `statusline.filetype_profile`; see
+                        |noethervim-user-config-data|.
     `<C-w>sP`           Split the path: project-relative directory as its
                         own component, bare filename beside it
     `<C-w>s<C-p>`       Toggle PDF mode
