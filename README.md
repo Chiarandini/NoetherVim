@@ -41,7 +41,7 @@ picker. See [Keybinding Philosophy](#keybinding-philosophy).
 - **Inspection is built in.** `:NoetherVim diff keymaps` shows every distro
 keymap your config has overridden, and `:NoetherVim diff options` does the same
 for options. "What does this distro actually change?" should be a one-command
-question, even after you layer your own config on top.
+question, even after you layer your own config on top. Furthermore, `:NoetherVim files` and `:NoetherVim grep` open source files (read-only) inside the editor with lua-doc comments for documenation.
 
 - **LaTeX, BibTeX and VimTeX are first-class.** The distro ships custom
 Snacks-based label and heading pickers, preamble snippets, BibTeX and Zotero

@@ -86,8 +86,8 @@ work.
 4. USER CONFIGURATION                                  *noethervim-user-config*
 
 NoetherVim is designed so that the source code is its own documentation.
-Browse core source files with SearchLeader+cnn or `:NoetherVim files`, and
-live-grep them with SearchLeader+cng. All source files open read-only to
+Browse core source files with SearchLeader+cf or `:NoetherVim files`, and
+live-grep them with SearchLeader+cg. All source files open read-only to
 prevent accidental edits. See |noethervim-inspect| for the full set of
 navigation commands.
 
