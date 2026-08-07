@@ -219,11 +219,11 @@ M.FileType = {
 
 -- ── Filetype profile marker ──────────────────────────────────────────
 -- Which of the two FileType profiles (see noethervim-filetype-profiles)
--- claimed this buffer. Off by default: enable with
+-- claimed this buffer. Off by default: start it with
 --   statusline = { filetype_profile = true }
--- in lua/user/config.lua. Clicking reports what the profile actually
--- turned on, read from the live window so per-buffer toggles ([ow, ]os,
--- ...) show up too.
+-- in lua/user/config.lua, and flip it any time with `<C-w>sf`. Clicking
+-- reports what the profile actually turned on, read from the live window
+-- so per-buffer toggles ([ow, ]os, ...) show up too.
 
 --- Classify the current buffer. Mirrors the dispatch in autocmds.lua.
 ---@return "writing"|"code"|"none"
@@ -247,7 +247,7 @@ local profile_hl = { writing = "profile_writing", code = "profile_code" }
 
 M.FiletypeProfile = {
   condition = function()
-    return current_profile() ~= "none"
+    return vim.g.heirline_filetype_profile_show and current_profile() ~= "none"
   end,
   provider = function()
     return " " .. profile_glyph[current_profile()] .. " "

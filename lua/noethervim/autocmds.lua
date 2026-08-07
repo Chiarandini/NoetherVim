@@ -241,6 +241,7 @@ end
 heirline_event("HeirlineGitToggle",    function() vim.g.heirline_git_show     = not vim.g.heirline_git_show;     vim.cmd.redrawstatus() end)
 heirline_event("HeirlinePdfSizeToggle",function() vim.g.heirline_pdfsize_show = not vim.g.heirline_pdfsize_show; vim.cmd.redrawstatus() end)
 heirline_event("HeirlineLspToggle",    function() vim.g.heirline_lsp_show     = not vim.g.heirline_lsp_show;     vim.cmd.redrawstatus() end)
+heirline_event("HeirlineProfileToggle", function() vim.g.heirline_filetype_profile_show = not vim.g.heirline_filetype_profile_show; vim.cmd.redrawstatus() end)
 heirline_event("HeirlineDirectoryOn",  function() vim.g.heirline_directory_show           = true;  vim.cmd.redrawstatus() end)
 heirline_event("HeirlineDirectoryOff", function() vim.g.heirline_directory_show           = false; vim.cmd.redrawstatus() end)
 heirline_event("HeirlineRelativeDirOn",function() vim.g.heirline_proj_relative_dir_show   = true;  vim.cmd.redrawstatus() end)

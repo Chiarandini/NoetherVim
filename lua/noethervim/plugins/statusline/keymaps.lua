@@ -15,6 +15,10 @@ function M.setup()
     vim.api.nvim_exec_autocmds("User", { pattern = "HeirlineLspToggle" })
   end, { desc = "statusline lsp toggle" })
 
+  vim.keymap.set("n", "<c-w>sf", function()
+    vim.api.nvim_exec_autocmds("User", { pattern = "HeirlineProfileToggle" })
+  end, { desc = "statusline [f]iletype-profile toggle" })
+
   vim.keymap.set("n", "<c-w>sP", function()
     if vim.g.heirline_directory_show == false then
       vim.api.nvim_exec_autocmds("User", {
