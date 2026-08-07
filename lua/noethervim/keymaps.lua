@@ -480,8 +480,8 @@ end, { desc = "context menu" })
 -- The bodies require noethervim.inspect on first press, not at load time,
 -- so registering early costs nothing at startup.
 --
--- SearchLeader+cu (user settings), +cc (config lua), +cf (ftplugins) and
--- +cs (snippets) are defined in snacks.lua, in the same namespace.
+-- SearchLeader+cL (lazy plugins), +cu (user settings) and +cc (config lua)
+-- are defined in snacks.lua, in the same namespace.
 
 local SearchLeader = require("noethervim.util").search_leader
 

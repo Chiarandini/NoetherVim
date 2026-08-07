@@ -1145,7 +1145,7 @@ Prefixes: ~
                                                         *noethervim-mapsearchleader*
     `SearchLeader`      Search & navigation (default: `<Space>`)
                       f(ind)  g(rep)  G(it)  l(sp)  d(iagnostics)
-                      q(uickfix)  c(onfig)  D(ebug)  s(ession)
+                      c(onfig)  D(ebug)  e(ditor files)
                       o(bsidian)  w(iki)
                       Configurable via |g:mapsearchleader|.
                                                         *noethervim-leader*
