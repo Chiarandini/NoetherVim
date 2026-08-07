@@ -258,3 +258,43 @@ up search. `g/` is free in Oil buffers: neither oil.nvim nor the distro
 binds it there, and the `wrapsearch` bundle's `g/` only acts in writing
 filetypes. Taken already are `g?`, `g.`, `g\`, `g~`, `gd`, `gf`, `gG`,
 `gs`, `gS`, `gV`, `gx`, `gX`, `gz` and `gZ`.
+
+## Mode colour in the number column
+
+Repeats the statusline's insert-mode signal in the number column, by
+recolouring `CursorLineNr` when the mode changes. Two indicators for one
+piece of state, at opposite corners of the screen, so it is in view
+wherever you are looking.
+
+Not shipped, for one concrete reason: `CursorLineNr` belongs to the
+colorscheme, and repainting it on every `ModeChanged` puts the distribution
+in a fight with any theme or plugin that also sets it. The statusline is
+NoetherVim's to paint; the number column is not. As a personal choice on a
+theme you have already settled, that objection does not apply.
+
+```lua
+-- ~/.config/nvim/lua/user/autocmds.lua
+local ns = vim.api.nvim_create_augroup("user_mode_linenr", { clear = true })
+
+-- Read the colours off the statusline palette so this tracks the theme,
+-- and the mode colours you may already have overridden in config.lua.
+local function mode_fg()
+    local ctx = require("noethervim.plugins.statusline.context")
+    return ctx.mode_colors[vim.fn.mode(1):sub(1, 1)] or ctx.colors.text_gray
+end
+
+local base
+vim.api.nvim_create_autocmd({ "ModeChanged", "ColorScheme" }, {
+    group = ns,
+    callback = function()
+        -- Captured once, so turning this off is a matter of deleting the
+        -- augroup and re-applying the colorscheme.
+        base = base or vim.api.nvim_get_hl(0, { name = "CursorLineNr" })
+        vim.api.nvim_set_hl(0, "CursorLineNr",
+            vim.tbl_extend("force", base, { fg = mode_fg(), bold = true }))
+    end,
+})
+```
+
+For the whole column rather than the cursor line, use `LineNr` instead --
+louder, and worth trying before deciding which you want.

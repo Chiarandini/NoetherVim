@@ -483,6 +483,12 @@ Current keys: ~
                                   unsaved changes. Default `" ●"`.
                                   Common alternatives: `" [+]"`,
                                   `" *"`, `" "`, `" ◉"`.
+    `statusline.mode_background`    Set to `false` to keep one statusline
+                                  background in every mode. On by default:
+                                  the bar shifts to blue in insert, so the
+                                  mode is legible from the shape of the bar
+                                  and not only from the mode chip, which
+                                  still changes colour either way.
     `statusline.filetype_profile`   Set to `true` to render a marker for
                                   the filetype profile (writing or code)
                                   that claimed the current buffer: a
@@ -1558,6 +1564,11 @@ Customize statusline colors and extra components in `lua/user/config.lua`: >lua
     `mode_n`, `mode_i`, `mode_v`, `mode_c`, `mode_t`, `mode_R`,
     `green`, `blue`, `orange`, `red`, `purple`, `default_gray`,
     `lazy_updates`, `text_gray`, `profile_writing`, `profile_code`
+
+    A `mode_` key names one mode and moves only that indicator. The mode
+    variations are reachable the same way, by their short name:
+    `mode_niI`, `mode_cv`, `mode_Rv`. Setting `green` instead moves the
+    normal-mode indicator and everything else green on the bar with it.
 
                                             *noethervim-statusline-themes*
     Every component asks the palette for a role rather than for a colour,

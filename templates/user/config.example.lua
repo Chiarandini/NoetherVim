@@ -59,9 +59,15 @@ return {
     --     -- look; "bubbly" rounds both edges; "straight" disables endcaps.
     --     edge_style = "round",  -- "round" | "slant" | "pointy" | "straight" | "bubbly"
     --
-    --     -- Override heirline color-table entries. Keys match heirline's
-    --     -- color names (mode_n, mode_i, git_added, ...).
+    --     -- Override entries in the statusline colour table. A `mode_`
+    --     -- key moves one mode indicator; a role name (green, orange,
+    --     -- text_gray, profile_code, ...) moves everything with that role.
     --     colors = { mode_n = "#458588" },
+    --
+    --     -- The bar shifts to a blue background in insert mode. Set false
+    --     -- to keep one background in every mode; the mode block at the
+    --     -- left still changes colour.
+    --     mode_background = true,
     --
     --     -- Extra heirline component specs appended to the right side of
     --     -- the main statusline, after the git block.
