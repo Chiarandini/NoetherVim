@@ -162,16 +162,27 @@ vim.keymap.set("n", "<S-down>",  function() sr.shrink_up()    end, { desc = "pul
 vim.keymap.set("n", "<S-left>",  function() sr.shrink_right() end, { desc = "pull right edge left" })
 vim.keymap.set("n", "<S-right>", function() sr.shrink_left()  end, { desc = "pull left edge right" })
 
--- Quick splits (unnamed scratch buffers -- save with :w <name> if needed)
-local function split_scratch(cmd)
-  vim.cmd(cmd)
-  vim.cmd("enew")
-  vim.bo.bufhidden = "wipe"
-  vim.bo.swapfile = false
+-- Quick splits, all three opening an empty scratch buffer rather than a
+-- second view of the current one (save with `:w <name>` to keep it).
+--
+-- `:vnew` / `:new` / `:tabnew` open the split and the empty buffer in one
+-- step; splitting first and then `:enew` would put the current buffer in the
+-- new window for a moment and fire its autocmds twice.
+--
+-- The buffer is wiped when it stops being displayed, so an untouched scratch
+-- leaves nothing behind in the buffer list. Typed-in text is not at risk:
+-- Neovim refuses to abandon a modified buffer (E37) before the wipe can
+-- happen.
+local function scratch(cmd)
+  return function()
+    vim.cmd(cmd)
+    vim.bo.bufhidden = "wipe"
+    vim.bo.swapfile = false
+  end
 end
-vim.keymap.set("n", "|", function() split_scratch("vs") end,  { desc = "vertical split scratch" })
-vim.keymap.set("n", "+", "<cmd>tabe<cr>",                      { desc = "new tab" })
-vim.keymap.set("n", "_", function() split_scratch("sp") end,  { desc = "horizontal split scratch" })
+vim.keymap.set("n", "|", scratch("vnew"),   { desc = "vertical split scratch" })
+vim.keymap.set("n", "+", scratch("tabnew"), { desc = "new tab scratch" })
+vim.keymap.set("n", "_", scratch("new"),    { desc = "horizontal split scratch" })
 
 -- ──────────────────────────────────────────────────────────────
 --  Normal mode -- closing things  (Z prefix)
