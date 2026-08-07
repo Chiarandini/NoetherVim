@@ -13,14 +13,25 @@ layout, then continue with
 
 ## Before you start: minimal Vim literacy
 
-You do not need to master Vim first. NoetherVim is usable with surface-level
-knowledge and teaches you the rest through the which-key popup you meet in
-step 2. But if modes, `hjkl` and `:w` mean nothing to you yet, three resources
-are worth keeping open the first week:
+You do not need to master Vim first. Surface-level knowledge is enough to
+edit, and the which-key panel in step 2 names the keys as you go. Configuring
+the distribution is a second skill, and no panel covers it. Steps 5 and 6
+stamp configuration from templates instead; [what this did not teach
+you](#what-this-did-not-teach-you) lists what stamping skips.
+
+If modes, `hjkl` and `:w` mean nothing to you yet, four resources are worth
+keeping open the first week:
 
 - **`:Tutor`** runs inside any Neovim install. About thirty minutes, covering
   modes, motions, `dd`/`yy`/`p`, search, and writing buffers. This is the
   single best use of your time as a new Vim user.
+- **[vimtutor-sequel](https://github.com/micahkepe/vimtutor-sequel)** numbers
+  its lessons 8 through 16, picking up where `:Tutor` ends: splits,
+  spellcheck, advanced search and replace, macros, sessions and registers,
+  change navigation. It ships as a text file and a launcher script, run
+  outside Neovim: install the Homebrew formula, or clone the repo and open a
+  copy of the text file with the vimrc beside it. Lessons 13 and 14 cover
+  Vimscript and Vundle-era plugin managers.
 - **[learnvim](https://learnvim.irian.to/)** is a free book on modal-editing
   intuition. Skim the first few chapters to internalise why `ci"` beats
   selecting and retyping.
@@ -30,6 +41,11 @@ are worth keeping open the first week:
 If you hit a command you do not know, `:help <thing>` almost always has an
 answer. Neovim's help system is one of the most reliable pieces of
 documentation in the ecosystem.
+
+A bundle covers the drilling. `practice.training` adds three games, each
+behind its own command: `:VimBeGood` for motions, `:Speedtyper` and `:Typr`
+for typing speed. `practice.hardtime` warns on, or blocks, repeated `hjkl` and
+other low-value motions. Step 6 enables either one.
 
 ## 1. Open a file
 
@@ -157,6 +173,28 @@ four questions without leaving the editor: *what is bound* (`<Space>?`), *what
 can I turn on* (`<Space>cb`), *what else can this do* (`:NoetherVim`), and *is
 anything wrong* (`:checkhealth noethervim`).
 
+## What this did not teach you
+
+Steps 5 and 6 stamped configuration from templates, through a diff. That path
+ends at the first change the distribution made no decision about. Past it sit
+four things, all of them Neovim's and lazy.nvim's, none specific to this
+distribution:
+
+- **Lua, enough to read and write a table.** The [Neovim Lua
+  guide](https://neovim.io/doc/user/lua-guide.html) is short, and the
+  prerequisite for the other three.
+- **The lazy.nvim plugin spec.** `keys`, `cmd`, `ft` and `event` control when
+  a plugin loads. `opts` merges into a spec that already exists; `config`
+  replaces it. An override that silently does nothing is usually that
+  distinction. The [spec reference](https://lazy.folke.io/spec) is the
+  authority. `:help noethervim-user-plugins` covers the cases specific to
+  overriding a plugin the distribution already configures: array-valued opts,
+  the function form, adding a trigger without dropping the existing ones.
+- **`vim.keymap.set`.** Every line of `lua/user/keymaps.lua` is a call to it.
+  `:help vim.keymap.set` is one screen.
+- **Autocommands and their events.** `:help events` lists the moments
+  behaviour can attach to. `lua/user/autocmds.lua` is where it goes.
+
 ## If a step did not work
 
 - Run `:checkhealth noethervim` first. Most first-launch problems are a
@@ -183,8 +221,3 @@ anything wrong* (`:checkhealth noethervim`).
 - Your configuration lives in `~/.config/nvim/lua/user/`. `<Space>ct` stamps a
   starting template for each file, and `:help noethervim-user-config` explains
   how the layering works.
-- The [Neovim Lua guide](https://neovim.io/doc/user/lua-guide.html) is short
-  and well-paced, and worth reading before your first autocommand or override.
-- The [lazy.nvim spec reference](https://lazy.folke.io/spec) is worth reading
-  before writing a plugin override, so your `keys` / `event` / `ft` / `opts`
-  table behaves the way you expect.
