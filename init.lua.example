@@ -94,7 +94,6 @@ require("lazy").setup({
 		-- { import = "noethervim.bundles.languages.java" },         -- nvim-jdtls (proper Java LSP support)
 		-- { import = "noethervim.bundles.languages.python" },       -- venv-selector (virtual environment switching)
 		-- { import = "noethervim.bundles.languages.latex" },        -- VimTeX + snippets/textobjects
-		-- { import = "noethervim.bundles.languages.latex-zotero" }, -- Zotero citation picker (needs Zotero + Better BibTeX)
 		-- { import = "noethervim.bundles.languages.web-dev" },      -- JS/TS template string + color preview
 
 		-- tools/
@@ -123,6 +122,7 @@ require("lazy").setup({
 		-- { import = "noethervim.bundles.writing.obsidian" },    -- Obsidian vault (also enable markdown bundle)
 		-- { import = "noethervim.bundles.writing.neorg" },       -- .norg wiki / note-taking
 		-- { import = "noethervim.bundles.writing.wrapsearch" },  -- make / and ? match across hard wraps
+		-- { import = "noethervim.bundles.writing.zotero" },      -- Zotero citation picker (tex, md, quarto, typst, org)
 
 		-- terminal/
 		-- { import = "noethervim.bundles.terminal.better-term" }, -- named terminal windows

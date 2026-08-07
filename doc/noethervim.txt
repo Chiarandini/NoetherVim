@@ -35,7 +35,7 @@ CONTENTS                                                  *noethervim-contents*
 1. INTRODUCTION                                    *noethervim* *neothervim*
 
 NoetherVim is an opinionated Neovim distribution built on lazy.nvim. It
-ships sensible defaults, 30+ core plugins, and 37 opt-in bundles, with a
+ships sensible defaults, 30+ core plugins, and 39 opt-in bundles, with a
 user configuration system that survives upstream updates.
 
 This help file covers in-editor usage and reference. For design rationale,
@@ -732,8 +732,7 @@ Available bundles (grouped by category): ~
     `python`         venv-selector.nvim: virtual environment switching.
     `latex`          VimTeX, img-clip, bibtex picker, LaTeX textobjects.
                      Requires: latexmk, TeX distribution.
-    `latex-zotero`   Zotero citation picker.
-                     Requires: Zotero.
+                     For citations, see the `zotero` bundle under writing/.
     `web-dev`        JS/TS template string + inline color preview.
 
     tools/ ~
@@ -779,6 +778,9 @@ Available bundles (grouped by category): ~
                      Recommended: also enable the markdown bundle.
                      Configure vault path in lua/user/config.lua.
     `neorg`          .norg wiki / note-taking.
+    `zotero`         Citation picker over a local Zotero library, for tex,
+                     markdown, quarto, typst, org and asciidoc.
+                     `<LocalLeader>z` opens it. Requires: Zotero, sqlite3.
     `wrapsearch`     Make `/` and `?` match across hard-wrapped lines, so
                      a phrase split by a wrap is still findable. The
                      writing profile hard-wraps by default, so this is its

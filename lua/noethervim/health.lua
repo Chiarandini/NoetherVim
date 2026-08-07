@@ -207,7 +207,7 @@ function M.check()
   -- ── LaTeX (only when bundle is enabled) ──────────────────────────────
   -- Skip the whole section when the latex bundle isn't active, otherwise
   -- users without LaTeX get noise about missing latexmk / parsers.
-  if bundle_active("languages.latex") or bundle_active("languages.latex-zotero") then
+  if bundle_active("languages.latex") or bundle_active("writing.zotero") then
     -- latexmk and pdflatex are covered by the bundle's `@requires`
     -- annotation above. What is left here is the checks that annotation
     -- cannot express: cross-platform PDF viewer discovery, and whether the

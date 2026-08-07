@@ -84,21 +84,6 @@ Requires:
 - **pngpaste** *(optional)*: pasting images from the clipboard on macOS
   <br />brew install pngpaste
 
-### `latex-zotero`
-
-A citation picker that reads your local Zotero database directly, for LaTeX, Markdown, Quarto, Typst and Org. Zotero must be running. Enable it alongside the latex bundle rather than instead of it.
-
-```lua
-{ import = "noethervim.bundles.languages.latex-zotero" }
-```
-
-Requires:
-
-- **Zotero**: the citation picker reads its local database
-  <br />https://www.zotero.org/
-- **sqlite3**: sqlite.lua opens the Zotero database through it
-  <br />preinstalled on macOS and most Linux distributions
-
 ### `python`
 
 :VenvSelect finds .venv, venv, conda and poetry environments, points the language server at whichever you pick, and exports VIRTUAL_ENV so terminal commands agree. :VenvSelectCached restores the last choice per project. With the debug bundle also enabled, registers the debugpy adapter against that same environment; with the test bundle, the neotest-python adapter.
@@ -380,6 +365,21 @@ Hard-wrapped prose breaks search: a phrase that reads as one line on screen has 
 ```lua
 { import = "noethervim.bundles.writing.wrapsearch" }
 ```
+
+### `zotero`
+
+A citation picker that reads your local Zotero database directly, for LaTeX, Markdown, Quarto, Typst, Org and AsciiDoc. Zotero must be running. For LaTeX it complements the latex bundle rather than replacing it.
+
+```lua
+{ import = "noethervim.bundles.writing.zotero" }
+```
+
+Requires:
+
+- **Zotero**: the citation picker reads its local database
+  <br />https://www.zotero.org/
+- **sqlite3**: sqlite.lua opens the Zotero database through it
+  <br />preinstalled on macOS and most Linux distributions
 
 ## Terminal & environment
 

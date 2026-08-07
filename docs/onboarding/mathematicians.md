@@ -46,7 +46,7 @@ and uncomment the bundles you want. Each one is a single line in the
 ```lua
 -- Core math + writing
 { import = "noethervim.bundles.languages.latex" },
-{ import = "noethervim.bundles.languages.latex-zotero" },  -- needs Zotero running
+{ import = "noethervim.bundles.writing.zotero" },  -- needs Zotero running
 { import = "noethervim.bundles.writing.markdown" },
 
 -- Optional, depending on your note-taking habit
@@ -185,7 +185,7 @@ buffer.
 
 ### Citations
 
-With the `latex-zotero` bundle enabled and Zotero running, press
+With the `zotero` bundle enabled and Zotero running, press
 `<LocalLeader>z` for a picker over your Zotero library. Pick an entry
 and the correctly-formatted `\cite{key}` lands at the cursor.
 

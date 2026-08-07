@@ -37,7 +37,7 @@
 --   subfile compilation:        subfile projects compile the current subfile by
 --                               default; :VimtexToggleMain switches to the full
 --                               project (g:vimtex_subfile_start_local = 1).
---   For Zotero citations, enable the separate latex-zotero bundle.
+--   For Zotero citations, enable the separate writing/zotero bundle.
 --
 -- PDF viewer: NOT set by the distro -- set vim.g.vimtex_view_method in lua/user/options.lua:
 --   vim.g.vimtex_view_method = 'skim'   -- or 'zathura', 'sioyek', etc.
