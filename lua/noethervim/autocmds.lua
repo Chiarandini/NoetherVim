@@ -158,11 +158,25 @@ vim.api.nvim_create_autocmd("FileChangedShell", {
   end,
 })
 
+-- The other direction: a buffer with a name and nothing at that path yet,
+-- from `:e newfile.txt`. Neovim says `[New]` once, on the cmdline, and then
+-- the buffer is indistinguishable from one backed by a file. Latch it so the
+-- statusline can keep saying so for as long as it is true. BufNewFile fires
+-- exactly when a file is opened for editing and does not exist.
+vim.api.nvim_create_autocmd("BufNewFile", {
+  group = vim.api.nvim_create_augroup("noethervim_new_file_set", { clear = true }),
+  callback = function(ev)
+    vim.b[ev.buf].noethervim_new_file = true
+  end,
+})
+
 vim.api.nvim_create_autocmd({ "BufWritePost", "BufReadPost" }, {
   group = vim.api.nvim_create_augroup("noethervim_out_of_sync_clear", { clear = true }),
   callback = function(ev)
     vim.b[ev.buf].noethervim_out_of_sync = nil
     vim.b[ev.buf].noethervim_file_missing = nil
+    -- A write creates the file, so the buffer is backed from here on.
+    vim.b[ev.buf].noethervim_new_file = nil
     vim.cmd.redrawstatus()
   end,
 })
@@ -177,7 +191,7 @@ vim.api.nvim_create_autocmd("TermOpen", {
   group = term_group,
   callback = function(ev)
     -- Terminals can be created in a buffer that is not on screen yet
-    -- (betterTerm, Snacks.terminal), so stamp the windows actually showing
+    -- (betterTerm, Snacks.terminal), so set them on the windows actually showing
     -- this buffer instead of whichever window happens to be current.
     for _, win in ipairs(vim.fn.win_findbuf(ev.buf)) do
       vim.wo[win].number         = false
@@ -281,7 +295,7 @@ local spell_in_code = ok_cfg and type(user_cfg) == "table" and user_cfg.spell_in
 -- callback runs in the context of the *currently active* window --
 -- which may be unrelated. Plugins that create hidden scratch buffers
 -- and set their filetype (mason-registry, lazydev's lib-doc loader,
--- treesitter's auto_install probes, etc.) would otherwise stamp our
+-- treesitter's auto_install probes, etc.) would otherwise apply our
 -- profile options onto the dashboard / oil / whatever window happens
 -- to be current at startup. Iterating `win_findbuf(ev.buf)` ensures
 -- we only touch windows actually displaying the buffer; hidden
@@ -296,16 +310,32 @@ local spell_in_code = ok_cfg and type(user_cfg) == "table" and user_cfg.spell_in
 -- continuation line one column right of the text it continues. v:virtnum
 -- is >0 on wrapped rows and <0 on virtual-text lines, which get a blank.
 -- %C keeps the fold column working for anyone who turns 'foldcolumn' on.
-local writing_statuscolumn =
-  [[%C%s%=%{v:virtnum > 0 ? "↳" : (v:virtnum < 0 ? "" : (v:relnum == 0 ? v:lnum : v:relnum))} ]]
+--
+-- A 'statuscolumn' is drawn whether or not 'number' is set, so the number
+-- half has to check both options itself -- otherwise `]on` would appear to
+-- do nothing in a writing buffer. With both off the column keeps only the
+-- wrap marker, which is the point of it.
+local wrap_statuscolumn =
+  [[%C%s%=%{v:virtnum > 0 ? "↳" : (v:virtnum < 0 ? "" : ]]
+  .. [[(!&number && !&relativenumber ? "" : ]]
+  .. [[(&relativenumber && v:relnum > 0 ? v:relnum : (&number ? v:lnum : v:relnum))))} ]]
 
---- Set the wrap marker unless this window already carries a 'statuscolumn'
---- the user chose. The profile runs on every FileType/BufWinEnter, long
---- after lua/user/ has loaded, so without this it would win every time.
-local function set_writing_statuscolumn(win)
+--- Keep the marker column in step with 'wrap'. It belongs to the option, not
+--- to the filetype: a code buffer someone ran `[ow` in has exactly the same
+--- ambiguity a wrapped prose buffer does, and writing buffers are only the
+--- common case because they wrap by default.
+---
+--- Wrap off means no continuation rows to mark, so the column comes off
+--- again and the native number column takes over. Only ever sets or clears
+--- our own expression -- a 'statuscolumn' from `lua/user/options.lua` is
+--- left alone, which matters because the profiles run on every
+--- FileType/BufWinEnter, long after user config has loaded.
+local function set_wrap_marker(win)
   local current = vim.wo[win].statuscolumn
-  if current == "" or current == writing_statuscolumn then
-    vim.wo[win].statuscolumn = writing_statuscolumn
+  if vim.wo[win].wrap then
+    if current == "" then vim.wo[win].statuscolumn = wrap_statuscolumn end
+  elseif current == wrap_statuscolumn then
+    vim.wo[win].statuscolumn = ""
   end
 end
 
@@ -327,19 +357,23 @@ local function apply_writing_profile(buf)
     vim.wo[win].list         = false
     vim.wo[win].conceallevel = 2
     vim.wo[win].spell        = true
-    set_writing_statuscolumn(win)
+    set_wrap_marker(win)
   end
 end
 
 local function apply_code_profile(buf)
   for _, win in ipairs(vim.fn.win_findbuf(buf)) do
     vim.wo[win].list = true
-    -- Window-local, so the wrap marker would otherwise persist when a code
-    -- buffer is opened in a window that was showing a writing buffer. Only
-    -- ours is cleared; a statuscolumn the user set stays put.
-    if vim.wo[win].statuscolumn == writing_statuscolumn then
-      vim.wo[win].statuscolumn = ""
-    end
+    -- The mirror of the writing profile's `wrap = true`. Without it a code
+    -- buffer opened in a window a writing buffer left wrapped stays wrapped,
+    -- and 'listchars' `extends` -- the marker saying a line runs off the
+    -- right edge -- has nothing to mark, because nothing runs off any more.
+    -- Vim remembers window-local options per (window, buffer), so this only
+    -- shows up on a buffer that window has not displayed before, which is
+    -- what makes it look intermittent.
+    vim.wo[win].wrap = false
+    -- Clears the marker column with it, since nothing wraps any more.
+    set_wrap_marker(win)
     if spell_in_code then
       -- Treesitter @spell captures (shipped with most parsers)
       -- restrict spellcheck to comments and string nodes; identifiers
@@ -363,6 +397,24 @@ vim.api.nvim_create_autocmd({ "FileType", "BufWinEnter" }, {
       apply_code_profile(ev.buf)
     end
   end,
+})
+
+-- `[ow` / `]ow` flip 'wrap' between profile applications, so the marker has
+-- to follow the option rather than only the filetype.
+vim.api.nvim_create_autocmd("OptionSet", {
+  group    = vim.api.nvim_create_augroup("noethervim_wrap_marker", { clear = true }),
+  pattern  = "wrap",
+  callback = function() set_wrap_marker(vim.api.nvim_get_current_win()) end,
+})
+
+-- Whether a window is the current one decides which statusline it gets, and
+-- closing a float changes the answer for the window underneath without
+-- necessarily marking its statusline dirty. The result is a window that
+-- still wears the dimmed inactive bar until something unrelated forces a
+-- redraw. Cheap to rule out: WinClosed fires rarely.
+vim.api.nvim_create_autocmd("WinClosed", {
+  group    = vim.api.nvim_create_augroup("noethervim_statusline_redraw", { clear = true }),
+  callback = function() vim.schedule(function() pcall(vim.cmd, "redrawstatus!") end) end,
 })
 
 -- ──────────────────────────────────────────────────────────────
