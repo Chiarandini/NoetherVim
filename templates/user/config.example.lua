@@ -31,6 +31,9 @@ return {
     -- nine more. Alternatively, install your preferred colorscheme under /user/plugins
     -- Setting one that is not installed warns on startup and falls
     -- back to gruvbox rather than leaving you on Neovim's built-in default.
+    -- Completion inside the quotes lists every scheme currently installed,
+    -- so it grows when you enable the bundle. `edge_style` below completes
+    -- the same way.
     -- colorscheme = "gruvbox",
 
     -- Picking a scheme with SearchLeader+C persists it across restarts, and

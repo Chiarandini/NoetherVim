@@ -116,7 +116,7 @@ return {
 				default = { "lsp", "snippets", "path", "buffer", "todos" },
 
 				per_filetype = {
-					lua = { "lsp", "snippets", "lazydev", "path", "buffer", "todos" },
+					lua = { "lsp", "snippets", "lazydev", "path", "buffer", "todos", "user_config" },
 					tex = { "lsp", "snippets", "vimtex", "images" },
 				},
 
@@ -191,6 +191,13 @@ return {
 					images = {
 						name   = "images",
 						module = "noethervim.sources.images",
+					},
+					-- Values for the fixed-vocabulary fields in
+					-- lua/user/config.lua. Gates itself on the filename, so it
+					-- costs nothing in every other Lua buffer.
+					user_config = {
+						name   = "NoetherVim config",
+						module = "noethervim.sources.user_config",
 					},
 				},
 			},
