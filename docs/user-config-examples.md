@@ -1,14 +1,19 @@
 # User config examples
 
-Copy-paste snippets for plugins NoetherVim declined to ship. Drop each file
+Copy-paste snippets for plugins NoetherVim declined to ship, and for
+behaviours it deliberately left off a plugin it does ship. Drop each file
 under `~/.config/nvim/lua/user/plugins/` and restart Neovim.
 
-Every entry names a reason the distribution will not ship the plugin, so you
+Every entry names a reason the distribution made the choice it did, so you
 can judge whether that reasoning applies to you. That is the bar for being
 here at all: if the honest answer were "the distribution could ship this and
 just has not", the fix would be a bundle, and documenting the workaround
 would only make it permanent. Something you have to write yourself because
 the distro made no choice for you belongs in a bundle, not on this page.
+
+The entries that override rather than add say so, and say what they cost:
+a default the distribution defends is not the same as a default nobody
+thought about.
 
 For how `opts` merging works when you adapt these, see
 `templates/user/plugins/example.lua` or `:help noethervim-user-plugins`.
@@ -138,3 +143,118 @@ return {
 Provider resolution is automatic: the `claude` CLI on `$PATH` first
 (reusing your Claude Code login), otherwise `ANTHROPIC_API_KEY` from the
 environment. See `:help smart-actions` once installed.
+
+## Fuzzy `/` inside Oil
+
+Replaces `/` in Oil buffers with a fuzzy picker over the entries currently
+listed, rather than an in-buffer search. Non-recursive, so it is the
+narrow counterpart to the distro's `gf`, which recurses through
+`Snacks.picker.files`.
+
+This one is an override, and that is why the distribution does not ship
+it. An Oil buffer is an ordinary Neovim buffer, which is the whole premise
+of the plugin: `dd` deletes a file because it deletes a line, and `/`
+searches the listing because it searches any buffer. Every keymap
+NoetherVim adds to Oil sits behind `g` or `y` for that reason, extending
+the buffer rather than reinterpreting it. Rebinding `/` trades a motion
+you already know for a picker, and it is a fair trade to make for
+yourself; it is not one to make on someone else's behalf.
+
+Inside the picker, `<CR>` does what `<CR>` on the entry does in Oil (enter
+a directory, open a file) and `<S-CR>` lands the Oil cursor on the entry
+without opening it, so you can act on it with the usual Oil keys.
+`<S-CR>` needs a terminal that distinguishes it from `<CR>` (the kitty
+keyboard protocol) — the same requirement as the `browse` picker.
+
+```lua
+-- ~/.config/nvim/lua/user/plugins/oil-fuzzy.lua
+local function fuzzy_pick_in_oil()
+    local oil    = require("oil")
+    local Snacks = require("snacks")
+    local bufnr  = vim.api.nvim_get_current_buf()
+    local win    = vim.api.nvim_get_current_win()
+
+    -- Read entries off the buffer lines so the picker mirrors exactly what
+    -- Oil is showing: no recursion, and the hidden-files toggle is honoured
+    -- for free.
+    local items = {}
+    for lnum = 1, vim.api.nvim_buf_line_count(bufnr) do
+        local entry = oil.get_entry_on_line(bufnr, lnum)
+        if entry and entry.name ~= ".." then
+            table.insert(items, {
+                text = entry.name,
+                lnum = lnum,
+                dir  = entry.type == "directory",
+            })
+        end
+    end
+    if #items == 0 then return end
+
+    -- Move the Oil cursor onto `item`, then optionally run `after` there.
+    -- Deferred so it fires once the picker has fully torn down.
+    local function land_on(item, after)
+        vim.schedule(function()
+            if not (item and vim.api.nvim_win_is_valid(win)) then return end
+            vim.api.nvim_set_current_win(win)
+            vim.api.nvim_win_set_cursor(win, { item.lnum, 0 })
+            if after then after() end
+        end)
+    end
+
+    local dir = oil.get_current_dir(bufnr)
+    Snacks.picker({
+        title  = dir and vim.fn.fnamemodify(dir, ":~") or "Oil",
+        layout = "select",
+        -- Return focus to the Oil window rather than snacks' default "main",
+        -- which excludes floats. For a floating Oil, restoring focus to the
+        -- window behind it fires oil's own WinLeave auto-close and the float
+        -- is gone before the deferred select() can run.
+        main   = { current = true },
+        items  = items,
+        format = function(item)
+            local icon, hl = Snacks.util.icon(item.text, item.dir and "directory" or "file")
+            return {
+                { icon .. " ", hl },
+                { item.text, item.dir and "SnacksPickerDirectory" or "SnacksPickerFile" },
+            }
+        end,
+        confirm = function(picker, item)
+            picker:close()
+            land_on(item, oil.select)
+        end,
+        actions = {
+            jump_to_entry = function(picker)
+                local item = picker:current()
+                picker:close()
+                land_on(item)
+            end,
+        },
+        win = {
+            input = {
+                keys = {
+                    ["<S-CR>"] = { "jump_to_entry", mode = { "i", "n" },
+                                   desc = "jump to entry (no open)" },
+                },
+            },
+        },
+    })
+end
+
+vim.api.nvim_create_autocmd("FileType", {
+    pattern = "oil",
+    callback = function(args)
+        vim.keymap.set("n", "/", fuzzy_pick_in_oil, {
+            buffer = args.buf,
+            desc = "fuzzy-find entries in this dir",
+        })
+    end,
+})
+
+return {}
+```
+
+Bind it to a free key instead of `/` if you want the picker without giving
+up search. `g/` is free in Oil buffers: neither oil.nvim nor the distro
+binds it there, and the `wrapsearch` bundle's `g/` only acts in writing
+filetypes. Taken already are `g?`, `g.`, `g\`, `g~`, `gd`, `gf`, `gG`,
+`gs`, `gS`, `gV`, `gx`, `gX`, `gz` and `gZ`.

@@ -68,7 +68,7 @@ Four commands, in the order worth running them: ~
                     Confirms your terminal, tools and config are in order.
                     See |noethervim-health|.
     SearchLeader+cb   Enable bundles. See |noethervim-bundle-toggle|.
-    SearchLeader+ct   Stamp `lua/user/` config templates. Start with
+    SearchLeader+ct   Write `lua/user/` config templates. Start with
                     `user/config.example.lua`, which is an annotated list
                     of everything the distribution lets you change about
                     its own behavior. See |noethervim-templates|.
@@ -285,16 +285,18 @@ settings on top of the globals:
                         `linebreak`, `spell`, `conceallevel = 2`, appends
                         `t` to `formatoptions` (auto-wrap at textwidth),
                         and hides list chars. Also binds `<C-l>` in
-                        insert mode for spell-fix, and sets a
-                        'statuscolumn' that marks wrapped lines
-                        (see |noethervim-wrap-marker|).
+                        insert mode for spell-fix. Wrapped lines get a
+                        marker column (see |noethervim-wrap-marker|).
     `noethervim_code`     Matches: every filetype NOT in the writing list,
                         structured-text set (json, jsonc, yaml, toml),
                         or special-buffer set (help, man, lspinfo, query,
                         qf, oil, terminal, snacks_*, lazy, mason,
                         checkhealth, notify, Trouble, dap / dap-float /
-                        dapui_*). Sets `list` on
-                        so trailing whitespace and tabs are visible.
+                        dapui_*). Sets `list` on so trailing whitespace and
+                        tabs are visible, and `wrap` off, the counterpart to
+                        the writing profile turning it on. `[ow` therefore
+                        lasts until the window shows a buffer again, the
+                        same as `]ow` in a writing buffer.
                         `formatoptions` omits `t` globally, so typing past
                         textwidth in code does NOT auto-break mid-line;
                         formatters handle line length instead. When
@@ -334,12 +336,19 @@ for writing filetypes. Global `list` is OFF; the code profile re-enables
 it for code filetypes. Listchars are styled in `noethervim/options.lua`.
 
                                                   *noethervim-wrap-marker*
-Soft-wrapped lines are marked with `↳` in the number column. 'showbreak'
-is left empty.
+Wherever 'wrap' is on, a continuation row is marked `↳` in the number
+column, so a line that ran past the window edge is never mistaken for a
+line of its own. Writing buffers wrap by default and so always show it; a
+code buffer shows it from the moment you press `[ow`, and stops when you
+press `]ow`.
 
-The marker is set by the writing profile and removed again by the code
-profile. Both steps only touch a 'statuscolumn' the distro itself set, so
-if you define your own in `lua/user/options.lua` it is left alone: >lua
+The marker column replaces 'number' while it is up, which is why it draws
+the line numbers itself and why `]on` still turns them off, leaving the
+marker on its own. It costs no text cell, so continuation rows stay lined
+up under the text they continue. 'showbreak' is left empty.
+
+A 'statuscolumn' you define in `lua/user/options.lua` is never touched,
+and switches the marker off for that window: >lua
     vim.o.statuscolumn = "%l "
 <
 To go back to an inline 'showbreak' arrow, set both in
@@ -471,7 +480,11 @@ Current keys: ~
                                   `" *"`, `" "`, `" ◉"`.
     `statusline.filetype_profile`   Set to `true` to render a marker for
                                   the filetype profile (writing or code)
-                                  that claimed the current buffer.
+                                  that claimed the current buffer: a
+                                  pencil in blue for writing, angle
+                                  brackets in purple for code, and
+                                  nothing at all for a buffer neither
+                                  profile claims.
                                   Clicking it reports the profile, the
                                   detected filetype, and the live values
                                   of the options the profile sets, so
@@ -719,8 +732,14 @@ The stock `init.lua.example` bootstrap calls
 `require("noethervim.util").buffer_notify()` immediately before
 `lazy.setup(...)` so these errors surface as `snacks.notifier` notifications
 after VimEnter rather than landing on the cmdline as ErrorMsg.
-`:checkhealth noethervim` mirrors the same errors under "Spec errors"
-so they remain visible after the notification has disappeared.
+
+Error-level startup notifications stay on screen until dismissed, and say
+so: the toast carries `<Esc>  dismiss` and, for a stale import, the key
+that opens `init.lua` (read from your keymaps, so a rebind shows yours).
+`:checkhealth noethervim` reports the same errors under "Spec errors",
+along with the current path when a bundle was renamed rather than removed,
+and flags an override left without a spec to extend under
+"Stranded overrides".
 Available bundles (grouped by category): ~
 
     languages/ ~
@@ -951,7 +970,7 @@ accidental edits to the distribution.
     SearchLeader+cg  `:NoetherVim grep`       Live grep NoetherVim source
     SearchLeader+cu   (snacks)                 Browse user config files
     SearchLeader+cb   `:NoetherVim bundles`    Browse bundle source files
-    SearchLeader+ct   `:NoetherVim templates`  Stamp user-config templates
+    SearchLeader+ct   `:NoetherVim templates`  Write user-config templates
     `<Leader>e`      `:NoetherVim override`   Edit/create user override
     SearchLeader+cL   (snacks)                 Lazy plugin list
     SearchLeader+?    `:NoetherVim keymap-guide`  Keymap namespace reference
@@ -1017,6 +1036,16 @@ The list shows normal-mode and insert-mode mappings together, and where a
 key exists in both the normal-mode entry is the one displayed. Entries
 like `q`, `j`, `k`, `gg`, `G`, `/` and `<C-w>H/J/K/L` therefore apply to
 the results window rather than the prompt; reach it with `<A-w>`.
+
+                                            *noethervim-picker-notifications*
+Notification history: ~
+
+SearchLeader+fn lists past notifications. `<CR>` opens the one under the
+cursor in a float: the full message, wrapped, sized to fit, bordered in
+the colour of its level. `q` closes it.
+
+The float's filetype is `noethervim-notification`, so it answers to the
+q-to-close set (|noethervim-q-close|) and skips both filetype profiles.
 
 ==============================================================================
 7. COMPARISON                                                *noethervim-diff*
@@ -1259,11 +1288,11 @@ Shadowed defaults: ~
     `n` / `N`       Always forward / always backward
                     (default: next / prev in search direction: after
                     `?pat`, default `n` goes up)
-    `|`             Vertical split tmp
+    `|`             Vertical split on a scratch buffer
                     (default: go to screen column)
-    `_`             Horizontal split tmp
+    `_`             Horizontal split on a scratch buffer
                     (default: go N-1 lines down, first non-blank)
-    `+`             New tab
+    `+`             New tab on a scratch buffer
                     (default: go to next line, first non-blank)
     `<C-w><C-q>`    Open quickfix
                     (default: close window: use `<C-w>q` or `:q`)
@@ -1381,10 +1410,33 @@ Clickable components: ~
     File name           Open current directory in system file browser
     Modified indicator  Diff unsaved changes against saved version
     Deleted-file flag   Offer to write the buffer back (see below)
+    New-file flag       Report that nothing is at that path yet (see below)
     Directory indicator Explain the cwd mismatch, offer `:lcd` (see below)
     LSP indicator       Open `:LspInfo`
     Git branch/status   Open lazygit in a terminal
     Update indicator    Open Lazy plugin manager
+
+                                          *noethervim-statusline-buffer-file*
+Buffer and file: ~
+
+    A buffer and the file it is named after are two different things, and
+    they come apart more often than the editor usually admits: the file can
+    be deleted, or changed underneath you, or never have existed. Vim says
+    so once, on the cmdline, at the moment it happens, and then the buffer
+    looks like any other.
+
+    The flag slot left of the filename holds that state instead, for as
+    long as it is true. Between them the flags answer one question, which
+    is whether what you are looking at exists anywhere but this buffer:
+
+    Deleted     the file was there and is gone
+    New         the file is not there yet
+    Modified    the file is there and differs from the buffer
+    Read-only   the buffer will not write back
+    Scratch     there is no file, and no name to write to
+
+    The directory indicator (below) answers the neighbouring question, of
+    where a relative `:w` or `:e` would land.
 
                                         *noethervim-statusline-deleted*
 Deleted-file flag: ~
@@ -1396,10 +1448,20 @@ Deleted-file flag: ~
 
     Click it to write the buffer back and recreate the file.
 
-    A file you have never written is not flagged: Neovim only tracks a
-    modification time for files it has actually read.
-
     The flag clears on the next write or re-read.
+
+                                        *noethervim-statusline-new-file*
+New-file flag: ~
+
+    A marker in the same slot when the buffer has a name but nothing is at
+    that path yet, as after `:e notes/draft.md` on a file that does not
+    exist. The buffer is the only copy, the same as for a deleted file, so
+    closing without writing loses it.
+
+    Click it for the full path. `:w` creates the file, and any parent
+    directories it needs.
+
+    The flag clears on the first write.
 
                                        *noethervim-statusline-directory*
 Directory indicator: ~
@@ -1563,7 +1625,7 @@ git root), and a `●` modified indicator. Tabs have per-tab close
 buttons and shrink gracefully when many tabs are open.
 
 Tab management keymaps: ~
-    `+`                 Open a new tab
+    `+`                 Open a new tab on an empty scratch buffer
     `<C-w><A-h>`        Move current tab left
     `<C-w><A-l>`        Move current tab right
     `[t` / `]t`         Previous / next tab

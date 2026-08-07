@@ -37,8 +37,10 @@ noethervim-mapsearchleader	noethervim.txt	/*noethervim-mapsearchleader*
 noethervim-nvim-appname	noethervim.txt	/*noethervim-nvim-appname*
 noethervim-option-layers	noethervim.txt	/*noethervim-option-layers*
 noethervim-option-toggles	noethervim.txt	/*noethervim-option-toggles*
+noethervim-override-drift	noethervim.txt	/*noethervim-override-drift*
 noethervim-override-timing	noethervim.txt	/*noethervim-override-timing*
 noethervim-picker-help	noethervim.txt	/*noethervim-picker-help*
+noethervim-picker-notifications	noethervim.txt	/*noethervim-picker-notifications*
 noethervim-q-close	noethervim.txt	/*noethervim-q-close*
 noethervim-quickstart	noethervim.txt	/*noethervim-quickstart*
 noethervim-resize-arrows	noethervim.txt	/*noethervim-resize-arrows*
@@ -50,11 +52,14 @@ noethervim-space	noethervim.txt	/*noethervim-space*
 noethervim-stale-imports	noethervim.txt	/*noethervim-stale-imports*
 noethervim-statusline	noethervim.txt	/*noethervim-statusline*
 noethervim-statusline-busy-override	noethervim.txt	/*noethervim-statusline-busy-override*
+noethervim-statusline-deleted	noethervim.txt	/*noethervim-statusline-deleted*
+noethervim-statusline-directory	noethervim.txt	/*noethervim-statusline-directory*
 noethervim-statusline-edge-style	noethervim.txt	/*noethervim-statusline-edge-style*
 noethervim-statusline-error-boundary	noethervim.txt	/*noethervim-statusline-error-boundary*
 noethervim-tabline	noethervim.txt	/*noethervim-tabline*
 noethervim-tabline-bufferline	noethervim.txt	/*noethervim-tabline-bufferline*
 noethervim-templates	noethervim.txt	/*noethervim-templates*
+noethervim-test-adapters	noethervim.txt	/*noethervim-test-adapters*
 noethervim-toggle	noethervim.txt	/*noethervim-toggle*
 noethervim-uninstall	noethervim.txt	/*noethervim-uninstall*
 noethervim-user-autocmds	noethervim.txt	/*noethervim-user-autocmds*

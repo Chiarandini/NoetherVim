@@ -16,8 +16,8 @@ layout, then continue with
 You do not need to master Vim first. Surface-level knowledge is enough to
 edit, and the which-key panel in step 2 names the keys as you go. Configuring
 the distribution is a second skill, and no panel covers it. Steps 5 and 6
-stamp configuration from templates instead; [what this did not teach
-you](#what-this-did-not-teach-you) lists what stamping skips.
+write configuration out from templates instead; [what this did not teach
+you](#what-this-did-not-teach-you) lists what that path skips.
 
 If modes, `hjkl` and `:w` mean nothing to you yet, four resources are worth
 keeping open the first week:
@@ -42,10 +42,10 @@ If you hit a command you do not know, `:help <thing>` almost always has an
 answer. Neovim's help system is one of the most reliable pieces of
 documentation in the ecosystem.
 
-A bundle covers the drilling. `practice.training` adds three games, each
-behind its own command: `:VimBeGood` for motions, `:Speedtyper` and `:Typr`
-for typing speed. `practice.hardtime` warns on, or blocks, repeated `hjkl` and
-other low-value motions. Step 6 enables either one.
+A Noethervim bundle covers the drilling: `practice.training` adds three games, each behind its own
+command. For our purposes, the game that matters is `:VimBeGood` which gamifies going over vim for
+motions. Furthermore, `practice.hardtime` warns on, or blocks, repeated `hjkl` and other low-value
+motions. Step 6 enables either one.
 
 ## 1. Open a file
 
@@ -60,8 +60,32 @@ language with a server available, the LSP, completion, treesitter, formatting
 and diagnostics attach on their own; if the server or parser is not installed
 yet, which is normal on a fresh install, it is installed for you.
 
-## 2. Discovering keybindings: press a prefix and wait
+### Prose files and code files behave differently
 
+Open a `.md` or `.tex` file and the editor changes shape. Lines soft-wrap at
+the window edge, with `↳` marking each continuation row so a wrapped line is
+never mistaken for a new one. Spellcheck is on, and `<C-l>` in insert mode
+fixes the last misspelling. Typing past column 100 breaks the line for you.
+
+Open a `.lua` or `.py` file and none of that happens. Lines run off the right
+edge rather than wrapping, `›` marks where one continues past the edge, tabs
+and trailing spaces are drawn, and nothing reflows as you type, because in
+code a line break is syntax rather than presentation.
+
+This is one setting, chosen by filetype, and it is worth knowing early for
+two reasons. It is the thing most likely to make NoetherVim look broken to
+someone arriving from another config, since prose behaving differently from
+code is not standard Neovim. And it means a tutorial that says "turn on
+`wrap`" has already been answered for you in one kind of file and
+deliberately not in the other.
+
+Some filetypes are in neither camp: JSON, YAML, help pages, Oil, terminals.
+They keep whatever their own plugins set.
+
+`:help noethervim-filetype-profiles` lists exactly what each one sets, and
+`[ow` / `]ow` turn wrapping on and off for the window whenever you disagree.
+
+## 2. Discovering keybindings: press a prefix and wait
 Press `<Space>` and stop. After a moment a which-key panel lists everything
 available under it. Press `f` and the panel narrows to the file pickers. Press
 `<Esc>` to back out.
@@ -175,7 +199,7 @@ anything wrong* (`:checkhealth noethervim`).
 
 ## What this did not teach you
 
-Steps 5 and 6 stamped configuration from templates, through a diff. That path
+Steps 5 and 6 wrote configuration out from templates, through a diff. That path
 ends at the first change the distribution made no decision about. Past it sit
 four things, all of them Neovim's and lazy.nvim's, none specific to this
 distribution:
@@ -218,6 +242,6 @@ distribution:
 - `:NoetherVim diff keymaps`, `diff options` and `diff autocmds` show what you
   have changed relative to the defaults. This is the fastest way to check
   whether an override took effect.
-- Your configuration lives in `~/.config/nvim/lua/user/`. `<Space>ct` stamps a
+- Your configuration lives in `~/.config/nvim/lua/user/`. `<Space>ct` writes a
   starting template for each file, and `:help noethervim-user-config` explains
   how the layering works.

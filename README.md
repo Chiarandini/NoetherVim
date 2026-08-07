@@ -43,7 +43,7 @@ grep` open the distro's own source code read-only in the editor, and every plugi
 spec and bundle leads with a header comment describing what it configures.
 `<CR>` on a row of the keymap guide jumps to the line that defined it.
 
-- **Overriding is scaffolded and checked.** `:NoetherVim templates` stamps
+- **Overriding is scaffolded and checked.** `:NoetherVim templates` writes
 starting points into `lua/user/`, and `:NoetherVim override` seeds one with the
 upstream spec's repo strings as commented stubs. `diff keymaps`, `diff options`
 and `diff autocmds` mark which entries a user config has changed, and
@@ -300,7 +300,7 @@ NoetherVim loads user override files after each core module. Create any of these
 | `lsp/<server>.lua` | Per-server LSP settings |
 | `config.lua` | Config data table: vault paths, feature flags, filetype lists (`:help noethervim-user-config-data`) |
 
-Template files are provided in `templates/user/` in the installed distro - copy the ones you want and uncomment the relevant lines. The fastest way to grab one is `:NoetherVim templates` (or SearchLeader+ct): pick a template and press `<C-y>` to stamp it into `lua/user/`. A diff prompt shows the change first, `y` or `<CR>` accepts, and the new file opens for editing.
+Template files are provided in `templates/user/` in the installed distro - copy the ones you want and uncomment the relevant lines. The fastest way to grab one is `:NoetherVim templates` (or SearchLeader+ct): pick a template and press `<C-y>` to write it into `lua/user/`. A diff prompt shows the change first, `y` or `<CR>` accepts, and the new file opens for editing.
 
 Your config ends up laid out like this:
 

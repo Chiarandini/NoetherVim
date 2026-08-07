@@ -192,8 +192,8 @@ over a second word inserts the word that was just overwritten.
 
 ## `;` opens the command line
 
-`:` and `;` are the same physical key, one shifted and one not. `;` repeats the
-last `f` / `t` motion.
+`:` and `;` are the same physical key, and by default `;` repeats the
+last `f` / `t` motion. Consider the following remapping:
 
 ```lua
 vim.keymap.set({ "n", "v" }, ";", ":")
@@ -201,7 +201,8 @@ vim.keymap.set({ "n", "v" }, ";", ":")
 
 The trade depends on how much you use `f{char}` with `;` to repeat: if you use
 it often, keep `;` and put `:` somewhere else. NoetherVim ships this mapping,
-and `:help noethervim-semicolon` gives the one-line revert.
+since entering the commandline is one of the most common actions and making so making it as
+effortless as possible outweighs the default`;`. `:help noethervim-semicolon` gives the one-line revert.
 
 ## The smaller ones
 
@@ -213,8 +214,11 @@ and `:help noethervim-semicolon` gives the one-line revert.
 - **`|`, `_` and `+`**: splits shaped like what they make. `|` splits
   vertically, `_` splits horizontally, `+` opens a tab. They displace "go to
   screen column", "down N-1 lines to first non-blank" and "down one line to
-  first non-blank". NoetherVim opens a scratch buffer in the new split rather
-  than a second view of the current one.
+  first non-blank". All three open an empty scratch buffer rather than a
+  second view of the current one, which is what you want when the split is
+  for something new; `<C-w>v` and `<C-w>s` still give you the second view.
+  Leave the scratch untouched and it disappears with the window; type in it
+  and Neovim will not let you abandon it unsaved.
 - **`-`**: highlights every instance of the word under the cursor and reports
   how many there are, leaving the cursor where it was. `*` does the highlight
   but moves to the next match.
@@ -246,7 +250,11 @@ and `:help noethervim-semicolon` gives the one-line revert.
 - **Select mode**: letters replace the selection instead of running commands,
   `<Esc>` twice returns to normal, and `<C-a>` jumps past the end of what was
   selected. Select mode is where a snippet placeholder leaves you.
-
+- **J/K**: This one is probably the most controversial one on this list, but these bindings have
+  survived my config from the time they were added a few months into me getting into vim. In normal
+  mode, `J` maps to `j<c-e>` and `K` maps to `k<c-y>`. In normal-mode, `<c-e>` and `<c-y>` move the
+  buffer down/up while keeping your cursor position the same, so combining with `j` and `k` moves
+  both the cursor and the buffer. `K` is by default the hover key when inspecting code: I remapped it to `L` whose default behaviour is to go to the end of the line.
 ## Everything else
 
 `:help noethervim-keymaps` is the full list, including the prefix namespaces
