@@ -225,7 +225,7 @@ return {
 					{"<leader>r",  icon = {icon = icons.run, color = "yellow"}, group = "Run/REPL" },
 					{"<leader>t",  icon = {icon = icons.checkmark, color = "green"}, group = "Test" },
 					{"<leader>R",  icon = {icon = icons.refactor, color = "yellow"}, group = "refactor" },
-					{"<leader>ha", icon = {icon = icons.fish, color = "blue"},  group = "harpoon add" },
+					{"<leader>H",  icon = {icon = icons.fish, color = "blue"} },
 					{"[oH",        icon = {icon = icons.options_on, color = "yellow"},  desc = "show deleted hunks (gitsigns)" },
 					{"]oH",        icon = {icon = icons.options_off, color = "yellow"}, desc = "hide deleted hunks (gitsigns)" },
 					{"[og",        icon = {icon = icons.options_on, color = "yellow"},  desc = "git blame ON (gitsigns)" },

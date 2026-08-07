@@ -1152,7 +1152,7 @@ Prefixes: ~
     `<Leader>` (\)      Global actions
                       y/Y/p/P (clipboard)  f(ormat)  h(unk)  d(ebug)
                       t(est)  r(un/REPL)  R(efactor)  m(inimap)  b(ox)
-                      a(i)  z(en)
+                      a(i)  z(en)  H(arpoon add)
                                                         *noethervim-localleader*
     `<LocalLeader>` (,) Filetype-specific actions
                       LaTeX: vimtex commands, image paste

@@ -11,7 +11,8 @@
 --
 -- Key bindings:
 --   <c-w><c-h>  -- toggle harpoon quick-menu
---   <leader>ha  -- add current file
+--   <leader>H   -- add current file (<leader>h is the gitsigns hunk
+--                 namespace, so harpoon does not sit inside it)
 --   <c-s-n>     -- next mark
 --   <c-s-p>     -- previous mark
 --
@@ -33,7 +34,7 @@ return {
 				desc = "Harpoon menu",
 			},
 			{
-				"<leader>ha",
+				"<leader>H",
 				function()
 					require("harpoon"):list():append()
 					vim.notify("file added to harpoon", vim.log.levels.INFO, { title = "Harpoon" })
