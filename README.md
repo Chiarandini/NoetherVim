@@ -38,16 +38,16 @@ maplocalleader`), so Vim-flavoured muscle memory transfers intact. The one
 addition is a search leader, defaulting to `<Space>`, which owns every fuzzy
 picker. See [Keybinding Philosophy](#keybinding-philosophy).
 
-- **Inspection is built in.** `:NoetherVim diff keymaps`, `diff options` and
-`diff autocmds` list what the distro sets, with overridden entries marked.
-`:NoetherVim files` and `:NoetherVim grep` open the distro's own source
-read-only in the editor; each plugin spec and bundle carries a header comment
-describing what it configures.
+- **The source is the documentation.** `:NoetherVim files` and `:NoetherVim
+grep` open the distro's own source read-only in the editor, and every plugin
+spec and bundle leads with a header comment describing what it configures.
+`<CR>` on a row of the keymap guide jumps to the line that defined it.
 
-- **Overrides keep their link upstream.** `:NoetherVim override` seeds a user
-file with the upstream spec's repo strings as commented stubs. `:checkhealth
-noethervim` flags any override whose upstream file has since changed, so a fix
-upstream cannot pass unnoticed behind a stale copy.
+- **Overriding is scaffolded and checked.** `:NoetherVim templates` stamps
+starting points into `lua/user/`, and `:NoetherVim override` seeds one with the
+upstream spec's repo strings as commented stubs. `diff keymaps`, `diff options`
+and `diff autocmds` mark which entries a user config has changed, and
+`:checkhealth noethervim` flags any override whose upstream file has moved on.
 
 - **Vim's own patterns, carried to their end.** Vim's `ZZ` and `ZQ` grow into a
 full `Z` grid across quit, write and buffer-delete. `<Esc>` leaves a mode, and
