@@ -214,7 +214,7 @@ return {
 					{"<c-w>]",  icon = icons.window, group = "close window.." },
 					{"<c-w>l",  icon = icons.lazy, group = "Lazy" },
 					{"<c-w>s",  icon = {icon = icons.plus, color = "red"}, group = "Statusline" },
-					{"<leader>",  icon = {icon = icons.action, color = "blue"}, group = "action" },
+					{"<leader>",  icon = {icon = icons.action, color = "blue"}, group = "Global actions" },
 					{SearchLeader .. "o",  icon = {icon = icons.landplot, color = "blue"}, group = "Obsidian" },
 					{"<leader>o",  icon = {icon = icons.landplot, color = "blue"}, group = "Obsidian" },
 					{"<leader>w",  icon = {icon = icons.wiki, color = "blue"}, group = "Wiki" },
