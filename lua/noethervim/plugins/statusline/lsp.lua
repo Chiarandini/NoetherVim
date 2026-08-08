@@ -25,10 +25,15 @@ M.LSPActive = {
           vim.cmd("LspInfo")
           return
         end
-        local previous = vim.g.health
-        vim.g.health = vim.tbl_extend("force", previous or {}, { style = "float" })
+        -- The report opens through `vim.lsp.util.open_floating_preview`,
+        -- which takes its border from 'winborder'. Rounded, to match the
+        -- hover and signature floats and the popups the other statusline
+        -- components open.
+        local health, border = vim.g.health, vim.o.winborder
+        vim.g.health = vim.tbl_extend("force", health or {}, { style = "float" })
+        vim.o.winborder = "rounded"
         local ok, err = pcall(vim.cmd, "checkhealth vim.lsp")
-        vim.g.health = previous
+        vim.g.health, vim.o.winborder = health, border
         if not ok then vim.notify(tostring(err), vim.log.levels.ERROR) end
       end, 100)
     end,
