@@ -235,7 +235,7 @@ function M.bundles()
     },
     win = {
       input = {
-        footer     = hint_footer({ { "<cr>", "open" }, { "<c-o>", "override" }, { "<c-y>", "enable" }, { "<f1>", "keys" } }),
+        footer     = hint_footer({ { "<cr>", "open" }, { "<c-o>", "override" }, { "<c-y>", "enable" } }),
         footer_pos = "center",
         keys = {
           ["<CR>"]  = { "confirm",         mode = { "i", "n" }, desc = "open bundle source (readonly)" },
@@ -305,7 +305,7 @@ function M.templates()
     },
     win = {
       input = {
-        footer     = hint_footer({ { "<cr>", "open" }, { "<c-y>", "write" }, { "<f1>", "keys" } }),
+        footer     = hint_footer({ { "<cr>", "open" }, { "<c-y>", "write" } }),
         footer_pos = "center",
         keys = {
           ["<CR>"]  = { "confirm",        mode = { "i", "n" }, desc = "open template (readonly)" },
@@ -714,7 +714,7 @@ function M.diff_keymaps(opts)
       -- -- the title carries the state.
       footer     = hint_footer({
         { "<cr>", "source" }, { "<c-q>", "qf" },
-        { "<c-x>", "plugins" }, { "<f1>", "keys" },
+        { "<c-x>", "plugins" },
       }),
       footer_pos = "center",
       keys = {
@@ -808,7 +808,7 @@ function M.diff_options()
     items  = items,
     layout = { preset = "select", preview = "main" },
     win = { input = {
-      footer     = hint_footer({ { "<cr>", "source" }, { "<f1>", "keys" } }),
+      footer     = hint_footer({ { "<cr>", "source" } }),
       footer_pos = "center",
     } },
     format = function(item)
@@ -1363,7 +1363,7 @@ function M.diff_autocmds()
     items  = items,
     layout = { preset = "select", preview = "main" },
     win = { input = {
-      footer     = hint_footer({ { "<cr>", "source" }, { "<f1>", "keys" } }),
+      footer     = hint_footer({ { "<cr>", "source" } }),
       footer_pos = "center",
     } },
     format = function(item)

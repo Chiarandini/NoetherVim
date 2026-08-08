@@ -136,6 +136,46 @@ local function open_notification(notif)
 	})
 end
 
+--- Advertise `<F1>` on every picker.
+---
+--- The key is bound globally, so it works in all of them, but only the few
+--- pickers that build a footer for their own keys ever said so -- meet it on
+--- the bundles picker and you have no reason to think it works on
+--- `SearchLeader+ff`.
+---
+--- The title rather than a footer, because a footer needs a window edge to
+--- draw on and the layouts disagree about having one: `default` borders its
+--- whole box, `ivy` borders only the top and puts the title there. A hint
+--- that appears in some pickers and not others by accident of layout is
+--- worse than the inconsistency it was meant to fix. Every layout has a
+--- `{title}` slot, and the flags already render beside it.
+---
+--- Walks a copy, so the shipped presets are left alone for anyone who
+--- overrides `layouts` themselves, and matches on `{title}` rather than a
+--- fixed path so a preset added upstream is covered without a change here.
+local function layouts_with_help_hint()
+	local function patch(node)
+		if type(node) ~= "table" then return node end
+		local out = {}
+		for k, v in pairs(node) do
+			if k == "title" and type(v) == "string" and v:find("{title}", 1, true) then
+				out[k] = v .. "  <f1> keys"
+			else
+				out[k] = patch(v)
+			end
+		end
+		return out
+	end
+
+	local ok, presets = pcall(require, "snacks.picker.config.layouts")
+	if not ok then return nil end
+	local patched = {}
+	for name, preset in pairs(presets) do
+		patched[name] = patch(preset)
+	end
+	return patched
+end
+
 local SearchLeader = require("noethervim.util").search_leader
 
 return {
@@ -608,6 +648,7 @@ return {
 		-- document / project navigation keymaps are personal -- add yours in lua/user/plugins/
 	},
 	config = function(_, opts)
+		opts.picker.layouts = layouts_with_help_hint()
 		require("snacks").setup(opts)
 		-- Register a custom footer section that mirrors M.sections.startup but adds version.
 		-- Must run after snacks is set up so require("snacks.dashboard") resolves.

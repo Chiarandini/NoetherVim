@@ -1039,9 +1039,9 @@ source definition in the distribution or user config.
 Picker key list: ~
 
 Every snacks picker binds `<F1>` to a list of the keys it defines, in both
-normal and insert mode. Snacks also binds `?`, but only in normal mode;
-since pickers open with the prompt in insert mode, `?` typed there goes
-into the query instead.
+normal and insert mode, and says so in its title. Snacks also binds `?`,
+but only in normal mode; since pickers open with the prompt in insert
+mode, `?` typed there goes into the query instead.
 
 Dismiss the list with `<F1>` again or with `<Esc>`. `<Esc>` closes the
 picker itself only once the list is gone, so with the list open it takes
