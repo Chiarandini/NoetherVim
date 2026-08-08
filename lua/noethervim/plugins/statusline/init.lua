@@ -222,20 +222,45 @@ return {
         misc.Align,
       }
 
+      -- Quickfix and location lists. Ahead of SpecialStatusline, which used
+      -- to swallow them and render nothing at all: neither the help-filename
+      -- nor the filetype component has anything to say about a `quickfix`
+      -- buffer, so the bar came out blank.
+      local QuickfixStatusline = {
+        condition = function()
+          return conditions.buffer_matches({ buftype = { "quickfix" } })
+        end,
+        hl = function() return { bg = ctx.colors.default_gray } end,
+        { condition = conditions.is_active, vimode.ViMode },
+        misc.QuickfixInfo,
+        misc.Align,
+        misc.QCloseHint,
+        ruler.Pos,
+      }
+
+      -- Help pages, checkhealth reports, and the rest of the read-only
+      -- buffers. They are usually long and always transient, so the bar
+      -- answers the two questions that raises -- where am I, and how do I
+      -- leave -- rather than repeating a filetype the content makes obvious.
       local SpecialStatusline = {
         condition = function()
           -- :DiffOrig's disk-side scratch is nofile but conceptually a file;
           -- let it fall through to DefaultStatusline so it renders normally.
           if vim.b.noethervim_diff_scratch then return false end
           return conditions.buffer_matches({
-            buftype = { "nofile", "prompt", "help", "quickfix" },
+            buftype = { "nofile", "prompt", "help" },
             filetype = { "^git.*", "fugitive" },
           }) and vim.bo.filetype ~= ""
         end,
         hl = function() return { bg = ctx.colors.default_gray } end,
-        misc.HelpFileName,
+        { condition = conditions.is_active, vimode.ViMode },
+        misc.Space,
+        misc.SpecialName,
         misc.Align,
+        misc.QCloseHint,
         misc.FileType,
+        ruler.Percentage,
+        ruler.Pos,
       }
 
       local TerminalStatusline = {
@@ -263,6 +288,7 @@ return {
         fallthrough = false,
 
         AlphaStatusline,
+        QuickfixStatusline,
         SpecialStatusline,
         TerminalStatusline,
         InactiveStatusline,

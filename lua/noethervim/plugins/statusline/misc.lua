@@ -277,6 +277,70 @@ M.FiletypeProfile = {
   },
 }
 
+-- ── Report-buffer components ─────────────────────────────────────────
+-- Help pages, checkhealth output, quickfix lists: buffers you read rather
+-- than edit. They shared one statusline that showed a filename and a
+-- filetype, which left the two questions those buffers actually raise
+-- unanswered -- where am I in something this long, and how do I get out.
+
+--- The buffer's own name, when it has one worth showing -- `options.txt`
+--- for a help page. Nothing for a scratch report: the filetype component
+--- at the other end already names those, and saying "checkhealth" at both
+--- ends of the bar is not twice as informative.
+M.SpecialName = {
+  condition = function()
+    return vim.api.nvim_buf_get_name(0) ~= ""
+  end,
+  provider = function()
+    return vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ":t")
+  end,
+  hl = function() return { fg = ctx.colors.text_gray, bold = true } end,
+}
+
+--- `q closes` on the buffers where it does. Read from the same list the
+--- autocmd uses, so the hint cannot claim a key that is not bound -- and
+--- it disappears on a buffer the user added to `q_close_filetypes` without
+--- adding the keymap, which is the honest outcome.
+M.QCloseHint = {
+  condition = function()
+    return vim.fn.maparg("q", "n", false, true).buffer == 1
+  end,
+  provider = "q closes ",
+  hl = function() return { fg = ctx.colors.text_unselected, italic = true } end,
+}
+
+--- Quickfix / location list: which entry of how many, and the title the
+--- command that filled it left behind (`:grep`, `Diagnostics`, ...). The
+--- list is a result set, so its size and your place in it are the whole of
+--- what the bar can usefully say.
+M.QuickfixInfo = {
+  init = function(self)
+    local loc = vim.fn.getwininfo(vim.api.nvim_get_current_win())[1].loclist == 1
+    local list = loc and vim.fn.getloclist(0, { title = 0, size = 0, idx = 0 })
+                     or vim.fn.getqflist({ title = 0, size = 0, idx = 0 })
+    self.kind  = loc and "location" or "quickfix"
+    self.title = list.title
+    self.size  = list.size or 0
+    self.idx   = list.idx or 0
+  end,
+  {
+    provider = function(self) return " " .. self.kind .. " " end,
+    hl = function() return { fg = ctx.colors.text_gray, bold = true } end,
+  },
+  {
+    condition = function(self) return self.title and self.title ~= "" end,
+    provider = function(self) return self.title .. " " end,
+    hl = function() return { fg = ctx.colors.text_unselected } end,
+  },
+  {
+    provider = function(self)
+      if self.size == 0 then return "empty " end
+      return ("%d/%d "):format(self.idx, self.size)
+    end,
+    hl = function() return { fg = ctx.colors.orange, bold = true } end,
+  },
+}
+
 -- Help filename
 M.HelpFileName = {
   condition = function()
