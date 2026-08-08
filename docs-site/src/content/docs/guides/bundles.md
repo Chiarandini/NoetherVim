@@ -455,7 +455,7 @@ A minimap down the side of the window carrying diagnostics, git signs and search
 
 ### `tableaux`
 
-Thirty-one dashboard scenes for snacks.nvim: number-theoretic processes such as the Sieve of Eratosthenes, Collatz and pi convergents; dynamical systems including Conway's Game of Life and the Lorenz attractor; topological objects; and contemplative time- of-day scenes.
+Enabling it puts a scene on the dashboard straight away, picked at random until you choose one with `&lt;space&gt;ud`. Thirty-one in all, covering number-theoretic processes such as the Sieve of Eratosthenes, Collatz and pi convergents, dynamical systems including Conway's Game of Life and the Lorenz attractor, topological objects, and contemplative time-of-day scenes.
 
 ```lua
 { import = "noethervim.bundles.ui.tableaux" }
