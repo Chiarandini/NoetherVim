@@ -2,18 +2,41 @@
 -- Dashboard, notifications, picker, and miscellaneous UI utilities.
 ---@module "snacks"
 
--- Header lines need trailing spaces so all lines are the same visual width,
--- which ensures snacks centers the block correctly (it centers each line independently).
-local _header = table.concat({
-	"                                                               ",
-	"      ███╗   ██╗███████╗ ██████╗ ██╗   ██╗██╗███╗   ███╗       ",
-	"      ████╗  ██║██╔════╝██╔═══██╗██║   ██║██║████╗ ████║       ",
-	"█████╗██╔██╗ ██║█████╗  ██║   ██║██║   ██║██║██╔████╔██║█████╗ ",
-	"╚════╝██║╚██╗██║██╔══╝  ██║   ██║╚██╗ ██╔╝██║██║╚██╔╝██║╚════╝ ",
-	"      ██║ ╚████║███████╗╚██████╔╝ ╚████╔╝ ██║██║ ╚═╝ ██║       ",
-	"      ╚═╝  ╚═══╝╚══════╝ ╚═════╝   ╚═══╝  ╚═╝╚═╝     ╚═╝       ",
-	"                                                               ",
+-- Dashboard wordmark. The distribution shipped snacks' NEOVIM art with a
+-- dash bolted on either side, so the first thing a new user saw branded
+-- their install as plain Neovim -- with no evidence they had installed a
+-- distribution at all.
+--
+-- NOETHER is noethervim-tableaux's; VIM is the tail of snacks' own art, so
+-- the letterforms match by construction rather than by redrawing them.
+--
+-- 83 columns, which is wider than most defaults: `header` picks the narrow
+-- wordmark below when the window cannot hold it, since a clipped logo reads
+-- worse than a plain one.
+local _wordmark = table.concat({
+	"███╗   ██╗ ██████╗ ███████╗████████╗██╗  ██╗███████╗██████╗ ██╗   ██╗██╗███╗   ███╗",
+	"████╗  ██║██╔═══██╗██╔════╝╚══██╔══╝██║  ██║██╔════╝██╔══██╗██║   ██║██║████╗ ████║",
+	"██╔██╗ ██║██║   ██║█████╗     ██║   ███████║█████╗  ██████╔╝██║   ██║██║██╔████╔██║",
+	"██║╚██╗██║██║   ██║██╔══╝     ██║   ██╔══██║██╔══╝  ██╔══██╗╚██╗ ██╔╝██║██║╚██╔╝██║",
+	"██║ ╚████║╚██████╔╝███████╗   ██║   ██║  ██║███████╗██║  ██║ ╚████╔╝ ██║██║ ╚═╝ ██║",
+	"╚═╝  ╚═══╝ ╚═════╝ ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚═╝╚═╝     ╚═╝",
 }, "\n")
+
+local _wordmark_narrow = table.concat({
+	"",
+	"─── N O E T H E R V I M ───",
+	"",
+}, "\n")
+
+--- The widest wordmark the window can hold. Snacks centres the block and
+--- does not wrap it (`preset.header` is a plain string, read at render), so
+--- anything wider than the window loses its right-hand letters -- on this
+--- one that would leave "NOETHERV". Resolved once, when the spec loads:
+--- the dashboard is a startup surface, and a terminal resized afterwards
+--- has already moved past it.
+local function _header()
+	return vim.o.columns >= 87 and _wordmark or _wordmark_narrow
+end
 
 --- Returns file search in git scope
 ---@param opts table
@@ -130,7 +153,7 @@ return {
 		dashboard = {
 			enabled = vim.g.noethervim_dashboard ~= false,
 			preset = {
-				header = _header,
+				header = _header(),
 				keys = {
 					{ icon = " ", key = "i", desc = "New File (insert)",  action = ":ene | startinsert" },
 					{ icon = " ", key = "e", desc = "New File (normal)",  action = ":ene" },
