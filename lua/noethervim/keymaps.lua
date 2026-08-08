@@ -358,6 +358,10 @@ vim.keymap.set("v", "p", '"_dP', { desc = "paste over (keep register)" })
 -- Inner-line text object: il = between first non-blank and last non-blank char
 vim.keymap.set("x", "il", "g_o^",          { desc = "inner line" })
 vim.keymap.set("o", "il", ":normal vil<CR>", { desc = "inner line" })
+-- The whole line, charwise. `V` and `yy` are linewise, so their register
+-- pastes as a new line; this yanks a line to drop inside another one.
+vim.keymap.set("x", "al", "$o0",           { desc = "around line (charwise)" })
+vim.keymap.set("o", "al", ":normal val<CR>", { desc = "around line (charwise)" })
 
 -- Move block of text (respects indentation)
 vim.keymap.set("v", "<down>", ":m '>+1<CR>gv=gv", { desc = "move block down" })
