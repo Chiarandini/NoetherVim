@@ -259,7 +259,9 @@ return {
         misc.Align,
         misc.QCloseHint,
         misc.FileType,
+        misc.Space,
         ruler.Percentage,
+        misc.Space,
         ruler.Pos,
       }
 
@@ -274,9 +276,17 @@ return {
         misc.FileType,
       }
 
-      local AlphaStatusline = {
+      -- The dashboard has no statusline. Snacks hides the bar entirely with
+      -- `laststatus = 0` while its dashboard is up, but restores that the
+      -- first time another window opens -- open `:help` from the dashboard,
+      -- close it again, and the bar is back with the dashboard still on
+      -- screen. Whatever laststatus says, there is nothing worth reporting
+      -- about a menu, so render an empty bar rather than letting the
+      -- read-only branch below claim it for its `nofile` buftype.
+      local DashboardStatusline = {
         condition = function()
-          return vim.bo.filetype == "alpha"
+          local ft = vim.bo.filetype
+          return ft == "snacks_dashboard" or ft == "alpha"
         end,
         provider = "%=",
         hl = function() return { fg = ctx.colors.text_gray, bg = ctx.colors.bg } end,
@@ -287,7 +297,7 @@ return {
         -- true is used. Think of it as a switch case with breaks.
         fallthrough = false,
 
-        AlphaStatusline,
+        DashboardStatusline,
         QuickfixStatusline,
         SpecialStatusline,
         TerminalStatusline,
