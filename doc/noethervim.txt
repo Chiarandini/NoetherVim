@@ -2032,6 +2032,33 @@ A: Both are managed by Mason, the same as LSP servers. Use `:Mason`
 
    Test adapters pair the same way; see |noethervim-test-adapters|.
 
+                                              *noethervim-formatting-core*
+Q: Which filetypes can I format without enabling anything?~
+A: Thirteen, out of the box and with no bundle: `lua`, `python`, `bib`,
+   `javascript`, `javascriptreact`, `typescript`, `typescriptreact`,
+   `css`, `html`, `json`, `yaml`, `markdown` and `sh`.
+
+   This is deliberate rather than an oversight about where language
+   configuration belongs. Formatting a Python file is something you are
+   entitled to expect from an editor you just installed, so it is core's
+   to provide; a bundle deepens a subject rather than making a common
+   file type work at all. The formatter binaries still come from Mason on
+   first use, so nothing is downloaded for a language you never open.
+
+   To change one, or to add a filetype, override conform in
+   `user/plugins/`. `formatters_by_ft` is a table of arrays, so naming a
+   filetype replaces its list rather than adding to it: >lua
+    -- lua/user/plugins/conform.lua
+    return {
+      { "stevearc/conform.nvim",
+        opts = { formatters_by_ft = {
+          python = { "ruff_format" },   -- replaces black
+          rust   = { "rustfmt" },       -- adds a filetype core does not claim
+        } } },
+    }
+<
+   See |noethervim-user-plugins-arrays| for why the array does not merge.
+
 Q: Does NoetherVim format on save?~
 A: No; auto-formatting is deliberately off. Use `<Leader>ff` for
    explicit formatting (conform.nvim with LSP fallback). To opt into
