@@ -57,7 +57,7 @@ return {
     --     -- (and, for "slant"/"pointy"/"bubbly", an opening endcap on the
     --     -- right ruler block). Default "round" preserves the historical
     --     -- look; "bubbly" rounds both edges; "straight" disables endcaps.
-    --     edge_style = "round",  -- "round" | "slant" | "pointy" | "straight" | "bubbly"
+    --     edge_style = "round",  -- completes; slant has four directions
     --
     --     -- Override entries in the statusline colour table. A `mode_`
     --     -- key moves one mode indicator; a role name (green, orange,

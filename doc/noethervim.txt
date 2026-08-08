@@ -1604,13 +1604,23 @@ styles, an opening endcap on the right ruler block) follows the
 from the Nerd Font private use area, so a Powerline-capable terminal
 font is required.
 
-    `round`     (default) Rounded mode bubble, flush right edge.
-    `slant`     Slanted Powerline endcaps; right ruler also slanted.
-    `pointy`    Triangle endcaps; right ruler gets a triangle opener.
-    `straight`  No endcap glyphs; mode block renders as a plain
-                rectangle, right edge stays flush.
-    `bubbly`    Rounded endcaps on both sides (left mode block and
-                right ruler block).
+    `round`      (default) Rounded mode bubble, flush right edge.
+    `slant`      Slanted endcaps leaning right, so the mode block is a
+                 right-leaning parallelogram; right ruler also slanted.
+    `slant_left` The mirror of it, leaning left.
+    `slant_in`   Edges lean towards each other, making the block a
+                 trapezoid rather than a parallelogram.
+    `slant_out`  Edges lean apart, the other trapezoid.
+    `pointy`     Triangle endcaps; right ruler gets a triangle opener.
+    `straight`   No endcap glyphs; mode block renders as a plain
+                 rectangle, right edge stays flush.
+    `bubbly`     Rounded endcaps on both sides (left mode block and
+                 right ruler block).
+
+    An endcap at a section's left edge is filled on its right, and one at
+    the right edge is filled on its left. Two that lean the same way give a
+    parallelogram, two that lean opposite ways give a trapezoid, which is
+    the whole of the shape space and why the slant family has four members.
 
 Switching styles takes effect on the next Neovim launch (the bar is
 assembled in heirline's `config` callback). Picking an unknown name
