@@ -22,7 +22,8 @@
 --   • texlab:                    LaTeX LSP (Mason-installed only when this bundle is enabled)
 --   • img-clip.nvim:             drag-and-drop / clipboard image paste (<localleader>P)
 --   • snacks-bibtex:             BibTeX citation picker (<c-s-c> in insert mode)
---   • noethervim-tex:            LuaSnip snippets, blink.cmp sources, textobject keymaps
+--   • noethervim-tex:            LuaSnip snippets, blink.cmp sources, textobject keymaps,
+--                                PDF-follows-cursor (<LocalLeader>lf)
 --   • snacks-latex-labels:       label/heading jump (<localleader>w, <localleader>vul/vuh)
 --   • smart-enter.nvim:          <S-CR> continues environments (\\ rows, &= in align, \item)
 --   yP keymap:                  copy compiled PDF to clipboard
@@ -527,9 +528,38 @@ let g:vimtex_compiler_latexmk_engines = {
       -- extra_snippet_paths = {},
       -- textobjects         = true,
       -- accent_spell        = { enabled = true, severity = vim.diagnostic.severity.INFO },
+      -- follow              = { event = "moved", debounce = 150 },  -- false to skip entirely
     },
     config = function(self, opts)
       require("noethervim-tex").setup(opts)
+
+      -- PDF-follows-cursor, off until asked for per buffer. `<localleader>lf`
+      -- sits in vimtex's own `<localleader>l` command namespace, next to `ll`
+      -- compile and `lv` view, because that is what it is -- a third thing to
+      -- do with the viewer.
+      local function bind_follow(buf)
+        local ok, follow = pcall(require, "noethervim-tex.follow")
+        if not ok then return end
+        vim.keymap.set("n", "<localleader>lf", function()
+          local on = follow.toggle(0)
+          vim.notify("PDF follows the cursor: " .. (on and "on" or "off"),
+            vim.log.levels.INFO, { title = "vimtex" })
+        end, { buffer = buf, desc = "[l]atex PDF [f]ollow toggle" })
+      end
+
+      vim.api.nvim_create_autocmd("FileType", {
+        group = vim.api.nvim_create_augroup("noethervim_tex_follow_keys", { clear = true }),
+        pattern = { "tex", "plaintex", "latex" },
+        callback = function(ev) bind_follow(ev.buf) end,
+      })
+
+      -- This spec is `VeryLazy`, so FileType has already fired for the tex
+      -- file that was opened to trigger it. Bind those too, or the key is
+      -- missing in exactly the buffer that caused the plugin to load.
+      for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+        local ft = vim.bo[buf].filetype
+        if ft == "tex" or ft == "plaintex" or ft == "latex" then bind_follow(buf) end
+      end
 
       -- Transitional fallback: older noethervim-tex versions don't
       -- ship plugin/noethervim_tex.lua, so vim.g.loaded_noethervim_tex

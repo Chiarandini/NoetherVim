@@ -763,6 +763,8 @@ Available bundles (grouped by category): ~
     `java`           nvim-jdtls: proper Java LSP (requires special setup).
     `python`         venv-selector.nvim: virtual environment switching.
     `latex`          VimTeX, img-clip, bibtex picker, LaTeX textobjects.
+                     `<LocalLeader>lf` makes the PDF viewer follow the
+                     cursor until pressed again.
                      Requires: latexmk, TeX distribution.
                      For citations, see the `zotero` bundle under writing/.
     `web-dev`        JS/TS template string + inline color preview.
