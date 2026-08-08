@@ -26,20 +26,33 @@ vim.keymap.set("i", "<C-=>",   "<C-r>=",     { desc = "expression register" })
 
 -- Hybrid j/k: visual-line for small hops (natural under wrap), logical +
 -- jumplist mark for big hops (>5) so <C-o>/<C-i> recover the jump.
+--
+-- feedkeys from a plain mapping, NOT `expr`. An expr mapping's return value
+-- still has the typed count applied to it, so building the count into the
+-- string counted it twice: `3j` returned "3gj" and Vim ran "33gj", moving 33
+-- lines. Only counts above 5 escaped, because the `m'` prefix absorbed the
+-- pending count before it could reach the motion. The same collision is
+-- described on `arrow_or_motion` below, which is why that one uses feedkeys;
+-- this is the same fix. Invoking the mapping consumes the count, so what
+-- feedkeys queues carries exactly the one we build.
 local function vline_move(key)
-  local n = vim.v.count
-  if n > 5 then
-    return "m'" .. n .. key       -- set jump mark, then logical-line move
-  elseif n > 0 then
-    return n .. "g" .. key         -- counted visual-line move
-  else
-    return "g" .. key              -- single visual-line hop
+  return function()
+    local n = vim.v.count
+    local keys
+    if n > 5 then
+      keys = "m'" .. n .. key      -- set jump mark, then logical-line move
+    elseif n > 0 then
+      keys = n .. "g" .. key       -- counted visual-line move
+    else
+      keys = "g" .. key            -- single visual-line hop
+    end
+    vim.api.nvim_feedkeys(keys, "n", false)
   end
 end
-vim.keymap.set("n", "j", function() return vline_move("j") end,
-  { expr = true, desc = "visual-line down (jumplist for >5)" })
-vim.keymap.set("n", "k", function() return vline_move("k") end,
-  { expr = true, desc = "visual-line up (jumplist for >5)" })
+vim.keymap.set("n", "j", vline_move("j"),
+  { desc = "visual-line down (jumplist for >5)" })
+vim.keymap.set("n", "k", vline_move("k"),
+  { desc = "visual-line up (jumplist for >5)" })
 
 -- Scroll view without moving cursor
 vim.keymap.set("n", "zv", "zz10<c-e>", { desc = "scroll view down" })
@@ -468,6 +481,12 @@ vim.keymap.set({ "n", "v" }, "<Esc>", function()  -- clear highlights, dismiss n
     require("nvim-dap-virtual-text").refresh()
   end
   vim.cmd("echo ''")
+  -- `:noh` above clears v:hlsearch, which the statusline's search counter
+  -- reads. Nothing else here moves the cursor or changes the mode, so on a
+  -- buffer you are only reading -- help, checkhealth, quickfix -- no redraw
+  -- follows on its own and the stale `3/12` sits there until something
+  -- unrelated forces one.
+  vim.cmd.redrawstatus()
 end, { silent = true })
 
 -- ──────────────────────────────────────────────────────────────
