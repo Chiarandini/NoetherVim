@@ -14,12 +14,22 @@ M.LSPActive = {
     callback = function()
       -- `:LspInfo` was a nvim-lspconfig command and is gone; the built-in
       -- report replaced it. Fall back only if something still defines it.
+      --
+      -- In a float, because every other clickable component opens one, and
+      -- a click that replaces the buffer you were looking at is a click you
+      -- have to undo. `vim.g.health.style` is the supported way to ask for
+      -- it; set around the call rather than globally so a typed
+      -- `:checkhealth` still opens however the user prefers.
       vim.defer_fn(function()
         if vim.fn.exists(":LspInfo") == 2 then
           vim.cmd("LspInfo")
-        else
-          vim.cmd("checkhealth vim.lsp")
+          return
         end
+        local previous = vim.g.health
+        vim.g.health = vim.tbl_extend("force", previous or {}, { style = "float" })
+        local ok, err = pcall(vim.cmd, "checkhealth vim.lsp")
+        vim.g.health = previous
+        if not ok then vim.notify(tostring(err), vim.log.levels.ERROR) end
       end, 100)
     end,
     name = "heirline_LSP",
