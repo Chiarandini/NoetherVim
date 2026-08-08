@@ -1043,6 +1043,11 @@ normal and insert mode, and says so in its title. Snacks also binds `?`,
 but only in normal mode; since pickers open with the prompt in insert
 mode, `?` typed there goes into the query instead.
 
+Where `<CR>` does something other than open what you picked, the prompt
+says which action it is -- `copy` in the registers picker, `git checkout`
+in the branch picker. Pickers that open a file or jump to a line leave the
+prompt bare, since naming the obvious would bury the ones worth reading.
+
 Dismiss the list with `<F1>` again or with `<Esc>`. `<Esc>` closes the
 picker itself only once the list is gone, so with the list open it takes
 two presses to leave.
@@ -1379,8 +1384,8 @@ These keymaps activate only in their respective filetype, except for the
 
     qf (quickfix): ~
     `q`                 Close quickfix window
-    `<CR>`              Open entry and close quickfix
-    `<S-CR>`            Open entry, keep quickfix open
+    `<CR>`              Jump to entry, leave the list open
+    `<S-CR>`            Jump to entry and close the list
     `<C-j>` / `<C-n>`  Navigate down
     `<C-p>`             Navigate up
 
