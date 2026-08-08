@@ -159,7 +159,7 @@ local function layouts_with_help_hint()
 		local out = {}
 		for k, v in pairs(node) do
 			if k == "title" and type(v) == "string" and v:find("{title}", 1, true) then
-				out[k] = v .. "  <f1> keys"
+				out[k] = v .. "  (<f1> help)"
 			else
 				out[k] = patch(v)
 			end
@@ -174,6 +174,53 @@ local function layouts_with_help_hint()
 		patched[name] = patch(preset)
 	end
 	return patched
+end
+
+--- Name what `<CR>` will do, in the prompt, when it is not the obvious
+--- thing.
+---
+--- Pressing enter in a picker is a commitment, and for most of them it is
+--- the guessable one: open the file, jump to the line. For a couple of dozen
+--- it is not -- the registers picker copies, `git_branches` checks out,
+--- `undo` restores -- and there is no way to know before pressing, which
+--- makes those pickers ones you back out of rather than use.
+---
+--- The prompt rather than the title, which already carries the source, the
+--- live flag, the toggles and the help hint. The prompt sits at the point of
+--- commitment, renders in every layout, and is empty space today.
+---
+--- Only when the action is not a jump: labelling 41 file-and-line pickers
+--- "open" would bury the two dozen that say something.
+---
+--- Derived from snacks' own source table rather than listed here, so a
+--- source added or re-pointed upstream is described correctly without an
+--- edit, the same way the completion source reads colorschemes at runtime.
+local function prompts_naming_confirm()
+	--- `item_action` and `jump` are the generic "do the obvious thing"
+	--- actions; `close` as a whole confirm means the picker only shows.
+	local uninformative = { jump = true, item_action = true }
+
+	local function label(confirm)
+		if type(confirm) == "table" then
+			for _, name in ipairs(confirm) do
+				if type(name) == "string" and name ~= "close" then
+					confirm = name
+					break
+				end
+			end
+		end
+		if type(confirm) ~= "string" or uninformative[confirm] then return nil end
+		return (confirm:gsub("_", " "))
+	end
+
+	local ok, sources = pcall(require, "snacks.picker.config.sources")
+	if not ok then return {} end
+	local out = {}
+	for name, src in pairs(sources) do
+		local text = label(src.confirm)
+		if text then out[name] = { prompt = text .. "  " } end
+	end
+	return out
 end
 
 local SearchLeader = require("noethervim.util").search_leader
@@ -546,7 +593,9 @@ return {
 			Snacks.picker.browse({ title = vim.fn.fnamemodify(vim.uv.cwd(), ":~") })
 		end, desc = "file browser" },
 		-- Recent files
-		{ SearchLeader .. "fo", function() Snacks.picker.recent({ title = "Recent Files" })        end, desc = "[f]ind r[e]cent" },
+		{ SearchLeader .. "fo", function() Snacks.picker.recent({ title = "Recent Files" })        end, desc = "[f]ind [o]ld files (recent files)" },
+		-- register (recent deleted)
+		{ SearchLeader .. "fr", function() Snacks.picker.registers({ title = "Recently Deleted" })        end, desc = "[f]ind [r]egisters" },
 		-- Notifications
 		{ SearchLeader .. "fn", function() Snacks.picker.notifications({ title = "Notifications" }) end, desc = "[f]ind [n]otifications" },
 		-- Project files (git root)
@@ -649,6 +698,12 @@ return {
 	},
 	config = function(_, opts)
 		opts.picker.layouts = layouts_with_help_hint()
+		-- `keep`, so a source this file configures above wins over the
+		-- derived prompt rather than being overwritten by it.
+		for name, derived in pairs(prompts_naming_confirm()) do
+			opts.picker.sources[name] =
+				vim.tbl_deep_extend("keep", opts.picker.sources[name] or {}, derived)
+		end
 		require("snacks").setup(opts)
 		-- Register a custom footer section that mirrors M.sections.startup but adds version.
 		-- Must run after snacks is set up so require("snacks.dashboard") resolves.
