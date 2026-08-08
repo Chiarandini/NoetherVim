@@ -55,13 +55,28 @@ return {
 				sh              = { "shfmt" },
 			},
 			-- No format_on_save -- use <Leader>ff for explicit formatting.
+
+			-- Mason packages to fetch eagerly, rather than on first format.
+			-- Only the ones every install needs: core is written in Lua, so
+			-- stylua earns it. `bib` is claimed above but its formatter is
+			-- not here -- a .bib file is not something a user without LaTeX
+			-- opens, so `languages/latex` adds `bibclean` to this list.
+			--
+			-- A list, not a second `config`: lazy keeps only the last config
+			-- function it sees, so a bundle defining one would silently drop
+			-- this whole block. Bundles append with
+			-- `opts = function(_, opts) ... end`, the same way they extend
+			-- `ensure_installed`.
+			mason_install = { "stylua" },
 		},
 		config = function(_, opts)
+			local tools = opts.mason_install or {}
+			opts.mason_install = nil   -- conform would reject the unknown key
 			require("conform").setup(opts)
-			-- Auto-install required formatters via Mason if not already present.
-			local mr = require("mason-registry")
+			local ok_mr, mr = pcall(require, "mason-registry")
+			if not ok_mr then return end
 			mr.refresh(function()
-				for _, tool in ipairs({ "stylua", "bibclean" }) do
+				for _, tool in ipairs(tools) do
 					local ok, pkg = pcall(mr.get_package, tool)
 					if ok and not pkg:is_installed() then
 						pkg:install()

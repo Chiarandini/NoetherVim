@@ -72,6 +72,22 @@ return {
     end,
   },
 
+  -- ── bibclean (Mason install scoped to this bundle) ────────────────────────
+  -- Core claims `bib` in `formatters_by_ft` and leaves the binary to whoever
+  -- owns the subject, which is this bundle: a `.bib` file is not something a
+  -- user without LaTeX opens, so core fetching its formatter on every install
+  -- was a cost nobody else could spend.
+  --
+  -- `opts`, never `config` -- lazy keeps only the last config function, so
+  -- defining one here would replace core's and take its formatter list with
+  -- it. Same reason the treesitter block below says so.
+  { "stevearc/conform.nvim",
+    opts = function(_, opts)
+      opts.mason_install = opts.mason_install or {}
+      vim.list_extend(opts.mason_install, { "bibclean" })
+    end,
+  },
+
   -- ── treesitter: latex parser + theorem highlighting ───────────────────────
   -- Uses opts (merged by lazy) and init (runs before load, just registers
   -- an autocmd). NEVER define `config` here -- lazy overwrites the core
