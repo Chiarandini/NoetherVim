@@ -1,10 +1,12 @@
 ---@bundle tableaux
 ---@desc animated mathematical dashboard scenes
----@about Thirty-one dashboard scenes for snacks.nvim: number-theoretic
+---@about Enabling it puts a scene on the dashboard straight away, picked at
+---       random until you choose one with `<space>ud`. Thirty-one in all,
+---       covering number-theoretic
 ---       processes such as the Sieve of Eratosthenes, Collatz and pi
----       convergents; dynamical systems including Conway's Game of Life and
----       the Lorenz attractor; topological objects; and contemplative time-
----       of-day scenes.
+---       convergents, dynamical systems including Conway's Game of Life and
+---       the Lorenz attractor, topological objects, and contemplative
+---       time-of-day scenes.
 ---@requires none
 -- NoetherVim bundle: Tableaux
 -- Enable with: { import = "noethervim.bundles.ui.tableaux" }
@@ -40,6 +42,21 @@ return {
 		priority = 900,     -- after snacks.nvim (1000), before most other UI
 		opts     = {},
 		config   = function(_, opts)
+			-- The plugin renders a tableau only once one has been chosen and
+			-- persisted, so on a fresh enable it does nothing and the dashboard
+			-- looks exactly as it did before -- which reads as the bundle not
+			-- working rather than as waiting for a choice.
+			--
+			-- Enabling a bundle whose whole purpose is dashboard scenes IS the
+			-- choice to have them, so seed one when no pick exists yet. Only
+			-- when the file is absent or empty: a real pick, including a later
+			-- decision to go back to the plain header, is never overwritten.
+			local state = require("noethervim-tableaux.state")
+			state.set_path(opts.state_file
+				or (vim.fn.stdpath("state") .. "/user_dashboard_variant"))
+			local chosen = state.read()
+			if not chosen or chosen == "" then state.write("random") end
+
 			require("noethervim-tableaux").setup(opts)
 		end,
 	},
