@@ -98,10 +98,17 @@ jobs:
 
           haystack=$(grep -rh 'keymap\.set' lua/ | norm)
 
+          # A here-string, not `printf | grep -q`. `grep -q` exits on its
+          # first match and closes the pipe, so printf takes SIGPIPE; under
+          # `pipefail` the pipeline then reports the write error rather than
+          # grep's success, and `if !` reads that as "not bound". It only
+          # fires when the haystack is large enough that printf is still
+          # writing when grep leaves, which is why it passed locally and
+          # failed on the runner, on whichever key happened to lose the race.
           missing=0
           while IFS= read -r lhs; do
             [ -n "$lhs" ] || continue
-            if ! printf '%s\n' "$haystack" | grep -qF -- ", \"$lhs\""; then
+            if ! grep -qF -- ", \"$lhs\"" <<<"$haystack"; then
               echo "cited in $page but not bound in lua/: $lhs"
               missing=$((missing + 1))
             fi
