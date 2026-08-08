@@ -315,13 +315,28 @@ M.QCloseHint = {
 --- what the bar can usefully say.
 M.QuickfixInfo = {
   init = function(self)
-    local loc = vim.fn.getwininfo(vim.api.nvim_get_current_win())[1].loclist == 1
-    local list = loc and vim.fn.getloclist(0, { title = 0, size = 0, idx = 0 })
+    -- The window being drawn, not the focused one. A statusline is rendered
+    -- per window, and `nvim_get_current_win()` during that render answers
+    -- for whichever window has focus -- so an unfocused list reported the
+    -- cursor of the window you were actually in.
+    local win  = tonumber(vim.g.statusline_winid) or vim.api.nvim_get_current_win()
+    if not vim.api.nvim_win_is_valid(win) then win = vim.api.nvim_get_current_win() end
+    local info = vim.fn.getwininfo(win)[1]
+    local loc  = info.loclist == 1
+    local list = loc and vim.fn.getloclist(win, { title = 0, size = 0, idx = 0 })
                      or vim.fn.getqflist({ title = 0, size = 0, idx = 0 })
     self.kind  = loc and "location" or "quickfix"
     self.title = list.title
     self.size  = list.size or 0
-    self.idx   = list.idx or 0
+
+    -- `idx` is where the jump list is, which only moves on :cnext / <CR>.
+    -- Inside the list window the number people read is the entry under the
+    -- cursor, and one line per entry makes that the cursor line.
+    if info.quickfix == 1 then
+      self.idx = vim.api.nvim_win_get_cursor(win)[1]
+    else
+      self.idx = list.idx or 0
+    end
   end,
   {
     provider = function(self) return " " .. self.kind .. " " end,
