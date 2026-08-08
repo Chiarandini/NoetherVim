@@ -18,8 +18,16 @@ local _busy_overrides = {}
 local function utf8(b1, b2, b3) return string.char(b1, b2, b3) end
 local round_left  = utf8(0xee, 0x82, 0xb6) -- U+E0B6 round opener
 local round_right = utf8(0xee, 0x82, 0xb4) -- U+E0B4 round closer
-local slant_left  = utf8(0xee, 0x82, 0xba) -- U+E0BA lower-right triangle (slant opener)
-local slant_right = utf8(0xee, 0x82, 0xbc) -- U+E0BC upper-left triangle  (slant closer in the same direction, so the mode block reads as a right-leaning parallelogram instead of a trapezoid)
+-- The four Powerline slant glyphs. An OPENER sits at a section's left edge
+-- with its filled half on the right; a CLOSER sits at the right edge with
+-- its filled half on the left. Pairing an opener with the closer that leans
+-- the same way gives a parallelogram; pairing it with the other one gives a
+-- trapezoid. That is the whole of the shape space, and it is why there are
+-- exactly four slant styles below.
+local slant_open_r  = utf8(0xee, 0x82, 0xba) -- U+E0BA lower-right triangle
+local slant_close_r = utf8(0xee, 0x82, 0xbc) -- U+E0BC upper-left triangle
+local slant_open_l  = utf8(0xee, 0x82, 0xbe) -- U+E0BE upper-right triangle
+local slant_close_l = utf8(0xee, 0x82, 0xb8) -- U+E0B8 lower-left triangle
 local point_left  = utf8(0xee, 0x82, 0xb2) -- U+E0B2 left hard divider (pointy chevron opens section)
 local point_right = utf8(0xee, 0x82, 0xb0) -- U+E0B0 right hard divider (pointy chevron closes section)
 
@@ -34,12 +42,22 @@ local point_right = utf8(0xee, 0x82, 0xb0) -- U+E0B0 right hard divider (pointy 
 --   end_left -- opening endcap rendered immediately before the right-edge
 --     ruler block. nil means the right edge stays flush (square) with the
 --     screen, matching the historical NoetherVim look.
+--
+-- The slant family, by the shape the mode block ends up as:
+--   slant       both edges lean right -- a right-leaning parallelogram
+--   slant_left  both edges lean left  -- the mirror of it
+--   slant_in    edges lean towards each other -- a trapezoid
+--   slant_out   edges lean apart      -- the other trapezoid
+-- `slant` keeps its meaning, so an existing config is unaffected.
 local edge_styles = {
-  round    = { start_left = round_left, start_right = round_right, mid_left = nil,         end_left = nil },
-  slant    = { start_left = slant_left, start_right = slant_right, mid_left = slant_left,  end_left = slant_left },
-  pointy   = { start_left = point_left, start_right = point_right, mid_left = point_left,  end_left = point_left },
-  straight = { start_left = "",         start_right = "",          mid_left = nil,         end_left = nil },
-  bubbly   = { start_left = round_left, start_right = round_right, mid_left = round_left,  end_left = round_left },
+  round      = { start_left = round_left,   start_right = round_right,   mid_left = nil,           end_left = nil },
+  slant      = { start_left = slant_open_r, start_right = slant_close_r, mid_left = slant_open_r,  end_left = slant_open_r },
+  slant_left = { start_left = slant_open_l, start_right = slant_close_l, mid_left = slant_open_l,  end_left = slant_open_l },
+  slant_in   = { start_left = slant_open_r, start_right = slant_close_l, mid_left = slant_open_r,  end_left = slant_open_r },
+  slant_out  = { start_left = slant_open_l, start_right = slant_close_r, mid_left = slant_open_l,  end_left = slant_open_l },
+  pointy     = { start_left = point_left,   start_right = point_right,   mid_left = point_left,    end_left = point_left },
+  straight   = { start_left = "",           start_right = "",            mid_left = nil,           end_left = nil },
+  bubbly     = { start_left = round_left,   start_right = round_right,   mid_left = round_left,    end_left = round_left },
 }
 
 --- Configure statusline overrides. Called once during `noethervim.setup()`
