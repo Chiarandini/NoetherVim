@@ -61,16 +61,14 @@ end
 ---   added `Grbner`     ->  GRBNER, Grbner's good;      grbner      BAD
 ---
 --- So capitalisation is already handled upward from a lowercase entry, and
---- the possessive is already handled for a capitalised one. The two gaps
---- are the possessive of a lowercase word, and the lowercase form of a word
---- added while capitalised -- which is the common case for a term you first
---- meet at the start of a sentence.
+--- the possessive is already handled for a capitalised one. The one gap
+--- worth closing automatically is the possessive of a lowercase word.
 ---
---- Adding the lowercase form does mean a genuinely lowercase use stops being
---- flagged, which for a proper noun is a small loss of strictness. It is the
---- lesser cost: being told `bialgebra` is wrong for the rest of the document
---- because you first wrote it after a full stop is the friction this exists
---- to remove.
+--- The lowercase form of a capitalised entry is deliberately NOT added.
+--- It would help a common noun first met at the start of a sentence, but it
+--- would also stop a proper noun being flagged in lowercase, and most words
+--- worth adding by hand are names. Add the lowercase form yourself when you
+--- want it; `zg` on it will pick up its possessive too.
 ---
 ---@param word string
 ---@param bang boolean  true for the `!` (session-only) variants
@@ -90,12 +88,6 @@ function M.add_word(word, bang)
 
   want(word)
   want(word .. "'s")
-
-  local lower = word:lower()
-  if lower ~= word then
-    want(lower)
-    want(lower .. "'s")
-  end
 
   local added = {}
   for _, form in ipairs(forms) do
