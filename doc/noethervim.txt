@@ -909,6 +909,24 @@ via opts override in `user/plugins/`: >lua
     } }
 <
                                                    *noethervim-snippet-stop*
+                                                    *noethervim-spell-add*
+Adding a word: ~
+
+`zg` adds the word under the cursor to your spellfile, and with it the
+forms you would otherwise come back and add one at a time: the possessive,
+and -- for a word you added while it was capitalised -- the lowercase form.
+`zG` does the same for this session only. Both report what they wrote, and
+adding a word twice does nothing.
+
+Vim already accepts the capitalised and all-caps forms of a lowercase
+entry, so those are never written. The lowercase form of a capitalised
+entry is, which does mean a lowercase use of a proper noun stops being
+flagged; the alternative is being told a term is misspelled for the rest of
+a document because you first wrote it after a full stop.
+
+`<C-l>` in insert mode replaces the nearest misspelling behind the cursor
+with the first suggestion, leaving the cursor where you were typing.
+
 Getting out of a snippet: ~
 
     `<C-u>`             Stop every snippet in the buffer (insert, select)

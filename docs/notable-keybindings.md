@@ -222,6 +222,9 @@ effortless as possible outweighs the default`;`. `:help noethervim-semicolon` gi
 - **`-`**: highlights every instance of the word under the cursor and reports
   how many there are, leaving the cursor where it was. `*` does the highlight
   but moves to the next match.
+- `<c-l>` in insert mode in a buffer with writing (latex, markdown, etc.) will auto-fix the last
+  spelling mistake: if you wrote `helllo world |` and press `<c-l>` when at `|` then it will give you
+  `hello world |` and bring you back to the same cursor position.
 - **`[f` and `]f`**: previous and next file in the current directory,
   alphabetically, wrapping at the ends. Useful for numbered or dated files:
   chapters, notes, migrations.

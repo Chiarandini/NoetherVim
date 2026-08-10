@@ -34,7 +34,7 @@ plugin docs this guide links to.
 One thing worth knowing before the first launch: lazy.nvim bootstraps itself,
 pulls plugins, compiles treesitter parsers, and installs the LaTeX language
 server through Mason once you enable the bundle below. The first launch takes
-at most a minute, usually no more than 5 seconds, and subsequent ones are
+at most a minute, usually no more than 10 seconds, and subsequent ones are
 usually under 50ms.
 
 ## 2. Enabling the math bundles

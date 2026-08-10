@@ -362,8 +362,20 @@ local function apply_writing_profile(buf)
     vim.bo[buf].formatoptions = vim.bo[buf].formatoptions .. "t"
   end
   if not vim.b[buf].noethervim_writing_keymap then
-    vim.keymap.set("i", "<c-l>", "<c-g>u<Esc>[s1z=`]a<c-g>u",
+    -- `<Cmd>` runs the fix without leaving insert mode, so the cursor never
+    -- takes the trip out and back that the old <Esc>...`]a sequence relied
+    -- on. `<c-g>u` either side keeps the correction its own undo step.
+    vim.keymap.set("i", "<c-l>",
+      "<c-g>u<Cmd>lua require('noethervim.util.spell').fix_previous()<CR><c-g>u",
       { buffer = buf, silent = true, desc = "fix spelling" })
+    -- Adding a word also adds the forms you will go on to write; see
+    -- util/spell.lua for which, and why those.
+    vim.keymap.set("n", "zg", function()
+      require("noethervim.util.spell").add_under_cursor(false)
+    end, { buffer = buf, desc = "add word to spellfile (with variants)" })
+    vim.keymap.set("n", "zG", function()
+      require("noethervim.util.spell").add_under_cursor(true)
+    end, { buffer = buf, desc = "add word for this session (with variants)" })
     vim.b[buf].noethervim_writing_keymap = true
   end
   for _, win in ipairs(vim.fn.win_findbuf(buf)) do
