@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# Run the type check CI runs, before the push rather than after it.
+#
+# Why pre-push and not pre-commit: a round of work here is several commits
+# and one push, CI fires on the push, and the check is ~2.5s over 145 files.
+# On pre-commit that is paid per commit to catch a failure that can only
+# surface at push time, and it taxes the "commit now, tidy later" flow.
+#
+# Blocks on failure, because a warning nobody is stopped by is one that ends
+# up in CI anyway. `git push --no-verify` skips it when you mean to.
+#
+# Install (once per clone):
+#   git config core.hooksPath tools/hooks
+set -euo pipefail
+
+repo="$(git rev-parse --show-toplevel)"
+
+if ! command -v lua-language-server >/dev/null 2>&1; then
+	echo "pre-push: lua-language-server not on PATH, skipping the type check." >&2
+	echo "          CI still runs it; install it to catch failures locally." >&2
+	exit 0
+fi
+
+echo "pre-push: type-checking $(basename "$repo") ..."
+
+# --check_format=pretty matches the CI invocation exactly, so what you read
+# here is what the workflow log will say.
+output="$(lua-language-server \
+	--check_format=pretty \
+	--check "$repo/." \
+	--configpath="$repo/.luarc.json" \
+	--checklevel=Warning 2>&1)" || true
+
+if printf '%s\n' "$output" | grep -q "no problems found"; then
+	echo "pre-push: no problems found."
+	exit 0
+fi
+
+# The progress meter is carriage-return separated and shares a line with the
+# first diagnostic, so split on \r before filtering or the bars come through
+# attached to the output that matters.
+printf '%s\n' "$output" \
+	| tr '\r' '\n' \
+	| grep -vE '^[[:space:]]*(Initializing \.\.\.)?[[:space:]]*(>+=*[[:space:]]+[0-9]+/[0-9]+.*)?[[:space:]]*$' >&2
+cat >&2 <<-EOF
+
+	pre-push: the type check failed, and CI will fail the same way.
+
+	Re-run it yourself with:
+	  lua-language-server --check_format=pretty --check . \\
+	    --configpath=.luarc.json --checklevel=Warning
+
+	Push anyway with:  git push --no-verify
+EOF
+exit 1
