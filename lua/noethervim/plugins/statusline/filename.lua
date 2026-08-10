@@ -424,8 +424,11 @@ M.OilBuffer = {
       local buf_name = vim.api.nvim_buf_get_name(0)
       local oil_prefix = "oil:///"
       local path = string.sub(buf_name, #oil_prefix + 1)
+      -- The filesystem root is `oil:///`, which leaves nothing after the
+      -- prefix and no name to match -- so the whole statusline crashed with
+      -- a concat-nil the moment you browsed to `/`. Root is its own name.
       local dir_name = string.match(path, "([^/]+)/?$")
-      return dir_name .. "/"
+      return dir_name and (dir_name .. "/") or "/"
     end,
   },
   hl = function() return { fg = ctx.colors.text_gray } end,
