@@ -67,10 +67,11 @@ project/
     └── commutative-square.pdf
 ```
 
-Source files sit one level down, so figure paths are `../images/...`, which
-is what the `FIG` snippet defaults to. If your images sit beside your
-sources, that default is wrong for you and the snippet needs changing --
-set `figure_folders` on the plugin rather than editing the snippet.
+Source files sit one level down, so figure paths are `../images/...`. The
+`FIG` snippet works this out rather than assuming it: it offers whichever of
+`figure_folders` actually exists, beside the document or one level up, and
+the offered path is still an editable field. Name your own folders with
+`figure_folders` if neither default matches.
 
 Figures are compiled separately as `standalone` documents where they are
 expensive -- TikZ diagrams that would otherwise be rebuilt on every run of
