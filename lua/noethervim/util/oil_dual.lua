@@ -52,6 +52,7 @@ local function link(a, b)
           end)
         end
       end)
+      M._pair = nil
       return true -- one-shot; the pair is gone either way
     end,
   })
@@ -103,12 +104,43 @@ end
 --- The new pane matches the shape of the one you were in: a float begets two
 --- floats, a normal window begets a vertical split. Mixing them would leave
 --- a float covering the split it was supposed to sit beside.
+--- The pair currently open, so `gV` can toggle rather than stack panes.
+---@type integer[]|nil
+M._pair = nil
+
+--- True when `win` belongs to the live pair.
+local function in_pair(win)
+  if not M._pair then return false end
+  for _, w in ipairs(M._pair) do
+    if w == win and vim.api.nvim_win_is_valid(w) then return true end
+  end
+  return false
+end
+
+--- Leave dual-pane mode: close one pane and let `link` take the other with
+--- it, which is the same path `q` uses.
+local function close_pair()
+  local pair = M._pair
+  M._pair = nil
+  if not pair then return end
+  for _, w in ipairs(pair) do
+    if vim.api.nvim_win_is_valid(w) then
+      pcall(vim.api.nvim_win_close, w, true)
+      return
+    end
+  end
+end
+
 function M.open()
   local oil = require("oil")
+  local cur = vim.api.nvim_get_current_win()
+
+  -- Pressing it again leaves, rather than opening a third pane beside the
+  -- two already there.
+  if in_pair(cur) then return close_pair() end
+
   local dir = oil.get_current_dir()
   if not dir then return end
-
-  local cur = vim.api.nvim_get_current_win()
 
   if not is_float(cur) then
     -- Window case: a plain vsplit is the whole of it, and Oil's own
@@ -118,6 +150,7 @@ function M.open()
     local right = vim.api.nvim_get_current_win()
     link(cur, right)
     bind(cur, right)
+    M._pair = { cur, right }
     return
   end
 
@@ -149,6 +182,7 @@ function M.open()
 
     link(wins[1], wins[2])
     bind(wins[1], wins[2])
+    M._pair = { wins[1], wins[2] }
     -- Land in the left pane: it is the one you were looking at, and reading
     -- left to right is the direction the copy usually goes.
     if vim.api.nvim_win_is_valid(wins[1]) then

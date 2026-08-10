@@ -6,7 +6,7 @@
 --   gd          Toggle detail view (adds permissions to default size + mtime)
 --   gf          Fuzzy find in current directory
 --   gG          Live grep in current directory
---   gV          Second Oil pane beside this one; <C-h>/<C-l> switch, q leaves
+--   gV          Second Oil pane beside this one; <C-h>/<C-l> switch, gV/q leave
 --   gX          Open directory in system file browser
 --   gS          Create symlink in current directory
 --   gz          Zip entry under cursor (normal) or selected entries (visual)

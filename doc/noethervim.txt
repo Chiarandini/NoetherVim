@@ -1420,7 +1420,7 @@ These keymaps activate only in their respective filetype, except for the
     `gV`                Second pane beside this one, for moving files
                         between directories. Both open where you are;
                         navigate each with Oil as usual. `<C-h>` / `<C-l>`
-                        switch panes, `q` leaves the pair.
+                        switch panes, `q` or `gV` again leaves the pair.
                         A float gives two floats and a split gives two
                         splits, so the pair matches what you were in.
                         To copy: yank an entry's line in one pane, put it
