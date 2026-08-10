@@ -365,8 +365,15 @@ vim.keymap.set("v", "j", "gj", { desc = "visual-line down" })
 vim.keymap.set("v", "k", "gk", { desc = "visual-line up" })
 vim.keymap.set("v", ";", ":",    { desc = "command-line" })
 
--- Paste over selection without polluting unnamed register
-vim.keymap.set("v", "p", '"_dP', { desc = "paste over (keep register)" })
+-- Paste over a selection without the replaced text landing in a register.
+--
+-- Neovim's own visual `P` already does exactly this, so `p` is aliased to it
+-- rather than reimplemented. The `"_dP` idiom this replaces was written for
+-- Vim before `v_P` existed, and it is wrong at the end of a line: `"_d` on
+-- the last word leaves the cursor on the character before it, so `P` pasted
+-- one column early -- `alpha beta gamma` became `alpha betaX ` instead of
+-- `alpha beta X`.
+vim.keymap.set("v", "p", "P", { desc = "paste over (keep register)" })
 
 -- Inner-line text object: il = between first non-blank and last non-blank char
 vim.keymap.set("x", "il", "g_o^",          { desc = "inner line" })
@@ -408,13 +415,16 @@ vim.keymap.set("n",          "<leader>p", '"*p', { desc = "paste from clipboard"
 vim.keymap.set("n",          "<leader>P", '"*P', { desc = "paste before from clipboard" })
 vim.keymap.set("n",          "<leader>Y", '"*yy', { desc = "yank line to clipboard" })
 
--- Visual paste variants: keep BOTH the unnamed register and clipboard pristine
-vim.keymap.set("v", "<leader>p", '"_d"*P', { desc = "paste clipboard (keep registers)" })
-vim.keymap.set("v", "<leader>P", '"_d"*P', { desc = "paste clipboard (keep registers)" })
+-- Visual paste variants: keep BOTH the unnamed register and the clipboard
+-- pristine. `"*P` over a selection, for the same reason as `p` above -- the
+-- register prefix composes with `v_P`, so this needs no delete step and gets
+-- end-of-line right.
+vim.keymap.set("v", "<leader>p", '"*P', { desc = "paste clipboard (keep registers)" })
+vim.keymap.set("v", "<leader>P", '"*P', { desc = "paste clipboard (keep registers)" })
 
 -- Visual quick shortcuts (post-selection)
-vim.keymap.set("v", "Y", '"*y',    { desc = "yank to clipboard" })
-vim.keymap.set("v", "P", '"_d"*P', { desc = "paste clipboard (keep registers)" })
+vim.keymap.set("v", "Y", '"*y', { desc = "yank to clipboard" })
+vim.keymap.set("v", "P", '"*P', { desc = "paste clipboard (keep registers)" })
 
 -- ──────────────────────────────────────────────────────────────
 --  Select mode
