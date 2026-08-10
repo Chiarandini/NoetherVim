@@ -130,7 +130,12 @@ end
 --- some earlier one is too. Written once here so the two callers cannot
 --- drift apart again.
 ---
----@param specs { value: fun(self:table):integer, text: fun(self:table, n:integer):string, hl: fun():table }[]
+---@class noethervim.Counter
+---@field value fun(self: table): integer     how many, read off the component's `self`
+---@field text  fun(self: table, n: integer): string   how to render a non-zero count
+---@field hl    fun(): table                  heirline highlight spec for this counter
+---
+---@param specs noethervim.Counter[]
 ---@return table  a heirline component whose children are the counters
 function M.joined_counters(specs)
   local out = {}
