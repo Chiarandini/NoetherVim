@@ -2,6 +2,7 @@
 -- Open with: <C-w><C-o> (float) or :Oil (replace buffer)
 --
 -- Custom keymaps (in addition to Oil defaults -- press g? inside Oil):
+--   <C-p>       Preview the entry under the cursor, following the cursor
 --   gd          Toggle detail view (adds permissions to default size + mtime)
 --   gf          Fuzzy find in current directory
 --   gG          Live grep in current directory

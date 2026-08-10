@@ -1411,6 +1411,10 @@ These keymaps activate only in their respective filetype, except for the
 
     oil (file explorer, `<C-w><C-o>` or `:Oil`): ~
     `g?`                Show all Oil keymaps (including defaults)
+    `<C-p>`             Preview the entry under the cursor in a split, and
+                        keep it in step as you move. Press it again to
+                        close. The split side follows the window shape;
+                        set `preview_split` in a user override to pin it.
     `gf`                Fuzzy find files in current directory
     `gG`                Live grep in current directory
     `gV`                Pick destination, open dual-pane float (q closes both)
