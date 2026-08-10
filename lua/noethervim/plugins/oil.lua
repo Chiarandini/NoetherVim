@@ -6,7 +6,7 @@
 --   gd          Toggle detail view (adds permissions to default size + mtime)
 --   gf          Fuzzy find in current directory
 --   gG          Live grep in current directory
---   gV          Pick destination and open dual-pane float (q closes both)
+--   gV          Second Oil pane beside this one; <C-h>/<C-l> switch, q leaves
 --   gX          Open directory in system file browser
 --   gS          Create symlink in current directory
 --   gz          Zip entry under cursor (normal) or selected entries (visual)
@@ -626,71 +626,8 @@ return {
 					end,
 				},
 				["gV"] = {
-					desc = "pick destination and split",
-					callback = function()
-						local oil = require("oil")
-						local dir = oil.get_current_dir()
-						if not dir then return end
-						local is_float = vim.api.nvim_win_get_config(0).relative ~= ""
-						if is_float then oil.close() end
-						vim.schedule(function()
-							require("snacks").picker({
-								title = "Split Oil: Pick Destination",
-								cwd = dir,
-								finder = "proc",
-								cmd = "fd",
-								args = { "--type", "d", "--hidden", "--exclude", ".git" },
-								format = "file",
-								show_empty = true,
-								transform = function(item)
-									item.cwd = dir
-									item.file = item.text
-									item.dir = true
-								end,
-								confirm = function(picker)
-									local item = picker:current()
-									if not item then return end
-									picker:close()
-									local dest = item.file
-									local is_abs = dest:sub(1, 1) == "/" or dest:match("^%a:[/\\]") ~= nil
-									if not is_abs then dest = vim.fs.joinpath(dir, dest) end
-									vim.schedule(function()
-										local total_w = math.floor(vim.o.columns * 0.8)
-										local total_h = math.floor(vim.o.lines * 0.7)
-										local row     = math.floor((vim.o.lines   - total_h) / 2)
-										local col0    = math.floor((vim.o.columns - total_w) / 2)
-										local half_w  = math.floor((total_w - 1) / 2)
-										-- Left pane: source dir
-										local lbuf = vim.api.nvim_create_buf(false, true)
-										local lwin = vim.api.nvim_open_win(lbuf, true, {
-											relative = "editor", style = "minimal", border = "rounded",
-											row = row, col = col0, width = half_w, height = total_h,
-										})
-										oil.open(dir)
-										-- Right pane: destination dir
-										local rbuf = vim.api.nvim_create_buf(false, true)
-										local rwin = vim.api.nvim_open_win(rbuf, true, {
-											relative = "editor", style = "minimal", border = "rounded",
-											row = row, col = col0 + half_w + 1, width = half_w, height = total_h,
-										})
-										oil.open(dest)
-										-- q closes both floats
-										local function close_both()
-											for _, w in ipairs({ lwin, rwin }) do
-												if vim.api.nvim_win_is_valid(w) then
-													vim.api.nvim_win_close(w, true)
-												end
-											end
-										end
-										for _, w in ipairs({ lwin, rwin }) do
-											local buf = vim.api.nvim_win_get_buf(w)
-											vim.keymap.set("n", "q", close_both, { buf = buf })
-										end
-									end)
-								end,
-							})
-						end)
-					end,
+					desc = "second pane beside this one (dual-pane)",
+					callback = function() require("noethervim.util.oil_dual").open() end,
 				},
 				["g."] = { "actions.toggle_hidden", mode = "n" },
 				["g\\"] = { "actions.toggle_trash", mode = "n" },
