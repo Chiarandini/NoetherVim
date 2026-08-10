@@ -10,6 +10,8 @@ The distro is opinionated, but anything and everything can be overridden through
 
 It is named after [Emmy Noether](https://en.wikipedia.org/wiki/Emmy_Noether), whose name also happens to contain *nvim* - *noether**Vim***.
 
+The documentation lives at **[nathanaelsrawley.com/noethervim](https://nathanaelsrawley.com/noethervim/)** - the same guides as `docs/`, plus the full `:help noethervim` reference rendered as a searchable page. This README covers installing and updating; everything about using the editor is there or in `:help`.
+
 
 > [!NOTE]
 > NoetherVim is in **alpha**. The core is stable for daily use, but what counts as a "default" vs. an "overridable" option is still being refined. These choices grew out of my Neovim use and represent my best idea of good, agnostic defaults. If you think there are better choices, [open an issue](https://github.com/Chiarandini/NoetherVim/issues) and we can address it there.
