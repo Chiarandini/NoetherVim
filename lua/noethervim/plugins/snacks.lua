@@ -200,6 +200,25 @@ local function prompts_naming_confirm()
 	--- actions; `close` as a whole confirm means the picker only shows.
 	local uninformative = { jump = true, item_action = true }
 
+	--- Sources whose action is worth naming but whose name is not.
+	---
+	--- Deriving from snacks' own table covers the two dozen that name their
+	--- action honestly, and misses the ones that route through the generic
+	--- `item_action` dispatcher or through a function we wrote ourselves --
+	--- neither of which has a name to read. `undo` is the case that matters:
+	--- `<CR>` there restores a buffer state, which is neither a jump nor
+	--- guessable, and it said nothing at all.
+	---
+	--- This is the small version of the "actions should carry their own
+	--- name" idea. Keeping it to a table here, rather than reshaping snacks'
+	--- action objects, means the fix lives entirely in our layer and a
+	--- source that starts naming itself upstream simply stops needing an
+	--- entry.
+	local named = {
+		undo          = "restore",
+		notifications = "read",
+	}
+
 	local function label(confirm)
 		if type(confirm) == "table" then
 			for _, name in ipairs(confirm) do
@@ -217,8 +236,12 @@ local function prompts_naming_confirm()
 	if not ok then return {} end
 	local out = {}
 	for name, src in pairs(sources) do
-		local text = label(src.confirm)
+		local text = named[name] or label(src.confirm)
 		if text then out[name] = { prompt = text .. "  " } end
+	end
+	-- Sources this file defines itself are not in snacks' table at all.
+	for name, text in pairs(named) do
+		if not out[name] then out[name] = { prompt = text .. "  " } end
 	end
 	return out
 end
