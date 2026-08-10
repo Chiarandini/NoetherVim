@@ -135,14 +135,30 @@ listed here because the two settings only make sense together.
 
 ## What this means for the snippets
 
-The bundle's LaTeX snippets divide into three:
+The bundle's LaTeX snippets divide into three, and two of them are switches:
 
-- Ones that work anywhere -- fractions, sectioning, `\textbf`, alignment.
-  Nothing below matters for these.
-- Ones that expect the preamble above -- `:defn`, `:prop`, `:lem`, and the
-  figure snippets. Useful if you adopt the convention, a trap if you do not.
-- Ones that are simply one person's shorthand -- `wlog`, `tfae`, `awsts`,
-  `vsp`. Harmless, and probably not yours.
+- **On always** -- fractions, sectioning, `\textbf`, alignment, the
+  environment wrappers, the preamble skeletons. Nothing on this page matters
+  for these; they work in any document.
+- **`conventions`** -- the theorem family, in the two-argument form with an
+  `\index` entry. Off by default, because `\begin{defn}{a}{b}` does not
+  compile against a preamble that has not declared it. Turn it on once you
+  have run `:thmset`.
+- **`acronyms`** -- the prose shorthand. Off by default for a different
+  reason: it has no dependency at all, it is simply one person's vocabulary.
+
+```lua
+-- lua/user/plugins/noethervim-tex.lua
+return {
+  { "Chiarandini/NoetherVim-Tex",
+    opts = { snippets = { conventions = true, acronyms = true } } },
+}
+```
+
+The figure snippet is the case that used to be a trap and is now not a
+switch: `FIG` reads `figure_folders` and offers whichever of them exists
+beside your document or one level up, so it fits either layout instead of
+assuming this one.
 
 `<Space>es` opens the snippet files, with the ones a plugin ships marked
 read-only and a route to start your own for the same filetype. Reading how
