@@ -6,91 +6,38 @@ local conditions = require("heirline.conditions")
 
 local M = {}
 
-local diagWithIcons = {
-  {
-    provider = icons.diagnostics .. "(",
-  },
-  { -- ERRORS
-    provider = function(self)
-      -- 0 is just another output, we can decide to print it or not!
-      return self.errors > 0 and (self.error_icon .. " " .. self.errors)
-    end,
-    hl = function() return { fg = ctx.colors.diag_error } end,
-  },
-  {
-    condition = function(self)
-      -- something to the right of errors
-      return self.errors > 0 and (self.warnings > 0 or self.info > 0 or self.hints > 0)
-    end,
-    provider = " ",
-  },
-  { -- WARNINGS
-    provider = function(self)
-      return self.warnings > 0 and (self.warn_icon .. " " .. self.warnings)
-    end,
-    hl = function() return { fg = ctx.colors.diag_warn } end,
-  },
-  {
-    condition = function(self)
-      return (self.errors > 0 or self.warnings > 0) and (self.info > 0 or self.hints > 0)
-    end,
-    provider = " ",
-  },
-  { -- INFO
-    provider = function(self)
-      return self.info > 0 and (self.info_icon .. " " .. self.info)
-    end,
-    hl = function() return { fg = ctx.colors.diag_info } end,
-  },
-  {
-    condition = function(self)
-      return (self.errors > 0 or self.warnings > 0 or self.info > 0) and self.hints > 0
-    end,
-    provider = " ",
-  },
-  { -- HINT
-    provider = function(self)
-      return self.hints > 0 and (self.hint_icon .. " " .. self.hints)
-    end,
-    hl = function() return { fg = ctx.colors.diag_hint } end,
-  },
-  {
-    provider = ")",
-  },
-}
+--- The four severity counters, in severity order. `with_icons` picks
+--- between `E 3` and a bare `3`; the flexible parent below renders the
+--- icon form and falls back to the bare one when the bar runs short.
+---
+--- Separators come from `ctx.joined_counters`, which is also what the git
+--- counters use -- see the note there for the spacing this gets right.
+local function severities(with_icons)
+  local function counter(key, icon_key, colour)
+    return {
+      value = function(self) return self[key] or 0 end,
+      text  = function(self, n)
+        return with_icons and (self[icon_key] .. " " .. n) or tostring(n)
+      end,
+      hl    = function() return { fg = ctx.colors[colour] } end,
+    }
+  end
 
-local diagWithoutIcons = {
-  {
-    provider = "(",
-  },
-  {
-    provider = function(self)
-      return self.errors > 0 and self.errors
-    end,
-    hl = function() return { fg = ctx.colors.diag_error } end,
-  },
-  {
-    provider = function(self)
-      return self.warnings > 0 and self.warnings
-    end,
-    hl = function() return { fg = ctx.colors.diag_warn } end,
-  },
-  {
-    provider = function(self)
-      return self.info > 0 and self.info
-    end,
-    hl = function() return { fg = ctx.colors.diag_info } end,
-  },
-  {
-    provider = function(self)
-      return self.hints > 0 and self.hints
-    end,
-    hl = function() return { fg = ctx.colors.diag_hint } end,
-  },
-  {
-    provider = ")",
-  },
-}
+  local counters = ctx.joined_counters({
+    counter("errors",   "error_icon", "diag_error"),
+    counter("warnings", "warn_icon",  "diag_warn"),
+    counter("info",     "info_icon",  "diag_info"),
+    counter("hints",    "hint_icon",  "diag_hint"),
+  })
+
+  local block = { { provider = with_icons and (icons.diagnostics .. "(") or "(" } }
+  for _, c in ipairs(counters) do block[#block + 1] = c end
+  block[#block + 1] = { provider = ")" }
+  return block
+end
+
+local diagWithIcons = severities(true)
+local diagWithoutIcons = severities(false)
 
 M.Diagnostics = {
 

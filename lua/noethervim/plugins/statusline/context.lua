@@ -114,6 +114,52 @@ function M.make_mode_colors(colors)
   return modes
 end
 
+--- Build a run of counters joined by single spaces -- `(+3 ~1 -2)`,
+--- `E1 W2 H4` -- where a counter that is zero contributes nothing, neither
+--- its own text nor the separator that would have preceded it.
+---
+--- Each counter is its own component because each carries its own colour, so
+--- the separator has to be a component too, and that is where both callers
+--- had independently got it wrong: a separator that tests only the thing
+--- after it emits a leading space when nothing precedes it, and one that
+--- tests only the thing before it emits a trailing space. The diagnostics
+--- component managed to do both at once, rendering `( 1    2)` for an error
+--- and a hint -- three separators for two visible counts.
+---
+--- The rule is that a separator appears when this counter is non-zero AND
+--- some earlier one is too. Written once here so the two callers cannot
+--- drift apart again.
+---
+---@param specs { value: fun(self:table):integer, text: fun(self:table, n:integer):string, hl: fun():table }[]
+---@return table  a heirline component whose children are the counters
+function M.joined_counters(specs)
+  local out = {}
+  for i, spec in ipairs(specs) do
+    local preceding = {}
+    for j = 1, i - 1 do
+      preceding[#preceding + 1] = specs[j].value
+    end
+    out[#out + 1] = {
+      condition = function(self)
+        if spec.value(self) <= 0 then return false end
+        for _, earlier in ipairs(preceding) do
+          if earlier(self) > 0 then return true end
+        end
+        return false
+      end,
+      provider = " ",
+    }
+    out[#out + 1] = {
+      provider = function(self)
+        local n = spec.value(self)
+        return n > 0 and spec.text(self, n) or nil
+      end,
+      hl = spec.hl,
+    }
+  end
+  return out
+end
+
 -- Cache git root lookups by directory path: finddir(".git/..") is a
 -- synchronous filesystem walk that fires on every statusline redraw.
 local _git_root_cache = {}
