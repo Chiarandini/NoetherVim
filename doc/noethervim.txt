@@ -765,6 +765,9 @@ Available bundles (grouped by category): ~
     `latex`          VimTeX, img-clip, bibtex picker, LaTeX textobjects.
                      `<LocalLeader>lf` makes the PDF viewer follow the
                      cursor until pressed again.
+                     Some of its snippets expect a particular preamble;
+                     which ones, and what it looks like, are written up at
+                     https://nathanaelsrawley.com/noethervim/guides/latex-setup/
                      Requires: latexmk, TeX distribution.
                      For citations, see the `zotero` bundle under writing/.
     `web-dev`        JS/TS template string + inline color preview.

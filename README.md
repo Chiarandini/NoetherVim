@@ -250,7 +250,9 @@ walkthrough that ends with a configuration file of your own, one bundle
 enabled, and a clean health check. **Coming in primarily for LaTeX?** Continue
 with the [onboarding guide for
 mathematicians](docs/onboarding/mathematicians.md): the math bundles,
-snippets, citations, and how to extend the setup.
+snippets, citations, and how to extend the setup. [One LaTeX
+setup](docs/latex-setup.md) writes up a worked setup the distribution does
+not impose, and says which snippets expect it.
 
 ## Configuration
 

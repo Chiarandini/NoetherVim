@@ -1,0 +1,149 @@
+# One LaTeX setup
+
+This is an account of how one person's LaTeX setup works, after about a
+decade of writing mathematics in it. It is not what NoetherVim does to your
+documents. The `latex` bundle assumes as little as it can get away with, and
+everything below is a choice you would have to make yourself.
+
+It is written down for two reasons. Some of the bundle's snippets are only
+worth having if you adopt the conventions they were built against, and it is
+better to say which than to let you discover it when a snippet emits an
+environment your preamble has never heard of. And a worked setup is easier to
+argue with than a blank file: disagree with a piece of it and you still know
+what the piece was for.
+
+Copy any of it. Ignore all of it.
+
+## Theorem environments carry their own name
+
+The usual `amsthm` declaration gives you numbered environments:
+
+```tex
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{defn}[theorem]{Definition}
+```
+
+which you then use as `\begin{defn} ... \end{defn}`, and refer to with a
+`\label` you have to remember to write.
+
+The variant here takes two arguments instead:
+
+```tex
+\begin{defn}{group-action}{Group action}
+    A group action of $G$ on $X$ is ...
+\end{defn}
+```
+
+The first is the label, the second is the human name shown in the rendered
+output. One declaration site, so a definition can never be labelled and named
+inconsistently, and `\cref{group-action}` reads as a sentence rather than as
+"Definition 3.7".
+
+The cost is that it is not standard: a co-author's `\begin{defn}` will not
+compile against your preamble, and yours will not compile against theirs. For
+a solo thesis or a book that is a fair trade. For a joint paper it is not,
+which is the main reason this is a page rather than a default.
+
+`:mathpkgs` and `:thmset` in the bundle write the declarations that make this
+work. The `:defn`, `:prop` and `:lem` snippets emit the two-argument form and
+expect them.
+
+## Every definition gets an index entry
+
+The theorem snippets also emit `\index{...}` alongside the environment. For
+a document long enough to need an index -- lecture notes, a book -- the
+entry is only ever written when the definition is, so the index cannot drift
+out of step with the text. For a paper it is noise, and you would want the
+snippets without it.
+
+## Figures live in one folder, referenced relatively
+
+```
+project/
+├── main.tex
+├── sections/
+│   └── chapter-3.tex
+└── images/
+    └── commutative-square.pdf
+```
+
+Source files sit one level down, so figure paths are `../images/...`, which
+is what the `FIG` snippet defaults to. If your images sit beside your
+sources, that default is wrong for you and the snippet needs changing --
+set `figure_folders` on the plugin rather than editing the snippet.
+
+Figures are compiled separately as `standalone` documents where they are
+expensive -- TikZ diagrams that would otherwise be rebuilt on every run of
+the main document. `:standalone` writes that skeleton.
+
+## Bibliographies: shared for books, per-document for papers
+
+Two patterns, and they want different things:
+
+- **A book or lecture-note series** shares one bibliography across every
+  chapter, so a citation added in chapter 8 is available in chapter 2 and
+  the numbering is consistent. One `.bib` at the project root.
+- **A paper** carries its own, so it can be handed to a journal as a
+  self-contained directory.
+
+The `zotero` bundle inserts a citation and appends the entry to whichever
+`.bib` it resolves for the current document. The resolution is a function you
+can replace, which is how the shared-bibliography case is expressed: point
+every file in the project at the same one.
+
+```lua
+-- lua/user/plugins/zotero.lua
+return {
+  { "Chiarandini/snacks-zotero.nvim",
+    opts = {
+      ft = {
+        tex = {
+          locate_bib = function()
+            -- Walk up for a project marker; fall back to the plugin's
+            -- per-document search when there is none.
+            local root = vim.fs.find(".project-root", { upward = true })[1]
+            return root and (vim.fs.dirname(root) .. "/references.bib")
+              or require("snacks_zotero.bib").locate_tex_bib()
+          end,
+        },
+      },
+    } },
+}
+```
+
+## Compilation is continuous, and the PDF follows the cursor
+
+VimTeX compiles on write with `latexmk`. `<LocalLeader>ll` starts it,
+`<LocalLeader>lv` jumps the viewer to the cursor, and `<LocalLeader>lf` makes
+the viewer follow the cursor as you move, so the PDF behaves like a second
+view of the document rather than something you check on.
+
+That last one is off until asked for, per buffer: a forward search is a
+viewer round-trip, and paying it on every cursor movement all session is a
+cost most editing does not want.
+
+## Prose is hard-wrapped
+
+The writing profile hard-wraps at `textwidth`, so a paragraph is several
+lines in the file and one in the output. The reason is version control: a
+one-line paragraph produces a one-line diff no matter which word changed,
+and a review of "what changed in this proof" becomes unreadable.
+
+The cost is that a search for a phrase can fail when the wrap falls between
+two of its words. That is what the `wrapsearch` bundle is for, and it is
+listed here because the two settings only make sense together.
+
+## What this means for the snippets
+
+The bundle's LaTeX snippets divide into three:
+
+- Ones that work anywhere -- fractions, sectioning, `\textbf`, alignment.
+  Nothing below matters for these.
+- Ones that expect the preamble above -- `:defn`, `:prop`, `:lem`, and the
+  figure snippets. Useful if you adopt the convention, a trap if you do not.
+- Ones that are simply one person's shorthand -- `wlog`, `tfae`, `awsts`,
+  `vsp`. Harmless, and probably not yours.
+
+`<Space>es` opens the snippet files, with the ones a plugin ships marked
+read-only and a route to start your own for the same filetype. Reading how
+one is built is the fastest way to write a different one.

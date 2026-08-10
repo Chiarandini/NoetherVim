@@ -46,6 +46,13 @@ const FILES = [
     description: 'Copy-paste specs for plugins deliberately left out of the distribution.',
     sidebar: 5,
   },
+  {
+    src: 'docs/latex-setup.md',
+    dest: 'guides/latex-setup.md',
+    title: 'One LaTeX setup',
+    description: 'A worked LaTeX setup the distribution does not impose, and which snippets expect it.',
+    sidebar: 6,
+  },
 ];
 
 // Sections sliced out of README.md by heading. A slice runs to the next
