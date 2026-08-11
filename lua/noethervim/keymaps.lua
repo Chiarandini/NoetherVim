@@ -83,11 +83,13 @@ vim.keymap.set("n", "<c-g>", "g<c-g>", { desc = "file info" })
 -- ──────────────────────────────────────────────────────────────
 
 -- <c-h/j/k/l>: shorthand for <c-w>h/j/k/l window navigation
--- `<cmd>wincmd`, not `<c-w>h`. `<c-w>l` is both a complete command and the
--- prefix of the Lazy family (`<c-w>ll`, `<c-w>li`, ...), which which-key also
--- registers as a group -- so the keystroke can sit waiting out 'timeoutlen'
--- to find out which you meant. `<cmd>` runs the command outright and cannot
--- be a prefix of anything.
+-- `<cmd>wincmd`, not `<c-w>h`. These are equivalent today: the rhs is not
+-- remapped, so `<c-w>l` reaches the builtin without consulting the Lazy
+-- family that shares its prefix (`<c-w>ll`, `<c-w>li`, ...). The command
+-- form is kept because it states the intent outright and stays correct if a
+-- plugin ever remaps `<c-w>`, not because the key form was misbehaving --
+-- the delay that prompted this turned out to be in the Oil dual-pane
+-- bindings, not here.
 vim.keymap.set("n", "<c-h>", "<cmd>wincmd h<cr>", { desc = "window left" })
 vim.keymap.set("n", "<c-j>", "<cmd>wincmd j<cr>", { desc = "window down" })
 vim.keymap.set("n", "<c-k>", "<cmd>wincmd k<cr>", { desc = "window up" })
