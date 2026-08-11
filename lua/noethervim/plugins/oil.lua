@@ -6,7 +6,7 @@
 --   gd          Toggle detail view (adds permissions to default size + mtime)
 --   gf          Fuzzy find in current directory
 --   gG          Live grep in current directory
---   gV          Second Oil pane beside this one; <C-h>/<C-l> switch, gV/q leave
+--   gV / g|     Second Oil pane beside this one; <C-h>/<C-l> switch, gV/q leave
 --   gX          Open directory in system file browser
 --   gS          Create symlink in current directory
 --   gz          Zip entry under cursor (normal) or selected entries (visual)
@@ -625,7 +625,16 @@ return {
 						})
 					end,
 				},
+				-- Two keys for one action, deliberately. `gV` sits with the
+				-- other `g`-prefixed Oil additions; `g|` echoes the `|` this
+				-- distribution already uses for a vertical split, and says
+				-- "second pane" where `V` only says "vertical". Both need
+				-- shift, so neither is the cheaper one to reach for.
 				["gV"] = {
+					desc = "second pane beside this one (dual-pane)",
+					callback = function() require("noethervim.util.oil_dual").open() end,
+				},
+				["g|"] = {
 					desc = "second pane beside this one (dual-pane)",
 					callback = function() require("noethervim.util.oil_dual").open() end,
 				},

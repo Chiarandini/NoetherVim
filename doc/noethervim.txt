@@ -1417,10 +1417,10 @@ These keymaps activate only in their respective filetype, except for the
                         set `preview_split` in a user override to pin it.
     `gf`                Fuzzy find files in current directory
     `gG`                Live grep in current directory
-    `gV`                Second pane beside this one, for moving files
+    `gV` / `g|`         Second pane beside this one, for moving files
                         between directories. Both open where you are;
                         navigate each with Oil as usual. `<C-h>` / `<C-l>`
-                        switch panes, `q` or `gV` again leaves the pair.
+                        switch panes, `q` or either key again leaves.
                         A float gives two floats and a split gives two
                         splits, so the pair matches what you were in.
                         To copy: yank an entry's line in one pane, put it
