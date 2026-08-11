@@ -60,26 +60,38 @@ end
 
 --- `<C-h>` / `<C-l>` between the two panes, and `q` to close both.
 ---
---- Bound per window rather than per buffer, re-applied on BufWinEnter, because
---- Oil swaps the buffer under you on every directory change.
+--- Both targets are resolved when the key is pressed, from the window you are
+--- standing in -- NOT captured when the mapping is made.
+---
+--- That distinction is the whole of it. The panes open at the same directory,
+--- and Oil serves one buffer per directory, so both windows show the SAME
+--- buffer. A buffer-local mapping is therefore set twice over, and a captured
+--- target means the second write wins: `<C-l>` aimed at one fixed window
+--- whichever pane you were in, so from that window it did nothing at all.
 ---@param a integer
 ---@param b integer
 local function bind(a, b)
+  local function other_pane()
+    local cur = vim.api.nvim_get_current_win()
+    local other = cur == a and b or a
+    -- Standing outside the pair (a stray split) should not teleport you.
+    if cur ~= a and cur ~= b then return nil end
+    return vim.api.nvim_win_is_valid(other) and other or nil
+  end
+
   local function apply()
     for _, win in ipairs({ a, b }) do
       if vim.api.nvim_win_is_valid(win) then
-        local other = win == a and b or a
         local buf = vim.api.nvim_win_get_buf(win)
         local opts = { buffer = buf, nowait = true, silent = true }
         local function focus()
-          if vim.api.nvim_win_is_valid(other) then
-            vim.api.nvim_set_current_win(other)
-          end
+          local other = other_pane()
+          if other then vim.api.nvim_set_current_win(other) end
         end
         vim.keymap.set("n", "<c-h>", focus, vim.tbl_extend("force", opts, { desc = "other Oil pane" }))
         vim.keymap.set("n", "<c-l>", focus, vim.tbl_extend("force", opts, { desc = "other Oil pane" }))
         vim.keymap.set("n", "q", function()
-          pcall(vim.api.nvim_win_close, win, true)
+          pcall(vim.api.nvim_win_close, vim.api.nvim_get_current_win(), true)
         end, vim.tbl_extend("force", opts, { desc = "close both Oil panes" }))
       end
     end
