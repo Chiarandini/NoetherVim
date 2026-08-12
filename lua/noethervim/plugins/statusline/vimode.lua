@@ -48,16 +48,20 @@ local SearchResults = {
     return true
   end,
   {
+    --- Centred in the mode chip, which Vim's own width syntax cannot do.
+    --- `%7(...%)` sets a minimum width and right-aligns inside it, so a short
+    --- count sat off to the right: `0/1` rendered as `"   0/1 "`, three
+    --- spaces to the left and one to the right. Only short counts were
+    --- affected, which is why it looked like a one-off rather than a rule.
+    ---
+    --- Splitting the padding by hand is exact at every width, and the chip
+    --- still grows past seven once the numbers need it.
     provider = function(self)
-      return "%7("
-          .. table.concat({
-            " ",
-            self.count.current,
-            "/",
-            self.count.total,
-            " ",
-          })
-          .. "%)"
+      local text  = ("%s/%s"):format(self.count.current, self.count.total)
+      local width = math.max(7, #text + 2)
+      local pad   = width - #text
+      local left  = math.floor(pad / 2)
+      return string.rep(" ", left) .. text .. string.rep(" ", pad - left)
     end,
   },
   { provider = " " }, -- separator after, if section is active

@@ -316,7 +316,17 @@ M.ScratchFlag = {
   condition = function()
     return vim.api.nvim_buf_get_name(0) == "" and vim.bo.buftype == "" and vim.bo.filetype == ""
   end,
-  hl = function() return { force = true, fg = ctx.colors.blue, bg = ctx.flag_bg() } end,
+  --- Blue while it matches what is on disk -- which for a scratch buffer is
+  --- nothing -- and the pencil's colour once you have typed into it, so the
+  --- two markers beside each other read as one state rather than two. Takes
+  --- the pencil's out-of-sync red too, so they cannot disagree.
+  hl = function()
+    local fg = ctx.colors.blue
+    if vim.bo.modified then
+      fg = vim.b.noethervim_out_of_sync and ctx.colors.red or ctx.colors.orange
+    end
+    return { force = true, fg = fg, bg = ctx.flag_bg() }
+  end,
   on_click = {
     callback = function()
       flag_popup({
