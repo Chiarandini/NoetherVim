@@ -224,16 +224,20 @@ map("[os", "<cmd>setlocal spell<cr>",          "spell")
 map("]os", "<cmd>setlocal nospell<cr>",        "no spell")
 map("[oS", "<cmd>setlocal scrollbind<cr>",     "scrollbind")
 map("]oS", "<cmd>setlocal noscrollbind<cr>",   "no scrollbind")
-map("[ot", "<cmd>set colorcolumn=+1<cr>",      "colorcolumn")
-map("]ot", "<cmd>set colorcolumn=<cr>",        "no colorcolumn")
+map("[ot", "<cmd>setlocal colorcolumn=+1<cr>", "colorcolumn")
+map("]ot", "<cmd>setlocal colorcolumn=<cr>",   "no colorcolumn")
 map("[ou", "<cmd>setlocal cursorcolumn<cr>",   "cursorcolumn")
 map("]ou", "<cmd>setlocal nocursorcolumn<cr>", "no cursorcolumn")
 map("[ov", "<cmd>set virtualedit+=all<cr>",    "virtualedit")
 map("]ov", "<cmd>set virtualedit-=all<cr>",    "no virtualedit")
 map("[ow", "<cmd>setlocal wrap<cr>",           "wrap")
 map("]ow", "<cmd>setlocal nowrap<cr>",         "no wrap")
-map("[ox", "<cmd>set cursorline cursorcolumn<cr>",    "crosshair")
-map("]ox", "<cmd>set nocursorline nocursorcolumn<cr>","no crosshair")
+-- `setlocal`, like every other window-local toggle here. With plain `:set`
+-- these also wrote the global default, so turning the crosshair on in one
+-- window handed it to every window opened afterwards -- which reads as the
+-- toggle having leaked into an unrelated buffer.
+map("[ox", "<cmd>setlocal cursorline cursorcolumn<cr>",    "crosshair")
+map("]ox", "<cmd>setlocal nocursorline nocursorcolumn<cr>","no crosshair")
 
 -- Illuminate (variable highlight)
 map("[oI", "<cmd>IlluminateResumeBuf<cr>",  "illuminate on")
