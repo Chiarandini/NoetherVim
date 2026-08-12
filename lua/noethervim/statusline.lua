@@ -1,3 +1,12 @@
+-- NoetherVim: statusline override registry.
+--
+-- This does NOT build the statusline. It records what `lua/user/config.lua`
+-- asks for -- colours, edge style, extra right-hand components, Busy
+-- overrides -- and the heirline components read it back while rendering.
+--
+-- The bar itself is built in lua/noethervim/plugins/statusline/: `init.lua`
+-- is the plugin spec, `statuslines.lua` decides which bar each window gets,
+-- and one file per component alongside them.
 -- NoetherVim statusline override registry.
 -- Called from noethervim.setup() before plugins load, so the heirline
 -- config function can read user preferences at runtime.
