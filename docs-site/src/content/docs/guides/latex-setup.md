@@ -121,7 +121,9 @@ return {
 
 ## Compilation is continuous, and the PDF follows the cursor
 
-VimTeX compiles on write with `latexmk`. `<LocalLeader>ll` starts it,
+VimTeX compiles with `latexmk`, once per request rather than continuously --
+`continuous = 0`, against VimTeX's own default of 1, so a large project does
+not rebuild on every write. `<LocalLeader>ll` runs a build,
 `<LocalLeader>lv` jumps the viewer to the cursor, and `<LocalLeader>lf` makes
 the viewer follow the cursor as you move, so the PDF behaves like a second
 view of the document rather than something you check on.

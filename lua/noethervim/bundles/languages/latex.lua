@@ -189,38 +189,55 @@ return {
         callback = function() vim.opt_local.iskeyword:append(":") end,
       })
 
-      vim.cmd([=[
-let g:vimtex_fold_enabled = 0
-let g:vimtex_format_enabled = 1
-let g:tex_indent_brace = 0
-let g:vimtex_quickfix_open_on_warning = 0
-let g:tex_conceal_frac = 1
-let g:vimtex_quickfix_ignore_filters = [
-\ 'Underfull \\hbox',
-\ 'Overfull \\hbox',
-\ 'LaTeX Warning: .\+ float specifier changed to',
-\ 'LaTeX hooks Warning',
-\ 'Package siunitx Warning: Detected the "physics" package:',
-\ 'Package hyperref Warning: Token not allowed in a PDF string',
-\]
-let g:vimtex_compiler_latexmk = {
-    \ 'aux_dir' : '',
-    \ 'out_dir' : '',
-    \ 'callback' : 1,
-    \ 'continuous' : 0,
-    \ 'executable' : 'latexmk',
-    \ 'hooks' : [],
-    \ 'options' : [
-    \   '-verbose',
-    \   '-file-line-error',
-    \   '-synctex=1',
-    \   '-interaction=nonstopmode',
-    \ ],
-    \}
-let g:vimtex_compiler_latexmk_engines = {
-    \ '_'                : '-lualatex',
-    \}
-]=])
+      -- VimTeX settings. Lua rather than a vimscript blob, and only the
+      -- values that differ from VimTeX's own defaults -- the block this
+      -- replaces restated several of them, which reads as a decision and is
+      -- not one.
+      --
+      -- Deleted as no-ops, each checked against vimtex/autoload/options.vim:
+      --   vimtex_fold_enabled = 0      already VimTeX's default
+      --   tex_conceal_frac = 1         no such option exists, in VimTeX or Vim
+      --   the latexmk aux_dir/out_dir/callback/executable/hooks/options keys,
+      --                                all identical to VimTeX's defaults
+      vim.g.vimtex_format_enabled = 1          -- VimTeX default 0; gq reflows prose
+      vim.g.tex_indent_brace = 0               -- built-in tex indent, not VimTeX
+
+      -- Warnings do not steal focus by opening the quickfix window; they are
+      -- still listed, and `<LocalLeader>le` opens the list on demand.
+      vim.g.vimtex_quickfix_open_on_warning = 0
+
+      -- Filters for messages that are noise in every document -- a package
+      -- announcing a known-harmless interaction, or a hook warning you cannot
+      -- act on.
+      --
+      -- `Underfull \\hbox` and `Overfull \\hbox` were in this list and have
+      -- been removed. They are not noise: they are the compiler reporting a
+      -- line it could not set within the margins, which is a real typesetting
+      -- defect and one of the few things LaTeX will tell you about your
+      -- output rather than your source. Filtering them meant a document could
+      -- be visibly wrong with a clean quickfix list.
+      vim.g.vimtex_quickfix_ignore_filters = {
+        [[LaTeX Warning: .\+ float specifier changed to]],
+        [[LaTeX hooks Warning]],
+        [[Package siunitx Warning: Detected the "physics" package:]],
+        [[Package hyperref Warning: Token not allowed in a PDF string]],
+      }
+
+      -- Two deliberate departures from VimTeX, both worth knowing about:
+      --
+      -- `continuous = 0` compiles once per `<LocalLeader>ll` instead of
+      -- leaving a latexmk process watching the file. VimTeX's default is 1.
+      -- One-shot keeps a large project from rebuilding on every keystroke-
+      -- triggered write, at the cost of having to ask for each build.
+      --
+      -- `_ = -lualatex` compiles everything with LuaLaTeX rather than letting
+      -- VimTeX pick from the document. LuaLaTeX handles fontspec and unicode
+      -- maths that pdflatex cannot, and is slower for documents that need
+      -- neither.
+      --
+      -- Override either in `user/plugins/`; they are ordinary `vim.g` values.
+      vim.g.vimtex_compiler_latexmk = { continuous = 0 }
+      vim.g.vimtex_compiler_latexmk_engines = { ["_"] = "-lualatex" }
       -- Subfile projects (subfiles.cls) start in local mode: compiling from
       -- a chapter builds that chapter's standalone PDF, not the whole book.
       -- :VimtexToggleMain switches the buffer to the full project (and back).
