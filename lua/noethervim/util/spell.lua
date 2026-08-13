@@ -21,19 +21,24 @@ local M = {}
 --- Replace the nearest misspelling before the cursor with Vim's first
 --- suggestion, leaving the cursor where it was relative to the text.
 ---
---- Finding the word is delegated to Vim's own `[s`, and this is the whole
---- reason for the delegation: spell checking is syntax-aware, and asking
---- `spellbadword()` about a plain Lua string throws that away. In a `.tex`
---- buffer `spellbadword([[\textbf{hello}]])` answers "textbf" while the
---- buffer itself answers "" -- the syntax marks commands `@nospell`. A
---- string-based search therefore walked into every LaTeX command and
---- "corrected" it, which is what made this look like it fixed a word other
---- than the one you had just mistyped.
+--- Finding the word is delegated to Vim's own `[s`. Spell checking is
+--- syntax-aware and asking `spellbadword()` about a plain Lua string throws
+--- that away: in a tex buffer `spellbadword([[\textbf{x}]])` answers
+--- "textbf" while the buffer answers "". A string-based search walked into
+--- every LaTeX command and "corrected" it.
 ---
---- Bounded to the paragraph. `[s` wraps around the whole file, so with no
---- typo nearby it would rewrite a word pages away; a match that lands after
---- the cursor (it wrapped) or before a blank line is rejected and nothing
---- happens.
+--- Only `bad` counts. `spellbadword()` returns a kind alongside the word,
+--- and three of the four are not spelling errors -- `caps` is "should start
+--- with a capital", `rare` and `local` are usage notes. Ignoring the kind
+--- meant the first word of a sentence came back as `{ "all", "caps" }` and
+--- got rewritten to "al": correct text, silently corrupted.
+---
+--- Not bounded to the paragraph. An earlier attempt stopped at a blank line
+--- on the theory that anything further back was not what you were writing;
+--- in practice the typo you want is often the last one you left behind, two
+--- paragraphs up. `[s` wraps the whole file, so the one thing rejected is a
+--- match that lands at or after the cursor, which means it wrapped and there
+--- is nothing behind you.
 ---
 --- Called from insert mode through a `<Cmd>` mapping, so insert mode is
 --- never left. The `<Esc>[s1z=`]a` sequence this replaces returned via the
@@ -44,27 +49,14 @@ function M.fix_previous()
   local buf = vim.api.nvim_win_get_buf(win)
   local row, col = unpack(vim.api.nvim_win_get_cursor(win))
 
-  --- First line of the paragraph the cursor is in: `[s` may travel further
-  --- than the thing you are writing, and anything past a blank line is not
-  --- the word you just mistyped.
-  local limit = 1
-  for r = row - 1, 1, -1 do
-    local l = vim.api.nvim_buf_get_lines(buf, r - 1, r, false)[1]
-    if not l or l:match("^%s*$") then limit = r + 1 break end
-  end
-
   local brow, bcol, bad
   vim.api.nvim_win_call(win, function()
-    -- `[s` lands on the start of the previous bad word, respecting syntax.
-    local ok = pcall(vim.cmd, "silent! normal! [s")
-    if not ok then return end
+    if not pcall(vim.cmd, "silent! normal! [s") then return end
     local pos = vim.api.nvim_win_get_cursor(win)
-    -- Reject a wrap (landed at or after where we started) and anything above
-    -- the paragraph.
+    -- Landed at or after where we started: `[s` wrapped, so nothing behind.
     if pos[1] > row or (pos[1] == row and pos[2] >= col) then return end
-    if pos[1] < limit then return end
-    local word = vim.fn.spellbadword()[1]
-    if word == "" then return end
+    local word, kind = unpack(vim.fn.spellbadword())
+    if word == "" or kind ~= "bad" then return end
     brow, bcol, bad = pos[1], pos[2], word
   end)
 
