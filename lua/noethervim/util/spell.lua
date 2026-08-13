@@ -18,70 +18,58 @@ local M = {}
 --- Same-length corrections looked fine, which is what made it intermittent.
 ---
 --- Computing the shift directly is exact for any pair of lengths.
---- The nearest bad word at or before the cursor, searching back across lines
---- but not past the paragraph.
----@return integer? row, integer? col, string? word   1-indexed row, 0-indexed col
-local function nearest_bad(win)
-  local row, col = unpack(vim.api.nvim_win_get_cursor(win))
-  local buf = vim.api.nvim_win_get_buf(win)
-
-  --- Last bad word in `text`. `spellbadword` reports the FIRST one, so walk
-  --- forward keeping the last -- and search for each occurrence from where
-  --- the previous match ended, since the same word may appear more than once
-  --- and `find` from the start would keep returning the first.
-  local function last_bad_in(text)
-    local from, at, bad = 1, nil, nil
-    while true do
-      local chunk = text:sub(from)
-      if chunk == "" then break end
-      local word = vim.fn.spellbadword(chunk)[1]
-      if word == "" then break end
-      local s = chunk:find(word, 1, true)
-      if not s then break end
-      at, bad = from + s - 1, word
-      from = at + #word
-    end
-    return at, bad
-  end
-
-  -- The line the cursor is on, up to the end of the word it sits in. Cutting
-  -- at the cursor exactly would hand a half-typed word to the checker, and
-  -- half of a correctly spelled word is usually a misspelled one: with the
-  -- cursor inside `spelled`, the checker saw `spelle` and duly "fixed" it.
-  local cur_line = vim.api.nvim_buf_get_lines(buf, row - 1, row, false)[1] or ""
-  local rest     = cur_line:sub(col + 1):match("^[%w']*") or ""
-  local at, bad  = last_bad_in(cur_line:sub(1, col + #rest))
-  if bad then return row, at - 1, bad end
-
-  -- Then backwards a line at a time. Bounded by the paragraph, because the
-  -- point is the sentence you are writing: the `[s` this replaces searched
-  -- the whole file with wraparound, so with nothing nearby it would silently
-  -- rewrite a word pages away.
-  for r = row - 1, 1, -1 do
-    local line = vim.api.nvim_buf_get_lines(buf, r - 1, r, false)[1]
-    if not line or line:match("^%s*$") then break end   -- paragraph boundary
-    at, bad = last_bad_in(line)
-    if bad then return r, at - 1, bad end
-  end
-end
-
---- Replace the nearest misspelling at or before the cursor with Vim's first
+--- Replace the nearest misspelling before the cursor with Vim's first
 --- suggestion, leaving the cursor where it was relative to the text.
 ---
---- Called from insert mode through a `<Cmd>` mapping, so insert mode is never
---- left. The sequence this replaces -- `<c-g>u<Esc>[s1z=`]a<c-g>u` -- left
---- insert mode to do the work and returned via the `] change mark, which is
---- set from the span that was replaced rather than the replacement, so it
---- landed short whenever the suggestion was longer than the typo.
+--- Finding the word is delegated to Vim's own `[s`, and this is the whole
+--- reason for the delegation: spell checking is syntax-aware, and asking
+--- `spellbadword()` about a plain Lua string throws that away. In a `.tex`
+--- buffer `spellbadword([[\textbf{hello}]])` answers "textbf" while the
+--- buffer itself answers "" -- the syntax marks commands `@nospell`. A
+--- string-based search therefore walked into every LaTeX command and
+--- "corrected" it, which is what made this look like it fixed a word other
+--- than the one you had just mistyped.
 ---
---- Only the cursor's own line is length-adjusted; a fix on an earlier line
---- does not move the column you are typing at.
+--- Bounded to the paragraph. `[s` wraps around the whole file, so with no
+--- typo nearby it would rewrite a word pages away; a match that lands after
+--- the cursor (it wrapped) or before a blank line is rejected and nothing
+--- happens.
+---
+--- Called from insert mode through a `<Cmd>` mapping, so insert mode is
+--- never left. The `<Esc>[s1z=`]a` sequence this replaces returned via the
+--- `] change mark, which is set from the replaced span rather than the
+--- replacement and so landed short whenever the suggestion was longer.
 function M.fix_previous()
   local win = vim.api.nvim_get_current_win()
   local buf = vim.api.nvim_win_get_buf(win)
   local row, col = unpack(vim.api.nvim_win_get_cursor(win))
 
-  local brow, bcol, bad = nearest_bad(win)
+  --- First line of the paragraph the cursor is in: `[s` may travel further
+  --- than the thing you are writing, and anything past a blank line is not
+  --- the word you just mistyped.
+  local limit = 1
+  for r = row - 1, 1, -1 do
+    local l = vim.api.nvim_buf_get_lines(buf, r - 1, r, false)[1]
+    if not l or l:match("^%s*$") then limit = r + 1 break end
+  end
+
+  local brow, bcol, bad
+  vim.api.nvim_win_call(win, function()
+    -- `[s` lands on the start of the previous bad word, respecting syntax.
+    local ok = pcall(vim.cmd, "silent! normal! [s")
+    if not ok then return end
+    local pos = vim.api.nvim_win_get_cursor(win)
+    -- Reject a wrap (landed at or after where we started) and anything above
+    -- the paragraph.
+    if pos[1] > row or (pos[1] == row and pos[2] >= col) then return end
+    if pos[1] < limit then return end
+    local word = vim.fn.spellbadword()[1]
+    if word == "" then return end
+    brow, bcol, bad = pos[1], pos[2], word
+  end)
+
+  -- Whatever happened above, the cursor belongs where the typing is.
+  vim.api.nvim_win_set_cursor(win, { row, col })
   if not bad then return end
 
   local suggestion = vim.fn.spellsuggest(bad, 1)[1]
@@ -91,11 +79,9 @@ function M.fix_previous()
   vim.api.nvim_buf_set_lines(buf, brow - 1, brow, false,
     { line:sub(1, bcol) .. suggestion .. line:sub(bcol + 1 + #bad) })
 
-  if brow == row then
-    vim.api.nvim_win_set_cursor(win, { row, col + (#suggestion - #bad) })
-  else
-    vim.api.nvim_win_set_cursor(win, { row, col })
-  end
+  -- Only a fix on the cursor's own line shifts the column being typed at.
+  local shift = (brow == row) and (#suggestion - #bad) or 0
+  vim.api.nvim_win_set_cursor(win, { row, math.max(0, col + shift) })
 end
 
 
