@@ -18,37 +18,86 @@ local M = {}
 --- Same-length corrections looked fine, which is what made it intermittent.
 ---
 --- Computing the shift directly is exact for any pair of lengths.
+--- The nearest bad word at or before the cursor, searching back across lines
+--- but not past the paragraph.
+---@return integer? row, integer? col, string? word   1-indexed row, 0-indexed col
+local function nearest_bad(win)
+  local row, col = unpack(vim.api.nvim_win_get_cursor(win))
+  local buf = vim.api.nvim_win_get_buf(win)
+
+  --- Last bad word in `text`. `spellbadword` reports the FIRST one, so walk
+  --- forward keeping the last -- and search for each occurrence from where
+  --- the previous match ended, since the same word may appear more than once
+  --- and `find` from the start would keep returning the first.
+  local function last_bad_in(text)
+    local from, at, bad = 1, nil, nil
+    while true do
+      local chunk = text:sub(from)
+      if chunk == "" then break end
+      local word = vim.fn.spellbadword(chunk)[1]
+      if word == "" then break end
+      local s = chunk:find(word, 1, true)
+      if not s then break end
+      at, bad = from + s - 1, word
+      from = at + #word
+    end
+    return at, bad
+  end
+
+  -- The line the cursor is on, up to the end of the word it sits in. Cutting
+  -- at the cursor exactly would hand a half-typed word to the checker, and
+  -- half of a correctly spelled word is usually a misspelled one: with the
+  -- cursor inside `spelled`, the checker saw `spelle` and duly "fixed" it.
+  local cur_line = vim.api.nvim_buf_get_lines(buf, row - 1, row, false)[1] or ""
+  local rest     = cur_line:sub(col + 1):match("^[%w']*") or ""
+  local at, bad  = last_bad_in(cur_line:sub(1, col + #rest))
+  if bad then return row, at - 1, bad end
+
+  -- Then backwards a line at a time. Bounded by the paragraph, because the
+  -- point is the sentence you are writing: the `[s` this replaces searched
+  -- the whole file with wraparound, so with nothing nearby it would silently
+  -- rewrite a word pages away.
+  for r = row - 1, 1, -1 do
+    local line = vim.api.nvim_buf_get_lines(buf, r - 1, r, false)[1]
+    if not line or line:match("^%s*$") then break end   -- paragraph boundary
+    at, bad = last_bad_in(line)
+    if bad then return r, at - 1, bad end
+  end
+end
+
+--- Replace the nearest misspelling at or before the cursor with Vim's first
+--- suggestion, leaving the cursor where it was relative to the text.
+---
+--- Called from insert mode through a `<Cmd>` mapping, so insert mode is never
+--- left. The sequence this replaces -- `<c-g>u<Esc>[s1z=`]a<c-g>u` -- left
+--- insert mode to do the work and returned via the `] change mark, which is
+--- set from the span that was replaced rather than the replacement, so it
+--- landed short whenever the suggestion was longer than the typo.
+---
+--- Only the cursor's own line is length-adjusted; a fix on an earlier line
+--- does not move the column you are typing at.
 function M.fix_previous()
   local win = vim.api.nvim_get_current_win()
+  local buf = vim.api.nvim_win_get_buf(win)
   local row, col = unpack(vim.api.nvim_win_get_cursor(win))
-  local line = vim.api.nvim_get_current_line()
 
-  -- Only look behind the cursor: the word being typed is the one to fix,
-  -- and a misspelling later on the line is not what <C-l> is reaching for.
-  local before = line:sub(1, col)
-
-  -- `spellbadword` reports the FIRST bad word in the string it is given, so
-  -- walk forward and keep the last one, which is the nearest behind us.
-  local from, bad_at, bad = 1, nil, nil
-  while true do
-    local chunk = before:sub(from)
-    if chunk == "" then break end
-    local word = vim.fn.spellbadword(chunk)[1]
-    if word == "" then break end
-    local s = chunk:find(word, 1, true)
-    if not s then break end
-    bad_at, bad = from + s - 1, word
-    from = bad_at + #word
-  end
+  local brow, bcol, bad = nearest_bad(win)
   if not bad then return end
 
   local suggestion = vim.fn.spellsuggest(bad, 1)[1]
   if not suggestion or suggestion == bad then return end
 
-  vim.api.nvim_set_current_line(
-    line:sub(1, bad_at - 1) .. suggestion .. line:sub(bad_at + #bad))
-  vim.api.nvim_win_set_cursor(win, { row, col + (#suggestion - #bad) })
+  local line = vim.api.nvim_buf_get_lines(buf, brow - 1, brow, false)[1]
+  vim.api.nvim_buf_set_lines(buf, brow - 1, brow, false,
+    { line:sub(1, bcol) .. suggestion .. line:sub(bcol + 1 + #bad) })
+
+  if brow == row then
+    vim.api.nvim_win_set_cursor(win, { row, col + (#suggestion - #bad) })
+  else
+    vim.api.nvim_win_set_cursor(win, { row, col })
+  end
 end
+
 
 -- ── Adding ───────────────────────────────────────────────────────────
 
