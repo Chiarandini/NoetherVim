@@ -8,7 +8,7 @@
 -- Formatting is handled by conform.nvim; linting by nvim-lint; none-ls is gone.
 --
 -- Override data values via a user plugin spec:
---   { "neovim/nvim-lspconfig", opts = { diagnostic = { virtual_text = true } } }
+--   { "neovim/nvim-lspconfig", opts = { diagnostic = { virtual_lines = true } } }
 --   { "stevearc/conform.nvim", opts = { formatters_by_ft = { rust = { "rustfmt" } } } }
 --   { "mfussenegger/nvim-lint", opts = { linters_by_ft = { sh = { "shellcheck" } } } }
 local SearchLeader = require("noethervim.util").search_leader
@@ -24,7 +24,25 @@ return {
 		"rachartier/tiny-inline-diagnostic.nvim",
 		event = "VeryLazy",
 		priority = 1000,
-		opts = {},
+		-- A message too long for the rest of the line is clipped, not wrapped.
+		-- The plugin's wrapping modes draw the overflow on top of the buffer
+		-- lines below with `virt_text_pos = "overlay"`, so a verbose message
+		-- replaces two or three lines of real code, cut mid-identifier, with
+		-- nothing marking where the code ends and the message begins.
+		-- `gl` and `]d` / `[d` open the full text in a float.
+		opts = {
+			options = {
+				overflow = { mode = "oneline" },
+
+				-- `DiagnosticChanged` alongside the plugin's own `LspAttach`:
+				-- this renderer replaces Neovim's inline message (turned off
+				-- below), so a buffer it never watches shows a sign and an
+				-- underline with the text nowhere but `gl`. That is every
+				-- buffer whose diagnostics come from a linter rather than a
+				-- language server.
+				overwrite_events = { "LspAttach", "DiagnosticChanged" },
+			},
+		},
 		config = function(_, opts)
 			require("tiny-inline-diagnostic").setup(opts)
 			vim.diagnostic.config({ virtual_text = false })
@@ -193,7 +211,7 @@ return {
 			diagnostic = {
 				virtual_text  = false,
 				severity_sort = true,
-				float = { border = 'rounded', source = 'always' },
+				float = { border = 'rounded', source = true },
 			},
 		},
 

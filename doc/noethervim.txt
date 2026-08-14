@@ -2052,6 +2052,36 @@ A: NoetherVim uses nvim-lint alongside conform.nvim. Most linting is
    `linters_by_ft.<ft>` is also an array; same caveat applies. See
    |noethervim-user-plugins-arrays|.
 
+                                          *noethervim-diagnostic-display*
+Q: The error message beside my cursor is cut off. Can I see all of it?~
+A: `gl` opens the full text in a float; `]d` and `[d` jump to the next
+   or previous diagnostic and open it there. The inline text is a
+   one-line preview, clipped where the window ends.
+
+   To let it continue over the lines below instead:
+>lua
+    -- lua/user/plugins/diagnostics.lua
+    return {
+      { "rachartier/tiny-inline-diagnostic.nvim",
+        opts = { options = { overflow = { mode = "wrap" } } } },
+    }
+<
+   The continuation is drawn on top of the lines below, so while the
+   cursor rests there a long message hides two or three lines of code.
+
+   For a renderer that pushes those lines down rather than covering
+   them, swap in Neovim's own:
+>lua
+    -- lua/user/plugins/diagnostics.lua
+    return {
+      { "rachartier/tiny-inline-diagnostic.nvim", enabled = false },
+      { "neovim/nvim-lspconfig",
+        opts = { diagnostic = {
+          virtual_lines = { current_line = true },
+        } } },
+    }
+<
+
 Q: How do I install a formatter or debugger?~
 A: Both are managed by Mason, the same as LSP servers. Use `:Mason`
    to browse and install interactively. Formatters referenced by
