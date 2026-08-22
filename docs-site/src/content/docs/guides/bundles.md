@@ -325,10 +325,14 @@ In-editor rendering and concealment, a live browser preview, smart table editing
 
 Requires:
 
-- **Node.js** *(optional)*: markdown-preview builds its viewer with it, and mdmath renders through it
+- **Node.js** *(optional)*: markdown-preview builds its viewer with it
   <br />https://nodejs.org/
-- **a terminal with the kitty graphics protocol** *(optional)*: inline math rendering by mdmath
+- **a terminal with the kitty graphics protocol** *(optional)*: inline math rendering by Snacks.image
   <br />kitty, WezTerm, or Ghostty
+- **pdflatex** *(optional)*: Snacks.image typesets each equation before displaying it
+  <br />MacTeX or TeX Live; `tectonic` also works
+- **ImageMagick** *(optional)*: converts the typeset equation into a displayable image
+  <br />https://imagemagick.org
 
 ### `neorg`
 

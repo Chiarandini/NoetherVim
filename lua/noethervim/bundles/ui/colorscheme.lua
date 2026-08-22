@@ -29,7 +29,7 @@ return {
   -- ── Mainstream picks ──────────────────────────────────────────────────────
   -- The schemes with the widest install base, and correspondingly the deepest
   -- first-party integrations with the plugins NoetherVim's UI is built from
-  -- (snacks, blink.cmp, which-key, trouble, gitsigns). Start here.
+  -- (snacks, blink.cmp, which-key, trouble, gitsigns).
 
   { "catppuccin/nvim",   name = "catppuccin", lazy = true },
   { "folke/tokyonight.nvim",                  lazy = true },

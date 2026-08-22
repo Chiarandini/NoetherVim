@@ -216,10 +216,18 @@ paths as bundles.
 
 **Plain Markdown + `markdown` bundle.** The lightest option.
 Render-markdown.nvim concealed formatting in-buffer (headings, bold,
-lists), mdmath.nvim renders `$...$` math inline, and markdown-preview
-gives you a browser preview on `:MarkdownPreview`. Paste images the
-same way as LaTeX: `<LocalLeader>P`. Good if you keep notes as
-individual files in a `notes/` directory.
+lists), `$...$` and `$$...$$` are typeset by LaTeX and drawn over the
+source text, and markdown-preview gives you a browser preview on
+`:MarkdownPreview`. Paste images the same way as LaTeX:
+`<LocalLeader>P`. Good if you keep notes as individual files in a
+`notes/` directory.
+
+Inline math needs `pdflatex` (or `tectonic`), ImageMagick, and a
+terminal that speaks the kitty graphics protocol: kitty, WezTerm or
+Ghostty. Without them the rest of the bundle still works and the
+equations stay as source. Move the cursor onto an equation to see the
+source again. Images in `![caption](path)` render the same way, and
+`:checkhealth snacks` reports which of the three are missing.
 
 **Obsidian vault + `obsidian` bundle.** If you already use Obsidian
 for notes, this bundle makes NoetherVim a first-class editor for your
