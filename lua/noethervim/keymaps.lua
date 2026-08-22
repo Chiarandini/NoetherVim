@@ -249,6 +249,41 @@ vim.keymap.set("n", "-",
 -- c+p / c+m / g+p operator sequences. See templates/user/keymaps.example.lua
 -- or add them to your lua/user/keymaps.lua
 
+-- gz / gZ: the case operators Vim is missing. `gu`, `gU` and `g~` cover
+-- lower, upper and toggle; neither raises just the leading letter.
+--   gz  Title Case    -- `gziw`, `gzip`, `gz$`, or `gz` on a selection
+--   gZ  sentence case -- same motions, only the first letter of the region
+-- Both leave every character after the first as typed, so `PDE`, `LaTeX` and
+-- `Toronto` survive. Implementation and the minor-word list: util/case.lua.
+--
+-- Title Case takes the unshifted key because it is the one with no short
+-- manual equivalent. Raising a single leading letter is already two keys --
+-- `~` on the character, or `guiw~` for a word -- while Title Casing a run by
+-- hand is one `~` per word, so that is where an operator actually earns its
+-- place.
+--
+-- `gs` was the other candidate and is taken (LSP signature help, lsp.lua);
+-- `gC` is taken too (visual per-line comment invert). There is deliberately
+-- no `gzz` line-wise double: mapping an operator and its doubled form makes
+-- every `gz` wait out `timeoutlen` first, which is the same annoyance
+-- `gc`/`gcc` is known for. Use `gzV` -- or `gzip`.
+do
+  local case = function(kind)
+    return function() return require("noethervim.util.case").operator(kind) end
+  end
+
+  vim.keymap.set("n", "gz", case("title"),    { expr = true, desc = "Title Case operator" })
+  vim.keymap.set("n", "gZ", case("sentence"), { expr = true, desc = "[Z] sentence case operator" })
+
+  -- `:<C-u>` rather than a plain Lua callback: entering the command line from
+  -- Visual mode is what sets `< and `>, and the operator needs them set
+  -- before it can reselect the region.
+  vim.keymap.set("x", "gz", ":<C-u>lua require('noethervim.util.case').visual('title')<CR>",
+    { silent = true, desc = "Title Case selection" })
+  vim.keymap.set("x", "gZ", ":<C-u>lua require('noethervim.util.case').visual('sentence')<CR>",
+    { silent = true, desc = "[Z] sentence case selection" })
+end
+
 -- ]f / [f: next/previous file in the same directory (alphabetical order)
 do
   local function navigate_file(dir)

@@ -1240,6 +1240,7 @@ Prefixes: ~
                       gt(ype def)  gi(mplementation)  gs(ignature)
                       gl(diagnostics)  go(utline)  gy(ank type at cursor)
                       gr* = Neovim 0.12 defaults (grr/grn/gra…)
+                      gz / gZ (capitalize, see |noethervim-case|)
                       SearchLeader+li / +lO (call hierarchy in/out)
                                                         *noethervim-brackets*
     `[x` / `]x`         Directional navigation
@@ -1279,6 +1280,7 @@ Other notable keymaps: ~
     `g<C-a>`/`g<C-x>` Sequential increment/decrement in visual selection
     `<C-/>`           Toggle comment (builtin gc/gcc, all modes)
     `<C-S-r>`         Comment lines and paste uncommented copy below
+    `gz` / `gZ`         Capitalize (see |noethervim-case|)
 
     Visual: ~
     `gC`              Invert comment per-line. Unlike `gc` (which picks
@@ -1313,6 +1315,46 @@ Other notable keymaps: ~
     `<C-l>`           Insert cwd
     `<C-y>`           Yank cmdline to clipboard
     `<C-o>`           Redirect output to buffer
+
+                                                        *noethervim-case*
+Capitalization operators ~
+
+Vim ships three case operators -- `gu`, `gU` and `g~` -- and no way to raise
+only the leading letter. NoetherVim adds the missing pair:
+
+    `gz`{motion}       Title Case: raise the first letter of every word.
+    `gZ`{motion}       Sentence case: raise the first letter of the region.
+
+Both work in Visual mode on the selection, take a count, and repeat with
+`.`. `gziw`, `gzip`, `gz$` and `gZ3w` all do what they read like.
+
+Title Case has the unshifted key because it is the one with no short
+manual equivalent. Raising a single leading letter is already two keys --
+`~` on the character, or `guiw~` for a word -- while Title Casing a run by
+hand is one `~` per word.
+
+Both are conservative: every character after the first is left exactly as
+typed. `gZ` on `the PDE of LaTeX notes` gives `The PDE of LaTeX notes`,
+not `The pde of latex notes` -- which is what the usual `guiw~` workaround
+would leave you with.
+
+`gz` leaves the short function words lowercase unless they fall first or
+last in the run, so `of mice and men` becomes `Of Mice and Men`. The list
+lives in `util/case.lua` and can be replaced from `lua/user/`: >lua
+    -- lua/user/overrides/case.lua
+    local case = require("noethervim.util.case")
+    case.minor_words = {}                 -- capitalize every word
+    case.minor_words = { ["über"] = true } -- or supply your own set
+<
+In tex buffers a leading control sequence is stepped over rather than
+walked into, so `gZ` on `\emph{the cat}` gives `\emph{The cat}` and not
+`\Emph{the cat}`. An accent macro is followed through -- `\'etale` becomes
+`\'Etale` -- and a bare macro is treated as the word it renders as, so
+`\LaTeX is great` is left alone.
+
+There is deliberately no `gzz` line-wise double. Mapping an operator and
+its doubled form together makes every `gz` wait out 'timeoutlen' first,
+which is the same annoyance `gc`/`gcc` is known for. Use `gzV` or `gzip`.
 
 Shadowed defaults: ~
                                                 *noethervim-shadowed*
