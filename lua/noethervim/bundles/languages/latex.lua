@@ -765,7 +765,9 @@ return {
         ["df:"] = "\\cref{%s}", ["lm:"] = "\\cref{%s}",
         ["th:"] = "\\cref{%s}", ["co:"] = "\\cref{%s}",
         ["pr:"] = "\\cref{%s}", ["box:"] = "\\cref{%s}",
-        ["ex:"] = "example~\\ref{%s}", ["eq:"] = "equation~\\eqref{%s}",
+        -- cleveref names the counter itself: \cref{eq:foo} renders as
+        -- "eq. (1)", parentheses included, so \eqref would be redundant.
+        ["ex:"] = "example~\\ref{%s}", ["eq:"] = "\\cref{%s}",
       },
       patterns = {
         { pattern = "\\begin{(%w+)}{(.-)}{(.-)}", type = "environment" },
