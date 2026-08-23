@@ -1514,6 +1514,21 @@ Clickable components: ~
     Git branch/status   Open lazygit in a terminal
     Update indicator    Open Lazy plugin manager
 
+                                            *noethervim-statusline-mode-chip*
+Mode chip: ~
+
+    The colored block at the left of the bar names the current mode, and
+    hands its space to a counter when there is one to show.
+
+    Search: the match under the cursor and how many the pattern has in the
+    buffer, as `3/12`. It clears with the highlighting, on `<Esc>` or `]oh`.
+
+    Confirmed substitute (`:s/old/new/gc`): the prompt you are answering and
+    how many the pass will offer, as `3/12`. The total is fixed when the run
+    starts, and skipping with `n` advances the count the same as replacing.
+
+    Neither counter is computed in buffers over 50000 lines.
+
                                           *noethervim-statusline-buffer-file*
 Buffer and file: ~
 
