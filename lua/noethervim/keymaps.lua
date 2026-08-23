@@ -418,12 +418,36 @@ vim.keymap.set("v", ";", ":",    { desc = "command-line" })
 vim.keymap.set("v", "p", "P", { desc = "paste over (keep register)" })
 
 -- Inner-line text object: il = between first non-blank and last non-blank char
-vim.keymap.set("x", "il", "g_o^",          { desc = "inner line" })
-vim.keymap.set("o", "il", ":normal vil<CR>", { desc = "inner line" })
--- The whole line, charwise. `V` and `yy` are linewise, so their register
--- pastes as a new line; this yanks a line to drop inside another one.
-vim.keymap.set("x", "al", "$o0",           { desc = "around line (charwise)" })
-vim.keymap.set("o", "al", ":normal val<CR>", { desc = "around line (charwise)" })
+vim.keymap.set("x", "il", "g_o^",          { desc = "inner line (keeps indent)" })
+vim.keymap.set("o", "il", ":normal vil<CR>", { desc = "inner line (keeps indent)" })
+-- al: the whole line, charwise, stopping before the line break. `V` and `yy`
+-- are linewise, so their register pastes as a new line; this yanks a line to
+-- drop inside another one, and `dal` empties a line without removing it.
+--
+-- Both ends are set by column instead of with `$`, which sets 'curswant' to
+-- MAXCOL. A charwise operator reads MAXCOL as "through the end of the line"
+-- and takes the newline with it, which would make `dal` close the line up and
+-- `yal` carry a line break into whatever it pastes into. No motion reaches the
+-- last character without setting it.
+--
+-- An empty line holds nothing but the line break, so the operator is cancelled
+-- there rather than joining the next line up.
+do
+  local function around_line()
+    local win  = vim.api.nvim_get_current_win()
+    local lnum = vim.api.nvim_win_get_cursor(win)[1]
+    local len  = #vim.api.nvim_buf_get_lines(0, lnum - 1, lnum, true)[1]
+    if len == 0 then return end
+    vim.api.nvim_win_set_cursor(win, { lnum, 0 })
+    vim.cmd("normal! o")
+    vim.api.nvim_win_set_cursor(win, { lnum, len - 1 })
+  end
+
+  vim.keymap.set("x", "al", around_line, { desc = "around line (no line break)" })
+  vim.keymap.set("o", "al", function()
+    return vim.api.nvim_get_current_line() == "" and "<Esc>" or ":normal val<CR>"
+  end, { expr = true, desc = "around line (no line break)" })
+end
 
 -- Move block of text (respects indentation)
 vim.keymap.set("v", "<down>", ":m '>+1<CR>gv=gv", { desc = "move block down" })

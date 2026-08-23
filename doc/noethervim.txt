@@ -1303,7 +1303,7 @@ Other notable keymaps: ~
     `Y`               Yank selection to clipboard
     `P`               Paste clipboard (keep registers)
     `p`               Paste over (keep register)
-    `il`              Inner-line text object
+    `il` / `al`       Line text objects (|noethervim-line-objects|)
     `<Down>` / `<Up>` Move block
 
     Insert: ~
@@ -1315,6 +1315,28 @@ Other notable keymaps: ~
     `<C-l>`           Insert cwd
     `<C-y>`           Yank cmdline to clipboard
     `<C-o>`           Redirect output to buffer
+
+                                                *noethervim-line-objects*
+Line text objects ~
+
+Vim has no text object for a line. `V` and `yy` are linewise, so what they
+put in a register comes back as a whole new line, and there is no operator
+target that stops at the line break.
+
+    `al`              The whole line, up to but not including the break.
+    `il`              The line without its indentation: first non-blank
+                      through last non-blank.
+
+Both take an operator and both work on a Visual selection.
+
+    `yal`             Yank a line as text, to drop inside another one
+                      with `p` instead of below it.
+    `dal`             Empty a line and keep it: the line stays, its
+                      contents go.
+    `dil`             The same, with the indentation left in place, ready
+                      to type the line again.
+
+`al` does nothing on an empty line, where the break is all there is.
 
                                                         *noethervim-case*
 Capitalization operators ~

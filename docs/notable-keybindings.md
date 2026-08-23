@@ -228,9 +228,12 @@ effortless as possible outweighs the default`;`. `:help noethervim-semicolon` gi
 - **`[f` and `]f`**: previous and next file in the current directory,
   alphabetically, wrapping at the ends. Useful for numbered or dated files:
   chapters, notes, migrations.
-- **`il`**: the inner-line text object, from the first non-blank character to
-  the last. `dil` clears a line's contents without touching its indentation and
-  `cil` retypes it in place. Vim ships no text object for this.
+- **`il` and `al`**: the line text objects Vim leaves out. `il` runs from the
+  first non-blank character to the last, so `dil` clears a line's contents
+  without touching its indentation and `cil` retypes it in place. `al` is the
+  whole line up to the break, so `dal` empties a line and keeps it, where `dd`
+  would take the line with it, and `yal` puts the line in a register as text,
+  ready for `p` to drop it inside another line instead of below it.
 - **`zv` and `zx`**: `zz10<C-e>` and `zz10<C-y>`. Centre the cursor line, then
   scroll the window ten lines, leaving the cursor on the same buffer line.
 - **`<C-w>t`**: a twelve-line terminal along the bottom that toggles rather
