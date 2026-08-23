@@ -75,13 +75,35 @@ return {
   -- Moving the cursor onto an equation's line reveals the source again, unless
   -- 'concealcursor' covers the current mode.
   --
-  -- `image` is not filetype-scoped: enabling it also renders math in tex and
-  -- typst buffers, and images in every language Snacks ships a query for.
+  -- `image` is not filetype-scoped: enabling it renders math and images in
+  -- every language Snacks ships a query for, tex and typst among them. This
+  -- bundle's subject is markdown, so it claims markdown and leaves the rest
+  -- alone; `[om` opts a single buffer back in.
+  --
+  -- The gate is `b:snacks_image_attached`, the flag Snacks' own attach checks
+  -- before it does anything. Setting it on FileType gets there first, because
+  -- Snacks schedules its attach rather than running it inline. The language,
+  -- not the filetype, decides: that is what Snacks matches on, so `quarto`
+  -- and `rmd` are claimed alongside `markdown` without naming them.
   {
     "folke/snacks.nvim",
     opts = {
       image = { enabled = true },
     },
+    init = function()
+      vim.api.nvim_create_autocmd("FileType", {
+        group = vim.api.nvim_create_augroup("noethervim_markdown_image_scope", { clear = true }),
+        callback = function(ev)
+          local lang = vim.treesitter.language.get_lang(vim.bo[ev.buf].filetype)
+          if lang ~= "markdown" then
+            vim.b[ev.buf].snacks_image_attached = true
+            -- Second marker so `[om` can tell "held back here" from "already
+            -- rendering", which the Snacks flag alone reads the same way.
+            vim.b[ev.buf].noethervim_image_scoped = true
+          end
+        end,
+      })
+    end,
   },
 
   -- ── treesitter: latex parser ──────────────────────────────────────────────

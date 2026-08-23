@@ -30,10 +30,12 @@ noethervim-guide	noethervim.txt	/*noethervim-guide*
 noethervim-hard-wrap	noethervim.txt	/*noethervim-hard-wrap*
 noethervim-health	noethervim.txt	/*noethervim-health*
 noethervim-health-terminal	noethervim.txt	/*noethervim-health-terminal*
+noethervim-inline-math	noethervim.txt	/*noethervim-inline-math*
 noethervim-inspect	noethervim.txt	/*noethervim-inspect*
 noethervim-install	noethervim.txt	/*noethervim-install*
 noethervim-keymaps	noethervim.txt	/*noethervim-keymaps*
 noethervim-leader	noethervim.txt	/*noethervim-leader*
+noethervim-line-objects	noethervim.txt	/*noethervim-line-objects*
 noethervim-load-order	noethervim.txt	/*noethervim-load-order*
 noethervim-localleader	noethervim.txt	/*noethervim-localleader*
 noethervim-mapsearchleader	noethervim.txt	/*noethervim-mapsearchleader*
@@ -61,6 +63,7 @@ noethervim-statusline-deleted	noethervim.txt	/*noethervim-statusline-deleted*
 noethervim-statusline-directory	noethervim.txt	/*noethervim-statusline-directory*
 noethervim-statusline-edge-style	noethervim.txt	/*noethervim-statusline-edge-style*
 noethervim-statusline-error-boundary	noethervim.txt	/*noethervim-statusline-error-boundary*
+noethervim-statusline-mode-chip	noethervim.txt	/*noethervim-statusline-mode-chip*
 noethervim-statusline-new-file	noethervim.txt	/*noethervim-statusline-new-file*
 noethervim-statusline-themes	noethervim.txt	/*noethervim-statusline-themes*
 noethervim-tabline	noethervim.txt	/*noethervim-tabline*

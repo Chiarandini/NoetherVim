@@ -161,6 +161,49 @@ toggle("oA",
   function() vim.b.noethervim_abolish_force = nil end,
   "abolish auto-correct in code")
 
+-- Inline math rendering (Snacks.image; the markdown bundle turns it on).
+--
+-- `[om` renders math in the current buffer, which is how a tex or typst
+-- buffer opts in: the markdown bundle claims markdown and leaves other
+-- filetypes to their own devices. `]om` stops math rendering everywhere,
+-- for a document where typesetting each equation costs more than reading
+-- the source does.
+--
+-- Off is global because Snacks tracks no per-buffer switch for it, and the
+-- flag the discovery pass reads (`math.enabled`) is one value for the
+-- session. Clearing the extmarks takes the images off the screen at once;
+-- the next pass over each buffer drops the placements behind them.
+local function image_math(on)
+  local ok, snacks = pcall(require, "snacks")
+  if not ok or not snacks.image or not snacks.image.config.enabled then
+    vim.notify("inline math needs the markdown bundle", vim.log.levels.WARN)
+    return
+  end
+  snacks.image.config.math.enabled = on
+  if not on then
+    local ns = vim.api.nvim_create_namespace("snacks.image")
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+      if vim.api.nvim_buf_is_loaded(buf) then
+        vim.api.nvim_buf_clear_namespace(buf, ns, 0, -1)
+      end
+    end
+  elseif vim.b.noethervim_image_scoped or not vim.b.snacks_image_attached then
+    vim.b.noethervim_image_scoped = nil
+    vim.b.snacks_image_attached = nil
+    -- A real buffer number, not 0: Snacks names the buffer's augroup after
+    -- whatever it is handed, so 0 would build a group nothing else can find.
+    require("snacks.image.doc").attach(vim.api.nvim_get_current_buf())
+  else
+    -- Already attached, so nothing is scheduled to redraw it. WinScrolled is
+    -- what the inline renderer listens on that costs nothing to fake.
+    vim.api.nvim_exec_autocmds("WinScrolled", { modeline = false })
+  end
+  M._notify("inline math " .. (on and "enabled" or "disabled"))
+end
+
+vim.keymap.set("n", "[om", function() image_math(true)  end, { desc = "enable inline math" })
+vim.keymap.set("n", "]om", function() image_math(false) end, { desc = "disable inline math" })
+
 -- Blink.cmp completion on/off
 vim.g.blink_toggle = true
 local function toggle_cmp(bool)

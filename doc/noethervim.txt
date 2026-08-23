@@ -899,6 +899,26 @@ are being collected: >lua
         table.insert(opts.adapters, require("neotest-adapter")({}))
       end }
 <
+                                                    *noethervim-inline-math*
+Inline math (markdown bundle): ~
+
+The `markdown` bundle typesets `$...$` and `$$...$$` and draws the result
+over the source, in markdown buffers. Each equation is set by pdflatex or
+tectonic and converted by ImageMagick, then cached, so only its first
+appearance pays for the run. It needs a terminal that speaks the kitty
+graphics protocol (kitty, WezTerm, Ghostty).
+
+Move the cursor onto an equation's line to see the source again, unless
+'concealcursor' covers the mode you are in.
+
+    `[om`             Render math in this buffer. In a tex or typst
+                      buffer this is the opt-in: the bundle claims
+                      markdown and leaves other filetypes to the PDF
+                      or preview they already have.
+    `]om`             Stop rendering math, in every buffer. Reach for
+                      this in a document where typesetting each equation
+                      costs more than reading the source.
+
 Configuring noethervim-tex (latex bundle): ~
 
 The `latex` bundle includes `noethervim-tex`, which provides LaTeX snippets,
@@ -1256,6 +1276,8 @@ Prefixes: ~
                       G is off by default; toggle persists across sessions
                       (stored in stdpath("state")).
                       `[oC`/`]oC` toggle blink.cmp completion on/off
+                      `[om`/`]om` toggle inline math
+                      (|noethervim-inline-math|)
                                                         *noethervim-Z*
     `Z`                 Closing things, arranged as a grid. Rows say how
                       much you are willing to lose; columns say what you
