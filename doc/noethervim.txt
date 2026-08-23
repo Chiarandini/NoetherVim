@@ -1360,6 +1360,9 @@ Both take an operator and both work on a Visual selection.
 
 `al` does nothing on an empty line, where the break is all there is.
 
+Both take a register prefix, so `"_dal` clears a line without disturbing
+the unnamed register and `"ayal` puts one in register `a`.
+
                                                         *noethervim-case*
 Capitalization operators ~
 
