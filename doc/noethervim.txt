@@ -1506,6 +1506,14 @@ These keymaps activate only in their respective filetype, except for the
                         set `preview_split` in a user override to pin it.
     `gf`                Fuzzy find files in current directory
     `gG`                Live grep in current directory
+    `gt`                Open a .tex file from this directory (latex
+                        bundle). A lone match opens; with several, a
+                        picker appears where `<CR>` opens the file and
+                        `<S-CR>` puts the Oil cursor on it without
+                        opening, ready for the usual Oil keys
+    `gP`                Open a .pdf from this directory in the system
+                        viewer (latex bundle). With several, a list
+                        appears to choose from
     `gV` / `g|`         Second pane beside this one, for moving files
                         between directories. Both open where you are;
                         navigate each with Oil as usual. `<C-h>` / `<C-l>`

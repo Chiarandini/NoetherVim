@@ -657,6 +657,12 @@ return {
   -- ── Oil: open .tex (gt) / .pdf (gP) in current dir ──────────────────────
   -- LaTeX-specific Oil keymaps -- open the .tex (gt) or .pdf (gP) file in the
   -- current Oil directory, or show a picker if there are multiple.
+  --
+  -- `gt` is `noethervim.util.oil_pick` narrowed to .tex, so it inherits that
+  -- picker's two keys: <CR> opens the file exactly as <CR> on the Oil line
+  -- would, <S-CR> only lands the Oil cursor on it. Opening goes through
+  -- oil.select(), which is what keeps the float case -- close the float,
+  -- edit in the window behind it -- out of this file.
   {
     "stevearc/oil.nvim",
     opts = {
@@ -666,30 +672,12 @@ return {
           callback = function()
             local dir = require("oil").get_current_dir()
             if not dir then return end
-            local files = vim.fn.glob(dir .. "*.tex", false, true)
-            if #files == 0 then
-              vim.notify("No .tex files in " .. dir, vim.log.levels.WARN)
-              return
-            end
-            local is_float = vim.api.nvim_win_get_config(0).relative ~= ""
-            local function open_file(path)
-              if is_float then
-                require("oil").close()
-                vim.schedule(function() vim.cmd("edit " .. vim.fn.fnameescape(path)) end)
-              else
-                vim.cmd("edit " .. vim.fn.fnameescape(path))
-              end
-            end
-            if #files == 1 then
-              open_file(files[1])
-            else
-              vim.ui.select(files, {
-                prompt = "Select .tex file:",
-                format_item = function(f) return vim.fn.fnamemodify(f, ":t") end,
-              }, function(choice)
-                if choice then open_file(choice) end
-              end)
-            end
+            require("noethervim.util.oil_pick").pick({
+              filter      = function(entry) return entry.name:match("%.tex$") ~= nil end,
+              title       = "Select .tex file",
+              empty       = "No .tex files in " .. dir,
+              auto_select = true,
+            })
           end,
         },
         -- gP: twin of gt, but for the compiled PDF. Hands the file to the

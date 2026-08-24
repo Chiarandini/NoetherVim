@@ -166,98 +166,42 @@ without opening it, so you can act on it with the usual Oil keys.
 `<S-CR>` needs a terminal that distinguishes it from `<CR>` (the kitty
 keyboard protocol) — the same requirement as the `browse` picker.
 
+The picker itself ships with the distribution -- `gt` in the latex bundle is
+the same one, narrowed to `.tex` files -- so the override is a keymap and a
+call:
+
 ```lua
 -- ~/.config/nvim/lua/user/plugins/oil-fuzzy.lua
-local function fuzzy_pick_in_oil()
-    local oil    = require("oil")
-    local Snacks = require("snacks")
-    local bufnr  = vim.api.nvim_get_current_buf()
-    local win    = vim.api.nvim_get_current_win()
-
-    -- Read entries off the buffer lines so the picker mirrors exactly what
-    -- Oil is showing: no recursion, and the hidden-files toggle is honoured
-    -- for free.
-    local items = {}
-    for lnum = 1, vim.api.nvim_buf_line_count(bufnr) do
-        local entry = oil.get_entry_on_line(bufnr, lnum)
-        if entry and entry.name ~= ".." then
-            table.insert(items, {
-                text = entry.name,
-                lnum = lnum,
-                dir  = entry.type == "directory",
-            })
-        end
-    end
-    if #items == 0 then return end
-
-    -- Move the Oil cursor onto `item`, then optionally run `after` there.
-    -- Deferred so it fires once the picker has fully torn down.
-    local function land_on(item, after)
-        vim.schedule(function()
-            if not (item and vim.api.nvim_win_is_valid(win)) then return end
-            vim.api.nvim_set_current_win(win)
-            vim.api.nvim_win_set_cursor(win, { item.lnum, 0 })
-            if after then after() end
-        end)
-    end
-
-    local dir = oil.get_current_dir(bufnr)
-    Snacks.picker({
-        title  = dir and vim.fn.fnamemodify(dir, ":~") or "Oil",
-        layout = "select",
-        -- Return focus to the Oil window rather than snacks' default "main",
-        -- which excludes floats. For a floating Oil, restoring focus to the
-        -- window behind it fires oil's own WinLeave auto-close and the float
-        -- is gone before the deferred select() can run.
-        main   = { current = true },
-        items  = items,
-        format = function(item)
-            local icon, hl = Snacks.util.icon(item.text, item.dir and "directory" or "file")
-            return {
-                { icon .. " ", hl },
-                { item.text, item.dir and "SnacksPickerDirectory" or "SnacksPickerFile" },
-            }
-        end,
-        confirm = function(picker, item)
-            picker:close()
-            land_on(item, oil.select)
-        end,
-        actions = {
-            jump_to_entry = function(picker)
-                local item = picker:current()
-                picker:close()
-                land_on(item)
-            end,
-        },
-        win = {
-            input = {
-                keys = {
-                    ["<S-CR>"] = { "jump_to_entry", mode = { "i", "n" },
-                                   desc = "jump to entry (no open)" },
-                },
-            },
-        },
-    })
-end
-
 vim.api.nvim_create_autocmd("FileType", {
     pattern = "oil",
     callback = function(args)
-        vim.keymap.set("n", "/", fuzzy_pick_in_oil, {
+        vim.keymap.set("n", "/", function()
+            require("noethervim.util.oil_pick").pick()
+        end, {
             buffer = args.buf,
             desc = "fuzzy-find entries in this dir",
         })
     end,
 })
-
-return {}
 ```
+
+`pick()` takes an optional table:
+
+- `filter` -- `fun(entry): boolean`, to list only the entries it accepts
+- `title` -- picker title; the Oil directory when omitted
+- `empty` -- what to say when nothing matches
+- `auto_select` -- with exactly one match, act on it and skip the picker
+- `keys` -- `{ jump = "<S-CR>" }`, to move the jump key elsewhere
+
+A `.tex`-only variant, for instance, passes
+`filter = function(entry) return entry.name:match("%.tex$") ~= nil end`.
 
 Bind it to a free key instead of `/` if you want the picker without giving
 up search. `g/` is free in Oil buffers: neither oil.nvim nor the distro
 binds it there, and the `wrapsearch` bundle's `g/` only acts in writing
 filetypes. Taken already are `g?`, `g.`, `g\`, `g~`, `gd`, `gf`, `gG`,
-`gs`, `gS`, `gV`, `gx`, `gX`, `gz` and `gZ`.
+`gs`, `gS`, `gV`, `gx`, `gX`, `gz` and `gZ`, plus `gt` and `gP` with the
+latex bundle on.
 
 ## Mode colour in the number column
 
