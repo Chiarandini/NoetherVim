@@ -99,7 +99,12 @@ function M.pick(opts)
     actions = {
       -- <S-CR>: jump to the entry -- land the Oil cursor on it WITHOUT opening
       -- (no oil.select), so you can then act on it with the usual Oil keys.
-      jump_to_entry = function(picker)
+      --
+      -- Named `jump` so it displaces snacks' own jump for this picker. That
+      -- one wants item.file or item.buf and asserts without either; these
+      -- items are Oil lines, not locations, so any default binding the keys
+      -- below miss -- after an `opts.keys` rebind, say -- lands here instead.
+      jump = function(picker)
         local item = picker:current()
         picker:close()
         land_on(item)
@@ -108,17 +113,17 @@ function M.pick(opts)
     win = {
       input = {
         keys = {
-          [keys.jump] = { "jump_to_entry", mode = { "i", "n" }, desc = "jump to entry (no open)" },
+          [keys.jump] = { "jump", mode = { "i", "n" }, desc = "jump to entry (no open)" },
         },
       },
       -- The list window carries its own copy of the default keys, where
-      -- <S-CR> is snacks' `pick_win` + `jump`. That pair wants item.file or
-      -- item.buf and asserts without one; these items are Oil lines, not
-      -- locations. Bind the jump key here too so focusing the list (<Tab>,
-      -- `/`) can't reach the default.
+      -- <S-CR> is snacks' `pick_win` + `jump`. The action above already
+      -- claims the `jump` half; binding the key here too drops `pick_win`,
+      -- which would otherwise stop to ask which window -- a question with no
+      -- answer when all the key does is move a cursor in the Oil buffer.
       list = {
         keys = {
-          [keys.jump] = { "jump_to_entry", desc = "jump to entry (no open)" },
+          [keys.jump] = { "jump", desc = "jump to entry (no open)" },
         },
       },
     },

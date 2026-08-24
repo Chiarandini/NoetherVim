@@ -476,37 +476,30 @@ return {
 						vim.schedule(function() open_notification(item.item) end)
 					end,
 				},
-				-- ── vim.ui.select ───────────────────────────────────────
-				-- snacks routes `vim.ui.select` through a picker whose
-				-- items are arbitrary Lua values, not locations. The
-				-- default `<S-CR>` (`pick_win` then `jump`) wants
-				-- item.file or item.buf and hits
-				-- `assert(..., "Either item.buf or item.file is required")`
-				-- without one, so on a list of plain strings the key
-				-- errors instead of choosing.
-				--
-				-- Overriding `jump` for this source only keeps the key's
-				-- intent: `pick_win` has already pointed `picker.main` at
-				-- the chosen window, and the select source's own `confirm`
-				-- closes the picker back into that window before running
-				-- `on_choice` -- so <S-CR> still means "act in the window
-				-- I pick". Items that *do* carry a file/buf (ui.select
-				-- over tables) keep the real jump.
-				select = {
-					actions = {
-						jump = function(picker, item, action)
-							if item and (item.file or item.buf) then
-								return require("snacks.picker.actions").jump(picker, item, action)
-							end
-							return picker:action("confirm")
-						end,
-					},
-				},
 			},
-			-- <c-o> on any file in any picker opens Oil in that file's parent dir.
-			-- If a floating Oil window is already open, navigates it there instead of
-			-- opening a new buffer -- keeps the float as the "active" Oil pane.
 			actions = {
+				-- ── <S-CR> on a non-location item ───────────────────────
+				-- `<S-CR>` is the one key that names `jump` directly; every
+				-- other open-it-somewhere key routes through the source's
+				-- `confirm`. A source whose items are not locations --
+				-- `select` (what `vim.ui.select` becomes), the notifications
+				-- source above, icons, registers, undo -- therefore has no
+				-- way to shield it, and snacks' jump hits
+				-- `assert(..., "Either item.buf or item.file is required")`
+				-- on an item carrying neither.
+				--
+				-- Falling back to the source's own `confirm` keeps the key's
+				-- intent: `pick_win` has already pointed `picker.main` at the
+				-- chosen window, and `confirm` closes the picker back into
+				-- that window before acting -- so <S-CR> still means "act in
+				-- the window I pick". Items that do carry a file or buf keep
+				-- the real jump.
+				jump = function(picker, item, action)
+					if item and (item.file or item.buf) then
+						return require("snacks.picker.actions").jump(picker, item, action)
+					end
+					return picker:action("confirm")
+				end,
 				-- The help overlay is not focusable, so <Esc> is still handled by the
 				-- input window and would close the whole picker out from under it.
 				dismiss_help = function(picker)
@@ -525,6 +518,9 @@ return {
 				help_list = function(picker)
 					picker.list.win:toggle_help({ win = { title = help_title, title_pos = "center" } })
 				end,
+				-- <c-o> on any file in any picker opens Oil in that file's parent dir.
+				-- If a floating Oil window is already open, navigates it there instead of
+				-- opening a new buffer -- keeps the float as the "active" Oil pane.
 				open_oil_dir = function(picker)
 					local item = picker:current()
 					if not item then return end
