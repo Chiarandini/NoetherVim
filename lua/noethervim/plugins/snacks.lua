@@ -476,6 +476,32 @@ return {
 						vim.schedule(function() open_notification(item.item) end)
 					end,
 				},
+				-- ── vim.ui.select ───────────────────────────────────────
+				-- snacks routes `vim.ui.select` through a picker whose
+				-- items are arbitrary Lua values, not locations. The
+				-- default `<S-CR>` (`pick_win` then `jump`) wants
+				-- item.file or item.buf and hits
+				-- `assert(..., "Either item.buf or item.file is required")`
+				-- without one, so on a list of plain strings the key
+				-- errors instead of choosing.
+				--
+				-- Overriding `jump` for this source only keeps the key's
+				-- intent: `pick_win` has already pointed `picker.main` at
+				-- the chosen window, and the select source's own `confirm`
+				-- closes the picker back into that window before running
+				-- `on_choice` -- so <S-CR> still means "act in the window
+				-- I pick". Items that *do* carry a file/buf (ui.select
+				-- over tables) keep the real jump.
+				select = {
+					actions = {
+						jump = function(picker, item, action)
+							if item and (item.file or item.buf) then
+								return require("snacks.picker.actions").jump(picker, item, action)
+							end
+							return picker:action("confirm")
+						end,
+					},
+				},
 			},
 			-- <c-o> on any file in any picker opens Oil in that file's parent dir.
 			-- If a floating Oil window is already open, navigates it there instead of
