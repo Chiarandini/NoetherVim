@@ -86,7 +86,7 @@ Requires:
 
 ### `python`
 
-:VenvSelect finds .venv, venv, conda and poetry environments, points the language server at whichever you pick, and exports VIRTUAL_ENV so terminal commands agree. :VenvSelectCached restores the last choice per project. With the debug bundle also enabled, registers the debugpy adapter against that same environment; with the test bundle, the neotest-python adapter.
+:VenvSelect finds .venv, venv, conda and poetry environments, points the language server at whichever you pick, and exports VIRTUAL_ENV so terminal commands agree; the last choice is remembered and reactivated per project. With the debug bundle also enabled, registers the debugpy adapter against that same environment; with the test bundle, the neotest-python adapter.
 
 ```lua
 { import = "noethervim.bundles.languages.python" }

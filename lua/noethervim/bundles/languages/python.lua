@@ -2,8 +2,8 @@
 ---@desc virtual environment switching
 ---@about :VenvSelect finds .venv, venv, conda and poetry environments, points
 ---       the language server at whichever you pick, and exports VIRTUAL_ENV
----       so terminal commands agree. :VenvSelectCached restores the last
----       choice per project. With the debug bundle also enabled, registers
+---       so terminal commands agree; the last choice is remembered and
+---       reactivated per project. With the debug bundle also enabled, registers
 ---       the debugpy adapter against that same environment; with the test
 ---       bundle, the neotest-python adapter.
 ---@requires exe=python3 label="Python 3" why="virtual-environment discovery"
@@ -20,8 +20,8 @@
 -- Enable with: { import = "noethervim.bundles.languages.python" }
 --
 -- Provides venv-selector.nvim -- virtual environment switching.
---   :VenvSelect        pick a venv (searches for .venv, venv, conda, poetry, etc.)
---   :VenvSelectCached  re-select last used venv for this project
+--   :VenvSelect  pick a venv (.venv, venv, conda, poetry, etc.); the last
+--                selection is remembered and reactivated per project
 --
 -- Automatically reconfigures the LSP (pyright/basedpyright) to use the
 -- selected environment and sets VIRTUAL_ENV for terminal commands.
@@ -34,7 +34,7 @@ return {
 	{
 		"linux-cultist/venv-selector.nvim",
 		dependencies = { "neovim/nvim-lspconfig" },
-		cmd = { "VenvSelect", "VenvSelectCached" },
+		cmd = { "VenvSelect" },
 		ft = "python",
 		opts = {},
 	},

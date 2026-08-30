@@ -29,8 +29,15 @@ return {
     dependencies = { "nvim-lua/plenary.nvim" },
     config = function()
       local ok_cfg, user_cfg = pcall(require, "user.config")
-      local vault = (ok_cfg and type(user_cfg) == "table" and user_cfg.obsidian_vault)
-        or "~/obsidian/"
+      local vault = ok_cfg and type(user_cfg) == "table" and user_cfg.obsidian_vault
+      if not vault then
+        vim.notify(
+          "Obsidian bundle: set obsidian_vault in lua/user/config.lua "
+            .. "(see :help noethervim-user-config-data)",
+          vim.log.levels.WARN
+        )
+        return
+      end
 
       require("obsidian").setup({
         legacy_commands = false,

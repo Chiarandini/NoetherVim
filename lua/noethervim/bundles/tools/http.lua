@@ -13,10 +13,11 @@
 --   Compatible with JetBrains HTTP Client syntax.
 --
 -- Usage:
---   Create a .http or .rest file, write requests, then:
---     <localleader>r    run request under cursor
---     <localleader>a    run all requests in file
---     <localleader>i    inspect current request
+--   Create a .http or .rest file and write requests. This bundle loads kulala
+--   for those filetypes but does not bind run keys by default; enable kulala's
+--   own keymaps (opts.global_keymaps = true) or map its run / run_all / inspect
+--   functions in user/keymaps.lua. Shipping default <localleader> keymaps is
+--   tracked as a follow-up.
 --
 -- Example .http file:
 --   GET https://httpbin.org/get

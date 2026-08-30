@@ -35,11 +35,11 @@ return {
 			{ "<leader>mbo", "<cmd>Neominimap bufOn<cr>",       desc = "Minimap on (buffer)" },
 			{ "<leader>mbc", "<cmd>Neominimap bufOff<cr>",      desc = "Minimap off (buffer)" },
 		},
+		-- neominimap is configured through vim.g.neominimap, read once at load; it
+		-- exposes no setup() function, so all config lives here in init (which runs
+		-- before the plugin loads), not in a config function.
 		init = function()
-			vim.g.neominimap = { auto_enable = true }
-		end,
-		config = function()
-			require("neominimap").setup({
+			vim.g.neominimap = {
 				auto_enable          = true,
 				log_level            = vim.log.levels.OFF,
 				notification_level   = vim.log.levels.INFO,
@@ -70,7 +70,7 @@ return {
 				window_border = "single",
 				winopt = {},
 				bufopt = {},
-			})
+			}
 		end,
 	},
 }
