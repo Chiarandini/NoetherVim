@@ -79,8 +79,9 @@ end
 
 -- ── Adding ───────────────────────────────────────────────────────────
 
---- Add `word` to the spellfile, together with the forms you will go on to
---- write and would otherwise have to add one at a time.
+--- Every form worth writing when `word` is added: the word itself, plus the
+--- forms you will go on to write and would otherwise have to add one at a
+--- time.
 ---
 --- What Vim already covers, measured rather than assumed:
 ---
@@ -97,14 +98,16 @@ end
 --- worth adding by hand are names. Add the lowercase form yourself when you
 --- want it; `zg` on it will pick up its possessive too.
 ---
+--- Pure, and public, so a config writing the same word into more than one
+--- dictionary can ask for the rule once and apply its own filtering per
+--- target. `spellbadword()` cannot serve that: it answers for the loaded
+--- dictionaries as a whole, so the first write makes every later target
+--- look already satisfied.
+---
 ---@param word string
----@param bang boolean  true for the `!` (session-only) variants
----@return string[] added  every form actually written
-function M.add_word(word, bang)
+---@return string[] forms
+function M.variants(word)
   if not word or word == "" then return {} end
-  local cmd = "spellgood"
-  -- `!` is the session-only variant; `vim.cmd` takes it as a field.
-  local mods_bang = bang and true or false
 
   local forms, seen = {}, {}
   local function want(w)
@@ -115,9 +118,22 @@ function M.add_word(word, bang)
 
   want(word)
   want(word .. "'s")
+  return forms
+end
+
+--- Add `word` to the spellfile in each of its |M.variants|.
+---
+---@param word string
+---@param bang boolean  true for the `!` (session-only) variants
+---@return string[] added  every form actually written
+function M.add_word(word, bang)
+  if not word or word == "" then return {} end
+  local cmd = "spellgood"
+  -- `!` is the session-only variant; `vim.cmd` takes it as a field.
+  local mods_bang = bang and true or false
 
   local added = {}
-  for _, form in ipairs(forms) do
+  for _, form in ipairs(M.variants(word)) do
     -- Skip what is already accepted, so the spellfile stays a record of
     -- decisions rather than of everything that was ever typed, and so that
     -- adding the same word twice is a no-op.
