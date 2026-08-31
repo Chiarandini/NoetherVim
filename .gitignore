@@ -4,8 +4,10 @@ tests/
 .cache
 .claude/
 dev-docs/
-# Ships at the beta cut, not in alpha: drop this line then. It carries the
-# Documentation Style section that doc/noethervim.txt is written against.
+# Ship at the beta cut, not in alpha: drop these lines then. CONTRIBUTING.md
+# carries the Documentation Style section that doc/noethervim.txt is written
+# against; CLAUDE.md is the arbiter that routes to it.
 CONTRIBUTING.md
+CLAUDE.md
 .keys
 README_backup.md
