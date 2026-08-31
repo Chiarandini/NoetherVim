@@ -180,6 +180,22 @@ return {
 				build = function()
 					pcall(vim.cmd, "MasonUpdate")
 				end,
+				-- mason.setup() is what appends the package registries, and
+				-- the keymap below can load mason.nvim on its own without
+				-- loading nvim-lspconfig. Setting it up from the parent's
+				-- config would leave the registry empty on that path, so
+				-- every installed package reads as "removed from the
+				-- registry" and nothing is available to install.
+				opts = {
+					ui = {
+						border = 'rounded',
+						icons = {
+							package_installed   = '✓',
+							package_pending     = '➜',
+							package_uninstalled = '✗',
+						},
+					},
+				},
 				keys = {
 					{
 						"<c-w><c-m>",
@@ -426,17 +442,6 @@ return {
 						end, bufnr)
 					end, km_opts('[y]ank type at cursor'))
 				end,
-			})
-
-			require('mason').setup({
-				ui = {
-					border = 'rounded',
-					icons = {
-						package_installed   = '✓',
-						package_pending     = '➜',
-						package_uninstalled = '✗',
-					},
-				},
 			})
 
 			require('mason-lspconfig').setup({
