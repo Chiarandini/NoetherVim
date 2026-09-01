@@ -43,8 +43,12 @@ M.languages = {
 	bash       = { file = "bash" },
 	zsh        = { file = "zsh" },
 
-	javascript = { root = { "package.json" }, file = "node", project = "npm start" },
-	typescript = { root = { "package.json" }, file = "tsx",  project = "npm start" },
+	javascript = { root = { "package.json" }, file = "node", project = "npm start --silent" },
+	-- `node` rather than `tsx`: Node strips types natively from 22.6 and does
+	-- it without a flag from 23, so a TypeScript file runs with the toolchain
+	-- already required for JavaScript. Naming `tsx` meant claiming a binary
+	-- nothing here installs, and the run failing with "command not found".
+	typescript = { root = { "package.json" }, file = "node", project = "npm start --silent" },
 
 	-- `go run .` builds the package in the working directory, which is what a
 	-- Go "project run" means; `go run <file>` is the single-file form.

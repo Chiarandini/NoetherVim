@@ -35,6 +35,15 @@ return {
 		end,
 	},
 
+	-- The parsers arrived via core's `auto_install` before, which works but
+	-- states no dependency: nothing recorded that this bundle needs them, so
+	-- nothing would notice if auto_install were turned off.
+	{ "nvim-treesitter/nvim-treesitter",
+		opts = { ensure_installed = {
+			"typescript", "javascript", "tsx", "css", "html", "json",
+		} },
+	},
+
 	{
 		"axelvc/template-string.nvim",
 		ft     = { "html", "typescript", "javascript", "typescriptreact", "javascriptreact", "vue", "svelte", "python" },

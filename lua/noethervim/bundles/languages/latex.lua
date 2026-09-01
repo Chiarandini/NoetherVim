@@ -83,6 +83,12 @@ return {
   -- it. Same reason the treesitter block below says so.
   { "stevearc/conform.nvim",
     opts = function(_, opts)
+      -- latexindent ships with TeX Live, which this bundle already requires,
+      -- so the filetype is claimed without adding a Mason install. bibclean is
+      -- the exception: core claims `bib` and leaves the binary to whoever
+      -- actually opens a .bib file.
+      opts.formatters_by_ft = opts.formatters_by_ft or {}
+      opts.formatters_by_ft.tex = { "latexindent" }
       opts.mason_install = opts.mason_install or {}
       vim.list_extend(opts.mason_install, { "bibclean" })
     end,
