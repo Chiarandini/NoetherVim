@@ -24,7 +24,7 @@ reads. Run that for the state of the bundles you actually have enabled.
 
 ### `c-cpp`
 
-Installs clangd on demand and adds the C and C++ treesitter parsers. With the debug bundle also enabled, registers the codelldb adapter and launch configurations for both languages.
+Installs clangd on demand and adds the C and C++ treesitter parsers. With the debug bundle also enabled, registers the codelldb adapter and launch configurations for both languages; with the test bundle, runs CTest through neotest, whatever framework the project uses.
 
 ```lua
 { import = "noethervim.bundles.languages.c-cpp" }
@@ -36,6 +36,8 @@ Requires:
   <br />CMake writes it with CMAKE_EXPORT_COMPILE_COMMANDS=ON; Make users usually generate it with bear
 - **codelldb** *(optional)*: stepping through C and C++, when the debug bundle is also enabled
   <br />:MasonInstall codelldb
+- **CTest** *(optional)*: running tests, when the test bundle is also enabled; ships with CMake
+  <br />https://cmake.org/download/ (CMake 3.21 or newer)
 
 ### `go`
 
@@ -54,7 +56,7 @@ Requires:
 
 ### `java`
 
-jdtls needs workspace management and jar paths that plain lspconfig cannot supply, so it gets a dedicated client. It starts on the first .java buffer. Install the server itself with :MasonInstall jdtls. With the test bundle also enabled, registers the JUnit adapter.
+jdtls needs workspace management and jar paths that plain lspconfig cannot supply, so it gets a dedicated client, started per buffer with a workspace directory of its own. With the debug bundle also enabled it loads the Java debug and test jars into the server, which is what makes breakpoints and the JUnit adapter work.
 
 ```lua
 { import = "noethervim.bundles.languages.java" }
@@ -63,7 +65,7 @@ jdtls needs workspace management and jar paths that plain lspconfig cannot suppl
 Requires:
 
 - **a JDK**: jdtls will not start without one
-  <br />JDK 17 or newer; jdtls itself installs via Mason
+  <br />JDK 17 or newer
 - **Maven or Gradle** *(optional)*: neotest-java builds and runs through the project's own tool, when the test bundle is also enabled
   <br />whichever your project already uses
 
@@ -103,7 +105,7 @@ Requires:
 
 ### `rust`
 
-rustaceanvim goes past plain rust-analyzer with macro expansion, runnables and debuggables, the crate graph, hover actions and structural search-replace. It manages its own LSP client, so no lspconfig entry is needed. With the test bundle also enabled, it supplies its own neotest adapter.
+rustaceanvim goes past plain rust-analyzer with macro expansion, runnables and debuggables, the crate graph, hover actions and structural search-replace. It manages its own LSP client, so no lspconfig entry is needed. With the test bundle also enabled, cargo tests run through neotest; with the debug bundle, it loads debug targets from rust-analyzer once an adapter is installed.
 
 ```lua
 { import = "noethervim.bundles.languages.rust" }
@@ -115,8 +117,8 @@ Requires:
   <br />rustup component add rust-analyzer
 - **Cargo**: building and running from the editor
   <br />https://rustup.rs/
-- **codelldb or lldb** *(optional)*: stepping through Rust, when the debug bundle is also enabled
-  <br />:MasonInstall codelldb
+- **codelldb** *(optional)*: stepping through Rust, when the debug bundle is also enabled
+  <br />:MasonInstall codelldb, or put lldb-dap on PATH
 
 ### `web-dev`
 
@@ -252,7 +254,7 @@ Requires:
 
 ### `task-runner`
 
-overseer.nvim runs and tracks tasks, compiler.nvim wraps it in a project compiler UI, and &lt;leader&gt;rf runs the current file in a way that respects filetype and version managers.
+overseer.nvim runs and tracks tasks, compiler.nvim wraps it in a project compiler UI, and &lt;leader&gt;rf and &lt;leader&gt;rp run the current file or the project around it, respecting filetype, project markers and version managers.
 
 ```lua
 { import = "noethervim.bundles.tools.task-runner" }
