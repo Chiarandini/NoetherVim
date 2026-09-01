@@ -5,15 +5,36 @@ name: capability matrix
 # the formatter reformats, diagnostics appear, tests run, the debugger stops on
 # a breakpoint, and the file and project both run.
 #
-# Not a per-PR job. It provisions Rust, Go, Python, a JDK, Node and LLVM, then
-# installs a Mason package set on top, which is minutes of work and network
-# that no pull request should pay for. `check.yml` and `docs.yml` remain the
-# fast gates; this is the slow one that catches what they cannot see -- a
-# bundle whose source reads as correct and whose feature does not work.
+# Two triggers, because there are two ways this can break.
+#
+# A change to a language bundle, to the shared run table, or to the LSP stack
+# can break a checkpoint, so those paths run it on the pull request that made
+# the change -- attributed to that change, while the author is looking. It is
+# slow (it provisions Rust, Go, Python, a JDK, Node and LLVM, then a Mason
+# package set), which is why it is path-filtered rather than universal:
+# check.yml and docs.yml stay the fast gates every PR pays for.
+#
+# The matrix can also break with no commit at all. Every checkpoint depends on
+# something outside this repository -- a plugin, a Mason package, a language
+# server, a toolchain -- and all of them move. That is what the schedule is
+# for, and weekly is the honest cadence for it: nightly on a repository whose
+# dependencies change slower than that mostly re-verifies unchanged code and
+# trains you to ignore the result.
 on:
+  pull_request:
+    paths:
+      - "lua/noethervim/bundles/languages/**"
+      - "lua/noethervim/bundles/tools/{debug,test,task-runner}.lua"
+      - "lua/noethervim/util/run.lua"
+      - "lua/noethervim/util/mason_install.lua"
+      - "lua/noethervim/plugins/lsp.lua"
+      - "lua/noethervim/lsp/**"
+      - "tests/capability*"
+      - "tests/fixtures/lang/**"
+      - ".github/workflows/capability.yml"
   schedule:
-    # 04:00 UTC, after the day's merges have landed.
-    - cron: "0 4 * * *"
+    # Mondays 04:00 UTC: a drift canary, not a per-change gate.
+    - cron: "0 4 * * 1"
   workflow_dispatch:
     inputs:
       language:
