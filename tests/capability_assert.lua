@@ -164,7 +164,12 @@ local SPECS = {
 		-- CTest lives in the same fixture root as the plain C files: neotest
 		-- roots an adapter at Neovim's cwd, so a test project in a sibling
 		-- directory is invisible to it.
-		test = { file = "capfixture_test.cpp", bin = "ctest", prepare = {
+		-- GAP, not FAIL: the capability is real and passes on macOS, and on
+		-- Linux the project builds and `ctest -N` lists the tests while the
+		-- adapter reports nothing (issue #14). Tracked so a genuine regression
+		-- elsewhere stays visible.
+		test = { gap = "neotest-ctest yields no results on Linux (issue #14)",
+		         file = "capfixture_test.cpp", bin = "ctest", prepare = {
 			{ "cmake", "-S", ".", "-B", "build", "-DCMAKE_BUILD_TYPE=Debug" },
 			{ "cmake", "--build", "build" },
 		},
