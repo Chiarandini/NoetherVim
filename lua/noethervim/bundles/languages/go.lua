@@ -34,6 +34,32 @@
 -- below.
 
 return {
+	-- gopls is not installed by go.nvim (its `lsp_cfg` defaults to off), and
+	-- core's list does not carry it, so without this the Go bundle gives you
+	-- tooling with no language server behind it. The matching
+	-- `vim.lsp.enable` lives in lua/noethervim/lsp/gopls.lua.
+	{ "neovim/nvim-lspconfig",
+		opts = function(_, opts)
+			opts.ensure_installed = opts.ensure_installed or {}
+			vim.list_extend(opts.ensure_installed, { "gopls" })
+		end,
+	},
+
+	{ "nvim-treesitter/nvim-treesitter",
+		opts = { ensure_installed = { "go", "gomod", "gowork" } },
+	},
+
+	-- goimports over gofmt: it does gofmt's job and fixes the import block,
+	-- which is the edit a Go buffer needs most often.
+	{ "stevearc/conform.nvim",
+		opts = function(_, opts)
+			opts.formatters_by_ft = opts.formatters_by_ft or {}
+			opts.formatters_by_ft.go = { "goimports" }
+			opts.mason_install = opts.mason_install or {}
+			table.insert(opts.mason_install, "goimports")
+		end,
+	},
+
 	{
 		"ray-x/go.nvim",
 		dependencies = {
@@ -65,6 +91,12 @@ return {
 				opts = {},
 			},
 		},
+		-- nvim-dap-go looks for `dlv` on PATH; Mason's `delve` package puts it
+		-- there, so the adapter it registers has something to launch.
+		opts = function(_, opts)
+			opts.mason_install = opts.mason_install or {}
+			table.insert(opts.mason_install, "delve")
+		end,
 	},
 
 	-- ── Go test adapter ───────────────────────────────────────────────────
