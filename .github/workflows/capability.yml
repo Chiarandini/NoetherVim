@@ -83,15 +83,22 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: "22" }
 
-      - name: C, CMake and the rest
+      - name: C, CMake, Maven and the rest
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake clangd
+          # maven is what neotest-java builds and runs through; the java row's
+          # test cell needs it, and the toolchain gate is on `java`, so its
+          # absence would read as a failure rather than as UNCOVERED.
+          sudo apt-get install -y build-essential cmake clangd maven
           # The tree-sitter CLI is what nvim-treesitter builds parsers with,
           # and core disables parser installation without it. Not an apt
           # package; npm is the supported route.
           npm install -g tree-sitter-cli
-          python3 -m pip install --quiet pytest
+          # PEP 668 marks the runner's Python as externally managed, so a plain
+          # `pip install` fails there. Try it first anyway, so this keeps
+          # working on an image that has not adopted the marker.
+          python3 -m pip install --quiet pytest \
+            || python3 -m pip install --quiet --break-system-packages pytest
 
       - name: Run the matrix
         # The harness owns its own isolated NVIM_APPNAME and XDG root, so it
