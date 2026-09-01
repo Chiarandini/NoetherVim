@@ -435,6 +435,69 @@ return {
             { desc = "stop all compilation and on-save auto-compile" })
           vim.keymap.set("n", "<plug>(vimtex-stop)", stop_project, { buffer = ev.buf })
           vim.keymap.set("n", "<plug>(vimtex-stop-all)", stop_all_projects, { buffer = ev.buf })
+
+          -- ── Forward search is only as current as the last compile ──────
+          -- SyncTeX maps source lines as they were when the PDF was built.
+          -- With `continuous = 0` above, nothing rebuilds unless asked, so a
+          -- PDF can sit hours behind the buffer; the viewer then lands where
+          -- the cursor's line number used to be. That is silent, and it looks
+          -- exactly like a broken viewer configuration.
+          --
+          -- Say so before syncing anyway, and name the key that fixes it.
+          -- Resolved from the live keymap table rather than written as `\ll`,
+          -- so a rebind is reflected.
+          local function compile_key()
+            local best
+            local maps = vim.api.nvim_buf_get_keymap(ev.buf, "n")
+            vim.list_extend(maps, vim.api.nvim_get_keymap("n"))
+            for _, km in ipairs(maps) do
+              if (km.rhs or ""):find("vimtex%-compile%)") then
+                if not best or #km.lhs < #best then best = km.lhs end
+              end
+            end
+            return best and vim.fn.keytrans(
+              vim.api.nvim_replace_termcodes(best, true, true, true))
+          end
+
+          --- Why forward search may miss, or nil when it should be accurate.
+          local function sync_drift()
+            if vim.bo[ev.buf].modified then
+              return "this buffer has unsaved changes"
+            end
+            local ok, pdf = pcall(vim.fn.eval, "b:vimtex.compiler.get_file('pdf')")
+            if not ok or type(pdf) ~= "string" or pdf == "" then return nil end
+            local built = vim.uv.fs_stat(pdf)
+            -- No PDF at all is vimtex's message to give, not ours.
+            if not built then return nil end
+            local src = vim.api.nvim_buf_get_name(ev.buf)
+            local edited = src ~= "" and vim.uv.fs_stat(src) or nil
+            if not edited or edited.mtime.sec <= built.mtime.sec then return nil end
+
+            local mins = math.floor((edited.mtime.sec - built.mtime.sec) / 60)
+            local age = mins < 1 and "less than a minute"
+              or mins < 60 and (mins .. (mins == 1 and " minute" or " minutes"))
+              or (math.floor(mins / 60) .. (mins < 120 and " hour" or " hours"))
+            return "the PDF is " .. age .. " behind this file"
+          end
+
+          -- Overriding the command covers the key too: vimtex defines
+          -- `<plug>(vimtex-view)` as `:VimtexView<cr>`, and the command is
+          -- resolved when the mapping runs.
+          vim.api.nvim_buf_create_user_command(ev.buf, "VimtexView", function(a)
+            local drift = sync_drift()
+            if drift then
+              local key = compile_key()
+              vim.notify(
+                ("forward search may be off: %s%s"):format(
+                  drift, key and (" (" .. key .. " rebuilds it)") or ""),
+                vim.log.levels.WARN, { title = "vimtex" })
+            end
+            vim.fn["vimtex#view#view"](a.args or "")
+          end, {
+            nargs = "?",
+            complete = "file",
+            desc = "view the PDF, saying so when it is behind the buffer",
+          })
         end,
       })
     end,
