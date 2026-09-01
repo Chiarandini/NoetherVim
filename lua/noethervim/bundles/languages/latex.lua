@@ -460,24 +460,46 @@ return {
           end
 
           --- Why forward search may miss, or nil when it should be accurate.
+          ---
+          --- The file to compare against is the SyncTeX map rather than the
+          --- PDF. They come apart: a run can refresh the PDF and leave the
+          --- `.synctex.gz` from an earlier one, and forward search reads the
+          --- map. Fall back to the PDF only when there is no map to check.
           local function sync_drift()
+            -- A build in flight is about to make all of this current. Saying
+            -- the PDF is behind during the seconds a compile takes is how a
+            -- warning becomes noise, because the on-save auto-compile means
+            -- the normal editing loop passes through this state every time.
+            local running_ok, running = pcall(vim.fn.eval, "b:vimtex.compiler.is_running()")
+            if running_ok and running == 1 then return nil end
+
             if vim.bo[ev.buf].modified then
               return "this buffer has unsaved changes"
             end
-            local ok, pdf = pcall(vim.fn.eval, "b:vimtex.compiler.get_file('pdf')")
-            if not ok or type(pdf) ~= "string" or pdf == "" then return nil end
-            local built = vim.uv.fs_stat(pdf)
-            -- No PDF at all is vimtex's message to give, not ours.
+
+            local function output(ext)
+              local ok, path = pcall(vim.fn.eval,
+                ("b:vimtex.compiler.get_file('%s')"):format(ext))
+              if not ok or type(path) ~= "string" or path == "" then return nil end
+              local stat = vim.uv.fs_stat(path)
+              return stat and { path = path, mtime = stat.mtime.sec } or nil
+            end
+
+            local map = output("synctex.gz")
+            local built = map or output("pdf")
+            -- Nothing compiled at all is vimtex's message to give, not ours.
             if not built then return nil end
+
             local src = vim.api.nvim_buf_get_name(ev.buf)
             local edited = src ~= "" and vim.uv.fs_stat(src) or nil
-            if not edited or edited.mtime.sec <= built.mtime.sec then return nil end
+            if not edited or edited.mtime.sec <= built.mtime then return nil end
 
-            local mins = math.floor((edited.mtime.sec - built.mtime.sec) / 60)
+            local mins = math.floor((edited.mtime.sec - built.mtime) / 60)
             local age = mins < 1 and "less than a minute"
               or mins < 60 and (mins .. (mins == 1 and " minute" or " minutes"))
               or (math.floor(mins / 60) .. (mins < 120 and " hour" or " hours"))
-            return "the PDF is " .. age .. " behind this file"
+            return (map and "the SyncTeX data is " or "the PDF is ")
+              .. age .. " behind this file"
           end
 
           -- Overriding the command covers the key too: vimtex defines
