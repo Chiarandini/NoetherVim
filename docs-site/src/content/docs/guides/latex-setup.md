@@ -36,10 +36,14 @@ The variant here takes two arguments instead:
 \end{defn}
 ```
 
-The first is the human name shown in the rendered output, the second is the
+The first is the title shown in the rendered output, the second is the
 label. One declaration site, so a definition can never be labelled and named
-inconsistently, and `\cref{grpAction}` reads as a sentence rather than as
+inconsistently, and `\cref{df:grpAction}` reads as a sentence rather than as
 "Definition 3.7".
+
+That form comes from tcolorbox rather than from anything hand-rolled:
+`\newtcbtheorem` declares environments taking exactly a title and a label, and
+gives the label a per-environment prefix, which is where the `df:` comes from.
 
 Typing `:defn group action` writes both from what you typed: the name is
 title-cased and the label is a compact form of it. So the label is derived
@@ -50,9 +54,10 @@ compile against your preamble, and yours will not compile against theirs. For
 a solo thesis or a book that is a fair trade. For a joint paper it is not,
 which is the main reason this is a page rather than a default.
 
-`mathpkgs` and `thmset` in the bundle write the declarations that make this
-work. The `:defn`, `:prop` and `:lem` snippets emit the two-argument form and
-expect them.
+`mathpkgs` writes the package block. The theorem declarations are not among
+what any snippet writes, since `thmset` produces the standard one-argument
+`\newtheorem` form; [the declarations below](#the-declarations-conventions-expects)
+are the ones the `:defn`, `:prop` and `:lem` snippets expect.
 
 ## Every definition gets an index entry
 
@@ -171,48 +176,69 @@ return {
 
 ### The declarations `conventions` expects
 
-`\newtheorem` gives one-argument environments, so the two-argument form needs
-a wrapper: an inner environment that carries the counter, and an outer one
-that takes the name and the label and passes them on. Seven of them, plus a
-capitalised `Proof` because that is what the theorem snippets close with.
+The two-argument form is not a wrapper anyone has to write. It is tcolorbox's
+own interface: `\newtcbtheorem` declares an environment taking a title and a
+label, and its final argument is a prefix that the label is given. So
 
-The argument order is name first, label second, matching what the snippets
-write: `#1` becomes the optional argument `amsthm` renders in the heading, and
-`#2` becomes the `\label`.
+```tex
+\newtcbtheorem[number within=section]{defn}{Definition}{...}{df}
+```
+
+makes `\begin{defn}{Group Action}{grpAction}` set *Definition 1.1: Group
+Action* and write `\label{df:grpAction}`. Those prefixes are the same ones the
+label picker maps in its `transformations` table, which is why `\cref` and
+`<Space>w` agree about what a definition is called.
+
+`label type=` names the cleveref type, so `\crefname` can be stated in the
+ordinary way rather than reaching for the internal counter.
 
 ```tex
 \usepackage{amsmath, amssymb, amsthm, mathtools}
+\usepackage[most]{tcolorbox}
+\tcbuselibrary{theorems}
 \usepackage[hidelinks]{hyperref}
 \usepackage{cleveref}
 
-% Numbered environments, all sharing one counter.
-\newtheorem{innerthm}{Theorem}[section]
-\newtheorem{innerprop}[innerthm]{Proposition}
-\newtheorem{innerlem}[innerthm]{Lemma}
-\newtheorem{innercor}[innerthm]{Corollary}
-\theoremstyle{definition}
-\newtheorem{innerdefn}[innerthm]{Definition}
-\newtheorem{innerexample}[innerthm]{Example}
-\newtheorem{innerbox}[innerthm]{Box}
+% Theorem-like environments, all sharing the thm counter within a section.
+% Last argument is the label prefix; `label type` is the cleveref type.
+\newtcbtheorem[number within=section]{thm}{Theorem}%
+  {colback=green!5, colframe=green!35!black, fonttitle=\bfseries,
+   label type=theorem}{th}
+\newtcbtheorem[number within=section, use counter from=thm]{lem}{Lemma}%
+  {colback=blue!5, colframe=black!35!black, fonttitle=\bfseries,
+   label type=lemma}{lm}
+\newtcbtheorem[number within=section, use counter from=thm]{prop}{Proposition}%
+  {colback=white!5, colframe=white!35!black, fonttitle=\bfseries,
+   label type=proposition}{pr}
+\newtcbtheorem[number within=section, use counter from=thm]{cor}{Corollary}%
+  {colback=blue!5, colframe=blue!35!black, fonttitle=\bfseries,
+   label type=corollary}{co}
+\newtcbtheorem[number within=section, use counter from=thm]{defn}{Definition}%
+  {colback=red!5, colframe=red!35!black, fonttitle=\bfseries,
+   label type=definition}{df}
+\newtcbtheorem[number within=section, use counter from=thm]{example}{Example}%
+  {colback=black!2, colframe=black!50, fonttitle=\bfseries,
+   label type=example}{ex}
 
-% Two-argument wrappers: {Name}{label}.
-\newenvironment{thm}[2]{\begin{innerthm}[#1]\label{#2}}{\end{innerthm}}
-\newenvironment{prop}[2]{\begin{innerprop}[#1]\label{#2}}{\end{innerprop}}
-\newenvironment{lem}[2]{\begin{innerlem}[#1]\label{#2}}{\end{innerlem}}
-\newenvironment{cor}[2]{\begin{innercor}[#1]\label{#2}}{\end{innercor}}
-\newenvironment{defn}[2]{\begin{innerdefn}[#1]\label{#2}}{\end{innerdefn}}
-\newenvironment{example}[2]{\begin{innerexample}[#1]\label{#2}}{\end{innerexample}}
-\newenvironment{titledBox}[2]{\begin{innerbox}[#1]\label{#2}}{\end{innerbox}}
+% titledBox has no display name of its own: the title argument is the whole
+% heading, set inline in bold.
+\newtcbtheorem[number within=section, use counter from=thm]{titledBox}{}%
+  {label type=box, enhanced, sharp corners, colback=white, colframe=black,
+   attach title to upper, before upper={\textbf{\tcbtitletext}\quad},
+   fonttitle=\bfseries, separator sign={\quad}}{box}
 
 % The theorem snippets close proofs with a capitalised Proof.
 \newenvironment{Proof}{\begin{proof}}{\end{proof}}
+
+\crefname{theorem}{theorem}{theorems}
+\crefname{definition}{definition}{definitions}
+\crefname{box}{box}{boxes}
 ```
 
 `:defn group action` then writes `\begin{defn}{Group Action}{grpAction}`,
-which sets *Definition 1.1 (Group Action)*, and `\cref{grpAction}` reads
-*definition 1.1*. The `:exercise`
-snippet additionally wants the `exercises` package, which supplies the
-`Exercise` and `Answer` environments it writes.
+and `\cref{df:grpAction}` reads *definition 1.1*. The `:exercise` snippet
+additionally wants the `exercises` package, which supplies the `Exercise` and
+`Answer` environments it writes.
 
 The figure snippet is the case that used to be a trap and is now not a
 switch: `FIG` reads `figure_folders` and offers whichever of them exists

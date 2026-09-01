@@ -41,7 +41,7 @@ local MAX_HEADER_LINES = 60
 ---@class noethervim.BundleRequirement
 ---@field kind "exe"|"env"|"app"|"note"  how to verify it
 ---@field value string            executable, env var, application name, or prose
----@field label string            human name, shown in health output and docs
+---@field label string            name, shown in health output and docs
 ---@field why? string             what stops working without it
 ---@field install? string         how to get it
 ---@field optional? boolean       degrades gracefully rather than breaking

@@ -261,7 +261,7 @@ end
 
 -- ── Progress label ────────────────────────────────────────────────────────
 
----Human label for a state currently compiling. Returns "compiling…",
+---label for a state currently compiling. Returns "compiling…",
 ---"compiling 42%", or "compiling 102% — almost done". Percentage is
 ---clamped to 95 until success fires, so a stalled bar doesn't sit at 99.
 ---Returns a raw string with literal `%`; statusline consumers must

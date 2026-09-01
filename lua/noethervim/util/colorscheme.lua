@@ -96,7 +96,7 @@ function M.apply(scheme, source)
   end
 end
 
---- Human-readable account of the active scheme and what set it.
+---readable account of the active scheme and what set it.
 --- Reported by `:checkhealth noethervim`.
 ---@return string
 function M.status()

@@ -118,7 +118,7 @@ local function frame_has_literal(file, line, resolved_lhs)
   local text = read_line(file, line)
   if not text then return false end
   local ctext = canon(text)
-  -- Generate the handful of forms a human would plausibly write.
+  -- Generate the handful of forms a user would plausibly write.
   local forms = { resolved_lhs, vim.fn.keytrans(resolved_lhs) }
   -- Also try the fully-resolved byte form (e.g. `<lt>t` stored in the
   -- registry → source-written form `<t`). `nvim_replace_termcodes`
