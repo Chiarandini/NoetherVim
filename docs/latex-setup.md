@@ -44,14 +44,14 @@ compile against your preamble, and yours will not compile against theirs. For
 a solo thesis or a book that is a fair trade. For a joint paper it is not,
 which is the main reason this is a page rather than a default.
 
-`:mathpkgs` and `:thmset` in the bundle write the declarations that make this
+`mathpkgs` and `thmset` in the bundle write the declarations that make this
 work. The `:defn`, `:prop` and `:lem` snippets emit the two-argument form and
 expect them.
 
 ## Every definition gets an index entry
 
 The theorem snippets also emit `\index{...}` alongside the environment. For
-a document long enough to need an index -- lecture notes, a book -- the
+a document long enough to need an index (lecture notes, a book) the
 entry is only ever written when the definition is, so the index cannot drift
 out of step with the text. For a paper it is noise, and you would want the
 snippets without it.
@@ -74,8 +74,8 @@ the offered path is still an editable field. Name your own folders with
 `figure_folders` if neither default matches.
 
 Figures are compiled separately as `standalone` documents where they are
-expensive -- TikZ diagrams that would otherwise be rebuilt on every run of
-the main document. `:standalone` writes that skeleton.
+expensive: TikZ diagrams that would otherwise be rebuilt on every run of
+the main document. `standalone` writes that skeleton.
 
 ## Bibliographies: shared for books, per-document for papers
 
@@ -112,10 +112,10 @@ return {
 }
 ```
 
-## Compilation is continuous, and the PDF follows the cursor
+## Compilation is on request, and the PDF follows the cursor
 
-VimTeX compiles with `latexmk`, once per request rather than continuously --
-`continuous = 0`, against VimTeX's own default of 1, so a large project does
+VimTeX compiles with `latexmk` once per request rather than continuously
+(`continuous = 0`, against VimTeX's own default of 1), so a large project does
 not rebuild on every write. `<LocalLeader>ll` runs a build,
 `<LocalLeader>lv` jumps the viewer to the cursor, and `<LocalLeader>lf` makes
 the viewer follow the cursor as you move, so the PDF behaves like a second
@@ -124,6 +124,11 @@ view of the document rather than something you check on.
 That last one is off until asked for, per buffer: a forward search is a
 viewer round-trip, and paying it on every cursor movement all session is a
 cost most editing does not want.
+
+The cost of building on request is that the PDF drifts behind the source, and
+SyncTeX resolves against the line numbers it recorded at the last build. So
+`<LocalLeader>lv` checks first, and says how far behind the PDF is rather than
+jumping somewhere plausible and wrong.
 
 ## Prose is hard-wrapped
 
@@ -140,15 +145,15 @@ listed here because the two settings only make sense together.
 
 The bundle's LaTeX snippets divide into three, and two of them are switches:
 
-- **On always** -- fractions, sectioning, `\textbf`, alignment, the
+- **On always**: fractions, sectioning, `\textbf`, alignment, the
   environment wrappers, the preamble skeletons. Nothing on this page matters
   for these; they work in any document.
-- **`conventions`** -- the theorem family, in the two-argument form with an
+- **`conventions`**: the theorem family, in the two-argument form with an
   `\index` entry. Off by default, because `\begin{defn}{a}{b}` does not
-  compile against a preamble that has not declared it. Turn it on once you
-  have run `:thmset`.
-- **`acronyms`** -- the prose shorthand. Off by default for a different
-  reason: it has no dependency at all, it is simply one person's vocabulary.
+  compile against a preamble that has not declared it. The declarations are
+  below.
+- **`acronyms`**: the prose shorthand. Off by default for a different reason;
+  it has no dependency at all, it is simply one person's vocabulary.
 
 ```lua
 -- lua/user/plugins/noethervim-tex.lua
@@ -158,6 +163,46 @@ return {
 }
 ```
 
+### The declarations `conventions` expects
+
+`\newtheorem` gives one-argument environments, so the two-argument form needs
+a wrapper: an inner environment that carries the counter, and an outer one
+that takes the label and the name and passes them on. Seven of them, plus a
+capitalised `Proof` because that is what the theorem snippets close with.
+
+```tex
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\usepackage[hidelinks]{hyperref}
+\usepackage{cleveref}
+
+% Numbered environments, all sharing one counter.
+\newtheorem{innerthm}{Theorem}[section]
+\newtheorem{innerprop}[innerthm]{Proposition}
+\newtheorem{innerlem}[innerthm]{Lemma}
+\newtheorem{innercor}[innerthm]{Corollary}
+\theoremstyle{definition}
+\newtheorem{innerdefn}[innerthm]{Definition}
+\newtheorem{innerexample}[innerthm]{Example}
+\newtheorem{innerbox}[innerthm]{Box}
+
+% Two-argument wrappers: {label}{Name}.
+\newenvironment{thm}[2]{\begin{innerthm}[#2]\label{#1}}{\end{innerthm}}
+\newenvironment{prop}[2]{\begin{innerprop}[#2]\label{#1}}{\end{innerprop}}
+\newenvironment{lem}[2]{\begin{innerlem}[#2]\label{#1}}{\end{innerlem}}
+\newenvironment{cor}[2]{\begin{innercor}[#2]\label{#1}}{\end{innercor}}
+\newenvironment{defn}[2]{\begin{innerdefn}[#2]\label{#1}}{\end{innerdefn}}
+\newenvironment{example}[2]{\begin{innerexample}[#2]\label{#1}}{\end{innerexample}}
+\newenvironment{titledBox}[2]{\begin{innerbox}[#2]\label{#1}}{\end{innerbox}}
+
+% The theorem snippets close proofs with a capitalised Proof.
+\newenvironment{Proof}{\begin{proof}}{\end{proof}}
+```
+
+`\begin{defn}{groupAction}{Group action}` then sets *Definition 1.1 (Group
+action)*, and `\cref{groupAction}` reads *definition 1.1*. The `:exercise`
+snippet additionally wants the `exercises` package, which supplies the
+`Exercise` and `Answer` environments it writes.
+
 The figure snippet is the case that used to be a trap and is now not a
 switch: `FIG` reads `figure_folders` and offers whichever of them exists
 beside your document or one level up, so it fits either layout instead of
@@ -166,3 +211,39 @@ assuming this one.
 `<Space>es` opens the snippet files, with the ones a plugin ships marked
 read-only and a route to start your own for the same filetype. Reading how
 one is built is the fastest way to write a different one.
+
+## Navigating by structure, including your own environments
+
+`]g` and `[g` jump between theorem environments, `]p` and `]x` between proofs
+and examples. The names each one matches are a list rather than something
+fixed, because the names in a document belong to whoever wrote it. Out of the
+box `]g` covers both spellings, so `\begin{theorem}` and `\begin{thm}` are
+both found.
+
+Adding a motion is an entry in the same table. The `exercises` environment
+that `:exercise` writes has none by default, so:
+
+```lua
+-- lua/user/plugins/noethervim-tex.lua
+return {
+  { "Chiarandini/NoetherVim-tex",
+    opts = {
+      textobjects = {
+        exercise = { envs = { "Exercise" }, next = "]e", prev = "[e",
+                     desc = "exercise" },
+      },
+    } },
+}
+```
+
+Pick the keys to suit your own map rather than copying these two: `]e` and
+`[e` are line-swap keys in some configurations, and `]c` and `[c`, which would
+otherwise be the obvious pair for chapters, are Vim's diff-mode change motions
+and gitsigns' hunk motions. That is why chapter navigation ships unbound and
+is one table entry away:
+
+```lua
+textobjects = {
+  chapter = { node = "chapter", next = "]c", prev = "[c", desc = "chapter" },
+}
+```

@@ -64,20 +64,29 @@ which command to run if something is missing.
 
 ## 3. Writing a LaTeX paper
 
-The LaTeX bundle gives you the same level of support as an IDE: live
-compilation, forward/reverse PDF sync, snippet-driven math entry,
-citation picker, theorem navigation, and a 1000+ math spell
-dictionary.
+The LaTeX bundle gives you the same level of support as an IDE: compilation,
+forward/reverse PDF sync, snippet-driven math entry, citation picker, theorem
+navigation, and a math spell dictionary of about a thousand terms.
 
 ### Compile and preview
 
 VimTeX handles compilation. Open a `.tex` file and:
 
-- `<LocalLeader>ll`: start continuous compilation (latexmk watches the
-  file and recompiles on save).
-- `<LocalLeader>lv`: open the PDF in your viewer.
+- `<LocalLeader>ll`: build once with latexmk. Nothing watches the file
+  afterwards, so a large book does not rebuild on every keystroke-triggered
+  write; press it again when you want the PDF caught up. A second press while
+  a build is running stops it.
+- `<LocalLeader>lv`: open the PDF in your viewer and jump it to the cursor.
 - `<LocalLeader>lc`: clean auxiliary files.
 - `<LocalLeader>le`: show the error/warning log if compilation fails.
+
+Because builds happen on request, the PDF can fall behind the source, and
+SyncTeX maps the line numbers as they were at the last build. When that is the
+case, `<LocalLeader>lv` says so before jumping, naming the key that rebuilds:
+
+```
+forward search may be off: the PDF is 13 minutes behind this file (\ll rebuilds it)
+```
 
 Forward search (jump from `.tex` cursor to PDF location) and reverse
 search (click in the PDF, jump to the source line) need a viewer set
@@ -88,8 +97,11 @@ is the common choice. VimTeX's documentation covers the setup:
 
 A couple of NoetherVim-specific extras on top of VimTeX:
 
-- `yP`: copy the compiled PDF path to the system clipboard (useful
-  for drag-and-drop into email or a tracker).
+- `yP`: put the compiled PDF itself on the system clipboard, so the next
+  paste into an email or an issue attaches the file.
+- `:PDF`: hand the compiled PDF to whatever your system opens PDFs with. This
+  and `yP` treat the PDF as a file and need no viewer configured;
+  `<LocalLeader>lv` is the one that drives your viewer and syncs.
 - `<C-w>sp`: toggle whether the PDF size shows in the statusline.
 - `<LocalLeader>vw`: run VimTeX's word count.
 
@@ -105,36 +117,70 @@ flavors:
   - `pp` -> `\partial`
   - `ee` -> `e^{}`
   - `((` -> `\left( \right)` pair
-  - `bb` -> `\bar{}`
+  - `BB` -> `\overline{}`
 - **Manual** (type the trigger and press `<Tab>` to expand). Used for
   larger scaffolds so you don't get surprise expansions:
-  - `:thm Title` -> full theorem environment with label
-  - `:defn`, `:prop`, `:lem`, `:cor`, `:example`, `:exercise`, `:box`
+  - `:align` -> `\begin{align}...\end{align}`, and the same for any
+    environment name you put after the colon
+  - `mathpkgs`, `thmset`, `amsart`: preamble blocks, above `\begin{document}`
 
-A handful of text abbreviations also auto-expand: `tfae` -> "the
-following are equivalent", `iff` -> "if and only if", `wrt`, `wlog`,
-`ftsoc`, `SES`, `fg`. These snippets are also aware if you are in math-mode or text-mode
-and will expand accordingly.
-
-Open `:NoetherVim plugins`, pick `noethervim-tex`, and browse
-`LuaSnip/tex/` for the full snippet catalog. Context detection
-(math zone vs. text zone vs. tikz) means snippets only fire where
-they make sense.
-
-### Preamble
-
-At the start of a line in the preamble (above `\begin{document}`),
-type `@` and press `<Tab>` to get a picker of `.tex` files from your
-preamble folder; useful if you maintain shared macros across
-documents. The folder defaults to `preamble/` inside your config
-directory. Point it elsewhere with an `opts` override on the
-`NoetherVim-Tex` spec:
+Everything above works in any LaTeX document. Two further sets ship switched
+off, because each assumes something about you rather than about LaTeX:
 
 ```lua
 -- ~/.config/nvim/lua/user/plugins/noethervim-tex.lua
 return {
     { "Chiarandini/NoetherVim-tex",
-      opts = { preamble_folder = "~/Documents/LaTeX/preamble/" },
+      opts = { snippets = { conventions = true, acronyms = true } },
+    },
+}
+```
+
+- `conventions`: the theorem family as `:thm`, `:defn`, `:prop`, `:lem`,
+  `:cor`, `:example`, `:exercise` and `:box`. They emit
+  `\begin{defn}{label}{Name}`, a two-argument form that needs declarations
+  your preamble may not have. [One LaTeX setup](../latex-setup.md) writes them
+  out.
+- `acronyms`: prose shorthand, where `tfae` becomes "the following are
+  equivalent" and `wlog`, `wrt`, `ftsoc`, `SES` and `iff` do the same. No
+  preamble needed; it is off because it is one writer's vocabulary.
+
+Open `:NoetherVim plugins`, pick `noethervim-tex`, and browse `LuaSnip/tex/`
+for the always-on catalog and `snippets/` for the two switchable sets.
+Context detection (math zone versus text zone versus tikz) means snippets only
+fire where they make sense.
+
+### Preamble
+
+At the start of a line above `\begin{document}`, type `@` for a menu of the
+`.tex` fragments it can find. Nothing ships in it. A fragment is any `.tex`
+file in one of the preamble folders, and its first `%` comment line becomes
+the description shown in the menu:
+
+```tex
+% Standard mathematics packages
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\usepackage{cleveref}
+```
+
+Saved as `preamble/packages.tex`, that appears as `packages` the next time `@`
+is typed.
+
+Two folders are searched. `preamble` beside or above the document is the
+project's own, and accepting a fragment from it writes `\input{...}`, so a
+book's chapters share one file. `preamble/` inside your config directory is
+your library, and accepting from it inserts the contents, because an `\input`
+naming a path on your own machine stops compiling the moment the `.tex`
+reaches a co-author. The menu labels each item with which one it came from.
+
+`:checkhealth noethervim-tex` reports the folders it resolved and how many
+fragments each holds. Point the library elsewhere with an `opts` override:
+
+```lua
+-- ~/.config/nvim/lua/user/plugins/noethervim-tex.lua
+return {
+    { "Chiarandini/NoetherVim-tex",
+      opts = { preamble = { folders = { "preamble", "~/Documents/LaTeX/preamble" } } },
     },
 }
 ```
@@ -147,7 +193,13 @@ structure, in the `[` / `]` pairing the rest of the distribution uses:
 - `]g` / `[g` - next / previous theorem (or any theorem-like env)
 - `]p` / `[p` - next / previous proof, `]P` / `[P` for its `\end`
 - `]x` / `[x` - next / previous example, `]X` / `[X` for its `\end`
-- `]c` / `[c` - next / previous chapter
+
+Which environment names count is configuration, not a fixed list, because the
+names in a document are yours. `]g` covers both the standard amsthm spellings
+and their abbreviations, so `\begin{theorem}` and `\begin{thm}` are both
+found; `:help noethervim-tex-textobjects` shows how to narrow the list, add a
+motion, or bind chapter navigation, which ships unbound because `]c` and `[c`
+are Vim's diff-mode change motions and gitsigns' hunk motions.
 
 These are motions, not textobjects, and they compose with operators the way
 `]m` or `]}` do: `d]g` deletes from the cursor to the start of the next
@@ -174,8 +226,9 @@ checked as *Poincaré* and passes. Misspellings inside an accented word are
 still caught, and are reported as diagnostics as well as highlights.
 
 Add your own words by pressing `zg` on one in normal mode. In `.tex` buffers
-`zg` is routed: an accented word goes to the accent dictionary in its decoded
-form, a plain one to your ordinary spell file. You can also edit
+`zg` understands the accent: on `Poincar\'e` it writes the decoded *Poincaré*
+to your spell file rather than the fragment the cursor is sitting on. `zw` and
+`z=` are accent-aware in the same way. You can also edit
 `~/.local/share/nvim/site/spell/en.utf-8.add` directly.
 
 The `:NoetherTexAccent*` commands cover the rest: `Add`, `MarkWrong`,

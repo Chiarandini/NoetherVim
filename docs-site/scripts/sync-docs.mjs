@@ -115,6 +115,9 @@ const LINKS = [
   [/\]\(\.\.\/\.\.\/README\.md(#[a-z0-9-]*)?\)/g, '](https://github.com/Chiarandini/NoetherVim)'],
   [/\]\(first-session\.md(#[a-z0-9-]*)?\)/g, '](/noethervim/start/first-session/)'],
   [/\]\(mathematicians\.md(#[a-z0-9-]*)?\)/g, '](/noethervim/start/mathematicians/)'],
+  // docs/onboarding/mathematicians.md points at the LaTeX guide one level up.
+  [/\]\(\.\.\/latex-setup\.md(#[a-z0-9-]*)?\)/g, '](/noethervim/guides/latex-setup/)'],
+  [/\]\(docs\/latex-setup\.md(#[a-z0-9-]*)?\)/g, '](/noethervim/guides/latex-setup/)'],
   [/\]\(docs\/user-config-examples\.md\)/g, '](/noethervim/guides/recipes/)'],
   [/\]\(`?docs\/bundles\.md`?(#[a-z-]*)?\)/g, '](/noethervim/guides/bundles/)'],
   [/\]\(#configuration\)/g, '](/noethervim/guides/configuration/)'],

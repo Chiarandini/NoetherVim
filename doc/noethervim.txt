@@ -922,15 +922,19 @@ Move the cursor onto an equation's line to see the source again, unless
 Configuring noethervim-tex (latex bundle): ~
 
 The `latex` bundle includes `noethervim-tex`, which provides LaTeX snippets,
-treesitter textobjects, a preamble completion source, and a spell
-dictionary of common mathematical terms. Configure it
+treesitter navigation, preamble and figure completion sources, theorem-tag
+colouring, and a spell dictionary of common mathematical terms. Configure it
 via opts override in `user/plugins/`: >lua
     { "Chiarandini/NoetherVim-tex", opts = {
-        preamble_folder = "~/my/preambles/",
+        -- Both off by default: `conventions` needs preamble declarations
+        -- yours may not have, `acronyms` is one writer's vocabulary.
+        snippets = { conventions = true, acronyms = true },
+        preamble = { folders = { "preamble", "~/my/preambles/" } },
         extra_snippet_paths = { "~/shared-snippets/" },
         textobjects = false,
     } }
 <
+See `:help noethervim-tex` for the full option list.
                                                    *noethervim-snippet-stop*
                                                     *noethervim-spell-add*
 Adding a word: ~
@@ -1513,7 +1517,27 @@ These keymaps activate only in their respective filetype, except for the
     plain `<CR>` for both.
 
     tex: ~
-    `:PDF`              Open compiled PDF
+    `:PDF`              Open the compiled PDF in the system viewer. This,
+                       `yP` and Oil's `gP` treat the PDF as a file and
+                       need no viewer configured; `<LocalLeader>lv` is
+                       the one that drives your viewer and syncs
+    `yP`                Put the compiled PDF on the system clipboard
+    `<LocalLeader>lv`   View the PDF at the cursor. Says so first when
+                       the PDF is behind the buffer, since SyncTeX
+                       resolves against the last build
+    `<LocalLeader>lf`   Toggle the PDF following the cursor
+    `<LocalLeader>P`    Paste an image from the clipboard as a figure
+    `<C-S-c>`           Citation from a .bib file (insert)
+    `@`                 Preamble fragment completion, at the start of a
+                       line above `\begin{document}`
+    `]g` `[g`           Next / previous theorem environment; `]p` `[p`
+                       for proofs, `]x` `[x` for examples, and `]P` `]X`
+                       for their `\end`
+    `ig` `ag`           A paragraph that stops at display math,
+                       environments, `\item` and sectioning
+    `zg` `zw` `z=`      Spell add / mark wrong / suggest, understanding
+                       LaTeX accents: on `K\"ahler` these read the
+                       decoded word rather than the fragment
     `<S-CR>`            Smart newline in environments (insert)
     `<C-l>`             Auto-fix nearest spelling error (insert)
     `<LocalLeader>vw`   VimTeX word count
