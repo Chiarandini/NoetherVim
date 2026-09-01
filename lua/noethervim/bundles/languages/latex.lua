@@ -22,13 +22,16 @@
 --   • texlab:                    LaTeX LSP (Mason-installed only when this bundle is enabled)
 --   • img-clip.nvim:             drag-and-drop / clipboard image paste (<localleader>P)
 --   • snacks-bibtex:             BibTeX citation picker (<c-s-c> in insert mode)
---   • noethervim-tex:            LuaSnip snippets, blink.cmp sources, textobject keymaps,
+--   • noethervim-tex:            LuaSnip snippets, blink.cmp sources, structure
+--                                motions, theorem-tag colouring,
 --                                PDF-follows-cursor (<LocalLeader>lf)
 --   • snacks-latex-labels:       label/heading jump (<localleader>w, <localleader>vul/vuh)
 --   • smart-enter.nvim:          <S-CR> continues environments (\\ rows, &= in align, \item)
---   yP keymap:                  copy compiled PDF to clipboard
+--   the PDF as a file:          yP copies it, Oil's gP opens one from a
+--                               directory, :PDF opens this document's in the
+--                               system viewer. <LocalLeader>lv is the other
+--                               half, the live view, and it is what syncs.
 --   <c-w>sp:                    toggle PDF size in statusline
---   theorem highlighting:       treesitter-based theorem label coloring
 --   gd / <C-]>:                 jump to the label under the cursor (\cref, \ref,
 --                               \eqref, ...) via the label cache; <C-]> pushes the
 --                               tag stack so <C-t> returns. Works across subfiles
@@ -94,85 +97,19 @@ return {
     end,
   },
 
-  -- ── treesitter: latex parser + theorem highlighting ───────────────────────
-  -- Uses opts (merged by lazy) and init (runs before load, just registers
-  -- an autocmd). NEVER define `config` here -- lazy overwrites the core
-  -- treesitter config function, breaking ensure_installed / auto_install.
+  -- ── treesitter: latex parser ──────────────────────────────────────────────
+  -- `opts` only, merged by lazy. NEVER define `config` here -- lazy overwrites
+  -- the core treesitter config function, breaking ensure_installed /
+  -- auto_install.
+  --
+  -- Theorem-tag colouring used to live here and now belongs to noethervim-tex
+  -- (`theorem_highlight`), which already owns the latex queries and can offer
+  -- it to readers who use the plugin without this distribution.
   {
     "nvim-treesitter/nvim-treesitter",
     opts = {
       ensure_installed = { "latex" },
     },
-    init = function()
-      local ns = vim.api.nvim_create_namespace("noethervim_latex_highlights")
-
-      -- Theorem environments in this distro use the form
-      --   \begin{theorem}{label}{Human Tag}
-      -- (the same \begin{env}{..}{..} convention snacks-latex-labels keys
-      -- off of below). We colour that second curly arg -- the
-      -- human-readable "tag" -- with texRefArg.
-      --
-      -- A dedicated, predicate-free query is built lazily on first use.
-      -- The old code iterated the *entire* latex `highlights` query looking
-      -- for a `texTheoremTag` capture, which (a) the rewritten upstream
-      -- latex grammar no longer emits, so the feature silently did nothing,
-      -- and (b) forced evaluation of that query's #eq?/#match? predicates,
-      -- whose get_node_text calls raised "Index out of bounds" on a buffer
-      -- still settling right after BufRead.
-      local theorem_query
-      local function get_query()
-        if theorem_query == nil then
-          local ok, q = pcall(vim.treesitter.query.parse, "latex", [[
-            (generic_environment
-              . (begin)
-              . (curly_group)
-              . (curly_group (text) @theorem_tag))
-          ]])
-          theorem_query = ok and q or false
-        end
-        return theorem_query or nil
-      end
-
-      local function highlight_theorem_tags(bufnr)
-        if not vim.api.nvim_buf_is_loaded(bufnr) then return end
-        -- get_parser throws when the latex parser isn't installed
-        local ok, parser = pcall(vim.treesitter.get_parser, bufnr, "latex")
-        if not ok or not parser then return end
-        local query = get_query()
-        if not query then return end
-        local tree = parser:parse()[1]
-        if not tree then return end
-
-        vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
-        for id, node in query:iter_captures(tree:root(), bufnr) do
-          if query.captures[id] == "theorem_tag" then
-            local r1, c1, r2, c2 = node:range()
-            -- pcall: a node range can momentarily outrun the buffer if the
-            -- tree lags an edit, which would make set_extmark raise
-            -- "Invalid 'col': out of range". Don't let one stale node abort
-            -- the whole pass.
-            pcall(vim.api.nvim_buf_set_extmark, bufnr, ns, r1, c1, {
-              end_row  = r2,
-              end_col  = c2,
-              hl_group = "texRefArg",
-              spell    = false,
-            })
-          end
-        end
-      end
-
-      vim.api.nvim_create_autocmd({ "BufRead", "BufWritePost" }, {
-        group    = vim.api.nvim_create_augroup("noethervim_latex_hl", { clear = true }),
-        pattern  = "*.tex",
-        -- Defer off the BufRead critical path: parsing synchronously while
-        -- the buffer is still being read is what raced into the
-        -- out-of-bounds errors above.
-        callback = function(args)
-          local buf = args.buf
-          vim.schedule(function() highlight_theorem_tags(buf) end)
-        end,
-      })
-    end,
   },
 
   -- ── vimtex ────────────────────────────────────────────────────────────────
@@ -187,9 +124,15 @@ return {
       vim.g.tex_flavor  = "latex"
     end,
     config = function()
-      -- ':' is part of LaTeX label names (th:foo, pr:bar, …).
-      -- Adding it to iskeyword lets blink.cmp treat "th:foo" as one keyword,
-      -- so the completion menu stays open after typing ':'.
+      -- ':' is part of LaTeX label names (th:foo, pr:bar, …), so word motions
+      -- should step over one whole label: `w`, `e`, `b`, `iw` and `*` all
+      -- treat "th:foo" as a single word here.
+      --
+      -- This is not what keeps the completion menu open after ':'. blink
+      -- swaps 'iskeyword' for a hardcoded charset while it decides what
+      -- counts as a keyword, so a buffer's setting cannot reach it; the
+      -- vimtex provider advertises ':' as a trigger character instead, in
+      -- plugins/cmp.lua.
       vim.api.nvim_create_autocmd("FileType", {
         pattern  = { "tex", "latex" },
         callback = function() vim.opt_local.iskeyword:append(":") end,
@@ -381,9 +324,34 @@ return {
         callback = function(ev)
           local o = function(desc) return { silent = true, buffer = ev.buf, desc = desc } end
 
-          -- :PDF -- open compiled PDF
+          -- :PDF -- hand the compiled PDF to the system viewer.
+          --
+          -- There are two families here and this is the artifact one: `yP`
+          -- copies the PDF, Oil's `gP` opens one from a directory, and this
+          -- opens the current document's. They treat the PDF as a file and
+          -- need no viewer configured. VimTeX's `<LocalLeader>lv` is the
+          -- other family, the live view, and it is the one that syncs to the
+          -- cursor.
+          --
+          -- The path comes from vimtex, which knows the main file and the
+          -- out_dir. The basename this used to build (`%:t:r`) resolved
+          -- against the cwd, so it missed whenever the cwd was not the
+          -- document's directory, whenever out_dir was set, and for an
+          -- \input child, which has no PDF of its own.
           vim.api.nvim_buf_create_user_command(ev.buf, "PDF", function()
-            local pdf = vim.fn.expand("%:t:r") .. ".pdf"
+            local pdf
+            if vim.fn.exists("b:vimtex") == 1 then
+              local ok, out = pcall(vim.fn.eval, "b:vimtex.compiler.get_file('pdf')")
+              if ok and type(out) == "string" and out ~= "" then pdf = out end
+            end
+            pdf = pdf or (vim.fn.expand("%:p:r") .. ".pdf")
+
+            if vim.fn.filereadable(pdf) == 0 then
+              vim.notify(("no compiled PDF at %s (:VimtexCompile builds it)"):format(pdf),
+                vim.log.levels.WARN)
+              return
+            end
+
             if vim.fn.has("macunix") == 1 then
               vim.fn.jobstart({ "open", pdf }, { detach = true })
             elseif vim.fn.has("win32") == 1 then
@@ -391,7 +359,7 @@ return {
             else
               vim.fn.jobstart({ "xdg-open", pdf }, { detach = true })
             end
-          end, { desc = "open compiled PDF" })
+          end, { desc = "open compiled PDF in the system viewer" })
 
           vim.keymap.set("n", "<localleader>vw", "<Cmd>VimtexCountWords<CR>", o("vimtex word count"))
 
@@ -563,27 +531,36 @@ return {
     event = "VeryLazy",
     dependencies = { "L3MON4D3/LuaSnip" },
     opts = {
-      -- preamble_folder     = vim.fn.stdpath("config") .. "/preamble/",
+      -- Snippet sets beyond the ones that work in any LaTeX document. Both
+      -- default off: `conventions` is the theorem family in the two-argument
+      -- `\begin{defn}{label}{Name}` form, which needs declarations your
+      -- preamble may not have, and `acronyms` is prose shorthand (wlog,
+      -- tfae, ...) that is one writer's vocabulary rather than a default.
+      -- See https://nathanaelsrawley.com/noethervim/guides/latex-setup/
+      -- snippets            = { conventions = false, acronyms = false },
+      --
+      -- Where `@` looks for preamble fragments, searched in order. A relative
+      -- entry is found by walking up from the document and is referenced with
+      -- \input; an absolute one is your library and is inserted inline.
+      -- preamble            = { folders = { "preamble", vim.fn.stdpath("config") .. "/preamble/" } },
       -- extra_snippet_paths = {},
       -- textobjects         = true,
       -- accent_spell        = { enabled = true, severity = vim.diagnostic.severity.INFO },
       -- follow              = { event = "moved", debounce = 150 },  -- false to skip entirely
     },
-    config = function(self, opts)
+    config = function(_, opts)
       require("noethervim-tex").setup(opts)
 
       -- PDF-follows-cursor, off until asked for per buffer. `<localleader>lf`
       -- sits in vimtex's own `<localleader>l` command namespace, next to `ll`
       -- compile and `lv` view, because that is what it is -- a third thing to
       -- do with the viewer.
+      -- The plugin already owns the toggle and its message as
+      -- :VimtexFollowToggle; this only gives it a buffer-local key, so the
+      -- wording does not exist in two places to drift apart.
       local function bind_follow(buf)
-        local ok, follow = pcall(require, "noethervim-tex.follow")
-        if not ok then return end
-        vim.keymap.set("n", "<localleader>lf", function()
-          local on = follow.toggle(0)
-          vim.notify("PDF follows the cursor: " .. (on and "on" or "off"),
-            vim.log.levels.INFO, { title = "vimtex" })
-        end, { buffer = buf, desc = "[l]atex PDF [f]ollow toggle" })
+        vim.keymap.set("n", "<localleader>lf", "<cmd>VimtexFollowToggle<cr>",
+          { buffer = buf, desc = "[l]atex PDF [f]ollow toggle" })
       end
 
       vim.api.nvim_create_autocmd("FileType", {
@@ -600,22 +577,6 @@ return {
         if ft == "tex" or ft == "plaintex" or ft == "latex" then bind_follow(buf) end
       end
 
-      -- Transitional fallback: older noethervim-tex versions don't
-      -- ship plugin/noethervim_tex.lua, so vim.g.loaded_noethervim_tex
-      -- is unset and we register the math vocab spellfile here. The
-      -- new plugin/ file sets the flag and handles both .add files
-      -- itself, in which case this branch is skipped. Remove this
-      -- block once the upstream noethervim-tex pin is bumped.
-      if vim.g.loaded_noethervim_tex ~= 1 then
-        local spell_add = self.dir .. "/spell/en.utf-8.add"
-        if vim.uv.fs_stat(spell_add) then
-          local spl = spell_add .. ".spl"
-          if not vim.uv.fs_stat(spl) then
-            pcall(vim.cmd, "silent mkspell! " .. vim.fn.fnameescape(spell_add))
-          end
-          vim.opt.spellfile:append(spell_add)
-        end
-      end
     end,
   },
 
