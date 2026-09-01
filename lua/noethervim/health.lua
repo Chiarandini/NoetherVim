@@ -697,6 +697,13 @@ function M.check()
   if vim.env.NOETHERVIM_NO_USER or vim.g.noethervim_no_user then
     h.info("User overrides: SUPPRESSED (NOETHERVIM_NO_USER or vim.g.noethervim_no_user set)")
   end
+  if vim.g.noethervim_auto_install == false then
+    h.info("Toolchain auto-install: OFF (vim.g.noethervim_auto_install = false)\n"
+      .. "Formatters, linters and debug adapters named by enabled bundles are\n"
+      .. "not fetched; install them yourself or with :Mason.")
+  else
+    h.ok("Toolchain auto-install: ON -- enabled bundles fetch their Mason tools")
+  end
 end
 
 return M

@@ -35,6 +35,15 @@ return {
 		end,
 	},
 
+	-- The parsers arrived via core's `auto_install` before, which works but
+	-- states no dependency: nothing recorded that this bundle needs them, so
+	-- nothing would notice if auto_install were turned off.
+	{ "nvim-treesitter/nvim-treesitter",
+		opts = { ensure_installed = {
+			"typescript", "javascript", "tsx", "css", "html", "json",
+		} },
+	},
+
 	{
 		"axelvc/template-string.nvim",
 		ft     = { "html", "typescript", "javascript", "typescriptreact", "javascriptreact", "vue", "svelte", "python" },
@@ -72,51 +81,61 @@ return {
 	-- ── JavaScript / TypeScript debug adapter ─────────────────────────────
 	-- `optional = true` means lazy.nvim drops this whole fragment unless
 	-- nvim-dap is required by something else, i.e. unless tools/debug.lua is
-	-- enabled. That gating is what keeps the cost proportionate:
-	-- vscode-js-debug is ~430 MB and its `build` step runs `npm i` at install
-	-- time, which is only worth paying for by someone who writes JavaScript.
+	-- enabled.
+	--
+	-- js-debug ships two servers and the difference is not cosmetic.
+	-- `vsDebugServer` is the VS Code flavour: it expects the editor to answer a
+	-- `startDebugging` reverse request and run the debuggee in a child session.
+	-- Against nvim-dap that request never arrived, so the child session was
+	-- never created, nothing ever stopped, and a breakpoint did nothing --
+	-- including with `stopOnEntry`, because the session that would stop did not
+	-- exist. `dapDebugServer` is the standalone-DAP entry point and speaks to a
+	-- plain DAP client directly.
+	--
+	-- Mason's `js-debug-adapter` package is that release, which also retires a
+	-- ~430 MB source checkout whose `build` ran `npm i` at install time.
 	{
 		"mfussenegger/nvim-dap",
 		optional = true,
-		dependencies = {
-			{
-				"microsoft/vscode-js-debug",
-				lazy    = true,
-				version = "1.x",
-				build   = "npm i && npm run compile vsDebugServerBundle && mv dist out",
-			},
-			{
-				"mxsdev/nvim-dap-vscode-js",
-				lazy = true,
-				opts = {
-					debugger_path = vim.fn.stdpath("data") .. "/lazy/vscode-js-debug",
-					adapters = { "pwa-node", "pwa-chrome", "pwa-msedge", "node-terminal", "pwa-extensionHost" },
-				},
-				config = function(_, opts)
-					require("dap-vscode-js").setup(opts)
+		opts = function(_, opts)
+			opts.mason_install = opts.mason_install or {}
+			table.insert(opts.mason_install, "js-debug-adapter")
 
-					-- `${workspaceFolder}` is resolved by nvim-dap per session,
-					-- so the debuggee runs from wherever the session starts.
-					-- A literal `vim.fn.getcwd()` here would be evaluated once,
-					-- at plugin load, and freeze that directory.
-					local dap = require("dap")
-					for _, ft in ipairs({ "javascript", "typescript", "javascriptreact", "typescriptreact" }) do
-						dap.configurations[ft] = {
-							{
-								type = "pwa-node", name = "Launch file", request = "launch",
-								program = "${file}", cwd = "${workspaceFolder}",
-								sourceMaps = true, protocol = "inspector", console = "integratedTerminal",
-							},
-							{
-								type = "pwa-node", name = "Attach to process", request = "attach",
-								processId = require("dap.utils").pick_process, cwd = "${workspaceFolder}",
-								sourceMaps = true, protocol = "inspector", console = "integratedTerminal",
-							},
-						}
-					end
-				end,
-			},
-		},
+			local dap = require("dap")
+			local server = vim.fs.joinpath(vim.fn.stdpath("data"), "mason", "packages",
+				"js-debug-adapter", "js-debug", "src", "dapDebugServer.js")
+
+			-- One server backs every js-debug adapter type; they differ only in
+			-- the `type` a configuration names.
+			for _, name in ipairs({ "pwa-node", "pwa-chrome", "pwa-msedge",
+			                        "node-terminal", "pwa-extensionHost" }) do
+				dap.adapters[name] = {
+					type = "server",
+					host = "localhost",
+					port = "${port}",
+					executable = { command = "node", args = { server, "${port}" } },
+				}
+			end
+
+			-- `${workspaceFolder}` is resolved by nvim-dap per session, so the
+			-- debuggee runs from wherever the session starts. A literal
+			-- `vim.fn.getcwd()` here would be evaluated once, at load, and
+			-- freeze that directory.
+			for _, ft in ipairs({ "javascript", "typescript", "javascriptreact", "typescriptreact" }) do
+				dap.configurations[ft] = {
+					{
+						type = "pwa-node", name = "Launch file", request = "launch",
+						program = "${file}", cwd = "${workspaceFolder}",
+						sourceMaps = true, protocol = "inspector",
+					},
+					{
+						type = "pwa-node", name = "Attach to process", request = "attach",
+						processId = require("dap.utils").pick_process, cwd = "${workspaceFolder}",
+						sourceMaps = true, protocol = "inspector",
+					},
+				}
+			end
+		end,
 	},
 
 	-- ── JavaScript / TypeScript test adapters ─────────────────────────────

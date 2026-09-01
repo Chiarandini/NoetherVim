@@ -123,7 +123,7 @@ header.
 <!-- BEGIN GENERATED: bundle-requirements -->
 - `c-cpp` needs compile_commands.json
 - `go` needs Go toolchain
-- `java` needs a JDK
+- `java` needs a JDK 21 or newer
 - `latex` needs latexmk
 - `python` needs Python 3
 - `rust` needs rust-analyzer, Cargo

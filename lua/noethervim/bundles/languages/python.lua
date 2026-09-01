@@ -39,15 +39,39 @@ return {
 		opts = {},
 	},
 
+	{ "nvim-treesitter/nvim-treesitter",
+		opts = { ensure_installed = { "python", "toml" } },
+	},
+
+	-- basedpyright and ruff are in core's `ensure_installed`, so the language
+	-- server half is already covered; black is not, and core does not claim
+	-- the filetype it cannot install for.
+	{ "stevearc/conform.nvim",
+		opts = function(_, opts)
+			opts.formatters_by_ft = opts.formatters_by_ft or {}
+			opts.formatters_by_ft.python = { "black" }
+			opts.mason_install = opts.mason_install or {}
+			table.insert(opts.mason_install, "black")
+		end,
+	},
+
 	-- ── Python debug adapter ──────────────────────────────────────────────
 	-- `optional = true` means lazy.nvim drops this whole fragment unless
 	-- nvim-dap is required by something else, i.e. unless tools/debug.lua is
 	-- enabled. Enabling this bundle alone installs no debugger.
 	--
-	-- dap-python.setup() with no argument launches the adapter with `python3`
-	-- from PATH; the interpreter the debuggee runs under is resolved per
-	-- session from VIRTUAL_ENV / CONDA_PREFIX, which is exactly what
-	-- venv-selector above sets.
+	-- Two interpreters are in play and they are not the same one. The argument
+	-- to setup() is the interpreter that RUNS THE ADAPTER, and it must be able
+	-- to `import debugpy`; the interpreter the DEBUGGEE runs under is resolved
+	-- per session from VIRTUAL_ENV / CONDA_PREFIX, which is what venv-selector
+	-- above sets, and is untouched by this.
+	--
+	-- Calling setup() with no argument points the adapter at `python3` from
+	-- PATH, which on a normal machine cannot import debugpy: Mason installs it
+	-- into its own venv. The result is a registered adapter, an installed
+	-- package, and a debugger that never starts. Point it at the venv Mason
+	-- actually filled, and fall back to `python3` for someone who installed
+	-- debugpy themselves.
 	{
 		"mfussenegger/nvim-dap",
 		optional = true,
@@ -56,10 +80,20 @@ return {
 				"mfussenegger/nvim-dap-python",
 				ft = "python",
 				config = function()
-					require("dap-python").setup()
+					local mason_python = vim.fs.joinpath(vim.fn.stdpath("data"),
+						"mason", "packages", "debugpy", "venv", "bin", "python")
+					require("dap-python").setup(
+						vim.uv.fs_stat(mason_python) and mason_python or "python3")
 				end,
 			},
 		},
+		-- Mason's debugpy is a standalone copy, which is the right one for the
+		-- adapter process itself; the debuggee still runs under whichever
+		-- interpreter :VenvSelect exported.
+		opts = function(_, opts)
+			opts.mason_install = opts.mason_install or {}
+			table.insert(opts.mason_install, "debugpy")
+		end,
 	},
 
 	-- ── Python test adapter ───────────────────────────────────────────────

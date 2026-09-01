@@ -6,6 +6,7 @@ neothervim-install	noethervim.txt	/*neothervim-install*
 neothervim-keymaps	noethervim.txt	/*neothervim-keymaps*
 noethervim	noethervim.txt	/*noethervim*
 noethervim-Z	noethervim.txt	/*noethervim-Z*
+noethervim-auto-install	noethervim.txt	/*noethervim-auto-install*
 noethervim-brackets	noethervim.txt	/*noethervim-brackets*
 noethervim-bundle-toggle	noethervim.txt	/*noethervim-bundle-toggle*
 noethervim-bundles	noethervim.txt	/*noethervim-bundles*
@@ -49,6 +50,7 @@ noethervim-picker-notifications	noethervim.txt	/*noethervim-picker-notifications
 noethervim-q-close	noethervim.txt	/*noethervim-q-close*
 noethervim-quickstart	noethervim.txt	/*noethervim-quickstart*
 noethervim-resize-arrows	noethervim.txt	/*noethervim-resize-arrows*
+noethervim-running	noethervim.txt	/*noethervim-running*
 noethervim-semicolon	noethervim.txt	/*noethervim-semicolon*
 noethervim-shadowed	noethervim.txt	/*noethervim-shadowed*
 noethervim-snippet-stop	noethervim.txt	/*noethervim-snippet-stop*

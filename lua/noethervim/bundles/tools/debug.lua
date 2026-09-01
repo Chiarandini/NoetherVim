@@ -20,9 +20,10 @@
 --   • languages/go.lua:      delve, via nvim-dap-go
 --   • languages/web-dev.lua: vscode-js-debug, for JavaScript and TypeScript
 --   • languages/c-cpp.lua:   codelldb, for C and C++
---   • languages/rust.lua:    nothing to register -- rustaceanvim autoloads
---                            its own configurations when rust-analyzer
---                            attaches; it still needs codelldb or lldb
+--   • languages/rust.lua:    codelldb or lldb-dap; rustaceanvim loads the
+--                            configurations from rust-analyzer, but only once
+--                            one of those adapters resolves. Until then the
+--                            list is empty; :checkhealth noethervim says so
 --
 -- Related bundles (enable separately):
 --   • test.lua:        neotest test runner
@@ -279,6 +280,20 @@ return {
 	-- ── DAP client ────────────────────────────────────────────────────────────
 	{ -- Debug Adapter Protocol client
 		"mfussenegger/nvim-dap",
+		-- Debug adapter binaries are collected in `opts.mason_install`, the
+		-- same shape conform and nvim-lint use for formatters and linters.
+		-- Registering `dap.adapters.codelldb` is only half the job: a
+		-- configuration naming an adapter whose binary was never installed
+		-- fails at the moment you pick it, which is the worst place to find
+		-- out. Language bundles append with `opts = function(_, opts) ... end`.
+		--
+		-- Deliberately no `opts = { mason_install = {} }` seed here. lazy
+		-- replaces arrays rather than merging them, and the stock init.lua
+		-- imports languages/ before tools/, so a table on this fragment merges
+		-- last and silently erases everything the language bundles appended.
+		-- The opts functions create the list themselves; `config` treats a nil
+		-- as an empty one.
+		opts_extend = { "mason_install" },
 		dependencies = {
 			{
 				"rcarriga/nvim-dap-ui",
@@ -355,10 +370,12 @@ return {
 			{ "<leader>dw", function() require("dapui").elements.watches.add(vim.fn.expand("<cword>")) end, desc = "DAP: Watch Word" },
 			{ "<leader>dt", function() require("dap").disconnect()                                 end, desc = "DAP: Disconnect" },
 		},
-		config = function()
+		config = function(_, opts)
 			local dap   = require("dap")
 			local dapui = require("dapui")
 			local ic    = require("noethervim.util.icons")
+
+			require("noethervim.util.mason_install").ensure(opts.mason_install)
 
 			-- Highlights for the active stopped line (Visual-bright) and for
 			-- ancestor callstack frames. The ancestor bg is derived by blending
