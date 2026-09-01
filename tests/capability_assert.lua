@@ -134,11 +134,8 @@ local SPECS = {
 		fmt = { file = "messy.ts", bin = "prettierd",
 		        expect = "export function messy(a: number): number" },
 		test = { file = "main.test.ts", bin = "npx" },
-		-- Tracked, not a regression: a session starts and hangs with no stopped
-		-- event, in ESM and CommonJS alike, and with js-debug wired directly as
-		-- well as through nvim-dap-vscode-js. Leading hypothesis is Node 25 vs
-		-- vscode-js-debug 1.x (issue #12).
-		debug = { gap = "js-debug session never stops (issue #12)" },
+		debug = { file = "main.js", ft = "javascript", line = 2, adapter = "pwa-node",
+		          config = "", var = "a", value = "40" },
 		lint = { inject = "const __capBroken: number = \"not a number\";" },
 	},
 	java = {
