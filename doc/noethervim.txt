@@ -1316,6 +1316,28 @@ Prefixes: ~
                       every buffer it can before forcing out.
                       `ZR` (scratch sweep) deletes unnamed scratch buffers.
 
+                                                        *noethervim-running*
+Running code: ~
+
+    `<Leader>rf`        Run the current file
+    `<Leader>rp`        Run the project around it
+    `<Leader>rc`        Run the current file in a floating window
+    `<Leader>rT`        Send the run command to a betterTerm terminal
+
+    What each language runs is one table, so the four agree. `rf` and `rp`
+    need the task-runner bundle; `rc` and `rT` are core, and `rT` also
+    needs the better-term bundle.
+
+    The difference between `rf` and `rp` is the project: in a Cargo crate
+    `rf` runs `cargo run`, and on a loose .rs file it compiles that file
+    alone. `rp` runs the project's own entry point (cargo, go.mod, npm,
+    Maven, make) and does nothing when there is no project around the
+    buffer. Interpreted languages have `rf` only.
+
+    Version managers are honoured: an interpreter is resolved through
+    mise, asdf, pyenv, rbenv, nodenv or goenv for the buffer's directory
+    before it runs, so a project pinned to an older Python gets that one.
+
 Other notable keymaps: ~
 
     Normal: ~
