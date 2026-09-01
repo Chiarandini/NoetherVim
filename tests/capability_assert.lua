@@ -167,7 +167,11 @@ local SPECS = {
 		test = { file = "capfixture_test.cpp", bin = "ctest", prepare = {
 			{ "cmake", "-S", ".", "-B", "build", "-DCMAKE_BUILD_TYPE=Debug" },
 			{ "cmake", "--build", "build" },
-		} },
+		},
+		-- Asked only when the cell fails, and it separates the three things
+		-- that look identical from the outside: the project did not build, or
+		-- ctest cannot see the tests, or the adapter cannot see ctest.
+		diagnose = { "ctest", "--test-dir", "build", "-N" } },
 		-- c-cpp's launch config asks for the executable path with vim.fn.input,
 		-- so the probe answers it the way a user would.
 		-- Built to its own path, not `main`: checkpoint 7 compiles main.c to
@@ -457,9 +461,16 @@ else
 					for _, a in ipairs(ntcfg.adapters) do names[#names + 1] = a.name or "?" end
 					-- A failed build presents as "no results", which blames the
 					-- adapter for something that happened before it ran.
+					local extra = ""
+					if not prep_err and t.diagnose then
+						local d = vim.system(t.diagnose, { cwd = test_fixture, text = true }):wait(60000)
+						extra = ("  [%s -> exit %d: %s]"):format(t.diagnose[1], d.code,
+							vim.trim(((d.stdout or "") .. (d.stderr or "")):gsub("%s+", " ")):sub(1, 110))
+					end
 					record("5 test", "FAIL", prep_err
 						and ("project did not build: " .. prep_err)
-						or ("no results within budget; configured: " .. table.concat(names, ", ")))
+						or ("no results within budget; configured: "
+							.. table.concat(names, ", ") .. extra))
 				elseif counts.passed >= 1 and counts.failed >= 1 then
 					record("5 test", "PASS", ("%d passed, %d failed of %d")
 						:format(counts.passed, counts.failed, counts.total))
