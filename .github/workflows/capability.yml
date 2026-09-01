@@ -1,0 +1,102 @@
+name: capability matrix
+
+# Grades every language bundle against the eight checkpoints in the
+# language-bundle contract: a language server attaches, treesitter parses,
+# the formatter reformats, diagnostics appear, tests run, the debugger stops on
+# a breakpoint, and the file and project both run.
+#
+# Not a per-PR job. It provisions Rust, Go, Python, a JDK, Node and LLVM, then
+# installs a Mason package set on top, which is minutes of work and network
+# that no pull request should pay for. `check.yml` and `docs.yml` remain the
+# fast gates; this is the slow one that catches what they cannot see -- a
+# bundle whose source reads as correct and whose feature does not work.
+on:
+  schedule:
+    # 04:00 UTC, after the day's merges have landed.
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+    inputs:
+      language:
+        description: "One language (rust, go, python, c, java, web, latex) or --all"
+        required: false
+        default: "--all"
+
+concurrency:
+  group: capability-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  matrix:
+    name: language capability matrix
+    runs-on: ubuntu-latest
+    # The budget is dominated by provisioning, not by the checks.
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Neovim
+        uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: stable
+
+      # Each language brings its own toolchain. A missing one is reported as
+      # UNCOVERED rather than FAIL, so a provisioning failure here degrades the
+      # run honestly instead of turning it red for the wrong reason -- but the
+      # point of installing them is that UNCOVERED should stay empty.
+      - name: Rust toolchain
+        run: rustup component add rust-analyzer rustfmt
+
+      - uses: actions/setup-go@v5
+        with: { go-version: "stable" }
+
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "17" }
+
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+
+      - name: C, CMake and the rest
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake clangd
+          # The tree-sitter CLI is what nvim-treesitter builds parsers with,
+          # and core disables parser installation without it. Not an apt
+          # package; npm is the supported route.
+          npm install -g tree-sitter-cli
+          python3 -m pip install --quiet pytest
+
+      - name: Run the matrix
+        # The harness owns its own isolated NVIM_APPNAME and XDG root, so it
+        # cannot touch a real config even on a runner.
+        #
+        # No TeX distribution is installed: it is gigabytes for one bundle, and
+        # the harness gates every row on its toolchain, so latex reports
+        # UNCOVERED here rather than failing. Its one real capability, the
+        # compile, is covered by tests/behave_latex.lua.
+        #
+        # `pipefail` so a crash in the harness fails the step even though the
+        # output is piped through tee.
+        shell: bash
+        run: |
+          set -o pipefail
+          bash tests/capability.sh "${{ inputs.language || '--all' }}" 2>&1 | tee capability.log
+
+      # The matrix is the artifact worth keeping: it is the record of what the
+      # distribution could actually do on a given day.
+      - name: Publish the matrix
+        if: always()
+        run: |
+          {
+            echo '## Language capability matrix'
+            echo
+            echo '| language | checkpoints |'
+            echo '| --- | --- |'
+            grep '^MATRIX' capability.log 2>/dev/null \
+              | sed 's/^MATRIX \([a-z]*\) /| `\1` | /; s/$/ |/' \
+              || echo '| (no matrix rows; see the job log) | |'
+          } >> "$GITHUB_STEP_SUMMARY"

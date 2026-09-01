@@ -1,0 +1,7 @@
+{
+  "name": "capfixture",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": { "start": "node main.ts", "test": "vitest run" },
+  "devDependencies": { "vitest": "^2.1.8" }
+}
