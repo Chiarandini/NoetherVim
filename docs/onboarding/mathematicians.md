@@ -133,7 +133,7 @@ directory. Point it elsewhere with an `opts` override on the
 ```lua
 -- ~/.config/nvim/lua/user/plugins/noethervim-tex.lua
 return {
-    { "Chiarandini/NoetherVim-Tex",
+    { "Chiarandini/NoetherVim-tex",
       opts = { preamble_folder = "~/Documents/LaTeX/preamble/" },
     },
 }
@@ -275,7 +275,7 @@ outside your config directory:
 ```lua
 -- ~/.config/nvim/lua/user/plugins/noethervim-tex.lua
 return {
-    { "Chiarandini/NoetherVim-Tex",
+    { "Chiarandini/NoetherVim-tex",
       opts = { preamble_folder = "~/Documents/LaTeX/preamble/" },
     },
 }

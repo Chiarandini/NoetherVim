@@ -56,10 +56,10 @@ config = function(_, opts)
 	-- ~/.config/nvim, so your own files resolve outside stdpath("config"), while
 	-- a dev checkout under ~/programming is nowhere near stdpath("data").
 	-- fs_realpath, not resolve(): it collapses symlinks *and* normalises case.
-	-- Case matters because lazy names a dev directory after the repo string
-	-- ("Chiarandini/NoetherVim-Tex" -> .../NoetherVim-Tex) while the checkout on
-	-- disk may be spelled differently (.../noethervim-tex). A case-insensitive
-	-- filesystem happily opens both, but a string compare of the two fails.
+	-- Case matters because lazy names a dev directory after the last segment of
+	-- the repo string, and a checkout on disk may be spelled differently. A
+	-- case-insensitive filesystem happily opens both, but a string compare of
+	-- the two fails.
 	local function canonical(path)
 		return vim.uv.fs_realpath(path) or vim.fs.normalize(path)
 	end

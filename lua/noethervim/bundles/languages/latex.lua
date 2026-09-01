@@ -590,7 +590,7 @@ return {
   -- needs to mkspell or append to spellfile. The accent spell-check
   -- diagnostics layer also lives there; configure via opts.accent_spell.
   {
-    "Chiarandini/NoetherVim-Tex",
+    "Chiarandini/NoetherVim-tex",
     event = "VeryLazy",
     dependencies = { "L3MON4D3/LuaSnip" },
     opts = {

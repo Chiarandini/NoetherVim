@@ -153,7 +153,7 @@ The bundle's LaTeX snippets divide into three, and two of them are switches:
 ```lua
 -- lua/user/plugins/noethervim-tex.lua
 return {
-  { "Chiarandini/NoetherVim-Tex",
+  { "Chiarandini/NoetherVim-tex",
     opts = { snippets = { conventions = true, acronyms = true } } },
 }
 ```

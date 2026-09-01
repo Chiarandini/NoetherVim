@@ -925,7 +925,7 @@ The `latex` bundle includes `noethervim-tex`, which provides LaTeX snippets,
 treesitter textobjects, a preamble completion source, and a spell
 dictionary of common mathematical terms. Configure it
 via opts override in `user/plugins/`: >lua
-    { "Chiarandini/noethervim-tex", opts = {
+    { "Chiarandini/NoetherVim-tex", opts = {
         preamble_folder = "~/my/preambles/",
         extra_snippet_paths = { "~/shared-snippets/" },
         textobjects = false,
