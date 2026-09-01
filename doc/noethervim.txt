@@ -1203,6 +1203,28 @@ can be turned off with a single flag in your init.lua, set before
 With the flag set, `nvim` opens straight into an empty buffer. Set it
 to `true` or leave unset to keep the dashboard (default).
 
+                                                    *noethervim-auto-install*
+Declining toolchain auto-install: ~
+
+Enabling a bundle is how you ask for the tools it drives. A language
+bundle names its language server, formatter, linter and debug adapter,
+and NoetherVim fetches through Mason whatever is missing, the same way
+language servers have always arrived. Enabling `languages/rust` together
+with `tools/debug` gets you codelldb; `languages/python` gets you black.
+
+To decline, set this in your init.lua before `lazy.setup`: >lua
+    vim.g.noethervim_auto_install = false
+<
+Nothing is then fetched on your behalf. Bundles still declare what they
+need, `:checkhealth noethervim` still names anything missing, and
+`:Mason` still installs on request. Set this when a toolchain is managed
+outside the editor, by Nix, by system packages, or by a project-local
+environment, where a second copy under Mason is at best redundant and at
+worst a version you did not choose.
+
+Language servers are unaffected: they arrive through `ensure_installed`
+and are not gated by this flag.
+
 ==============================================================================
 9. KEYMAP NAMESPACES                     *noethervim-keymaps* *neothervim-keymaps*
 

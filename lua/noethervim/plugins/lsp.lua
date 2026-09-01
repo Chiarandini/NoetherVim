@@ -59,7 +59,6 @@ return {
 		opts  = {
 			formatters_by_ft = {
 				lua             = { "stylua" },
-				python          = { "black" },
 				bib             = { "bibclean" },
 				javascript      = { "prettierd" },
 				javascriptreact = { "prettierd" },
@@ -74,33 +73,27 @@ return {
 			},
 			-- No format_on_save -- use <Leader>ff for explicit formatting.
 
-			-- Mason packages to fetch eagerly, rather than on first format.
-			-- Only the ones every install needs: core is written in Lua, so
-			-- stylua earns it. `bib` is claimed above but its formatter is
-			-- not here -- a .bib file is not something a user without LaTeX
-			-- opens, so `languages/latex` adds `bibclean` to this list.
+			-- Mason packages backing the claims above. The rule is that
+			-- whoever claims a filetype installs its formatter: core claims
+			-- the ones every install meets regardless of language (Lua for the
+			-- config itself, shell scripts, and the JSON / YAML / Markdown
+			-- that prettierd covers), and a language bundle claims its own.
+			-- `bib` is the one claim core makes without installing, because a
+			-- .bib file is not something a user without LaTeX opens; the latex
+			-- bundle adds `bibclean` to this list.
 			--
 			-- A list, not a second `config`: lazy keeps only the last config
 			-- function it sees, so a bundle defining one would silently drop
 			-- this whole block. Bundles append with
 			-- `opts = function(_, opts) ... end`, the same way they extend
 			-- `ensure_installed`.
-			mason_install = { "stylua" },
+			mason_install = { "stylua", "prettierd", "shfmt" },
 		},
 		config = function(_, opts)
 			local tools = opts.mason_install or {}
 			opts.mason_install = nil   -- conform would reject the unknown key
 			require("conform").setup(opts)
-			local ok_mr, mr = pcall(require, "mason-registry")
-			if not ok_mr then return end
-			mr.refresh(function()
-				for _, tool in ipairs(tools) do
-					local ok, pkg = pcall(mr.get_package, tool)
-					if ok and not pkg:is_installed() then
-						pkg:install()
-					end
-				end
-			end)
+			require("noethervim.util.mason_install").ensure(tools)
 		end,
 	},
 
@@ -120,10 +113,16 @@ return {
 				-- Most linting is provided by LSP servers (basedpyright, ruff,
 				-- eslint, lua_ls, …). Add non-LSP linters here or via opts override.
 			},
+			-- Same contract as conform's list above: a bundle that adds a
+			-- linter to `linters_by_ft` names its Mason package here, and the
+			-- binary arrives with the bundle instead of being a manual step
+			-- the reader only learns about from :checkhealth.
+			mason_install = {},
 		},
 		config = function(_, opts)
 			local lint = require("lint")
 			lint.linters_by_ft = opts.linters_by_ft
+			require("noethervim.util.mason_install").ensure(opts.mason_install)
 
 			vim.api.nvim_create_autocmd({ "BufReadPost", "BufWritePost", "InsertLeave" }, {
 				group = vim.api.nvim_create_augroup("noethervim_lint", { clear = true }),
