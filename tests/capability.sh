@@ -30,7 +30,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 FIXTURES="$SCRIPT_DIR/fixtures/lang"
 
-LANGS=(rust go python c java web latex)
+LANGS=(rust go python c cpp java web latex)
 
 APPNAME="nvim-captest"
 HARNESS_ROOT="${TMPDIR:-/tmp}/noethervim-capability-harness"
@@ -120,6 +120,7 @@ main_for() {
         java)   echo "src/main/java/capfixture/Main.java" ;;
         web)    echo "main.ts" ;;
         latex)  echo "main.tex" ;;
+        cpp)    echo "main.cpp" ;;
     esac
 }
 
@@ -178,6 +179,18 @@ run_one() {
         fi
         ( cd "$FIXTURES/web" && timeout 300 npx vitest run >/dev/null 2>&1 ) || true
     fi
+
+    # compile_commands.json carries an absolute directory, so it is generated
+    # here rather than committed: a path from the machine that wrote it is
+    # wrong everywhere else, and clangd would resolve includes against it.
+    for d in c cpp; do
+        if [ -d "$FIXTURES/$d" ]; then
+            src="main.c"; cc="cc"
+            [ "$d" = "cpp" ] && { src="main.cpp"; cc="c++"; }
+            printf '[{"directory":"%s","command":"%s -c %s","file":"%s"}]\n' \
+                "$FIXTURES/$d" "$cc" "$src" "$src" > "$FIXTURES/$d/compile_commands.json"
+        fi
+    done
 
     # doctest.h backs the C/C++ test fixture and is third-party; fetched
     # rather than vendored, so the repo does not carry 500 KB of someone

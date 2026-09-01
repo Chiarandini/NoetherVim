@@ -94,6 +94,20 @@ local SPECS = {
 		debug = { line = 2, adapter = "debugpy", config = "", var = "a", value = "40" },
 		lint = { inject = "def __cap_broken():\n    return __cap_missing()" },
 	},
+	cpp = {
+		bundle = "languages.c-cpp", dir = "cpp", main = "main.cpp", ft = "cpp",
+		tool = "c++", lsp = { "clangd" }, parser = "cpp", node = "function_definition",
+		run_file = "42", run_project = false,  -- `make` builds; it does not run
+		fmt = { file = "messy.cpp", bin = "clang-format", expect = "int messy(int a)" },
+		-- The bundle registers one CTest adapter for both filetypes, and the c
+		-- row exercises it against a real CMake project. Standing up a second
+		-- identical project here would duplicate, not add.
+		test = { na = "one CTest adapter serves both filetypes; graded on the c row" },
+		debug = { line = 3, adapter = "codelldb", config = "", var = "a", value = "40",
+		          program = "main_debug",
+		          build = { "c++", "-g", "-O0", "main.cpp", "-o", "main_debug" } },
+		lint = { inject = "int __cap_broken() { return __cap_missing(); }" },
+	},
 	latex = {
 		bundle = "languages.latex", dir = "latex", main = "main.tex", ft = "tex",
 		tool = "latexmk", lsp = { "texlab" }, parser = "latex", node = "section",
