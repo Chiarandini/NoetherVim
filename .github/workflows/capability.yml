@@ -24,7 +24,9 @@ on:
   pull_request:
     paths:
       - "lua/noethervim/bundles/languages/**"
-      - "lua/noethervim/bundles/tools/{debug,test,task-runner}.lua"
+      - "lua/noethervim/bundles/tools/debug.lua"
+      - "lua/noethervim/bundles/tools/test.lua"
+      - "lua/noethervim/bundles/tools/task-runner.lua"
       - "lua/noethervim/util/run.lua"
       - "lua/noethervim/util/mason_install.lua"
       - "lua/noethervim/plugins/lsp.lua"

@@ -411,7 +411,7 @@ else
 				-- web-dev registers both neotest-jest and neotest-vitest, and
 				-- only one of them owns a given project. Taking whichever
 				-- adapter_ids() happens to yield first made this cell flaky --
-				-- green alone, red in the suite -- because the idle adapter
+				-- green alone, red in the suite, because the idle adapter
 				-- reports total>0, running==0 and no results, which satisfies a
 				-- naive "the run finished" test.
 				--
@@ -506,7 +506,7 @@ else
 				-- `vim.fn.input`, which cannot be answered headlessly: `vim.fn`
 				-- is metatable-backed, so assigning a stub over it does not
 				-- take, and the real prompt then blocks until the budget runs
-				-- out. Supply the answer as config data instead -- the same
+				-- out. Supply the answer as config data instead: the same
 				-- value a user would type, without the prompt.
 				if d.program then
 					chosen = vim.tbl_extend("force", chosen,
