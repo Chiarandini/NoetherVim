@@ -1,8 +1,9 @@
 ---@bundle task-runner
 ---@desc run builds and project tasks from the editor
 ---@about overseer.nvim runs and tracks tasks, compiler.nvim wraps it in a
----       project compiler UI, and <leader>rf runs the current file in a way
----       that respects filetype and version managers.
+---       project compiler UI, and <leader>rf and <leader>rp run the current
+---       file or the project around it, respecting filetype, project markers
+---       and version managers.
 ---@requires note="your project build tool"
 ---          why="overseer and compiler.nvim shell out to it"
 ---          install="make, cargo, latexmk, npm, ... whatever the project uses"
@@ -14,27 +15,15 @@
 --   compiler.nvim:    project compiler UI  (:CompilerOpen, :CompilerToggleResults)
 --
 -- Keymaps:
---   <leader>rf    run current file (filetype-aware, version-manager-aware)
+--   <leader>rf    run the current file
+--   <leader>rp    run the project around it (cargo, go.mod, npm, Maven, make)
 --   <c-w><c-r>   toggle task list
 
--- Filetype → interpreter command.
--- For commands with subcommands (e.g. "go run"), the first word is resolved
--- through version managers while the rest is preserved.
-local runners = {
-	python     = "python3",
-	lua        = "lua",
-	javascript = "node",
-	typescript = "tsx",
-	go         = "go run",
-	sh         = "sh",
-	bash       = "bash",
-	zsh        = "zsh",
-	ruby       = "ruby",
-	julia      = "julia",
-	perl       = "perl",
-	r          = "Rscript",
-	php        = "php",
-}
+-- What each language runs comes from `noethervim.util.run`, shared with core's
+-- code_runner so a language is taught once. What is local to this bundle is
+-- running it through overseer, and resolving the interpreter through whichever
+-- version manager governs the directory.
+local run = require("noethervim.util.run")
 
 -- General-purpose version managers, tried first in order.
 -- All support `<manager> which <bin>` and respect per-directory config.
@@ -91,41 +80,55 @@ local function resolve_runner(cmd, dir)
 	return cmd
 end
 
+--- Run the current file, or the project around it, as an overseer task.
+---
+--- The version-manager pass applies only to the interpreter forms, where the
+--- command begins with a bare binary name we might resolve to a per-directory
+--- install. A build tool invoked through its own project (`cargo run`,
+--- `./gradlew run`, `make`) already resolves itself, and rewriting its first
+--- word would be wrong.
+---@param kind "file"|"project"
+local function start_task(kind)
+	local cmd, cwd = run.command(kind, 0)
+	if not cmd or not cwd then
+		local ft = vim.bo.filetype
+		if kind == "project" then
+			vim.notify(("No project to run for %s here (looked for %s)"):format(
+				ft ~= "" and ft or "this buffer",
+				table.concat((run.languages[ft] or {}).root or { "a project marker" }, ", ")),
+				vim.log.levels.WARN)
+		else
+			vim.notify("No runner for filetype: " .. (ft ~= "" and ft or "(none)"), vim.log.levels.WARN)
+		end
+		return
+	end
+
+	local spec = run.languages[vim.bo.filetype] or {}
+	if type(spec[kind]) == "string" then
+		local bin = cmd:match("^(%S+)")
+		cmd = resolve_runner(bin, cwd) .. cmd:sub(#bin + 1)
+	end
+
+	require("overseer").new_task({
+		name = (kind == "project" and "Run project: " or "Run ") .. vim.fn.fnamemodify(cwd, ":t"),
+		cmd  = cmd,
+		cwd  = cwd,
+		components = {
+			"default",
+			{ "on_complete_notify", statuses = { "SUCCESS", "FAILURE" } },
+			"open_output",
+		},
+	}):start()
+end
+
 return {
 	{
 		"stevearc/overseer.nvim",
 		cmd  = { "OverseerRun", "OverseerToggle" },
 		keys = {
-			{
-				"<leader>rf",
-				function()
-					local ft = vim.bo.filetype
-					local cmd = runners[ft]
-					if not cmd then
-						vim.notify("No runner for filetype: " .. ft, vim.log.levels.WARN)
-						return
-					end
-
-					local file = vim.fn.shellescape(vim.fn.expand("%:p"))
-					local dir  = vim.fn.expand("%:p:h")
-					local name = vim.fn.expand("%:t")
-
-					cmd = resolve_runner(cmd, dir)
-
-					require("overseer").new_task({
-						name = "Run " .. name,
-						cmd  = cmd .. " " .. file,
-						cwd  = dir,
-						components = {
-							"default",
-							{ "on_complete_notify", statuses = { "SUCCESS", "FAILURE" } },
-							"open_output",
-						},
-					}):start()
-				end,
-				desc = "Run this [f]ile",
-			},
-			{ "<c-w><c-r>", "<cmd>OverseerToggle<cr>", desc = "Task list" },
+			{ "<leader>rf", function() start_task("file") end,    desc = "Run this [f]ile" },
+			{ "<leader>rp", function() start_task("project") end, desc = "Run this [p]roject" },
+			{ "<c-w><c-r>", "<cmd>OverseerToggle<cr>",            desc = "Task list" },
 		},
 		opts = {
 			task_list = {
