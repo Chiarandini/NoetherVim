@@ -162,6 +162,23 @@ run_one() {
     # run, and the symptom is an adapter that discovers the tests and reports
     # no results at all -- indistinguishable from a broken adapter. Fetch it
     # up front, so an UNCOVERED here can never be a hidden missing tool.
+    # vitest's first run in a project is a cold start: it resolves and
+    # transforms the whole dependency graph before reporting anything. Under
+    # --all, with six other languages already having run on the machine, that
+    # cold start has outrun the harness's poll budget and produced a green cell
+    # in isolation and a red one in the suite. Warm it here so the graded run
+    # measures the adapter rather than the transform.
+    if [ "$lang" = "web" ]; then
+        # node_modules is not committed, so a clean checkout has no vitest at
+        # all. Without this the test cell fails for a missing tool rather than
+        # reporting UNCOVERED, which is the one thing the coverage rule forbids.
+        if [ ! -d "$FIXTURES/web/node_modules" ]; then
+            ( cd "$FIXTURES/web" && timeout 600 npm install --silent ) \
+              || echo "    warning: npm install failed for the web fixture"
+        fi
+        ( cd "$FIXTURES/web" && timeout 300 npx vitest run >/dev/null 2>&1 ) || true
+    fi
+
     # doctest.h backs the C/C++ test fixture and is third-party; fetched
     # rather than vendored, so the repo does not carry 500 KB of someone
     # else's header for one fixture.

@@ -407,11 +407,24 @@ else
 				-- run first, then poll for both the id and its counts.
 				neotest.run.run(test_path)
 
+				-- A bundle can register more than one adapter for a filetype:
+				-- web-dev registers both neotest-jest and neotest-vitest, and
+				-- only one of them owns a given project. Taking whichever
+				-- adapter_ids() happens to yield first made this cell flaky --
+				-- green alone, red in the suite -- because the idle adapter
+				-- reports total>0, running==0 and no results, which satisfies a
+				-- naive "the run finished" test.
+				--
+				-- Require the positions to be resolved, not merely not-running.
 				local counts
 				local done = poll(300000, function()
 					for _, id in ipairs(neotest.state.adapter_ids()) do
 						local c = neotest.state.status_counts(id, { buffer = tbuf })
-						if c and c.total > 0 and c.running == 0 then counts = c; return true end
+						if c and c.total > 0 and c.running == 0
+							and (c.passed + c.failed) > 0 then
+							counts = c
+							return true
+						end
 					end
 					return false
 				end)
