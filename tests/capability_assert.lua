@@ -62,7 +62,10 @@ local SPECS = {
 		tool = "cargo", lsp = { "rust-analyzer" }, parser = "rust", node = "function_item",
 		run_file = "42", run_project = "42",
 		fmt = { file = "src/messy.rs", bin = "rustfmt", expect = "a: i32" },
-		test = { file = "src/main.rs", bin = "cargo" },
+		-- neotest-rust drives `cargo nextest`, not `cargo test`; without it the
+		-- adapter discovers the tests and reports nothing. Gating on the binary
+		-- it actually needs makes its absence read as UNCOVERED, not FAIL.
+		test = { file = "src/main.rs", bin = "cargo-nextest" },
 		-- Stop inside add(), where `a` is 40 regardless of how the binary was
 		-- launched. rustaceanvim's autoloaded "Cargo: build" config builds the
 		-- crate and runs the resulting binary under codelldb.
@@ -103,7 +106,7 @@ local SPECS = {
 		-- row exercises it against a real CMake project. Standing up a second
 		-- identical project here would duplicate, not add.
 		test = { na = "one CTest adapter serves both filetypes; graded on the c row" },
-		debug = { line = 3, adapter = "codelldb", config = "", var = "a", value = "40",
+		debug = { line = 4, adapter = "codelldb", config = "", var = "a", value = "40",
 		          program = "main_debug",
 		          build = { "c++", "-g", "-O0", "main.cpp", "-o", "main_debug" } },
 		lint = { inject = "int __cap_broken() { return __cap_missing(); }" },
@@ -171,7 +174,11 @@ local SPECS = {
 		-- `main` without -g, and `make main` then sees it up to date and skips
 		-- the debug build, so the breakpoint never binds and the program runs
 		-- to completion. Two checkpoints must not share one artifact.
-		debug = { line = 3, adapter = "codelldb", config = "", var = "a", value = "40",
+		-- Line 4, the first statement of the body, not line 3, the signature.
+		-- A breakpoint on a function's opening line binds inside the prologue,
+		-- before the parameters reach their stack slots, and reads garbage: on
+		-- Linux this produced `a=32767` while macOS happened to read 40.
+		debug = { line = 4, adapter = "codelldb", config = "", var = "a", value = "40",
 		          program = "main_debug",
 		          build = { "cc", "-g", "-O0", "main.c", "-o", "main_debug" } },
 		lint = { inject = "int __cap_broken(void) { return __cap_missing(); }" },
@@ -398,8 +405,13 @@ else
 			-- Some runners need the project built before anything is
 			-- discoverable or runnable: CTest reads CTestTestfile.cmake from a
 			-- build dir, and neotest-java wants compiled test classes.
+			local prep_err
 			for _, cmd in ipairs(t.prepare or {}) do
-				vim.system(cmd, { cwd = test_fixture }):wait(300000)
+				local r = vim.system(cmd, { cwd = test_fixture, text = true }):wait(300000)
+				if r.code ~= 0 and not prep_err then
+					prep_err = ("%s exited %d: %s"):format(cmd[1], r.code,
+						vim.trim(((r.stderr or "") .. (r.stdout or "")):gsub("%s+", " ")):sub(1, 90))
+				end
 			end
 			if t.prepare then vim.cmd("cd " .. vim.fn.fnameescape(test_fixture)) end
 			local test_path = test_fixture .. "/" .. t.file
@@ -443,8 +455,11 @@ else
 				if not done or not counts then
 					local names = {}
 					for _, a in ipairs(ntcfg.adapters) do names[#names + 1] = a.name or "?" end
-					record("5 test", "FAIL",
-						"no results within budget; configured: " .. table.concat(names, ", "))
+					-- A failed build presents as "no results", which blames the
+					-- adapter for something that happened before it ran.
+					record("5 test", "FAIL", prep_err
+						and ("project did not build: " .. prep_err)
+						or ("no results within budget; configured: " .. table.concat(names, ", ")))
 				elseif counts.passed >= 1 and counts.failed >= 1 then
 					record("5 test", "PASS", ("%d passed, %d failed of %d")
 						:format(counts.passed, counts.failed, counts.total))

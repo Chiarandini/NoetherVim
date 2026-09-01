@@ -12,6 +12,10 @@
 ---@requires exe=cargo label="Cargo"
 ---          why="building and running from the editor"
 ---          install="https://rustup.rs/"
+---@requires exe=cargo-nextest label="cargo-nextest"
+---          why="running tests, when the test bundle is also enabled;
+---               neotest-rust drives nextest rather than cargo test"
+---          install="cargo install cargo-nextest" optional=true
 ---@requires exe=codelldb label="codelldb"
 ---          why="stepping through Rust, when the debug bundle is also enabled"
 ---          install=":MasonInstall codelldb, or put lldb-dap on PATH" optional=true

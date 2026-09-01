@@ -64,8 +64,8 @@ jdtls needs workspace management and jar paths that plain lspconfig cannot suppl
 
 Requires:
 
-- **a JDK**: jdtls will not start without one
-  <br />JDK 17 or newer
+- **a JDK 21 or newer**: jdtls itself runs on 21; the project it indexes may target older
+  <br />https://adoptium.net/
 - **Maven or Gradle** *(optional)*: neotest-java builds and runs through the project's own tool, when the test bundle is also enabled
   <br />whichever your project already uses
 
@@ -117,6 +117,8 @@ Requires:
   <br />rustup component add rust-analyzer
 - **Cargo**: building and running from the editor
   <br />https://rustup.rs/
+- **cargo-nextest** *(optional)*: running tests, when the test bundle is also enabled; neotest-rust drives nextest rather than cargo test
+  <br />cargo install cargo-nextest
 - **codelldb** *(optional)*: stepping through Rust, when the debug bundle is also enabled
   <br />:MasonInstall codelldb, or put lldb-dap on PATH
 

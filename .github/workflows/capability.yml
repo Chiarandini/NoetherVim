@@ -69,7 +69,11 @@ jobs:
       # run honestly instead of turning it red for the wrong reason -- but the
       # point of installing them is that UNCOVERED should stay empty.
       - name: Rust toolchain
-        run: rustup component add rust-analyzer rustfmt
+        run: |
+          rustup component add rust-analyzer rustfmt
+          # neotest-rust drives `cargo nextest`, not `cargo test`.
+          curl -fsSL https://get.nexte.st/latest/linux \
+            | tar zxf - -C "${CARGO_HOME:-$HOME/.cargo}/bin"
 
       - uses: actions/setup-go@v5
         with: { go-version: "stable" }
@@ -78,7 +82,9 @@ jobs:
         with: { python-version: "3.12" }
 
       - uses: actions/setup-java@v4
-        with: { distribution: temurin, java-version: "17" }
+        # 21, not 17: jdtls itself runs on 21, and on 17 it does not start at
+        # all, which reads as "the Java bundle attaches no language server".
+        with: { distribution: temurin, java-version: "21" }
 
       - uses: actions/setup-node@v4
         with: { node-version: "22" }

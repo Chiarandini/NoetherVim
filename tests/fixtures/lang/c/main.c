@@ -1,6 +1,9 @@
 #include <stdio.h>
 
-int add(int a, int b) { return a + b; }
+int add(int a, int b) {
+    int sum = a + b;
+    return sum;
+}
 
 int main(void) {
     printf("%d\n", add(40, 2));

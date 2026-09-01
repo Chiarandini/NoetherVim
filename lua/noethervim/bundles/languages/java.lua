@@ -5,8 +5,9 @@
 ---       a workspace directory of its own. With the debug bundle also enabled
 ---       it loads the Java debug and test jars into the server, which is what
 ---       makes breakpoints and the JUnit adapter work.
----@requires exe=java label="a JDK" why="jdtls will not start without one"
----          install="JDK 17 or newer"
+---@requires exe=java label="a JDK 21 or newer"
+---          why="jdtls itself runs on 21; the project it indexes may target older"
+---          install="https://adoptium.net/"
 ---@requires note="Maven or Gradle"
 ---          why="neotest-java builds and runs through the project's own tool,
 ---               when the test bundle is also enabled"
