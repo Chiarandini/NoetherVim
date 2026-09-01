@@ -618,7 +618,7 @@ return {
     opts = {
       -- Snippet sets beyond the ones that work in any LaTeX document. Both
       -- default off: `conventions` is the theorem family in the two-argument
-      -- `\begin{defn}{label}{Name}` form, which needs declarations your
+      -- `\begin{defn}{Name}{label}` form, which needs declarations your
       -- preamble may not have, and `acronyms` is prose shorthand (wlog,
       -- tfae, ...) that is one writer's vocabulary rather than a default.
       -- See https://nathanaelsrawley.com/noethervim/guides/latex-setup/

@@ -114,7 +114,7 @@ end
 -- annotation feeds :checkhealth and the docs site. A bundle whose header
 -- lacks @desc shows "(no description)".
 
--- Display order and human-readable labels for filesystem category names.
+-- Display order and readable labels for filesystem category names.
 -- Any category present on disk but missing here renders as its raw name at
 -- the end of the list.
 local cat_order = {

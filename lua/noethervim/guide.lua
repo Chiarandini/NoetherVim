@@ -87,7 +87,7 @@ function B.pair(open_d, close_d, desc, open_lhs)
   B.keymap(open_d .. "  " .. close_d, desc, open_lhs, "n")
 end
 
---- Convert a resolved lhs to human-readable display text.
+--- Convert a resolved lhs to readable display text.
 --- keytrans converts special keys to notation (<Space>, <C-W>, etc.)
 --- but also escapes literal "<" as "<lt>". Undo that for display.
 local function display_lhs(lhs)

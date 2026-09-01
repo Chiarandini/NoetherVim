@@ -138,7 +138,7 @@ return {
 
 - `conventions`: the theorem family as `:thm`, `:defn`, `:prop`, `:lem`,
   `:cor`, `:example`, `:exercise` and `:box`. They emit
-  `\begin{defn}{label}{Name}`, a two-argument form that needs declarations
+  `\begin{defn}{Name}{label}`, a two-argument form that needs declarations
   your preamble may not have. [One LaTeX setup](../latex-setup.md) writes them
   out.
 - `acronyms`: prose shorthand, where `tfae` becomes "the following are
