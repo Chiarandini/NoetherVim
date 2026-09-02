@@ -152,13 +152,29 @@ return {
         opts = {
           -- The DiffLabel winbar is meaningful only on diff windows (its
           -- `condition` is `vim.wo.diff`), which are normal splits. Heirline
-          -- still sets the winbar option on every window taller than one
-          -- row; on a normal window an empty (non-diff) winbar collapses, but
-          -- on a floating window the reserved row stays as a blank slot -- e.g.
-          -- the blank row above blink.cmp's completion menu. Skip floats so the
-          -- winbar never lands there; diff splits are unaffected.
-          disable_winbar_cb = function()
-            return vim.api.nvim_win_get_config(0).relative ~= ""
+          -- still sets the winbar option on every window; on a normal window
+          -- an empty (non-diff) winbar collapses, but a floating window keeps
+          -- the reserved row as a blank slot (the gap above blink.cmp's
+          -- completion menu), and a one-row window has no row to give at all
+          -- and fails with "Not enough room" (the message windows of
+          -- `vim._core.ui2` are one row each). So skip every window that is
+          -- not a plain split. Asking the window rather than the buffer keeps
+          -- the scratch side of |:DiffOrig|, which is a `nofile` buffer in a
+          -- real split, labelled.
+          --
+          -- Heirline hands the callback a buffer and iterates windows without
+          -- entering them, so the window under decision is the current one
+          -- only when the current one is holding that buffer.
+          disable_winbar_cb = function(args)
+            local cur  = vim.api.nvim_get_current_win()
+            local wins = { cur }
+            if args and args.buf and vim.api.nvim_win_get_buf(cur) ~= args.buf then
+              wins = vim.fn.win_findbuf(args.buf)
+            end
+            for _, win in ipairs(wins) do
+              if vim.api.nvim_win_get_config(win).relative ~= "" then return true end
+            end
+            return false
           end,
         },
       })
