@@ -247,22 +247,45 @@ smap <silent><expr> <c-q> luasnip#choice_active() ? '<Plug>luasnip-next-choice' 
 	vim.api.nvim_create_user_command('LuaSnipStop', stop_all_and_report,
 		{ desc = 'Stop every snippet in the buffer and clear leftover marks' })
 
-	-- Insert and select, where you are when a snippet goes wrong. Normal-mode
-	-- <C-u> is left alone so it keeps scrolling half a page.
-	vim.keymap.set({ 'i', 's' }, '<c-u>', stop_all_and_report,
+	--- Whether this buffer has anything for a stop to act on: a live snippet,
+	--- or the extmarks one leaves behind after being unlinked.
+	local function has_snippet_state()
+		local buf = vim.api.nvim_get_current_buf()
+		local session = require('luasnip.session')
+		if session.current_nodes[buf] then return true end
+		return #vim.api.nvim_buf_get_extmarks(buf, session.ns_id, 0, -1, {}) > 0
+	end
+
+	-- Insert-mode <C-u> is Vim's "delete what you have typed on this line",
+	-- which is worth more than an unconditional snippet escape hatch: a
+	-- snippet is active for a few seconds an hour, and that key is reached for
+	-- constantly. So stop snippets only when there are snippets to stop, and
+	-- otherwise pass the keystroke through untouched. Same shape as the <C-q>
+	-- guard below, which leaves <C-q> alone unless a choice node is active.
+	--
+	-- Select mode has no comparable native <C-u>, and reaching it at all
+	-- almost always means sitting on a tabstop, so there it always stops.
+	vim.keymap.set('i', '<c-u>', function()
+		if has_snippet_state() then
+			stop_all_and_report()
+		else
+			-- 'i': ahead of anything already in the typeahead, so the
+			-- replayed key lands where it was pressed rather than after the
+			-- next keystrokes. 'n' so it is not fed back through this mapping.
+			vim.api.nvim_feedkeys(
+				vim.api.nvim_replace_termcodes('<C-u>', true, false, true), 'ni', false)
+		end
+	end, { desc = 'stop all snippets, else delete entered text' })
+
+	vim.keymap.set('s', '<c-u>', stop_all_and_report, { desc = 'stop all snippets' })
+
+	-- <Leader>, not <LocalLeader>: stopping snippets is a global action that
+	-- happens to act on this buffer, not a filetype action, and LocalLeader
+	-- mappings have to be buffer-local. Capital for the stronger of the pair,
+	-- next to <Leader>u, which unlinks only the snippet you are in.
+	vim.keymap.set('n', '<leader>U', stop_all_and_report,
 		{ desc = 'stop all snippets' })
 
-	vim.keymap.set('n', '<localleader>u', stop_all_and_report,
-		{ desc = 'stop all snippets' })
-
-	vim.cmd([[
-function SourceSnippets()
-	for f in split(glob(stdpath('config') . '/LuaSnip/*.lua'), '\n')
-		exe 'source' f
-	endfor
-	echom 'snippets sourced'
-endfunction
-	]])
 end
 }
 

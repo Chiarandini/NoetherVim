@@ -956,9 +956,13 @@ with the first suggestion, leaving the cursor where you were typing.
 Getting out of a snippet: ~
 
     `<C-u>`             Stop every snippet in the buffer (insert, select)
-    `<LocalLeader>u`    Same, from normal mode
+    `<Leader>U`         Same, from normal mode
     `:LuaSnipStop`      Same, as a command
     `<Leader>u`         Unlink only the snippet you are in
+
+`<C-u>` only stops snippets when there are snippets to stop. With none
+active and no marks left behind, it is Vim's own "delete what you have
+typed on this line", untouched.
 
 Stopping is not the same as unlinking. Unlinking drops one snippet and
 hands the cursor to its neighbor; LuaSnip's extmarks stay behind, so the
