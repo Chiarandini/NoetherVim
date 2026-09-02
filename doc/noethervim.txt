@@ -2181,6 +2181,9 @@ Run `:checkhealth noethervim` to verify your setup. Checks include:
 - Optional tools: node, zoxide, lazygit, tree-sitter
 - Terminal: true color, `<S-CR>` support, Nerd Font (heuristic, see below)
 - LaTeX toolchain (if latex bundle enabled)
+- Snippets: how many are loaded per filetype, where your own live, and a
+  warning when a trigger is defined more than once (which shows up as a
+  duplicated entry in the completion menu)
 - Template version: warns if your init.lua is outdated
 - Override drift: warns when a file you overrode has changed upstream
   (see |noethervim-override-drift|)

@@ -1,6 +1,20 @@
 -- :checkhealth noethervim
 local h = vim.health
 
+--- The key that opens the snippet files, read from the live keymap table
+--- rather than written out, so a rebind is reflected. Returned in press-it
+--- form (`<Space>es`); nil when nothing is bound to it.
+local function edit_snippets_key()
+  local best
+  for _, km in ipairs(vim.api.nvim_get_keymap("n")) do
+    if (km.rhs or ""):find("LuaSnipEdit", 1, true) then
+      if not best or #km.lhs < #best then best = km.lhs end
+    end
+  end
+  return best and vim.fn.keytrans(
+    vim.api.nvim_replace_termcodes(best, true, true, true))
+end
+
 local function check_exe(name, required)
   if vim.fn.executable(name) == 1 then
     h.ok(name)
@@ -262,6 +276,87 @@ function M.check()
     else
       h.warn("latex treesitter parser not installed -- run :TSInstall latex")
     end
+  end
+
+  -- ── Snippets ──────────────────────────────────────────────────────────
+  -- What is loaded, from where, and whether any trigger arrived twice. The
+  -- last one is here because a duplicate is invisible from the outside: the
+  -- completion menu simply lists an entry twice, which reads as clutter
+  -- rather than as a fault, and there was no way to ask.
+  h.start("Snippets (LuaSnip)")
+
+  local ls_ok, ls = pcall(require, "luasnip")
+  if not ls_ok then
+    h.info("LuaSnip is not loaded yet. It loads on InsertEnter, and each\n"
+      .. "filetype's snippets load the first time you type in such a buffer,\n"
+      .. "so nothing is reported until then.")
+  else
+    local manual = ls.get_snippets(nil, { type = "snippets" }) or {}
+    local auto   = ls.get_snippets(nil, { type = "autosnippets" }) or {}
+
+    local fts = {}
+    for ft in pairs(manual) do fts[ft] = true end
+    for ft in pairs(auto) do fts[ft] = true end
+    local names = vim.tbl_keys(fts)
+    table.sort(names)
+
+    -- Said every time, not only when nothing is loaded. A filetype missing
+    -- from the list below looks like a fault otherwise, and the usual reason
+    -- is simply that no buffer of that filetype has been typed in yet.
+    h.info("Snippets load per filetype, the first time you type in a buffer\n"
+      .. "of that filetype, so a filetype you have only opened is not listed.")
+
+    for _, ft in ipairs(names) do
+      local m, a = manual[ft] or {}, auto[ft] or {}
+      local seen, repeats = {}, {}
+      for _, list in ipairs({ m, a }) do
+        for _, snip in ipairs(list) do
+          local trig = snip.trigger
+          seen[trig] = (seen[trig] or 0) + 1
+          if seen[trig] == 2 then repeats[#repeats + 1] = trig end
+        end
+      end
+
+      local distinct = vim.tbl_count(seen)
+      h.ok(("%s: %d snippet%s (%d manual, %d auto), %d distinct trigger%s")
+        :format(ft, #m + #a, (#m + #a) == 1 and "" or "s", #m, #a,
+          distinct, distinct == 1 and "" or "s"))
+
+      if #repeats > 0 then
+        -- Shortest first, and regex triggers elided: a list led by
+        -- `([%s%a%(%)%[%]%{%}%$])00` tells the reader nothing, while `cc` and
+        -- `ff` tell them exactly which snippet to go looking at.
+        table.sort(repeats, function(x, y)
+          if #x ~= #y then return #x < #y end
+          return x < y
+        end)
+        local shown = {}
+        for _, trig in ipairs(vim.list_slice(repeats, 1, 8)) do
+          shown[#shown + 1] = #trig > 12 and (trig:sub(1, 11) .. "…") or trig
+        end
+        h.warn(
+          ("%s: %d triggers are defined more than once"):format(ft, #repeats),
+          { "For example: " .. table.concat(shown, "  "),
+            "A trigger defined twice appears twice in the completion menu.",
+            "Usually one collection has been registered twice; compare the",
+            "directories listed by " .. (edit_snippets_key() or ":LuaSnipEdit") .. "." })
+      end
+    end
+
+    -- Where the reader's own snippets live, which is the answer to "where do
+    -- I put one" and is not guessable from the outside.
+    local mine = vim.fn.stdpath("config") .. "/LuaSnip"
+    if vim.fn.isdirectory(mine) == 1 then
+      local n = #vim.fn.glob(mine .. "/**/*.lua", false, true)
+      h.ok(("your snippets: %s (%d file%s)")
+        :format(vim.fn.fnamemodify(mine, ":~"), n, n == 1 and "" or "s"))
+    else
+      h.info(("your snippets would live in %s, which does not exist yet")
+        :format(vim.fn.fnamemodify(mine, ":~")))
+    end
+    local key = edit_snippets_key()
+    h.info(("%s opens them, and a file a plugin ships opens read-only.")
+      :format(key and (key .. " (:LuaSnipEdit)") or ":LuaSnipEdit"))
   end
 
   -- ── User override system ──────────────────────────────────────────────
