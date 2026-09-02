@@ -33,6 +33,31 @@ M.missing = nil
 ---@type string|nil
 M.dropped = nil
 
+--- Put the plugin that provides `scheme` on the runtimepath, then apply it.
+---
+--- `:colorscheme` reaches a lazy-loaded theme through `ColorSchemePre`, which
+--- lazy.nvim answers by loading the plugin that owns the scheme. Autocommands
+--- do not nest, so when this runs from inside one that event never fires: the
+--- theme stays off the runtimepath and the command fails with nothing to show
+--- for it but `v:errmsg`. `nvim <dir>` arrives here exactly that way, because
+--- painting the directory listing pumps the event loop mid-startup and setup()
+--- can be re-entered from inside an autocommand. Loading the plugin up front
+--- makes the outcome the same in every context.
+---
+--- Resolving `colors/` is then the test of whether the scheme exists, because
+--- the command's own exit status is not one: inside an autocommand a
+--- `:colorscheme` that failed still reports success.
+---@param scheme string
+---@return boolean applied
+local function load_scheme(scheme)
+  local ok, loader = pcall(require, "lazy.core.loader")
+  if ok then pcall(loader.colorscheme, scheme) end
+
+  local found = #vim.api.nvim_get_runtime_file("colors/" .. scheme .. ".lua", false) > 0
+    or #vim.api.nvim_get_runtime_file("colors/" .. scheme .. ".vim", false) > 0
+  return found and pcall(vim.cmd.colorscheme, scheme)
+end
+
 -- ── Persistence ─────────────────────────────────────────────────────────────
 
 local function save(name)
@@ -53,7 +78,7 @@ function M.setup_persistence()
   -- VimEnter autocmd would never fire).
   local saved = load()
   if saved then
-    if pcall(vim.cmd.colorscheme, saved) then
+    if load_scheme(saved) then
       M.source = "persisted"
     else
       M.dropped = saved
@@ -80,7 +105,7 @@ end
 ---@param scheme string
 ---@param source "config"|"default"
 function M.apply(scheme, source)
-  if pcall(vim.cmd.colorscheme, scheme) then
+  if load_scheme(scheme) then
     M.source = source
     return
   end
@@ -91,7 +116,7 @@ function M.apply(scheme, source)
       .. "add the plugin to lua/user/plugins/."):format(scheme),
     vim.log.levels.WARN)
 
-  if scheme ~= M.DEFAULT and pcall(vim.cmd.colorscheme, M.DEFAULT) then
+  if scheme ~= M.DEFAULT and load_scheme(M.DEFAULT) then
     M.source = "fallback"
   end
 end

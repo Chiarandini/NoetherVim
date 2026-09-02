@@ -311,9 +311,9 @@ function M.setup()
   -- Fall back to gruvbox when the user has not picked a scheme. It is the
   -- shipped default, and the dashboard / statusline fallback colours are
   -- chosen against it, so an unconfigured install still looks coherent.
-  -- Its spec is `lazy = true`; lazy.nvim's ColorSchemePre handler loads it
-  -- on demand here. Skip only when persistence actually restored a saved
-  -- pick: `vim.g.colors_name` is not a safe test on its own, since lazy.nvim
+  -- Its spec is `lazy = true`; util.colorscheme loads it on demand here.
+  -- Skip only when persistence actually restored a saved pick:
+  -- `vim.g.colors_name` is not a safe test on its own, since lazy.nvim
   -- applies its own `install.colorscheme` fallback while it installs missing
   -- plugins on a first launch.
   if cs.source ~= "persisted" then
