@@ -6,7 +6,14 @@ local SearchLeader = require("noethervim.util").search_leader
 return {
 {
 	"L3MON4D3/LuaSnip",
-	version = "1.*",
+	-- 2.x, not 1.x. The 1.x loader registers a collection twice when a
+	-- `lazy_load` runs re-entrantly, which happens whenever a snippet file
+	-- requires a module from a plugin that is itself loaded on demand: the
+	-- outer load is still iterating the collection list when the inner one
+	-- appends to it. Every affected trigger then expands from two snippets
+	-- and appears twice in the completion menu. The loaders were rewritten
+	-- upstream and 2.x does not do it.
+	version = "2.*",
 	build = "make install_jsregexp",
 	event = "InsertEnter",
 
@@ -19,6 +26,13 @@ config = function(_, opts)
 		history = false,
 		updateevents = "TextChanged,TextChangedI",
 		enable_autosnippets = true,
+		-- Record the file each snippet came from. It costs a small table per
+		-- snippet and buys the only durable way to name one: a trigger is not
+		-- unique (`iff` is deliberately two snippets, one for text and one for
+		-- maths), so anything that reports or acts on a single snippet needs
+		-- its origin. :checkhealth uses it to say which files a repeated
+		-- trigger comes from.
+		loaders_store_source = true,
 		ext_opts = {
 			[types.choiceNode] = {
 				active = {

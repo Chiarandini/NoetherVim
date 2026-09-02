@@ -308,11 +308,28 @@ function M.check()
 
     for _, ft in ipairs(names) do
       local m, a = manual[ft] or {}, auto[ft] or {}
-      local seen, repeats = {}, {}
+      -- Where each snippet came from, when LuaSnip is recording it. A
+      -- repeated trigger is only worth reporting alongside its origins: two
+      -- snippets from two files is a shadowing, two from one file is usually
+      -- deliberate, and the same file twice is a loader fault.
+      local function origin(snip)
+        local src_ok, src = pcall(function()
+          return ls.snippet_source and ls.snippet_source.get(snip)
+        end)
+        if src_ok and src and src.file then
+          return vim.fn.fnamemodify(src.file, ":t")
+        end
+        return nil
+      end
+
+      local seen, repeats, sources = {}, {}, {}
       for _, list in ipairs({ m, a }) do
         for _, snip in ipairs(list) do
           local trig = snip.trigger
           seen[trig] = (seen[trig] or 0) + 1
+          sources[trig] = sources[trig] or {}
+          local from = origin(snip)
+          if from then table.insert(sources[trig], from) end
           if seen[trig] == 2 then repeats[#repeats + 1] = trig end
         end
       end
@@ -330,16 +347,25 @@ function M.check()
           if #x ~= #y then return #x < #y end
           return x < y
         end)
-        local shown = {}
-        for _, trig in ipairs(vim.list_slice(repeats, 1, 8)) do
-          shown[#shown + 1] = #trig > 12 and (trig:sub(1, 11) .. "…") or trig
+        local advice = {}
+        for _, trig in ipairs(vim.list_slice(repeats, 1, 6)) do
+          local label = #trig > 12 and (trig:sub(1, 11) .. "…") or trig
+          local from = sources[trig] or {}
+          advice[#advice + 1] = from[1]
+            and ("%s  <- %s"):format(label, table.concat(from, ", "))
+            or label
         end
-        h.warn(
-          ("%s: %d triggers are defined more than once"):format(ft, #repeats),
-          { "For example: " .. table.concat(shown, "  "),
-            "A trigger defined twice appears twice in the completion menu.",
-            "Usually one collection has been registered twice; compare the",
-            "directories listed by " .. (edit_snippets_key() or ":LuaSnipEdit") .. "." })
+        advice[#advice + 1] = ""
+        advice[#advice + 1] =
+          "Two files means one shadows the other, and the later one wins."
+        advice[#advice + 1] =
+          "One file twice is usually deliberate: a trigger may have several"
+        advice[#advice + 1] =
+          "snippets separated by context, as `iff` has for text and maths."
+        advice[#advice + 1] =
+          "The same file listed twice is a loader fault, not your doing."
+        h.warn(("%s: %d triggers resolve to more than one snippet")
+          :format(ft, #repeats), advice)
       end
     end
 
