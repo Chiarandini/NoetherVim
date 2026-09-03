@@ -981,6 +981,11 @@ Create a directory for the target filetype (e.g. `LuaSnip/tex/`,
 return a snippet list. LuaSnip auto-loads them alongside any
 plugin-provided snippets.
 
+Saving a snippet file puts it to work straight away. That holds for a file
+you have just created for a filetype you had no snippets for before, and it
+holds in every other Neovim you have open at the time. Nothing needs
+restarting.
+
 SearchLeader+es (`:LuaSnipEdit`) jumps to a snippet file for the current
 filetype. Every registered file is listed, yours and the ones plugins
 ship, so the picker doubles as a way to read how a bundled snippet is

@@ -61,7 +61,20 @@ config = function(_, opts)
 	}
 	ls.setup(vim.tbl_deep_extend("force", defaults, opts))
 
-	require("luasnip.loaders.from_lua").lazy_load({ paths = vim.fn.stdpath("config") .. "/LuaSnip/" })
+	-- lazy_paths, not paths: a root that does not exist is dropped at startup
+	-- with nothing but a line in the log, and a fresh install has no
+	-- <config>/LuaSnip yet, so the first snippet file written there would stay
+	-- unregistered until the next restart. lazy_paths watches for the
+	-- directory's creation instead. Empty `paths` is what keeps the runtimepath
+	-- scan for `luasnippets/` directories switched off; plugins that ship
+	-- snippets register their own collections and are already accounted for.
+	-- libuv watchers alongside the default BufWritePost ones, so a snippet
+	-- edited in one Neovim reaches every other instance running at the time.
+	require("luasnip.loaders.from_lua").lazy_load({
+		paths = {},
+		lazy_paths = { vim.fn.stdpath("config") .. "/LuaSnip" },
+		fs_event_providers = { autocmd = true, libuv = true },
+	})
 
 	-- Snippet files reach the picker from three places: your own config, plugins
 	-- that ship snippets, and `dev` checkouts of those plugins. Ownership comes
@@ -185,26 +198,6 @@ config = function(_, opts)
 				end
 				vim.cmd("edit " .. vim.fn.fnameescape(file))
 				vim.bo.readonly = owning_plugin(file) ~= nil
-
-				-- lazy_load() scanned the directory once, so a filetype LuaSnip has
-				-- never seen stays unregistered no matter how many times the new
-				-- file is written: its BufWritePost reload only refreshes files
-				-- already in the cache. Re-scan after the first write, so the
-				-- snippets work in this session instead of after a restart.
-				if created then
-					vim.api.nvim_create_autocmd("BufWritePost", {
-						buffer = vim.api.nvim_get_current_buf(),
-						once   = true,
-						desc   = "luasnip: register a newly created snippet file",
-						callback = function()
-							pcall(function()
-								require("luasnip.loaders.from_lua").load({
-									paths = cfg .. "/LuaSnip/",
-								})
-							end)
-						end,
-					})
-				end
 			end,
 		})
 	end, { desc = "edit snippet files (plugin-owned ones read-only)" })
