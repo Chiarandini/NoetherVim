@@ -369,6 +369,23 @@ function M.check()
       end
     end
 
+    -- jsregexp backs ECMAScript triggers and the transformations inside
+    -- LSP-format snippets. It is compiled by LuaSnip's build step, and when
+    -- that step did not run both degrade quietly: the trigger falls back to
+    -- matching literally, so the snippet never fires and nothing says why.
+    local js_ok, js = pcall(require, "luasnip.util.jsregexp")
+    if js_ok and js then
+      h.ok("jsregexp: available, so ECMAScript triggers and snippet "
+        .. "transformations work")
+    else
+      h.warn("jsregexp: not available", {
+        "A snippet written with trigEngine = \"ecma\" matches its trigger\n"
+          .. "literally instead, and transformations in LSP-format snippets\n"
+          .. "are skipped. Lua patterns and vim regexes are unaffected.",
+        ":Lazy build LuaSnip rebuilds it, given make and a C compiler.",
+      })
+    end
+
     -- Where the reader's own snippets live, which is the answer to "where do
     -- I put one" and is not guessable from the outside.
     local mine = vim.fn.stdpath("config") .. "/LuaSnip"
