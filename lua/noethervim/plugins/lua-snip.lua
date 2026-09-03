@@ -23,8 +23,26 @@ config = function(_, opts)
 	local types = require("luasnip.util.types")
 
 	local defaults = {
-		history = false,
-		updateevents = "TextChanged,TextChangedI",
+		-- The four settings that decide how snippets in a buffer connect to
+		-- each other. Only the first departs from the stock behavior.
+		--
+		-- keep_roots: remember every snippet expanded in the buffer, not just
+		-- the newest. It changes no jump anywhere; what it buys is <Leader>j,
+		-- which cannot reach a snippet the buffer has forgotten.
+		--
+		-- The other three stay off, because each of them puts jumps on keys
+		-- that blink.cmp already owns. link_roots lets <S-Tab> walk backwards
+		-- out of the snippet you are in and into an unrelated earlier one.
+		-- exit_roots = false leaves a finished snippet active at its last
+		-- node, so <S-Tab> re-enters something you thought you were done
+		-- with. link_children governs jumping from a node into a snippet
+		-- nested inside it; it is left alone because <Leader>j reaches a
+		-- nested snippet by position anyway.
+		keep_roots = true,
+		link_roots = false,
+		exit_roots = true,
+		link_children = false,
+		update_events = "TextChanged,TextChangedI",
 		enable_autosnippets = true,
 		-- Record the file each snippet came from. It costs a small table per
 		-- snippet and buys the only durable way to name one: a trigger is not
@@ -57,7 +75,7 @@ config = function(_, opts)
 			html = { 'javascript' },
 			lua  = { 'vim' },
 		}),
-		store_selection_keys = "<Tab>",
+		cut_selection_keys = "<Tab>",
 	}
 	ls.setup(vim.tbl_deep_extend("force", defaults, opts))
 
@@ -212,6 +230,18 @@ smap <silent><expr> <c-q> luasnip#choice_active() ? '<Plug>luasnip-next-choice' 
 	-- jk expand/jump: personal preference -- add to lua/user/ if desired.
 
 	vim.keymap.set('n', '<leader>u', require('luasnip').unlink_current, { desc = 'unlink current snippet' })
+
+	-- Put the cursor back inside a snippet you have already walked out of, so
+	-- a tabstop you filled in wrongly can be filled in again without retyping
+	-- the snippet. LuaSnip finds the node by position, so the cursor only has
+	-- to be somewhere in the snippet's text, and a snippet nested inside
+	-- another is reached the same way. Raises when there is nothing there,
+	-- which is a routine miss rather than a fault, so it is reported plainly.
+	vim.keymap.set('n', '<leader>j', function()
+		if not pcall(ls.activate_node) then
+			vim.notify("no snippet under the cursor", vim.log.levels.WARN)
+		end
+	end, { desc = 'jump back into the snippet under the cursor' })
 
 	--- Tear every snippet out of the current buffer.
 	---

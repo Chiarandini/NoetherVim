@@ -972,6 +972,22 @@ everything and clears those marks. Reach for it when a buffer still
 behaves as though a snippet were active. Buffer text is never touched,
 and snippets expand normally afterwards.
 
+                                                  *noethervim-snippet-reenter*
+Getting back into one: ~
+
+    `<Leader>j`         Jump back into the snippet under the cursor
+
+Tabbing past the last placeholder finishes a snippet, and normally that is
+the end of it. `<Leader>j` reopens one you have already left, so a
+placeholder you filled in wrongly can be filled in again without expanding
+the snippet a second time. Put the cursor anywhere in the snippet's text
+and press it; `<Tab>` and `<S-Tab>` then move between its placeholders as
+they did the first time. A snippet nested inside another is reached the
+same way.
+
+Snippets stay reachable for as long as the buffer is open. If the cursor
+is not in one, `<Leader>j` says so and does nothing.
+
                                                        *noethervim-snippets*
 Writing custom snippets: ~
 
