@@ -53,6 +53,7 @@ noethervim-resize-arrows	noethervim.txt	/*noethervim-resize-arrows*
 noethervim-running	noethervim.txt	/*noethervim-running*
 noethervim-semicolon	noethervim.txt	/*noethervim-semicolon*
 noethervim-shadowed	noethervim.txt	/*noethervim-shadowed*
+noethervim-snippet-disable	noethervim.txt	/*noethervim-snippet-disable*
 noethervim-snippet-reenter	noethervim.txt	/*noethervim-snippet-reenter*
 noethervim-snippet-stop	noethervim.txt	/*noethervim-snippet-stop*
 noethervim-snippets	noethervim.txt	/*noethervim-snippets*
