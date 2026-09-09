@@ -134,6 +134,9 @@ config = function(_, opts)
 		local plugins   = lazy_plugins()
 		local cfg       = vim.fn.stdpath("config")
 		local shown_cfg = vim.fn.fnamemodify(cfg, ":~")
+		-- Set by `extend` when its offer is the only entry, which is the case
+		-- LuaSnip opens without asking. Per invocation, so it cannot leak.
+		local unprompted_create = false
 
 		-- Without this the prompt just quietly offers "all", which reads as a bug
 		-- when you believe you are in a Rust buffer and the file is named
@@ -195,6 +198,12 @@ config = function(_, opts)
 						return {}          -- you already have one; nothing to add
 					end
 				end
+				-- LuaSnip only prompts when a filetype offers more than one file.
+				-- With nothing else to offer, this entry becomes the sole choice
+				-- and is opened without a prompt, so the `(new)` label is never
+				-- seen and a file appears in your config unasked. Remember that,
+				-- and confirm at the point of writing instead.
+				unprompted_create = #existing == 0
 				local target = cfg .. "/LuaSnip/" .. ft .. ".lua"
 				return { { ("%-16s · %s (new)"):format(shown_cfg, ft .. ".lua"), target } }
 			end,
@@ -207,6 +216,19 @@ config = function(_, opts)
 				-- A brand new snippet file has to return a table; an empty buffer
 				-- would make LuaSnip error the next time it loads the filetype.
 				local created = vim.fn.filereadable(file) == 0
+				-- Writing into lua/user/ is the reader's business, so it is never
+				-- a side effect of browsing. When the picker was skipped they were
+				-- never shown the `(new)` label, and this is the first point at
+				-- which the choice is put to them.
+				if created and unprompted_create then
+					local answer = vim.fn.confirm(
+						("You have no snippets of your own for this filetype.\n"
+							.. "Create %s?"):format(vim.fn.fnamemodify(file, ":~")),
+						"&Create\n&Cancel", 2, "Question")
+					if answer ~= 1 then
+						return
+					end
+				end
 				if created then
 					vim.fn.mkdir(vim.fn.fnamemodify(file, ":h"), "p")
 					vim.fn.writefile({
