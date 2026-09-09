@@ -1896,52 +1896,50 @@ local function print_help()
   vim.notify(table.concat(lines, "\n"), vim.log.levels.INFO, { title = "NoetherVim" })
 end
 
-function M.setup()
-  -- ── :NoetherVim command ──────────────────────────────────────
-  local function noethervim_handler(opts)
-    local args = vim.split(opts.args, "%s+", { trimempty = true })
-    local cmd  = args[1]
-    if not cmd then
-      print_help()
-      return
-    end
-    local fn = subcommands[cmd]
-    if fn then
-      fn(args[2], opts.bang)
-    else
-      vim.notify("NoetherVim: unknown subcommand '" .. cmd .. "'", vim.log.levels.ERROR)
-    end
+--- Run a `:NoetherVim` subcommand.
+---
+--- Exported rather than kept inside `setup()` so the command can be created
+--- before this module is loaded. Registering it late left `:NoetherVim` as a
+--- bare prefix of `:NoetherVimHighlightUnderCursor`, which takes no
+--- arguments, so an early `:NoetherVim bundles` failed with a trailing
+--- characters error instead of running.
+--- @param opts table the table Neovim hands a user-command callback
+function M.dispatch(opts)
+  local args = vim.split(opts.args, "%s+", { trimempty = true })
+  local cmd  = args[1]
+  if not cmd then
+    print_help()
+    return
   end
+  local fn = subcommands[cmd]
+  if fn then
+    fn(args[2], opts.bang)
+  else
+    vim.notify("NoetherVim: unknown subcommand '" .. cmd .. "'", vim.log.levels.ERROR)
+  end
+end
 
-  local noethervim_cmd_opts = {
-    nargs = "*",
-    bang  = true,
-    complete = function(_, cmdline)
-      -- No `trimempty`: a trailing space has to survive as an empty final
-      -- element, otherwise `:NoetherVim diff <Tab>` is indistinguishable
-      -- from `:NoetherVim diff<Tab>` and completes subcommands instead of
-      -- diff targets.
-      local args = vim.split((cmdline:gsub("^%s+", "")), "%s+")
-      -- Complete subcommand name
-      if #args <= 2 then
-        return vim.tbl_filter(function(s)
-          return s:find(args[2] or "", 1, true) == 1
-        end, subcommand_names)
-      end
-      -- Complete diff targets
-      if args[2] == "diff" and #args == 3 then
-        return vim.tbl_filter(function(s)
-          return s:find(args[3], 1, true) == 1
-        end, diff_targets())
-      end
-      return {}
-    end,
-    desc = "NoetherVim inspection and comparison commands",
-  }
-
-  vim.api.nvim_create_user_command("NoetherVim",  noethervim_handler, noethervim_cmd_opts)
-  vim.api.nvim_create_user_command("NeotherVim",  noethervim_handler, noethervim_cmd_opts) -- common misspelling alias
-
+--- @param cmdline string
+--- @return string[]
+function M.complete(_, cmdline)
+  -- No `trimempty`: a trailing space has to survive as an empty final
+  -- element, otherwise `:NoetherVim diff <Tab>` is indistinguishable
+  -- from `:NoetherVim diff<Tab>` and completes subcommands instead of
+  -- diff targets.
+  local args = vim.split((cmdline:gsub("^%s+", "")), "%s+")
+  -- Complete subcommand name
+  if #args <= 2 then
+    return vim.tbl_filter(function(s)
+      return s:find(args[2] or "", 1, true) == 1
+    end, subcommand_names)
+  end
+  -- Complete diff targets
+  if args[2] == "diff" and #args == 3 then
+    return vim.tbl_filter(function(s)
+      return s:find(args[3], 1, true) == 1
+    end, diff_targets())
+  end
+  return {}
 end
 
 return M

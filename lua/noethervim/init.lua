@@ -341,14 +341,37 @@ function M.setup()
   -- config bodies -- gets an exact file+line for the diff picker
   -- instead of a callback-file guess.
 
-  -- ── Deferred setup (inspect + helptags) ────────────────────────
-  -- These register pickers/commands that aren't reachable in the first
-  -- ~100ms of a session; running them at VeryLazy keeps `nvim .` fast.
+  -- ── :NoetherVim ────────────────────────────────────────────────
+  -- Registered now, not at VeryLazy. The name has to exist from the start:
+  -- until it does, `:NoetherVim` is a bare prefix of
+  -- `:NoetherVimHighlightUnderCursor`, which takes no arguments, so
+  -- `:NoetherVim bundles` fails with a trailing characters error rather
+  -- than running. That reaches anything driving Neovim before VeryLazy
+  -- fires, a `-c` argument or a headless script among them.
+  --
+  -- Registering the name is not the same as loading the module: both
+  -- callbacks require `noethervim.inspect` when they run, so the file is
+  -- still read on first use rather than at startup.
+  local inspect_cmd = {
+    nargs    = "*",
+    bang     = true,
+    complete = function(arg, cmdline)
+      return require("noethervim.inspect").complete(arg, cmdline)
+    end,
+    desc     = "NoetherVim inspection and comparison commands",
+  }
+  local function inspect_dispatch(opts)
+    require("noethervim.inspect").dispatch(opts)
+  end
+  vim.api.nvim_create_user_command("NoetherVim", inspect_dispatch, inspect_cmd)
+  -- Common misspelling, kept so it does not read as the command missing.
+  vim.api.nvim_create_user_command("NeotherVim", inspect_dispatch, inspect_cmd)
+
+  -- ── Deferred setup (helptags) ──────────────────────────────────
   vim.api.nvim_create_autocmd("User", {
     pattern = "VeryLazy",
     once = true,
     callback = function()
-      require("noethervim.inspect").setup()
       -- lazy.nvim generates helptags for plugins it manages, but in
       -- dev mode (rtp:prepend) it may not. Ensure :help noethervim
       -- works.
