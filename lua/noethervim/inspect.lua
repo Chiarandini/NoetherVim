@@ -263,7 +263,10 @@ end
 --- functions and metatables: copying one is expensive, copying 126 of them is
 --- worse, and switching off the copy would do nothing to the snippet the
 --- reader is actually typing against.
-function M.snippets()
+--- @param opts { only_off: boolean }|nil
+function M.snippets(opts)
+  opts = type(opts) == "table" and opts or {}
+  local only_off = opts.only_off or false
   local ok, ls = pcall(require, "luasnip")
   if not ok then
     return vim.notify("NoetherVim: LuaSnip is not loaded yet; type in a buffer first",
@@ -327,6 +330,15 @@ function M.snippets()
       end
     end
   end
+  if only_off then
+    items = vim.tbl_filter(function(item)
+      local snip = item.snip_id and ls.get_id_snippet(item.snip_id)
+      return snip ~= nil and engine.state(snip) == "off"
+    end, items)
+    if #items == 0 then
+      return vim.notify("NoetherVim: no snippets are switched off", vim.log.levels.INFO)
+    end
+  end
   if #items == 0 then
     return vim.notify("NoetherVim: no snippets are loaded for this buffer's filetype",
       vim.log.levels.WARN)
@@ -373,7 +385,14 @@ function M.snippets()
       end
     end
     reblame()
-    picker.list:update()
+    -- `force`, or `update()` leaves the list clean and render() returns early,
+    -- so the marks would not change and the key would look like it did nothing.
+    picker.list:update({ force = true })
+    local changed = #chosen - unnamed
+    if changed > 0 then
+      vim.notify(("%d snippet%s switched %s"):format(
+        changed, changed == 1 and "" or "s", want))
+    end
     if unnamed > 0 then
       vim.notify(
         ("%d snippet%s switched %s for this session only: LuaSnip recorded no\n"
@@ -384,7 +403,7 @@ function M.snippets()
   end
 
   Snacks.picker({
-    title   = "NoetherVim Snippets",
+    title   = only_off and "NoetherVim Snippets (switched off)" or "NoetherVim Snippets",
     items   = items,
     preview = "file",
     confirm = confirm_readonly,
@@ -409,6 +428,10 @@ function M.snippets()
       enable_snippet  = function(picker) apply_to_selection(picker, "on") end,
       -- The durable list lives in the reader's own config, which nothing here
       -- rewrites, so the entry is handed over to paste rather than applied.
+      only_off_toggle = function(picker)
+        picker:close()
+        M.snippets({ only_off = not only_off })
+      end,
       copy_config_entry = function(picker)
         local lines = {}
         for _, item in ipairs(picker:selected({ fallback = true })) do
@@ -433,14 +456,16 @@ function M.snippets()
     win = {
       input = {
         footer     = hint_footer({
-          { "<cr>", "open" }, { "<c-x>", "off" }, { "<c-y>", "on" }, { "<c-b>", "copy" },
+          { "<cr>", "open" }, { "<c-x>", "off" }, { "<c-y>", "on" },
+          { "<c-o>", "copy" }, { "<a-o>", only_off and "all" or "only off" },
         }),
         footer_pos = "center",
         keys = {
           ["<CR>"]  = { "confirm",           mode = { "i", "n" }, desc = "open the snippet's source (readonly)" },
           ["<C-x>"] = { "disable_snippet",   mode = { "i", "n" }, desc = "switch snippet off" },
           ["<C-y>"] = { "enable_snippet",    mode = { "i", "n" }, desc = "switch snippet on" },
-          ["<C-b>"] = { "copy_config_entry", mode = { "i", "n" }, desc = "copy a user/config.lua entry" },
+          ["<C-o>"] = { "copy_config_entry", mode = { "i", "n" }, desc = "copy a user/config.lua entry" },
+          ["<A-o>"] = { "only_off_toggle",   mode = { "i", "n" }, desc = "show only switched-off snippets" },
         },
       },
       list = {
@@ -448,7 +473,8 @@ function M.snippets()
           ["<CR>"]  = { "confirm",           desc = "open the snippet's source (readonly)" },
           ["<C-x>"] = { "disable_snippet",   desc = "switch snippet off" },
           ["<C-y>"] = { "enable_snippet",    desc = "switch snippet on" },
-          ["<C-b>"] = { "copy_config_entry", desc = "copy a user/config.lua entry" },
+          ["<C-o>"] = { "copy_config_entry", desc = "copy a user/config.lua entry" },
+          ["<A-o>"] = { "only_off_toggle",   desc = "show only switched-off snippets" },
         },
       },
     },
@@ -1804,7 +1830,7 @@ local subcommand_descriptions = {
   user              = "Browse files in lua/user/",
   plugins           = "Browse installed plugins",
   bundles           = "Bundle picker (<C-y> enable, <C-x> disable)",
-  snippets          = "Snippet picker (<C-y> on, <C-x> off, <C-b> copy config entry)",
+  snippets          = "Snippet picker (<C-y> on, <C-x> off, <A-o> only off); `snippets off` opens filtered",
   templates         = "Write user-config templates into lua/user/ (<C-y>)",
   ["keymap-guide"]  = "Keymap namespace reference buffer",
   status            = "Show which user override files are loaded",
@@ -1821,7 +1847,7 @@ local subcommands = {
   user              = M.user,
   plugins           = M.plugins,
   bundles           = M.bundles,
-  snippets          = M.snippets,
+  snippets          = function(arg) M.snippets({ only_off = arg == "off" }) end,
   templates         = M.templates,
   ["keymap-guide"]  = function() require("noethervim.guide").open() end,
   status            = M.status,

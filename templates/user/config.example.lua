@@ -206,7 +206,7 @@ return {
     -- ── Snippets you never want ───────────────────────────────────────────────
     -- Snippets listed here stay switched off, on every machine this config
     -- reaches. Open the snippet picker (SearchLeader+cs), put the cursor on
-    -- one and press <C-b>; it copies the entry below to your clipboard, so
+    -- one and press <C-o>; it copies the entry below to your clipboard, so
     -- the owner and file are filled in correctly.
     --
     -- To switch one off on this machine only, press <C-x> in that picker
