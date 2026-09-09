@@ -47,10 +47,15 @@ function M.state(snip)
   return snip.hidden and 'shipped_off' or 'on'
 end
 
+--- `opts.refresh = false` leaves the notification to the caller. Two reasons
+--- to want that: a bulk pass would otherwise fire the event once per snippet,
+--- and code running inside a `LuasnipSnippetsAdded` handler would re-enter the
+--- event it is already handling.
 --- @param snip table
 --- @param ft string the filetype it was listed under
+--- @param opts { refresh: boolean }|nil
 --- @return boolean changed false when it was already off
-function M.disable(snip, ft)
+function M.disable(snip, ft, opts)
   if snip[DISABLED] then
     return false
   end
@@ -58,14 +63,17 @@ function M.disable(snip, ft)
   snip.hidden = true
   snip.matches = no_match
   snip[DISABLED] = true
-  require('luasnip').refresh_notify(ft)
+  if not opts or opts.refresh ~= false then
+    require('luasnip').refresh_notify(ft)
+  end
   return true
 end
 
 --- @param snip table
 --- @param ft string
+--- @param opts { refresh: boolean }|nil
 --- @return boolean changed false when it was not off to begin with
-function M.enable(snip, ft)
+function M.enable(snip, ft, opts)
   if not snip[DISABLED] then
     return false
   end
@@ -77,7 +85,9 @@ function M.enable(snip, ft)
   snip.hidden = snip[WAS_HIDDEN]
   snip[WAS_HIDDEN] = nil
   snip[DISABLED] = nil
-  require('luasnip').refresh_notify(ft)
+  if not opts or opts.refresh ~= false then
+    require('luasnip').refresh_notify(ft)
+  end
   return true
 end
 

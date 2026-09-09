@@ -44,6 +44,7 @@ local SCHEMA = {
   q_close_filetypes            = "table",
   spell_in_code                = "boolean",
   toggle_feedback              = "string",
+  snippets_disabled            = "table",
 }
 
 --- Permitted values for the small enum fields. Validated alongside the
