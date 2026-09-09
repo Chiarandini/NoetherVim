@@ -603,6 +603,7 @@ end
 vim.keymap.set("n", SearchLeader .. "cf", inspect("files"),         { desc = "NoetherVim [f]iles" })
 vim.keymap.set("n", SearchLeader .. "cg", inspect("grep"),          { desc = "NoetherVim [g]rep" })
 vim.keymap.set("n", SearchLeader .. "cb", inspect("bundles"),       { desc = "NoetherVim [b]undles" })
+vim.keymap.set("n", SearchLeader .. "cs", inspect("snippets"),      { desc = "NoetherVim [s]nippets" })
 vim.keymap.set("n", SearchLeader .. "ct", inspect("templates"),     { desc = "NoetherVim [t]emplates" })
 vim.keymap.set("n", SearchLeader .. "ck", inspect("diff_keymaps"),  { desc = "diff [k]eymaps" })
 vim.keymap.set("n", SearchLeader .. "co", inspect("diff_options"),  { desc = "diff [o]ptions" })

@@ -171,27 +171,19 @@ return {
 						-- `:defn%s?([:%w-...])` in the buffer. They stay
 						-- expandable: typing the trigger and pressing Tab routes
 						-- through snippet_forward -> luasnip's expand_or_jump.
-						--
-						-- Two tests, because neither alone covers the field.
-						-- `regTrig` reports only the older spelling and stays
-						-- false for `trigEngine = "pattern"|"ecma"|"vim"`, so on
-						-- its own it lets those patterns through. Asking the
-						-- snippet's own matcher whether the trigger text matches
-						-- itself catches every engine, but reads a pattern that
-						-- can match itself (anything ending in `.*`) as literal.
-						-- A trigger is shown only when both agree it is safe.
+						-- What counts as a pattern takes two tests, and the reasoning
+						-- lives with the predicate, which the snippet picker shares for
+						-- labelling: a pattern names nothing a reader recognises.
 						transform_items = function(_, items)
 							local ok, ls = pcall(require, "luasnip")
 							if not ok then return items end
+							local snippets = require("noethervim.util.snippets")
 							return vim.tbl_filter(function(item)
 								local id = item.data and item.data.snip_id
 								if not id then return true end
 								local snip = ls.get_id_snippet(id)
 								if not snip then return true end
-								if snip.regTrig then return false end
-								if not snip.trig_matcher then return true end
-								local matched, match = pcall(snip.trig_matcher, snip.trigger, snip.trigger)
-								return matched and match == snip.trigger
+								return not snippets.is_pattern_trigger(snip)
 							end, items)
 						end,
 					},

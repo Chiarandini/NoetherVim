@@ -256,6 +256,205 @@ function M.bundles()
   })
 end
 
+--- Every loaded snippet, with what it is doing and where it came from.
+---
+--- Items carry a snippet id rather than the snippet itself. `picker:selected()`
+--- returns `vim.deepcopy` of its items, and a LuaSnip snippet is a table of
+--- functions and metatables: copying one is expensive, copying 126 of them is
+--- worse, and switching off the copy would do nothing to the snippet the
+--- reader is actually typing against.
+function M.snippets()
+  local ok, ls = pcall(require, "luasnip")
+  if not ok then
+    return vim.notify("NoetherVim: LuaSnip is not loaded yet; type in a buffer first",
+      vim.log.levels.WARN)
+  end
+  local engine = require("noethervim.util.snippets")
+  local store  = require("noethervim.util.snippet_store")
+  local snipid = require("noethervim.util.snippet_id")
+
+  -- Which list is responsible for a snippet being off, recomputed after every
+  -- change so the marks stay true while the picker is open.
+  local blamed = {}
+  local function reblame()
+    blamed = {}
+    for _, rec in ipairs(store.records()) do
+      blamed[table.concat({ rec.ft, rec.owner, rec.file, rec.trigger }, "\0")] =
+        rec.source
+    end
+  end
+  reblame()
+
+  -- `ls.get_snippets(nil, ...)` is keyed by filetype and covers every one that
+  -- has loaded, which `ls.available()` does not: that is scoped to the current
+  -- buffer, and a snippet you want to switch off is often in another filetype.
+  local items = {}
+  for _, kind in ipairs({ "snippets", "autosnippets" }) do
+    for ft, list in pairs(ls.get_snippets(nil, { type = kind }) or {}) do
+      for _, snip in ipairs(list) do
+        -- Invalidated snippets are the husks a file reload leaves behind.
+        -- Listing them would offer the reader a snippet that no longer fires.
+        if not snip.invalidated then
+          local idty = snipid.identity(snip, ft)
+          local src  = ls.snippet_source.get(snip)
+          local desc = snip.dscr and table.concat(snip.dscr, " ") or ""
+          -- A pattern trigger is not a name. `([%s%a%(%)%[%]%{%}%$])00` says
+          -- nothing; the snippet's own name does. Kept searchable by both.
+          local pattern = engine.is_pattern_trigger(snip)
+          local label   = snip.trigger
+          if pattern then
+            label = (snip.name and snip.name ~= "" and snip.name)
+              or (desc ~= "" and desc)
+              or snip.trigger
+          end
+          items[#items + 1] = {
+            label    = label,
+            pattern  = pattern,
+            text     = table.concat(
+              { ft, label, snip.trigger, desc, idty and idty.file or "" }, " "),
+            file     = src and src.file or nil,
+            pos      = src and src.line and { src.line, 0 } or nil,
+            snip_id  = snip.id,
+            ft       = ft,
+            trigger  = snip.trigger,
+            auto     = kind == "autosnippets",
+            desc     = desc,
+            owner    = idty and idty.owner or nil,
+            rel      = idty and idty.file or nil,
+            nameable = idty ~= nil,
+          }
+        end
+      end
+    end
+  end
+  if #items == 0 then
+    return vim.notify("NoetherVim: no snippets are loaded for this buffer's filetype",
+      vim.log.levels.WARN)
+  end
+  -- Literal triggers first within a filetype. Sorted purely alphabetically
+  -- the list opens on a wall of regex, since `(` sorts before every letter.
+  table.sort(items, function(a, b)
+    if a.ft ~= b.ft then return a.ft < b.ft end
+    if a.pattern ~= b.pattern then return b.pattern end
+    return a.label:lower() < b.label:lower()
+  end)
+
+  local function live(item)
+    return item.snip_id and ls.get_id_snippet(item.snip_id) or nil
+  end
+
+  --- What to show in the left-hand column, and why it differs from default.
+  local function mark(item)
+    local snip = live(item)
+    if not snip then return { "  gone   ", "Comment" } end
+    local state = engine.state(snip)
+    if state == "shipped_off" then
+      return { "  hidden ", "Comment" }
+    end
+    if state == "on" then
+      return { "  on     ", "DiagnosticOk" }
+    end
+    local why = blamed[table.concat(
+      { item.ft, item.owner or "", item.rel or "", item.trigger }, "\0")]
+    if why == "config" then return { "  blocked", "DiagnosticWarn" } end
+    if why == "toggle" then return { "  off    ", "DiagnosticWarn" } end
+    -- Off, but nothing remembers it: a snippet with no recorded source.
+    return { "  session", "DiagnosticHint" }
+  end
+
+  local function apply_to_selection(picker, want)
+    local chosen = picker:selected({ fallback = true })
+    local unnamed = 0
+    for _, item in ipairs(chosen) do
+      local snip = live(item)
+      if snip then
+        local named = store.set(snip, item.ft, want)
+        if not named then unnamed = unnamed + 1 end
+      end
+    end
+    reblame()
+    picker.list:update()
+    if unnamed > 0 then
+      vim.notify(
+        ("%d snippet%s switched %s for this session only: LuaSnip recorded no\n"
+          .. "source for them, so there is no stable name to remember.")
+          :format(unnamed, unnamed == 1 and "" or "s", want),
+        vim.log.levels.WARN)
+    end
+  end
+
+  Snacks.picker({
+    title   = "NoetherVim Snippets",
+    items   = items,
+    preview = "file",
+    confirm = confirm_readonly,
+    format  = function(item)
+      local ret = {} ---@type snacks.picker.Highlight[]
+      ret[#ret + 1] = mark(item)
+      ret[#ret + 1] = { string.format(" %-10s", item.ft), "SnacksPickerLabel" }
+      local label = item.label
+      if #label > 22 then label = label:sub(1, 21) .. "…" end
+      ret[#ret + 1] = { string.format("%-23s", label),
+        item.pattern and "Special" or nil }
+      ret[#ret + 1] = { item.auto and "auto " or "     ", "Comment" }
+      if item.desc ~= "" then
+        ret[#ret + 1] = { item.desc, "Comment" }
+      else
+        ret[#ret + 1] = { item.rel or "no source recorded", "NonText" }
+      end
+      return ret
+    end,
+    actions = {
+      disable_snippet = function(picker) apply_to_selection(picker, "off") end,
+      enable_snippet  = function(picker) apply_to_selection(picker, "on") end,
+      -- The durable list lives in the reader's own config, which nothing here
+      -- rewrites, so the entry is handed over to paste rather than applied.
+      copy_config_entry = function(picker)
+        local lines = {}
+        for _, item in ipairs(picker:selected({ fallback = true })) do
+          if item.nameable then
+            lines[#lines + 1] = ("  { ft = %q, trigger = %q, owner = %q, file = %q },")
+              :format(item.ft, item.trigger, item.owner, item.rel)
+          end
+        end
+        if #lines == 0 then
+          return vim.notify(
+            "NoetherVim: no source recorded for that snippet, so it cannot be\n"
+              .. "named in user/config.lua",
+            vim.log.levels.WARN)
+        end
+        local text = table.concat(lines, "\n")
+        vim.fn.setreg("+", text)
+        vim.fn.setreg('"', text)
+        vim.notify(("Copied %d entr%s for snippets_disabled in user/config.lua")
+          :format(#lines, #lines == 1 and "y" or "ies"))
+      end,
+    },
+    win = {
+      input = {
+        footer     = hint_footer({
+          { "<cr>", "open" }, { "<c-x>", "off" }, { "<c-y>", "on" }, { "<c-b>", "copy" },
+        }),
+        footer_pos = "center",
+        keys = {
+          ["<CR>"]  = { "confirm",           mode = { "i", "n" }, desc = "open the snippet's source (readonly)" },
+          ["<C-x>"] = { "disable_snippet",   mode = { "i", "n" }, desc = "switch snippet off" },
+          ["<C-y>"] = { "enable_snippet",    mode = { "i", "n" }, desc = "switch snippet on" },
+          ["<C-b>"] = { "copy_config_entry", mode = { "i", "n" }, desc = "copy a user/config.lua entry" },
+        },
+      },
+      list = {
+        keys = {
+          ["<CR>"]  = { "confirm",           desc = "open the snippet's source (readonly)" },
+          ["<C-x>"] = { "disable_snippet",   desc = "switch snippet off" },
+          ["<C-y>"] = { "enable_snippet",    desc = "switch snippet on" },
+          ["<C-b>"] = { "copy_config_entry", desc = "copy a user/config.lua entry" },
+        },
+      },
+    },
+  })
+end
+
 function M.templates()
   local root = effective_root()
   if not root then return vim.notify("NoetherVim: cannot locate source directory", vim.log.levels.ERROR) end
@@ -1605,6 +1804,7 @@ local subcommand_descriptions = {
   user              = "Browse files in lua/user/",
   plugins           = "Browse installed plugins",
   bundles           = "Bundle picker (<C-y> enable, <C-x> disable)",
+  snippets          = "Snippet picker (<C-y> on, <C-x> off, <C-b> copy config entry)",
   templates         = "Write user-config templates into lua/user/ (<C-y>)",
   ["keymap-guide"]  = "Keymap namespace reference buffer",
   status            = "Show which user override files are loaded",
@@ -1621,6 +1821,7 @@ local subcommands = {
   user              = M.user,
   plugins           = M.plugins,
   bundles           = M.bundles,
+  snippets          = M.snippets,
   templates         = M.templates,
   ["keymap-guide"]  = function() require("noethervim.guide").open() end,
   status            = M.status,

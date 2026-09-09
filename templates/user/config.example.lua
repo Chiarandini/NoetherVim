@@ -202,4 +202,19 @@ return {
     --   "off"              -- silent
     -- toggle_feedback = "echo",
 
+
+    -- ── Snippets you never want ───────────────────────────────────────────────
+    -- Snippets listed here stay switched off, on every machine this config
+    -- reaches. Open the snippet picker (SearchLeader+cs), put the cursor on
+    -- one and press <C-b>; it copies the entry below to your clipboard, so
+    -- the owner and file are filled in correctly.
+    --
+    -- To switch one off on this machine only, press <C-x> in that picker
+    -- instead. That choice is remembered outside your config, and where the
+    -- two disagree the machine-local one wins for the session.
+    -- snippets_disabled = {
+    --     { ft = "tex", trigger = "iff", owner = "NoetherVim-tex",
+    --       file = "snippets/acronyms/tex/acronyms.lua" },
+    -- },
+
 }

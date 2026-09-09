@@ -91,6 +91,35 @@ function M.enable(snip, ft, opts)
   return true
 end
 
+--- Whether the trigger is a pattern rather than literal text.
+---
+--- Two tests, because neither covers the field alone. `regTrig` reports only
+--- the older spelling and stays false for `trigEngine = "pattern"|"ecma"|
+--- "vim"`, so on its own it lets those through. Asking the snippet's own
+--- matcher whether the trigger text matches itself catches every engine, but
+--- reads a pattern that can match itself (anything ending in `.*`) as literal.
+--- A trigger counts as literal only when both agree.
+---
+--- Callers need this for two different reasons: a pattern must not be offered
+--- in the completion menu, where accepting it pastes the pattern itself, and a
+--- pattern is useless as a label, since `([%s%a%(%)%[%]%{%}%$])00` names
+--- nothing a reader recognises.
+--- @param snip table
+--- @return boolean
+function M.is_pattern_trigger(snip)
+  if not snip then
+    return false
+  end
+  if snip.regTrig then
+    return true
+  end
+  if not snip.trig_matcher then
+    return false
+  end
+  local matched, match = pcall(snip.trig_matcher, snip.trigger, snip.trigger)
+  return not (matched and match == snip.trigger)
+end
+
 --- @param snip table
 --- @param ft string
 --- @return boolean now_disabled
