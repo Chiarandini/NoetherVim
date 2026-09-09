@@ -162,10 +162,48 @@ config = function(_, opts)
 			return nil
 		end
 
+		-- Does the reader already have a snippet file for this filetype, as
+		-- opposed to only the ones plugins ship? Read from the same registry
+		-- LuaSnip's own picker reads, so the answer cannot disagree with it.
+		local function has_own_file(ft)
+			local ok_data, loader_data = pcall(require, "luasnip.loaders.data")
+			if not ok_data then
+				return true            -- cannot tell; do not promise a new file
+			end
+			for _, key in ipairs({ "lua_ft_paths", "snipmate_ft_paths", "vscode_ft_paths" }) do
+				for path, _ in pairs((loader_data[key] or {})[ft] or {}) do
+					if not owning_plugin(path) then
+						return true
+					end
+				end
+			end
+			return false
+		end
+
+		-- LuaSnip offers the filetypes as bare strings, so the one prompt a reader
+		-- always sees says nothing about which of them would write a file. Annotate
+		-- that list for the duration of this call only: the wrapper is dropped as
+		-- soon as the prompt has been built, leaving the second prompt and every
+		-- other caller of vim.ui.select untouched.
+		local orig_select = vim.ui.select
+		vim.ui.select = function(items, sel_opts, on_choice)
+			if type(sel_opts) == "table"
+				and type(sel_opts.prompt) == "string"
+				and sel_opts.prompt:match("^Select filetype")
+			then
+				sel_opts = vim.tbl_extend("force", sel_opts, {
+					format_item = function(ft)
+						return has_own_file(ft) and ft or (ft .. "   (creates a new file)")
+					end,
+				})
+			end
+			return orig_select(items, sel_opts, on_choice)
+		end
+
 		-- luasnip.loaders, not luasnip.loaders.from_lua: the from_lua variant takes
 		-- no arguments and delegates to a lua-only helper that silently discards
 		-- opts, so format/edit never ran (nor did LuaSnip's own $CONFIG shortening).
-		require("luasnip.loaders").edit_snippet_files({
+		local ok_edit, edit_err = pcall(require("luasnip.loaders").edit_snippet_files, {
 			-- Every path stays listed: reading the snippets a plugin ships is half
 			-- of what this picker is for. Label as owner + filename: the filetype
 			-- was chosen a prompt ago, so the LuaSnip/<ft>/ segment every entry
@@ -221,10 +259,13 @@ config = function(_, opts)
 				-- never shown the `(new)` label, and this is the first point at
 				-- which the choice is put to them.
 				if created and unprompted_create then
+					-- Yes/No, not Create/Cancel: `&` marks the accelerator, and
+					-- both of those words start with C, so one letter answered
+					-- for both and neither could be typed.
 					local answer = vim.fn.confirm(
 						("You have no snippets of your own for this filetype.\n"
 							.. "Create %s?"):format(vim.fn.fnamemodify(file, ":~")),
-						"&Create\n&Cancel", 2, "Question")
+						"&Yes\n&No", 2, "Question")
 					if answer ~= 1 then
 						return
 					end
@@ -247,6 +288,14 @@ config = function(_, opts)
 				vim.bo.readonly = owning_plugin(file) ~= nil
 			end,
 		})
+
+		-- Off again immediately. The prompt has already been handed its
+		-- formatter, and leaving the wrapper in place would annotate nothing
+		-- while adding a frame to every vim.ui.select in the session.
+		vim.ui.select = orig_select
+		if not ok_edit then
+			error(edit_err)
+		end
 	end, { desc = "edit snippet files (plugin-owned ones read-only)" })
 	vim.keymap.set('n', SearchLeader .. 'es', '<cmd>LuaSnipEdit<cr>', { desc = 'edit snippets' })
 
