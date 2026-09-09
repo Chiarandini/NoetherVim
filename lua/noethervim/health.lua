@@ -369,6 +369,83 @@ function M.check()
       end
     end
 
+    -- What is switched off, and by which of the two mechanisms. Reported
+    -- every run: a snippet that is missing because you switched it off months
+    -- ago is indistinguishable from one that never loaded, and this is the
+    -- only place that tells the two apart.
+    local store_ok, store = pcall(require, "noethervim.util.snippet_store")
+    if store_ok then
+      local audit_ok, report = pcall(store.audit)
+      if audit_ok and report then
+        local total = report.off_config + report.off_toggle
+        if total == 0 and report.on_override == 0 then
+          h.ok("no snippets are switched off")
+        else
+          h.ok(("%d snippet%s switched off (%d from user/config.lua, %d on "
+            .. "this machine only)")
+            :format(total, total == 1 and "" or "s",
+              report.off_config, report.off_toggle))
+        end
+
+        if report.on_override > 0 then
+          h.info(("%d snippet%s switched back on here despite user/config.lua")
+            :format(report.on_override, report.on_override == 1 and " is" or "s are"))
+        end
+
+        for _, clash in ipairs(report.disagreements) do
+          h.warn(("`%s` is blocked in user/config.lua but switched on here")
+            :format(clash.blocked.trigger), {
+            "The machine-local choice wins, because it was made later.",
+            "Remove it from user/config.lua to agree, or switch it off again",
+            "to drop the local exception: " .. report.path,
+          })
+        end
+
+        if #report.unresolved > 0 then
+          local advice = {}
+          for _, item in ipairs(vim.list_slice(report.unresolved, 1, 5)) do
+            advice[#advice + 1] = ("%s in %s: %s")
+              :format(item.record.trigger, item.record.file, item.reason)
+          end
+          advice[#advice + 1] = ""
+          advice[#advice + 1] =
+            "Usually the snippet was renamed or removed, in which case the"
+          advice[#advice + 1] =
+            "record is harmless and can be deleted. Nothing is switched off"
+          advice[#advice + 1] = "on its behalf."
+          local n = #report.unresolved
+          h.warn(("%d remembered snippet%s no longer name%s anything")
+            :format(n, n == 1 and "" or "s", n == 1 and "s" or ""), advice)
+        end
+      end
+    end
+
+    -- A snippet LuaSnip did not record a source for cannot be written down,
+    -- only switched off until the next restart. Worth saying plainly, since
+    -- the switch appears to work and then does not survive.
+    local id_ok, snippet_id = pcall(require, "noethervim.util.snippet_id")
+    if id_ok then
+      local nameless = 0
+      for _, ft in ipairs(names) do
+        for _, list in ipairs({ manual[ft] or {}, auto[ft] or {} }) do
+          for _, snip in ipairs(list) do
+            if not snip.invalidated and not snippet_id.identity(snip, ft) then
+              nameless = nameless + 1
+            end
+          end
+        end
+      end
+      if nameless > 0 then
+        h.warn(("%d snippet%s cannot be remembered between sessions")
+          :format(nameless, nameless == 1 and "" or "s"), {
+          "LuaSnip did not record which file they came from, so there is no",
+          "stable way to name them. You can still switch them off, but the",
+          "choice lasts only until you restart.",
+          "Upstream fix: https://github.com/L3MON4D3/LuaSnip/pull/1451",
+        })
+      end
+    end
+
     -- jsregexp backs ECMAScript triggers and the transformations inside
     -- LSP-format snippets. It is compiled by LuaSnip's build step, and when
     -- that step did not run both degrade quietly: the trigger falls back to
