@@ -132,13 +132,21 @@ end
 --- reader added a comment would be a bug, not a feature. So the line only
 --- breaks a tie between snippets that are otherwise identical, and callers are
 --- expected to write back the line they resolved to.
+---
+--- WHY INVALIDATED SNIPPETS ARE SKIPPED
+--- Saving a snippet file does not replace its snippets, it adds new ones and
+--- marks the old ones invalidated; both sit in the collection until LuaSnip
+--- next collects. Matching the dead one looks like success and does nothing,
+--- because it is already hidden and nothing reads it any more, while the live
+--- snippet it was superseded by stays switched on.
 --- @param id noethervim.SnippetIdentity
 --- @param candidates table[] snippets to search, all of `id.ft`
---- @return table|nil snip, string|nil reason
+--- @return table|nil snip
+--- @return string|nil reason
 function M.resolve(id, candidates)
   local same = {}
   for _, snip in ipairs(candidates) do
-    if snip.trigger == id.trigger then
+    if snip.trigger == id.trigger and not snip.invalidated then
       local other = M.identity(snip, id.ft)
       if other and other.owner == id.owner and other.file == id.file then
         table.insert(same, { snip = snip, line = other.line })

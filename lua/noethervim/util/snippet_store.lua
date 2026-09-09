@@ -90,7 +90,7 @@ function M.records()
   for _, rec in ipairs(toggles) do
     table.insert(
       records,
-      vim.tbl_extend('force', rec, { state = rec.state or 'off' })
+      vim.tbl_extend('force', rec, { state = rec.state or 'off', source = 'toggle' })
     )
   end
 
@@ -109,7 +109,7 @@ function M.records()
     else
       table.insert(
         records,
-        vim.tbl_extend('force', blocked, { state = 'off' })
+        vim.tbl_extend('force', blocked, { state = 'off', source = 'config' })
       )
     end
   end
@@ -236,6 +236,83 @@ end
 --- @return string path of the machine-owned toggle file
 function M.path()
   return toggle_path()
+end
+
+--- What the two lists currently amount to, changing nothing.
+---
+--- Separate from `apply` on purpose: `:checkhealth` must be able to say what
+--- is switched off without switching anything off as a side effect of being
+--- asked.
+--- @return table report counts, disagreements and records naming no snippet
+function M.audit()
+  local records, disagreements = M.records()
+  local report = {
+    off_config = 0,
+    off_toggle = 0,
+    on_override = 0,
+    unresolved = {},
+    disagreements = disagreements,
+    path = toggle_path(),
+  }
+  local pools = {}
+  for _, rec in ipairs(records) do
+    pools[rec.ft] = pools[rec.ft] or pool(rec.ft)
+    local snip, why = id_mod.resolve(rec, pools[rec.ft])
+    if not snip then
+      table.insert(report.unresolved, { record = rec, reason = why })
+    elseif rec.state == 'off' then
+      if rec.source == 'config' then
+        report.off_config = report.off_config + 1
+      else
+        report.off_toggle = report.off_toggle + 1
+      end
+    else
+      report.on_override = report.on_override + 1
+    end
+  end
+  return report
+end
+
+--- Re-apply after every load, so a disable outlives the file being saved.
+---
+--- LuaSnip re-runs a snippet file when it is written and builds fresh snippet
+--- objects, which carry none of the fields this module sets. Without this the
+--- disable would appear to work until the first edit and then quietly stop.
+---
+--- TWO FLAGS, NOT ONE
+--- `applying` drops the events `apply` itself causes: it calls
+--- `refresh_notify`, which fires the very event being handled. `scheduled`
+--- collapses a burst into one pass, because startup fires the event once per
+--- filetype and each pass would otherwise walk every record again.
+---
+--- The known gap: a genuine load landing in the same tick as our own refresh
+--- is dropped with it. The next load re-applies, and `apply` acts only on
+--- differences, so the cost of that is one pass, not a wrong state.
+function M.install()
+  local applying, scheduled = false, false
+  vim.api.nvim_create_autocmd('User', {
+    pattern = 'LuasnipSnippetsAdded',
+    group = vim.api.nvim_create_augroup('NoetherVimSnippetState', { clear = true }),
+    desc = 'noethervim: re-apply switched-off snippets after a snippet load',
+    callback = function()
+      if applying or scheduled then
+        return
+      end
+      scheduled = true
+      vim.schedule(function()
+        scheduled = false
+        applying = true
+        local ok, err = pcall(M.apply)
+        applying = false
+        if not ok then
+          vim.notify(
+            'noethervim: could not re-apply snippet state: ' .. tostring(err),
+            vim.log.levels.WARN
+          )
+        end
+      end)
+    end,
+  })
 end
 
 return M

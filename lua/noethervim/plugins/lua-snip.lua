@@ -88,6 +88,13 @@ config = function(_, opts)
 	-- snippets register their own collections and are already accounted for.
 	-- libuv watchers alongside the default BufWritePost ones, so a snippet
 	-- edited in one Neovim reaches every other instance running at the time.
+	-- Ahead of the loader, not after it: LuaSnip is loaded on InsertEnter, so
+	-- the buffer already has a filetype and lazy_load can register its
+	-- snippets during this call. Installed afterwards, the listener would miss
+	-- that first batch and snippets you had switched off would come back until
+	-- the next load.
+	require("noethervim.util.snippet_store").install()
+
 	require("luasnip.loaders.from_lua").lazy_load({
 		paths = {},
 		lazy_paths = { vim.fn.stdpath("config") .. "/LuaSnip" },
