@@ -374,6 +374,33 @@ function M.snippets(opts)
     return { "  session", "DiagnosticHint" }
   end
 
+  --- Open a snippet where it is defined.
+  ---
+  --- Not `confirm_readonly`: that one is for browsing distribution source and
+  --- only ever makes a file editable when it sits in the dev tree, so it would
+  --- open your own snippets read-only. The rule here is :LuaSnipEdit's, which
+  --- is about who owns the file: writing into a plugin's tree is what needs
+  --- guarding, because the next :Lazy update discards it.
+  local function confirm_snippet(picker, item)
+    picker:close()
+    if not item or not item.file then
+      return
+    end
+    local owner = snipid.owner(item.file)
+    local plugin_owned = owner ~= "config" and owner ~= "absolute"
+    if plugin_owned then
+      vim.cmd("view " .. vim.fn.fnameescape(item.file))
+      vim.bo.readonly = true
+      vim.bo.modifiable = false
+    else
+      vim.cmd("edit " .. vim.fn.fnameescape(item.file))
+    end
+    if item.pos and item.pos[1] and item.pos[1] > 0 then
+      pcall(vim.api.nvim_win_set_cursor, 0, { item.pos[1], item.pos[2] or 0 })
+      vim.cmd("norm! zzzv")
+    end
+  end
+
   local function apply_to_selection(picker, want)
     local chosen = picker:selected({ fallback = true })
     local unnamed = 0
@@ -406,7 +433,7 @@ function M.snippets(opts)
     title   = only_off and "NoetherVim Snippets (switched off)" or "NoetherVim Snippets",
     items   = items,
     preview = "file",
-    confirm = confirm_readonly,
+    confirm = confirm_snippet,
     format  = function(item)
       local ret = {} ---@type snacks.picker.Highlight[]
       ret[#ret + 1] = mark(item)
