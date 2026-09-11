@@ -40,6 +40,23 @@ if [ "${NVCAP_FRESH:-0}" = "1" ]; then
     rm -rf "$HARNESS_ROOT"
 fi
 
+# macOS reaps files under /var/folders after a few days and leaves the directory
+# tree standing, so a root that looks warm can be a shell: 98 plugin directories
+# and every Mason package present by name and empty of files. What that produces
+# is not an obvious "root is gone" but `module 'lazy' not found`, then every
+# checkpoint failing for an invented reason, which is the
+# cannot-distinguish-its-failure-modes trap in language-matrix-test-plan.md
+# arriving as an environment fault rather than a test one.
+#
+# One file decides it: lazy.nvim's entry point, without which no run can start.
+# Rebuild rather than report nonsense, and say so, because a silent re-clone
+# would make the first run of the day mysteriously slow instead.
+LAZY_SENTINEL="$HARNESS_ROOT/data/$APPNAME/lazy/lazy.nvim/lua/lazy/init.lua"
+if [ -d "$HARNESS_ROOT" ] && [ ! -f "$LAZY_SENTINEL" ]; then
+    echo "harness root is present but empty (tmp reaper); rebuilding $HARNESS_ROOT"
+    rm -rf "$HARNESS_ROOT"
+fi
+
 export XDG_CONFIG_HOME="$HARNESS_ROOT/config"
 export XDG_DATA_HOME="$HARNESS_ROOT/data"
 export XDG_STATE_HOME="$HARNESS_ROOT/state"
