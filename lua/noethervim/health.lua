@@ -937,10 +937,10 @@ function M.check()
     end
 
     if vim.o.autochdir then
-      h.warn("'autochdir' is on: the working directory follows the buffer, so it\n"
-        .. "is the file's directory and never the project root. Test discovery\n"
-        .. "reads it, and in a multi-package project comes up empty.\n"
-        .. "`]oa` turns it off for the window.")
+      h.info("'autochdir' is on, so the working directory is the current file's\n"
+        .. "directory rather than wherever Neovim started. Discovery is resolved\n"
+        .. "from it, which is normally still inside the project. It reports\n"
+        .. "nothing only when the current file belongs to no project at all.")
     end
   end
 

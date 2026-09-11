@@ -189,7 +189,32 @@ return {
 		opts = function(_, opts)
 			pcall(require, "rustaceanvim.neotest")
 			opts.adapters = opts.adapters or {}
-			table.insert(opts.adapters, require("neotest-rust"))
+
+			local rust = require("neotest-rust")
+
+			-- neotest-rust memoises `cargo metadata` per directory. `root(dir)`
+			-- caches under the directory it was handed; `filter_dir` later asks
+			-- for the workspace root. In a single crate those are the same key
+			-- and the second lookup is a hit. In a workspace opened from below
+			-- its root they differ, and the miss runs `Job:sync()` from
+			-- discovery, which is a fast event context where vim.wait is
+			-- illegal (E5560). Discovery aborts, no positions are ever found,
+			-- and every buffer answers "No tests found" with nothing wrong with
+			-- the file.
+			--
+			-- Warming the cache under the root it just returned is enough, and
+			-- needs only the adapter's own entry point: `root()` of a workspace
+			-- root memoises under that root. Both calls happen where neotest
+			-- resolves adapters, which is not a fast context; the one that
+			-- cannot afford a subprocess is the later one, and it now hits.
+			local root_of = rust.root
+			rust.root = function(dir)
+				local root = root_of(dir)
+				if root and root ~= dir then pcall(root_of, root) end
+				return root
+			end
+
+			table.insert(opts.adapters, rust)
 		end,
 	},
 }
