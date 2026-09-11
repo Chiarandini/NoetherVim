@@ -121,18 +121,41 @@ return {
 
 	-- ── Rust debug adapter ────────────────────────────────────────────────
 	-- `optional = true` gates this on tools/debug.lua, like every other
-	-- language bundle. rustaceanvim registers the configurations itself, from
-	-- rust-analyzer, so there is no adapter to define here; what it cannot do
-	-- is produce the binary those configurations launch. It looks for
-	-- `codelldb` or `lldb-dap` on PATH and silently registers nothing when
-	-- neither is there, which is the whole of the "debugging does nothing"
-	-- failure. Asking Mason for codelldb closes it.
+	-- language bundle. rustaceanvim supplies the configurations, read from
+	-- rust-analyzer; what it cannot do is produce the binary those
+	-- configurations launch. Asking Mason for codelldb closes that half.
+	--
+	-- The adapter is registered here rather than left to rustaceanvim, which
+	-- does register it but only as a side effect of building a debug
+	-- configuration, about a second and a half after rust-analyzer attaches.
+	-- Whatever reaches nvim-dap before then finds nothing: neotest's dap
+	-- strategy names the adapter directly instead of going through
+	-- rustaceanvim, so <Leader>td in the first moments of a buffer answered
+	-- "config references missing adapter codelldb". Defining it up front makes
+	-- the adapter's existence independent of that timing.
+	--
+	-- Same shape as languages/c-cpp.lua, and resolved the same way: Mason
+	-- prepends its bin directory to PATH, so the package name is enough.
+	-- Guarded on nil in both directions -- c-cpp may have defined it already,
+	-- and rustaceanvim's own registration is guarded too, so it defers here.
 	{
 		"mfussenegger/nvim-dap",
 		optional = true,
 		opts = function(_, opts)
 			opts.mason_install = opts.mason_install or {}
 			table.insert(opts.mason_install, "codelldb")
+
+			local dap = require("dap")
+			if dap.adapters.codelldb == nil then
+				dap.adapters.codelldb = {
+					type = "server",
+					port = "${port}",
+					executable = {
+						command = "codelldb",
+						args    = { "--port", "${port}" },
+					},
+				}
+			end
 		end,
 	},
 
