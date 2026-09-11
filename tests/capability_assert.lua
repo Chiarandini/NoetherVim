@@ -150,7 +150,12 @@ local SPECS = {
 		        expect = "int messy(int a)" },
 		test = { file = "src/test/java/capfixture/MainTest.java", bin = "mvn",
 		         prepare = { { "mvn", "-q", "-DskipTests", "test-compile" } } },
-		debug = { line = 5, adapter = "java", config = "", var = "a", value = "40" },
+		-- java-debug-adapter is a jar loaded into jdtls rather than a separate
+		-- process, so nvim-jdtls registers `dap.adapters.java` when the server
+		-- starts and there is nothing for the bundle to define at load. This is
+		-- the one declared exception to 6a; see languages/java.lua.
+		debug = { line = 5, adapter = "java", config = "", var = "a", value = "40",
+		          at_load_na = "nvim-jdtls registers the adapter when jdtls starts" },
 		lint = { inject = "  int __capBroken() { return __capMissing(); }" },
 	},
 	c = {
@@ -206,13 +211,37 @@ print(("=== %s (%s) ==="):format(LANG, spec.bundle))
 local fixture = ROOT .. "/" .. spec.dir
 local target  = fixture .. "/" .. spec.main
 
+-- ── 6a, measured here and recorded in position ────────────────────────────
+-- Read before anything opens a buffer or starts a language server, because
+-- that is the only moment the question is answerable. Checkpoint 6 asks
+-- whether the adapter exists and runs last, after checkpoints that each take
+-- seconds; by then anything that registers it late has long since done so, and
+-- late is indistinguishable from present.
+--
+-- `languages/rust` is why this exists. It named codelldb in `mason_install`
+-- and left the adapter itself to rustaceanvim, which registers it as a side
+-- effect of building a debug configuration about 1.3s after LspAttach.
+-- Checkpoint 6 passed throughout. What broke was <Leader>td, because neotest's
+-- dap strategy names the adapter directly instead of going through
+-- rustaceanvim, and in the first moments of a buffer there was nothing there.
+--
+-- Requiring dap here is what makes the reading cold: it loads nvim-dap and
+-- runs every bundle's `optional = true` fragment, and nothing else.
+local dap_at_load
+do
+	local want = (spec.debug or {}).adapter
+	local ok, dap = pcall(require, "dap")
+	dap_at_load = ok and want ~= nil and dap.adapters[want] ~= nil
+end
+
 if vim.fn.executable(spec.tool) ~= 1 then
 	-- Every checkpoint, not just the four the else-branch opens with. Listing a
 	-- subset here silently dropped format, diagnostics, test and debug from the
 	-- report whenever a toolchain was absent, which is exactly the "a cell may
 	-- never be skipped" rule this file claims to follow.
 	for _, cp in ipairs({ "1 lsp", "2 treesitter", "3 format", "4 diagnostics",
-	                      "5 test", "6 debug", "7 run-file", "8 run-project" }) do
+	                      "5 test", "5b cwd", "6a dap-at-load", "6 debug",
+	                      "7 run-file", "8 run-project" }) do
 		record(cp, "UNCOVERED", spec.tool .. " not on PATH")
 	end
 else
@@ -486,6 +515,45 @@ else
 			end
 		end
 	end
+	-- ── 5b. The same tests, from the directory that holds them ────────────
+	-- Measured in its own Neovim by capability_cwd.lua before this run began,
+	-- and read back here so the matrix stays one report. tests/capability.sh
+	-- phase 1b carries why it cannot share this process.
+	--
+	-- Red when: the file checkpoint 5 just ran produces no results once cwd is
+	-- its own directory rather than the project root.
+	do
+		local path = vim.env.CAP_CWD_RESULT or ""
+		local line = vim.fn.filereadable(path) == 1 and (vim.fn.readfile(path)[1] or "") or ""
+		local state, detail = line:match("^(%u[%u/]*)|(.*)$")
+		if state then
+			record("5b cwd", state, detail)
+		else
+			record("5b cwd", "FAIL", "the cwd probe produced no result")
+		end
+	end
+
+	-- ── 6a. The adapter is there before anything asks for it ──────────────
+	-- Recorded in reading order; measured cold at the top of this file. A
+	-- language bundle owes its adapter from its own nvim-dap fragment, per
+	-- language-bundle-contract.md checkpoint 6 ("registering an adapter").
+	--
+	-- Red when: nvim-dap has loaded and the adapter the debug row names is not
+	-- in `dap.adapters`, i.e. something outside the bundle registers it later.
+	do
+		local d = spec.debug
+		if d.na then
+			record("6a dap-at-load", "N/A", d.na)
+		elseif d.at_load_na then
+			record("6a dap-at-load", "N/A", d.at_load_na)
+		else
+			record("6a dap-at-load", dap_at_load and "PASS" or "FAIL",
+				dap_at_load
+					and (d.adapter .. " present as soon as nvim-dap loaded")
+					or (d.adapter .. " absent at load; registered later by something else"))
+		end
+	end
+
 	-- ── 6. Debugger ───────────────────────────────────────────────────────
 	-- The claim is not "an adapter table exists" -- that is what made the Rust
 	-- debugger look fine while it registered zero configurations. The claim is

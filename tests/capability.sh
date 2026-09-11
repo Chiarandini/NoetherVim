@@ -62,6 +62,7 @@ elif command -v gtimeout >/dev/null 2>&1; then NVTIMEOUT="gtimeout ${NVCAP_TIMEO
 # broken command, so every fixture starts clean.
 clean_fixtures() {
     rm -rf "$FIXTURES/rust/target" "$FIXTURES/rust/Cargo.lock" \
+           "$FIXTURES/rust-ws/target" "$FIXTURES/rust-ws/Cargo.lock" \
            "$FIXTURES/go/capfixture" "$FIXTURES/c/main" "$FIXTURES/c/main_debug" "$FIXTURES/c/build" \
            "$FIXTURES/java/target" \
            "$FIXTURES"/*/__pycache__ "$FIXTURES"/*/.pytest_cache 2>/dev/null
@@ -121,6 +122,36 @@ main_for() {
         web)    echo "main.ts" ;;
         latex)  echo "main.tex" ;;
         cpp)    echo "main.cpp" ;;
+    esac
+}
+
+# Checkpoint 5b: "<fixture dir>|<test file within it>", or empty for N/A.
+#
+# Deliberately NOT the fixture the other checkpoints use. Varying cwd against a
+# lone crate proves nothing: `src/` resolves the same root the project does, so
+# the cell goes green whatever neotest does, and the first version of this check
+# did exactly that. The shape that hides the bug is a workspace, where the same
+# move registers no adapter at all. rust-ws exists for this cell only.
+#
+# Only rust has a real cell today. The other fixtures are flat, so their test
+# file sits at the project root and there is no cwd below it -- a limit of the
+# fixtures rather than of those languages, and the fix is a nested fixture, not
+# a weaker check. java is out for a different reason: its test row needs
+# `mvn test-compile` first, and a probe that skipped the build would report a
+# missing build as a cwd failure.
+cwd_probe_for() {
+    case "$1" in
+        rust)   echo "rust-ws|crate_a/src/lib.rs" ;;
+        *)      echo "" ;;
+    esac
+}
+
+cwd_na_reason() {
+    case "$1" in
+        cpp)    echo "one CTest adapter serves both filetypes; graded on the c row" ;;
+        latex)  echo "a LaTeX document has no test suite to run" ;;
+        java)   echo "test row needs mvn test-compile; the cwd probe does not build" ;;
+        *)      echo "fixture is flat: the test file is at the project root, so there is no cwd below it" ;;
     esac
 }
 
@@ -224,8 +255,35 @@ run_one() {
     # silently tests the wrong bundle.
     local script="${NVCAP_PROBE:-$SCRIPT_DIR/capability_assert.lua}"
 
+    # ── phase 1b: checkpoint 5b, the working-directory pin ────────────────
+    # Its own Neovim. neotest roots its adapters from cwd the first time the
+    # client is used and does not re-root cleanly afterwards, so the condition
+    # has to be set before anything in the graded run has touched neotest.
+    # Runs before phase 2 for the same reason: sharing a process would leave
+    # checkpoint 5 with a client rooted at the wrong directory.
+    local cwd_result="$HARNESS_ROOT/cwd-result-$lang"
+    rm -f "$cwd_result"
+    local probe; probe="$(cwd_probe_for "$lang")"
+    if [ -z "$probe" ]; then
+        printf 'N/A|%s\n' "$(cwd_na_reason "$lang")" > "$cwd_result"
+    else
+        local pdir="${probe%%|*}" pfile="${probe#*|}"
+        local troot="$FIXTURES/$pdir"
+        local tdir; tdir="$(dirname "$troot/$pfile")"
+        echo "--- phase 1b: checkpoint 5b (cwd = ${tdir#$FIXTURES/}) ---"
+        # `+qa!` is a safety net, not the exit path: capability_cwd.lua quits
+        # itself once it has written a result. Without it, a script that dies
+        # before writing leaves headless Neovim sitting in the event loop until
+        # the timeout, which reads as "produced no result" several minutes later.
+        ( cd "$tdir" && CAP_CWD_RESULT="$cwd_result" CAP_TEST_FILE="$troot/$pfile" \
+            $NVTIMEOUT nvim --headless \
+            +"luafile $SCRIPT_DIR/capability_cwd.lua" +"qa!" ) >/dev/null 2>&1
+        [ -s "$cwd_result" ] || printf 'FAIL|capability_cwd.lua produced no result\n' > "$cwd_result"
+    fi
+
     echo "--- phase 2: capability checkpoints ($(basename "$script")) ---"
-    ( cd "$FIXTURES/$lang" && CAP_LANG="$lang" CAP_FIXTURES="$FIXTURES" $NVTIMEOUT nvim --headless \
+    ( cd "$FIXTURES/$lang" && CAP_LANG="$lang" CAP_FIXTURES="$FIXTURES" \
+        CAP_CWD_RESULT="$cwd_result" $NVTIMEOUT nvim --headless \
         +"luafile $script" +"qa!" )
     local rc=$?
     echo "--- $lang: exit $rc ---"

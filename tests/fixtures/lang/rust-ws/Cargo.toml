@@ -1,0 +1,8 @@
+# Checkpoint 5b only. A cargo workspace rather than a single crate, because
+# that is the shape the cwd pin actually hides: with a lone crate, running from
+# `src/` resolves the same root as running from the project, and the check goes
+# green whatever neotest does. Under a workspace the same move registers no
+# adapter at all. See tests/capability_cwd.lua.
+[workspace]
+resolver = "2"
+members = ["crate_a"]

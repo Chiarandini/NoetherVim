@@ -11,6 +11,7 @@ lazy-lock.json
 tests/*
 !tests/capability.sh
 !tests/capability_assert.lua
+!tests/capability_cwd.lua
 !tests/capability_provision.lua
 !tests/fixtures/
 tests/fixtures/*
@@ -28,7 +29,7 @@ tests/fixtures/lang/c/main_debug
 tests/fixtures/lang/cpp/main
 tests/fixtures/lang/cpp/main_debug
 tests/fixtures/lang/go/capfixture
-tests/fixtures/lang/rust/Cargo.lock
+tests/fixtures/lang/rust*/Cargo.lock
 # latexindent drops a log beside whatever it formats.
 tests/fixtures/lang/latex/indent.log
 # Generated per run: it embeds an absolute directory.
