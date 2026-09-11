@@ -65,7 +65,9 @@ local SPECS = {
 		-- neotest-rust drives `cargo nextest`, not `cargo test`; without it the
 		-- adapter discovers the tests and reports nothing. Gating on the binary
 		-- it actually needs makes its absence read as UNCOVERED, not FAIL.
-		test = { file = "src/main.rs", bin = "cargo-nextest" },
+		-- `key_at` is where checkpoint 5c parks the cursor before pressing the
+		-- run-nearest key: a literal from the line declaring the passing test.
+		test = { file = "src/main.rs", bin = "cargo-nextest", key_at = "fn passes" },
 		-- Stop inside add(), where `a` is 40 regardless of how the binary was
 		-- launched. rustaceanvim's autoloaded "Cargo: build" config builds the
 		-- crate and runs the resulting binary under codelldb.
@@ -80,7 +82,7 @@ local SPECS = {
 		tool = "go", lsp = { "gopls" }, parser = "go", node = "function_declaration",
 		run_file = "42", run_project = "42",
 		fmt = { file = "messy.go", bin = "goimports", expect = "func Messy(a int) int" },
-		test = { file = "main_test.go", bin = "go" },
+		test = { file = "main_test.go", bin = "go", key_at = "func TestPasses" },
 		debug = { line = 5, adapter = "go", config = "", var = "a", value = "40" },
 		lint = { inject = "func __capBroken() int { return __capMissing() }" },
 	},
@@ -93,7 +95,7 @@ local SPECS = {
 		-- across setuptools, poetry, uv and a bare script directory.
 		run_project = false,
 		fmt = { file = "messy.py", bin = "black", expect = "def messy(a):" },
-		test = { file = "test_main.py", bin = "pytest" },
+		test = { file = "test_main.py", bin = "pytest", key_at = "def test_passes" },
 		debug = { line = 2, adapter = "debugpy", config = "", var = "a", value = "40" },
 		lint = { inject = "def __cap_broken():\n    return __cap_missing()" },
 	},
@@ -136,7 +138,7 @@ local SPECS = {
 		run_file = "42", run_project = "42",
 		fmt = { file = "messy.ts", bin = "prettierd",
 		        expect = "export function messy(a: number): number" },
-		test = { file = "main.test.ts", bin = "npx" },
+		test = { file = "main.test.ts", bin = "npx", key_at = [[test("passes"]] },
 		debug = { file = "main.js", ft = "javascript", line = 2, adapter = "pwa-node",
 		          config = "", var = "a", value = "40" },
 		lint = { inject = "const __capBroken: number = \"not a number\";" },
@@ -148,7 +150,7 @@ local SPECS = {
 		run_file = "42", run_project = "42",
 		fmt = { file = "src/main/java/capfixture/Messy.java", bin = "google-java-format",
 		        expect = "int messy(int a)" },
-		test = { file = "src/test/java/capfixture/MainTest.java", bin = "mvn",
+		test = { file = "src/test/java/capfixture/MainTest.java", bin = "mvn", key_at = "void passes",
 		         prepare = { { "mvn", "-q", "-DskipTests", "test-compile" } } },
 		-- java-debug-adapter is a jar loaded into jdtls rather than a separate
 		-- process, so nvim-jdtls registers `dap.adapters.java` when the server
@@ -240,7 +242,7 @@ if vim.fn.executable(spec.tool) ~= 1 then
 	-- report whenever a toolchain was absent, which is exactly the "a cell may
 	-- never be skipped" rule this file claims to follow.
 	for _, cp in ipairs({ "1 lsp", "2 treesitter", "3 format", "4 diagnostics",
-	                      "5 test", "5b cwd", "6a dap-at-load", "6 debug",
+	                      "5 test", "5c keymap", "5b cwd", "6a dap-at-load", "6 debug",
 	                      "7 run-file", "8 run-project" }) do
 		record(cp, "UNCOVERED", spec.tool .. " not on PATH")
 	end
@@ -515,6 +517,81 @@ else
 			end
 		end
 	end
+	-- ── 5c. The key the header advertises, not the API behind it ──────────
+	-- Checkpoint 5 calls `neotest.run.run(path)`. Nothing in this matrix presses
+	-- what tools/test.lua's header advertises, and the two routes demonstrably
+	-- diverge: <Leader>td was broken while checkpoint 6 passed, because
+	-- neotest's dap strategy reaches nvim-dap by a path `dap.run` never takes.
+	-- This closes the run-nearest half of that.
+	--
+	-- Asserts dispatch, not the result, and the distinction is the point.
+	-- Checkpoint 5 has already produced results for this buffer, so polling for
+	-- results after the keypress would pass whether or not the key did anything
+	-- -- green by construction, which is the one thing this file may not ship.
+	-- Wrapping the function the header claims the key calls is the assertion
+	-- that can actually fail. Whether that call then produces the right results
+	-- is checkpoint 5's claim and is not restated here.
+	--
+	-- Red when: the key is unbound, or is bound to something that never reaches
+	-- neotest's nearest-position run.
+	do
+		local t = spec.test
+		local lhs = (vim.g.mapleader or "\\") .. "tt"
+		local function skip(state, why) record("5c keymap", state, why) end
+
+		if t.na then
+			skip("N/A", t.na)
+		elseif t.gap then
+			skip("N/A", "checkpoint 5 is a tracked GAP on this row")
+		elseif not t.key_at then
+			skip("N/A", "no nearest-test anchor declared for this fixture")
+		elseif vim.fn.executable(t.bin) ~= 1 then
+			skip("UNCOVERED", t.bin .. " not on PATH")
+		elseif vim.tbl_isempty(vim.fn.maparg(lhs, "n", false, true)) then
+			skip("FAIL", ("%s is not bound in normal mode"):format(lhs))
+		else
+			local test_path = ROOT .. "/" .. (t.dir or spec.dir) .. "/" .. t.file
+			vim.cmd("edit! " .. vim.fn.fnameescape(test_path))
+			local kbuf = vim.api.nvim_get_current_buf()
+
+			local row
+			for i, l in ipairs(vim.api.nvim_buf_get_lines(kbuf, 0, -1, false)) do
+				if l:find(t.key_at, 1, true) then row = i break end
+			end
+
+			if not row then
+				skip("FAIL", ("anchor %q is not in %s"):format(t.key_at, t.file))
+			else
+				vim.api.nvim_win_set_cursor(0, { row, 0 })
+				local neotest = require("neotest")
+				local real = neotest.run.run
+				local called = nil
+				neotest.run.run = function(...) called = true; return real(...) end
+
+				-- neotest.run is module-backed, so confirm the stub took rather
+				-- than reporting "the key did nothing" when what failed was the
+				-- instrumentation.
+				if neotest.run.run == real then
+					skip("UNCOVERED", "could not wrap neotest.run.run to observe the call")
+				else
+					-- `:normal` rather than nvim_feedkeys. feedkeys queues into
+					-- the typeahead buffer, and under `--headless` with the
+					-- script running from `luafile` that queue is not drained
+					-- by vim.wait: measured, a mapping fed this way never fires,
+					-- while the same mapping under `:normal` does. Reading that
+					-- as "the key is broken" would have been a harness bug
+					-- reported as a bundle one.
+					pcall(vim.cmd, "normal " .. lhs)
+					poll(20000, function() return called end)
+					neotest.run.run = real
+					record("5c keymap", called and "PASS" or "FAIL",
+						called and (lhs .. " reached neotest.run.run")
+						or (lhs .. " pressed, neotest.run.run never called"))
+				end
+			end
+		end
+	end
+
 	-- ── 5b. The same tests, from the directory that holds them ────────────
 	-- Measured in its own Neovim by capability_cwd.lua before this run began,
 	-- and read back here so the matrix stays one report. tests/capability.sh
