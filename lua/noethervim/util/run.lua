@@ -28,6 +28,28 @@ local M = {}
 ---@field file?    string|fun(c: noethervim.RunContext):string|nil
 ---@field project? string|fun(c: noethervim.RunContext):string|nil
 
+--- Does the cargo package rooted at `dir` produce a binary?
+---
+--- Cargo's target auto-discovery is three rules: `src/main.rs`, `src/bin/*.rs`,
+--- and an explicit `[[bin]]` section. Reading them here costs a stat, where the
+--- exhaustive answer would cost a `cargo metadata` subprocess on every press.
+--- The case it can still miss names `[[bin]]` in the manifest, so the manifest
+--- is read too.
+---
+--- A workspace root answers false, which is correct for the same reason: with
+--- several members `cargo run` cannot choose between their binaries either.
+---@param dir string  directory holding Cargo.toml
+---@return boolean
+local function rust_has_bin(dir)
+	if vim.uv.fs_stat(dir .. "/src/main.rs") then return true end
+	if #vim.fn.glob(dir .. "/src/bin/*.rs", true, true) > 0 then return true end
+	if not vim.uv.fs_stat(dir .. "/Cargo.toml") then return false end
+	for _, line in ipairs(vim.fn.readfile(dir .. "/Cargo.toml")) do
+		if line:find("^%s*%[%[bin%]%]") then return true end
+	end
+	return false
+end
+
 ---@type table<string, noethervim.RunSpec>
 M.languages = {
 	-- Interpreted languages: the command is the interpreter, the file is its
@@ -55,13 +77,24 @@ M.languages = {
 	go = { root = { "go.mod" }, file = "go run", project = "go run ." },
 
 	-- Cargo searches upward for the manifest the same way this does, so the
-	-- project command needs no path. Outside a crate, rustc still compiles a
-	-- lone file.
+	-- commands need no path. Outside a crate, rustc still compiles a lone file.
+	--
+	-- `cargo run` answers only for a package that builds a binary. A library
+	-- crate builds none, and there the command can never succeed: it fails with
+	-- "a bin target must be available" however the key was pressed. That is not
+	-- a rare shape. It is every workspace of libraries, and every exercise or
+	-- algorithms repository whose code lives behind its tests. Running the tests
+	-- is the nearest true reading of "run this", so that is what it does.
 	rust = {
 		root    = { "Cargo.toml" },
-		project = "cargo run",
+		project = function(c)
+			if not c.root then return nil end
+			return rust_has_bin(c.root) and "cargo run" or "cargo test"
+		end,
 		file    = function(c)
-			if c.root then return "cargo run" end
+			if c.root then
+				return rust_has_bin(c.root) and "cargo run" or "cargo test"
+			end
 			return ("rustc %s -o %s && %s"):format(c.file, c.stem, c.stem)
 		end,
 	},
