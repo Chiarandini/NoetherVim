@@ -275,6 +275,116 @@ dap_pickers.frames = function()
 	})
 end
 
+---Report what is being debugged and where it has stopped. The same facts are
+---spread across the panels; this is the one-key answer to "what am I even
+---attached to", useful when a config was picked minutes ago or when an
+---adapter has spawned child sessions.
+local function session_report()
+	local ic      = require("noethervim.util.icons")
+	local session = require("dap").session()
+
+	local function report(msg)
+		vim.notify(msg, vim.log.levels.INFO, { title = "Debugger", icon = ic.debug })
+	end
+
+	if not session then
+		report("No session")
+		return
+	end
+
+	local cfg   = session.config or {}
+	local lines = { ("%s (%s %s)"):format(cfg.name or "unnamed", cfg.type or "?", cfg.request or "?") }
+
+	local frame = session.current_frame
+	if session.stopped_thread_id and frame then
+		local where = frame.name or "?"
+		local src   = frame.source and (frame.source.path or frame.source.name)
+		if src then
+			where = ("%s  %s:%d"):format(where, vim.fn.fnamemodify(src, ":t"), frame.line or 0)
+		end
+		lines[#lines + 1] = "stopped at " .. where
+	elseif session.initialized then
+		lines[#lines + 1] = "running"
+	else
+		lines[#lines + 1] = "starting"
+	end
+
+	local function plural(n, noun)
+		return ("%d %s%s"):format(n, noun, n == 1 and "" or "s")
+	end
+	local threads = vim.tbl_count(session.threads or {})
+	if threads > 0 then lines[#lines + 1] = plural(threads, "thread") end
+	local children = vim.tbl_count(session.children or {})
+	if children > 0 then lines[#lines + 1] = plural(children, "child session") end
+
+	report(table.concat(lines, "\n"))
+end
+
+-- ─── The stepping tier ─────────────────────────────────────────────────────
+-- Function keys, because these six are pressed dozens of times per session
+-- and every other debugger in the world puts them here.
+--
+-- Bound in insert mode as well as normal. The REPL is a prompt buffer: the
+-- moment you type an expression into it you are in insert mode, and a
+-- normal-only stepping key is silent there. The console is a terminal, and
+-- gets the same six buffer-locally in `config` below; mapping terminal mode
+-- globally would take the function keys away from every htop, mc and lazygit
+-- running in an ordinary `:terminal`.
+--
+-- Each also gets a <Leader>d alias, because a function key is the one class
+-- of key something else can swallow before Neovim sees it: macOS claims F11
+-- for Show Desktop, Apple keyboards need `fn` unless the standard-function-
+-- keys setting is on, and <F17>/<F23> (shift+F5, shift+F11) only arrive from
+-- a terminal that encodes shifted function keys. The aliases keep the
+-- debugger drivable on a machine where any of that goes wrong.
+--
+-- The alias letters are gdb's, which is the debugger vocabulary a Vim user
+-- already has: n(ext), s(tep), f(inish). `dd` doubles the namespace prefix
+-- for its primary action; `dS` and `dT` are the two heavy session verbs, and
+-- sit beside `dt` (disconnect). The gdb-obvious `dc` and `dr` were already
+-- taken by clear-breakpoints and refresh-virtual-text.
+--
+-- The two shifted keys are bound under both spellings. They are separate
+-- keycodes, not synonyms: a terminal speaking the kitty keyboard protocol
+-- sends <S-F5>, one on the legacy xterm scheme sends the F17 the shifted key
+-- historically stood for, and whichever half is missing is a key that does
+-- nothing.
+local stepping = {
+	{ keys = { "<F5>"  },            action = "continue",  label = "Continue",  alias = "dd" },
+	{ keys = { "<F6>"  },            action = "restart",   label = "Restart",   alias = "dS" },
+	{ keys = { "<S-F5>",  "<F17>" }, action = "terminate", label = "Terminate", alias = "dT" },
+	{ keys = { "<F10>" },            action = "step_over", label = "Step Over", alias = "dn" },
+	{ keys = { "<F11>" },            action = "step_into", label = "Step Into", alias = "ds" },
+	{ keys = { "<S-F11>", "<F23>" }, action = "step_out",  label = "Step Out",  alias = "df" },
+}
+
+---Both tiers as lazy.nvim key specs, from one table so a function key and
+---its alias cannot drift apart.
+local function stepping_keys()
+	local keys = {}
+	for _, s in ipairs(stepping) do
+		local action = function() require("dap")[s.action]() end
+		for _, lhs in ipairs(s.keys) do
+			keys[#keys + 1] = { lhs, action, mode = { "n", "i" }, desc = "DAP: " .. s.label }
+		end
+		keys[#keys + 1] = { "<leader>" .. s.alias, action, desc = "DAP: " .. s.label }
+	end
+	return keys
+end
+
+---@param mode string|string[]
+---@param buffer integer|nil
+local function bind_stepping(mode, buffer)
+	for _, s in ipairs(stepping) do
+		for _, lhs in ipairs(s.keys) do
+			vim.keymap.set(mode, lhs, function() require("dap")[s.action]() end, {
+				buffer = buffer,
+				desc   = "DAP: " .. s.label,
+			})
+		end
+	end
+end
+
 return {
 
 	-- ── DAP client ────────────────────────────────────────────────────────────
@@ -342,13 +452,7 @@ return {
 				} },
 			},
 		},
-		keys = {
-			{ "<F5>",  function() require("dap").continue()                                        end, desc = "DAP: Continue" },
-			{ "<F6>",  function() require("dap").restart()                                         end, desc = "DAP: Restart" },
-			{ "<F17>", function() require("dap").terminate()                                       end, desc = "DAP: Terminate" }, -- <S-F5>
-			{ "<F10>", function() require("dap").step_over()                                       end, desc = "DAP: Step Over" },
-			{ "<F11>", function() require("dap").step_into()                                       end, desc = "DAP: Step Into" },
-			{ "<F23>", function() require("dap").step_out()                                        end, desc = "DAP: Step Out" }, -- <S-F11>
+		keys = vim.list_extend(stepping_keys(), {
 			{ "<leader>db", function() require("dap").toggle_breakpoint()                          end, desc = "DAP: Toggle Breakpoint" },
 			{ "<leader>dc", function()
 				require("dap").clear_breakpoints()
@@ -364,12 +468,12 @@ return {
 			{ "<leader>dl", function() require("dap").set_breakpoint(nil, nil, vim.fn.input("Log point message: ")) end, desc = "DAP: Log Breakpoint" },
 			{ "<leader>du", function() require("dapui").toggle()                                   end, desc = "DAP: Toggle UI" },
 			{ "<c-w><c-d>", function() require("dapui").toggle()                                   end, desc = "DAP: Toggle UI" },
-			{ "<leader>dg", function() require("dap").session()                                    end, desc = "DAP: Get Session" },
+			{ "<leader>dg", session_report,                                                             desc = "DAP: Report Session" },
 			{ "<leader>dp", function() require("dap").pause()                                      end, desc = "DAP: Pause" },
 			{ "<leader>dq", function() require("dap").close()                                      end, desc = "DAP: Quit" },
 			{ "<leader>dw", function() require("dapui").elements.watches.add(vim.fn.expand("<cword>")) end, desc = "DAP: Watch Word" },
 			{ "<leader>dt", function() require("dap").disconnect()                                 end, desc = "DAP: Disconnect" },
-		},
+		}),
 		config = function(_, opts)
 			local dap   = require("dap")
 			local dapui = require("dapui")
@@ -428,6 +532,15 @@ return {
 					numhl  = sign[3],
 				})
 			end
+
+			-- The console panel is the debuggee's terminal, so a cursor in it
+			-- is in terminal mode and every global mapping is off. Give it
+			-- the stepping tier back, buffer-locally.
+			vim.api.nvim_create_autocmd("FileType", {
+				group    = vim.api.nvim_create_augroup("noethervim_dap_console_keys", { clear = true }),
+				pattern  = "dapui_console",
+				callback = function(args) bind_stepping("t", args.buf) end,
+			})
 
 			dap.listeners.after.event_initialized["dapui_config"] = function() dapui.open({}) end
 			dap.listeners.before.event_terminated["dapui_config"] = function() dapui.close({}) end
