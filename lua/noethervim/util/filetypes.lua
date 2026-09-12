@@ -41,6 +41,10 @@ M.q_close = {
   "typr", "snacks_notif", "snacks_terminal",
   "nvim-undotree", "undotree", "diff",
   "noethervim-notification",
+  "dapui_scopes", "dapui_stacks", "dapui_breakpoints", "dapui_console",
+  "dapui_watches", "dap-repl",
+  "neotest-summary", "neotest-output", "neotest-output-panel",
+  "neotest-attach",
 }
 
 local ok_cfg, user_cfg = pcall(require, "user.config")

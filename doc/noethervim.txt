@@ -259,6 +259,12 @@ man, lazy, mason, checkhealth, undotree, diff, and friends). Editable
 filetypes are excluded on purpose, because `q` there would shadow macro
 recording, so `oil`, `markdown` and the like are left alone.
 
+The debugger and test panels are included: scopes, call stack,
+breakpoints, watches, the REPL and the program console from the debug
+bundle, and the summary, output and attach windows from the test
+bundle. The REPL and the watches panel do take typed expressions, but
+only in insert mode, so `q` costs nothing there beyond macro recording.
+
 To ADD a filetype, set `q_close_filetypes` in `lua/user/config.lua`; see
 |noethervim-user-config-data|. To REMOVE one of the defaults, clear the
 `noethervim_q_close` augroup and re-create the autocmd from
