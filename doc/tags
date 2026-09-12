@@ -20,6 +20,7 @@ noethervim-completion-style	noethervim.txt	/*noethervim-completion-style*
 noethervim-contents	noethervim.txt	/*noethervim-contents*
 noethervim-ctrl-w	noethervim.txt	/*noethervim-ctrl-w*
 noethervim-dashboard	noethervim.txt	/*noethervim-dashboard*
+noethervim-debug	noethervim.txt	/*noethervim-debug*
 noethervim-diagnostic-display	noethervim.txt	/*noethervim-diagnostic-display*
 noethervim-diff	noethervim.txt	/*noethervim-diff*
 noethervim-faq	noethervim.txt	/*noethervim-faq*

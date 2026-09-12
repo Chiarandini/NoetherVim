@@ -1414,6 +1414,77 @@ Running code: ~
     mise, asdf, pyenv, rbenv, nodenv or goenv for the buffer's directory
     before it runs, so a project pinned to an older Python gets that one.
 
+                                                          *noethervim-debug*
+Debugging: ~
+
+    These need the debug bundle (|noethervim-bundles|).
+
+    Six keys drive a session. Each sits on the function key every
+    debugger uses, and each has a `<Leader>d` alias for the keyboards and
+    terminals that cannot deliver one. The alias letters come from gdb:
+    next, step, finish.
+
+    `<F5>`    / `<Leader>dd`   Start a session, or continue a stopped one
+    `<F6>`    / `<Leader>dS`   Restart the session
+    `<S-F5>`  / `<Leader>dT`   Terminate: stop the program, end the session
+    `<F10>`   / `<Leader>dn`   Step over
+    `<F11>`   / `<Leader>ds`   Step into
+    `<S-F11>` / `<Leader>df`   Step out
+
+    The function keys reach the debugger from the REPL and the program's
+    console too, so an expression can be typed into the REPL and the
+    session stepped without leaving the panel. The aliases are normal
+    mode only.
+
+    If a function key does nothing, something upstream of Neovim took it.
+    On macOS they need `fn` held unless "Use F1, F2, etc. as standard
+    function keys" is on, and F11 opens Show Desktop until that shortcut
+    is cleared under Keyboard Shortcuts. `<S-F5>` and `<S-F11>` need a
+    terminal that encodes shifted function keys. The `<Leader>d` aliases
+    run the same six actions and depend on none of it.
+
+    Breakpoints and inspection: ~
+    `<Leader>db`        Toggle a breakpoint on this line
+    `<Leader>dC`        Breakpoint with a condition (prompts for it)
+    `<Leader>dl`        Log point: print a message instead of stopping
+    `<Leader>dc`        Clear every breakpoint
+    `<Leader>dR`        Run to the cursor
+    `<Leader>de`        Evaluate the word under the cursor, or the
+                        Visual selection
+    `<Leader>dE`        Evaluate a typed expression
+    `<Leader>di`        Hover information for the word under the cursor
+    `<Leader>dw`        Add the word under the cursor to Watches
+    `<Leader>dj`        Jump to the frame the session is stopped in
+    `<Leader>dr`        Redraw the inline values shown beside variables
+
+    Session and panels: ~
+    `<Leader>du`        Toggle the debug panels
+    `<C-w><C-d>`        The same toggle, from the window namespace
+    `<Leader>dp`        Pause a running program
+    `<Leader>dt`        Disconnect, leaving the program running
+    `<Leader>dq`        Close the session
+    `<Leader>dg`        Report the session: what is attached, and where
+                        it has stopped
+    `<Leader>dal`       Serve this Neovim on port 8086, to be attached to
+                        from a second instance
+
+    The panels open when a session starts and close when it ends: scopes,
+    watches, call stack and breakpoints down the right side, the REPL and
+    the program's console along the bottom. The line the session stopped
+    on is highlighted, and the frames that called it are shaded behind it.
+
+    Searching debugger state: ~
+    `SearchLeader+Dc`   Commands
+    `SearchLeader+DC`   Configurations
+    `SearchLeader+Db`   Breakpoints
+    `SearchLeader+Dv`   Variables in scope
+    `SearchLeader+Df`   Call stack frames
+
+    Adapters come from the language bundles, so what a buffer can debug
+    depends on which of those are enabled. The debug bundle on its own
+    debugs Lua: run `<Leader>dal` in the instance to be inspected, then
+    pick "Attach to running Neovim instance" from a second one.
+
 Other notable keymaps: ~
 
     Normal: ~
