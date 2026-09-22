@@ -3,6 +3,8 @@
 -- This does NOT build the statusline. It records what `lua/user/config.lua`
 -- asks for -- colours, edge style, extra right-hand components, Busy
 -- overrides -- and the heirline components read it back while rendering.
+-- It also owns the named presets the `<C-w>s` keys switch between, because
+-- `standard` is defined partly by what the user configured here.
 --
 -- The bar itself is built in lua/noethervim/plugins/statusline/: `init.lua`
 -- is the plugin spec, `statuslines.lua` decides which bar each window gets,
@@ -147,6 +149,71 @@ end
 --- `statusline.filetype_profile = true` in `lua/user/config.lua`.
 function M.show_filetype_profile()
   return _opts.filetype_profile == true
+end
+
+-- ── Presets ──────────────────────────────────────────────────────────
+--
+-- A preset is a complete state for every flag that gates a component in
+-- the main bar, so switching to one lands on a known bar rather than on
+-- whatever the individual `<C-w>s` toggles last left behind. That is what
+-- lets coming back need no memory of the way in.
+--
+-- `standard` is the bar a fresh start gives you, so it reads the flags the
+-- user configured rather than restating them. Every other preset is an
+-- override on top of it and inherits the rest, so a preset cannot silently
+-- drop a configured preference.
+--
+-- The keys are the full global names, so grepping `vim.g.heirline_git_show`
+-- still finds every writer.
+
+---@return table<string, boolean>
+local function standard_flags()
+  return {
+    heirline_git_show               = true,
+    heirline_lsp_show               = true,
+    heirline_pdfsize_show           = false,
+    heirline_directory_show         = false,
+    heirline_proj_relative_dir_show = false,
+    -- Seeded from `statusline.filetype_profile`, then owned by `<C-w>sf`.
+    -- A build-time gate would leave the key with nothing to toggle for
+    -- anyone who had not already opted in.
+    heirline_filetype_profile_show  = M.show_filetype_profile(),
+  }
+end
+
+local preset_overrides = {
+  -- Quiet the blocks that have nothing to say about a document being
+  -- compiled, and add the PDF size. `PdfFileSize` gates itself to
+  -- TeX-family filetypes, so that readout stays silent elsewhere.
+  pdf = {
+    heirline_git_show       = false,
+    heirline_lsp_show       = false,
+    heirline_directory_show = false,
+    heirline_pdfsize_show   = true,
+  },
+}
+
+--- Stamp every gated flag with `name`'s values and record it as current.
+---@param name "standard"|"pdf"
+function M.apply_preset(name)
+  local flags = standard_flags()
+  for k, v in pairs(preset_overrides[name] or {}) do flags[k] = v end
+  for k, v in pairs(flags) do vim.g[k] = v end
+  vim.g.heirline_preset = name
+end
+
+--- The preset applied last. The individual toggles deliberately leave this
+--- alone: after `<C-w>s<C-p>`, where going back leads should stay
+--- `standard` even if git has since been switched on by hand.
+---@return string
+function M.current_preset()
+  return vim.g.heirline_preset or "standard"
+end
+
+--- Apply `name`, or return to `standard` when it is already current.
+---@param name "pdf"
+function M.toggle_preset(name)
+  M.apply_preset(M.current_preset() == name and "standard" or name)
 end
 
 --- Returns the handler for clicking the git block in the statusline.

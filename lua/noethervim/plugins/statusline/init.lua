@@ -61,17 +61,10 @@ return {
       ctx.semiCircles[2] = edges.start_right
       ctx.edges = edges
 
-      -- Global toggle state.
-      vim.g.heirline_pdfsize_show = false
-      vim.g.heirline_git_show = true
-      vim.g.heirline_directory_show = false
-      vim.g.heirline_lsp_show = true
-      vim.g.heirline_proj_relative_dir_show = false
-      vim.g.toggle_name_or_project_relative = true
-      -- Seeded from `statusline.filetype_profile`, then owned by `<C-w>sf`.
-      -- A build-time gate would leave the key with nothing to toggle for
-      -- anyone who had not already opted in.
-      vim.g.heirline_filetype_profile_show = nv_sl.show_filetype_profile()
+      -- Global toggle state. The `standard` preset is the definition of
+      -- these seed values, so it lives in noethervim/statusline.lua next to
+      -- the user config it reads and there is only one copy of the list.
+      nv_sl.apply_preset("standard")
 
       -- ── Component modules ────────────────────────────────────
 

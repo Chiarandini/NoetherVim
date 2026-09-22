@@ -32,6 +32,8 @@
 --                               system viewer. <LocalLeader>lv is the other
 --                               half, the live view, and it is what syncs.
 --   <c-w>sp:                    toggle PDF size in statusline
+--   <c-w>s<c-p>:                PDF mode: PDF size on, git and LSP blocks off;
+--                               press again for the standard bar
 --   gd / <C-]>:                 jump to the label under the cursor (\cref, \ref,
 --                               \eqref, ...) via the label cache; <C-]> pushes the
 --                               tag stack so <C-t> returns. Works across subfiles

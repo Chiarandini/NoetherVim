@@ -31,11 +31,19 @@ function M.setup()
     end
   end, { desc = "statusline project directory toggle" })
 
+  -- Pressing this again goes to the `standard` preset, not back to whatever
+  -- was showing beforehand: a named destination needs nothing remembered.
   vim.keymap.set("n", "<c-w>s<c-p>", function()
     vim.api.nvim_exec_autocmds("User", {
-      pattern = "HeirlinePDFModeOn",
+      pattern = "HeirlinePresetPdfToggle",
     })
-  end, { desc = "statusline pdf-mode on" })
+  end, { desc = "statusline pdf-mode toggle" })
+
+  vim.keymap.set("n", "<c-w>s<c-s>", function()
+    vim.api.nvim_exec_autocmds("User", {
+      pattern = "HeirlinePresetStandard",
+    })
+  end, { desc = "statusline reset to standard" })
 end
 
 return M

@@ -1796,7 +1796,12 @@ with the `<C-w>s` prefix:
                         |noethervim-user-config-data|.
     `<C-w>sP`           Split the path: project-relative directory as its
                         own component, bare filename beside it
-    `<C-w>s<C-p>`       Toggle PDF mode
+    `<C-w>s<C-p>`       PDF mode: drop the git and LSP blocks and show the
+                        PDF size, for a bar that stays quiet while a
+                        document compiles. Press it again for the standard
+                        bar.
+    `<C-w>s<C-s>`       Back to the standard bar, whatever the toggles
+                        above have been left at.
 
 Clickable components: ~
 

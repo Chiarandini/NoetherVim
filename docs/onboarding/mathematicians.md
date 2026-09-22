@@ -103,6 +103,9 @@ A couple of NoetherVim-specific extras on top of VimTeX:
   and `yP` treat the PDF as a file and need no viewer configured;
   `<LocalLeader>lv` is the one that drives your viewer and syncs.
 - `<C-w>sp`: toggle whether the PDF size shows in the statusline.
+- `<C-w>s<C-p>`: PDF mode, which does the same and also drops the git and LSP
+  blocks, for a bar that stays quiet while a document compiles. Press it again
+  for the standard bar.
 - `<LocalLeader>vw`: run VimTeX's word count.
 
 ### Math entry via snippets
