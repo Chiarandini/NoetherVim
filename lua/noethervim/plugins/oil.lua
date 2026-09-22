@@ -2,6 +2,8 @@
 -- Open with: <C-w><C-o> (float) or :Oil (replace buffer)
 --
 -- Custom keymaps (in addition to Oil defaults -- press g? inside Oil):
+--   <S-CR>      Apply pending edits. Leaves Oil only from normal mode and
+--               only when nothing needed confirming; otherwise stays put
 --   <C-p>       Preview the entry under the cursor, following the cursor
 --   gd          Toggle detail view (adds permissions to default size + mtime)
 --   gf          Fuzzy find in current directory
@@ -565,6 +567,104 @@ return {
 			keymaps = {
 				["g?"] = { "actions.show_help", mode = "n" },
 				["<CR>"] = "actions.select",
+				-- The finishing variant of the plain key, the shape <S-CR>
+				-- already has in the quickfix window and the browse picker.
+				-- Here it finishes whichever level you are on: from insert
+				-- it ends the edit, committing the name you just typed and
+				-- dropping you into normal mode with the listing still up;
+				-- from normal it ends the session, committing and leaving.
+				--
+				-- Splitting it that way is what makes the insert binding
+				-- safe. Typing is when a stray <S-CR> is likeliest, and it
+				-- is also when the confirmation is likeliest to be waived
+				-- (`skip_confirm_for_simple_edits`, a lone rename), so an
+				-- insert-mode press that closed outright would be an
+				-- unaskable question answered by a twitch. Ending the
+				-- session stays a deliberate second press.
+				--
+				-- Buffer-local, so it shadows smart-enter's *global* insert
+				-- <S-CR> only inside oil, where that key has nothing to
+				-- offer anyway: there is no oil rule, so it falls back to a
+				-- plain newline, which is what <CR> already does here.
+				--
+				-- Leaving insert is not optional even on its own. `oil.save`
+				-- locks every oil buffer (`modifiable = false`) before
+				-- parsing, and the confirmation float wants normal-mode
+				-- `y`/`n`. `stopinsert` inside an insert mapping only takes
+				-- hold once the mapping returns, so the commit waits a tick.
+				--
+				-- Closing is `oil.close`, not `ZZ`. Oil does understand `ZZ`
+				-- (it sniffs the key buffer and quits from inside the save
+				-- callback, correctly sequenced), but what it runs is
+				-- `:quit`, which disposes of the window. For `:Oil` and
+				-- `nvim .` oil replaced a buffer in a window that was
+				-- already there, so the window is not oil's to take.
+				-- `oil.close` is what <C-c> here already means: put the
+				-- window back to whatever it held before. Ending the session
+				-- is left to `exit_if_last_buf`, which only bites when oil
+				-- really is the sole buffer and there is nothing to go back
+				-- to; a blank buffer is not what "leave" meant.
+				["<S-CR>"] = {
+					desc = "apply changes; from normal, also leave Oil",
+					mode = { "n", "i" },
+					callback = function()
+						local oil = require("oil")
+						-- Decided before `stopinsert`, which would otherwise
+						-- make every press look like it came from normal.
+						local leave = vim.fn.mode():sub(1, 1) ~= "i"
+
+						local function commit()
+							-- Oil stamps its confirmation buffer with this
+							-- filetype and nothing else does (the <C-p>
+							-- preview marks windows and buffers with vars
+							-- instead), so this fires exactly when you were
+							-- asked a question.
+							local asked = false
+							local probe = vim.api.nvim_create_autocmd("FileType", {
+								pattern  = "oil_preview",
+								once     = true,
+								callback = function() asked = true end,
+							})
+
+							oil.save({}, function(err)
+								pcall(vim.api.nvim_del_autocmd, probe)
+								if err then
+									-- Canceling the confirmation is an
+									-- ordinary outcome; the oil buffer
+									-- stays up, unsaved.
+									if err ~= "Canceled" then
+										vim.notify(err, vim.log.levels.ERROR)
+									end
+									return
+								end
+								-- A dialog changes what the press meant. You
+								-- reached for "commit and go", were stopped
+								-- and asked something, and answered it; going
+								-- as well would be a second consequence
+								-- arriving from a keystroke made before the
+								-- question existed. Deletes always ask (oil
+								-- never counts them as simple), and a deletion
+								-- is precisely when you want the listing back
+								-- to see the row gone. So leave only on a
+								-- commit that passed unquestioned; otherwise
+								-- the second press does it.
+								if not leave or asked then return end
+								-- One tick after the post-apply rerender, so
+								-- the buffer is not deleted mid-render.
+								vim.schedule(function()
+									oil.close({ exit_if_last_buf = true })
+								end)
+							end)
+						end
+
+						if leave then
+							commit()
+						else
+							vim.cmd("stopinsert")
+							vim.schedule(commit)
+						end
+					end,
+				},
 				["<C-s>"] = { "actions.select", opts = { vertical = true } },
 				["<C-h>"] = {},
 				["<C-l>"] = {},

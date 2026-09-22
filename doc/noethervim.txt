@@ -1717,6 +1717,33 @@ These keymaps activate only in their respective filetype, except for the
 
     oil (file explorer, `<C-w><C-o>` or `:Oil`): ~
     `g?`                Show all Oil keymaps (including defaults)
+    `<S-CR>`            Finish what you are in the middle of. From insert
+                        mode it applies the pending edits and returns you
+                        to normal mode with the listing still open, so the
+                        name you just typed is committed without reaching
+                        for `<Esc>`. From normal mode it applies them and
+                        leaves Oil: the window returns to what it held
+                        before Oil opened, or Neovim exits if Oil was the
+                        only buffer. Renaming and then leaving is therefore
+                        `<S-CR>` twice.
+                        Anything that raised a confirmation keeps the
+                        listing open once you have answered it, so a
+                        deletion leaves you looking at the result rather
+                        than somewhere else; press `<S-CR>` again to go.
+                        The confirmation itself is the one `:w` would show
+    Note: to go without the confirmation on small edits, set
+    `skip_confirm_for_simple_edits` in a user override for oil. Open
+    NoetherVim's `plugins/oil.lua` and run `:NoetherVim override`, or write
+    `lua/user/plugins/oil.lua` yourself: >lua
+        return {
+          "stevearc/oil.nvim",
+          opts = { skip_confirm_for_simple_edits = true },
+        }
+<
+    Deletes always ask, as do more than one rename, more than one copy, and
+    more than five new files. The setting reaches every Oil write, `:w`
+    included, not just `<S-CR>`.
+
     `<C-p>`             Preview the entry under the cursor in a split, and
                         keep it in step as you move. Press it again to
                         close. The split side follows the window shape;
