@@ -1703,6 +1703,17 @@ These keymaps activate only in their respective filetype, except for the
                        auto-compile for the project; the next manual
                        compile re-arms it. `:VimtexStopAll` does the
                        same for every open project
+    Note: SearchLeader+t lists this file's headings in a picker (markdown
+    and org files too). To list your own sectioning commands, give each a
+    depth in a user override: >lua
+        -- lua/user/plugins/cached-headings.lua
+        return {
+          "Chiarandini/snacks-cached-headings.nvim",
+          opts = { latex_headings = { bonussection = 3 } },
+        }
+<
+    Depth 3 lists `\bonussection` level with `\section`; the plugin's help,
+    |snacks-cached-headings-custom|, covers the rest.
 
     markdown: ~
     `<S-CR>`            Smart newline in lists (insert)

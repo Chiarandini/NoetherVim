@@ -1,9 +1,10 @@
 -- NoetherVim plugin: Cached Headings (snacks)
 --
 -- Headings picker for tex / markdown / org files. Uses Snacks.picker as the
--- UI; cache/parser/latex helpers all come from latex-nav-core. The plugin
--- registers its own user commands during setup() -- see the upstream readme
--- for the full surface (`:SnacksCachedHeadings`, `:CachedHeadings update|wipe`).
+-- UI; cache/parser/latex helpers all come from latex-nav-core. The plugin's
+-- plugin/ file registers `:SnacksCachedHeadings` and `:CachedHeadings
+-- update|wipe` when lazy loads it; setup() only sets options. Custom LaTeX
+-- heading commands go in `latex_headings`: `:h snacks-cached-headings-custom`.
 
 local SearchLeader = require("noethervim.util").search_leader
 
