@@ -171,6 +171,15 @@ local function body_snippet(filepath, lnum)
   return snippet
 end
 
+---Custom heading commands set in snacks-cached-headings' `latex_headings`,
+---so this breadcrumb and the headings picker agree on what a heading is.
+---Requiring the module makes lazy.nvim load the plugin, so its opts apply.
+---@return table<string, integer|false>|nil
+local function custom_latex_headings()
+  local ok, config = pcall(require, "snacks_cached_headings.config")
+  return ok and config.get().latex_headings or nil
+end
+
 ---Sectioning headings (part/chapter/section/...) in `filepath` at or above
 ---line `stop`, in document order.
 ---@param filepath string
@@ -179,8 +188,9 @@ end
 local function headings_above(filepath, stop)
   local ok, parser = pcall(require, "latex_nav_core.cached_headings.parser")
   if not ok then return {} end
+  local opts = { include_starred = true, latex_headings = custom_latex_headings() }
   local out = {}
-  for _, h in ipairs(parser.scan_file(filepath, "tex", { include_starred = true })) do
+  for _, h in ipairs(parser.scan_file(filepath, "tex", opts)) do
     if h.line > stop then break end
     table.insert(out, h)
   end
@@ -242,18 +252,21 @@ function M.documentation(entry)
     local stop = (i == #files) and entry.line or include_line(file, files[i + 1])
     if stop then
       for _, h in ipairs(headings_above(file, stop)) do
+        for lvl in pairs(chain) do
+          if lvl > h.level then chain[lvl] = nil end
+        end
         chain[h.level] = h
-        for lvl = h.level + 1, 5 do chain[lvl] = nil end
       end
     end
   end
 
+  -- Custom depths can be sparse or past 5, so walk the levels present.
+  local levels = vim.tbl_keys(chain)
+  table.sort(levels)
   local parts = {}
-  for lvl = 1, 5 do
+  for _, lvl in ipairs(levels) do
     local h = chain[lvl]
-    if h then
-      table.insert(parts, h.kind:sub(1, 1):upper() .. h.kind:sub(2) .. ": " .. h.title)
-    end
+    table.insert(parts, h.kind:sub(1, 1):upper() .. h.kind:sub(2) .. ": " .. h.title)
   end
 
   local body = body_snippet(entry.filename, entry.line)

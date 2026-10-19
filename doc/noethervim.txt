@@ -1712,8 +1712,10 @@ These keymaps activate only in their respective filetype, except for the
           opts = { latex_headings = { bonussection = 3 } },
         }
 <
-    Depth 3 lists `\bonussection` level with `\section`; the plugin's help,
-    |snacks-cached-headings-custom|, covers the rest.
+    Depth 3 lists `\bonussection` level with `\section`. The same table
+    decides which section the preview names while you complete a `\ref`
+    label. The plugin's help, |snacks-cached-headings-custom|, covers the
+    rest.
 
     markdown: ~
     `<S-CR>`            Smart newline in lists (insert)
