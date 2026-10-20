@@ -15,6 +15,11 @@
 --   gZ          Unzip .zip entry (normal) or selected .zip entries (visual)
 --   g. Toggle hidden files
 --   g\          Toggle trash
+--   gm          Select mode: mark scattered entries, then act on them
+--               together (<Space> toggle, y copy, d cut, D trash,
+--               c rename by s/pat/rep/, <Esc> leave). Y, gz and gZ also act
+--               on the selection. See
+--               noethervim.util.oil_select
 --   Y           Copy file(s) to the system clipboard. Normal yanks the
 --               entry under the cursor; visual yanks every selected entry,
 --               skipping "../" and unsaved lines.
@@ -186,7 +191,8 @@ local function yank_entry(reg, mods)
 	end
 end
 
--- Copy the visual-selection entries to the macOS system clipboard as proper
+-- Copy several entries (a visual range or a select-mode selection) to the
+-- macOS system clipboard as proper
 -- Finder file references. Oil's upstream copy_to_system_clipboard refuses
 -- multi-file visual mode on macOS because its AppleScript hardcodes
 -- `first item of args`; even if we bypass that with writeObjects: over
@@ -209,21 +215,10 @@ function run(argv) {
 }
 ]]
 
-local function mac_copy_visual_selection()
-	local oil = require("oil")
-	local dir = oil.get_current_dir()
-	if not dir then return end
-
+---@param targets noethervim.oil_select.Target[]
+local function mac_copy_paths(targets)
 	local paths = {}
-	local s, e = vim.fn.line("v"), vim.fn.line(".")
-	if s > e then s, e = e, s end
-	for lnum = s, e do
-		local entry = oil.get_entry_on_line(0, lnum)
-		if entry and entry.id and entry.id ~= 0 then
-			table.insert(paths, dir .. entry.name)
-		end
-	end
-	vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
+	for _, t in ipairs(targets) do table.insert(paths, t.path) end
 
 	if #paths == 0 then
 		vim.notify("Oil: no files to copy", vim.log.levels.WARN)
@@ -245,31 +240,13 @@ local function mac_copy_visual_selection()
 	end)
 end
 
--- Collect entry basenames from the current oil buffer. In visual mode, returns
--- every selected entry (skipping "../" and unsaved lines); in normal mode,
--- returns just the entry under the cursor. Returns (dir, names).
+-- Collect entry basenames from the current oil buffer: the select-mode
+-- selection, else every entry in the visual range, else the entry under the
+-- cursor, skipping "../" and unsaved lines (see oil_select.targets).
+-- Returns (dir, names).
 local function collect_entries()
-	local oil = require("oil")
-	local dir = oil.get_current_dir()
-	if not dir then return nil, {} end
-	local names = {}
-	if vim.fn.mode():match("^[vV\22]") then
-		local s, e = vim.fn.line("v"), vim.fn.line(".")
-		if s > e then s, e = e, s end
-		for line = s, e do
-			local entry = oil.get_entry_on_line(0, line)
-			if entry and entry.id and entry.id ~= 0 then
-				table.insert(names, entry.name)
-			end
-		end
-		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
-	else
-		local entry = oil.get_cursor_entry()
-		if entry and entry.id and entry.id ~= 0 then
-			table.insert(names, entry.name)
-		end
-	end
-	return dir, names
+	local dir, targets = require("noethervim.util.oil_select").targets()
+	return dir, vim.tbl_map(function(t) return t.name end, targets)
 end
 
 -- Zip entries under cursor / in visual selection to a .zip in the current oil
@@ -738,6 +715,13 @@ return {
 					desc = "second pane beside this one (dual-pane)",
 					callback = function() require("noethervim.util.oil_dual").open() end,
 				},
+				-- `m` for mark. Off SearchLeader on purpose: the mode changes
+				-- what `y` and `d` mean, and SearchLeader is side-effect free.
+				["gm"] = {
+					desc = "select mode: toggle entry (or visual range)",
+					mode = { "n", "x" },
+					callback = function() require("noethervim.util.oil_select").enter() end,
+				},
 				["g."] = { "actions.toggle_hidden", mode = "n" },
 				["g\\"] = { "actions.toggle_trash", mode = "n" },
 				["yp"] = { desc = "yank full path",           mode = "n", callback = yank_entry("",  nil)  },
@@ -750,9 +734,16 @@ return {
 					desc = "copy file(s) to system clipboard",
 					mode = { "n", "x" },
 					callback = function()
-						local is_visual = vim.fn.mode():match("^[vV\22]")
-						if is_visual and vim.fn.has("macunix") == 1 then
-							mac_copy_visual_selection()
+						local select = require("noethervim.util.oil_select")
+						local several = select.is_active() or vim.fn.mode():match("^[vV\22]") ~= nil
+						if several and vim.fn.has("macunix") == 1 then
+							local _, targets = select.targets()
+							mac_copy_paths(targets)
+						elseif select.is_active() then
+							-- Oil's Linux copy reads a visual range or the
+							-- cursor; it has no way to take scattered entries.
+							vim.notify("Oil: copying a selection to the clipboard is macOS-only",
+								vim.log.levels.WARN)
 						else
 							require("oil.clipboard").copy_to_system_clipboard()
 						end
