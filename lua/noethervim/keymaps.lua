@@ -35,6 +35,11 @@ vim.keymap.set("i", "<C-=>",   "<C-r>=",     { desc = "expression register" })
 -- described on `arrow_or_motion` below, which is why that one uses feedkeys;
 -- this is the same fix. Invoking the mapping consumes the count, so what
 -- feedkeys queues carries exactly the one we build.
+--
+-- Inserted at the front of the typeahead (`i`), not appended. Keys already
+-- waiting (the rest of a macro, a `:normal` string, typing that outran a
+-- busy editor) belong after the motion; appended, they ran first, so a
+-- macro `jdd` deleted the line it started on and moved afterwards.
 local function vline_move(key)
   return function()
     local n = vim.v.count
@@ -46,7 +51,7 @@ local function vline_move(key)
     else
       keys = "g" .. key            -- single visual-line hop
     end
-    vim.api.nvim_feedkeys(keys, "n", false)
+    vim.api.nvim_feedkeys(keys, "ni", false)
   end
 end
 vim.keymap.set("n", "j", vline_move("j"),
@@ -161,13 +166,14 @@ local sr = require("noethervim.util.smart_resize")
 -- then collides with the count baked into vline_move's expr return
 -- ("5gj"), making the j/k remap fire with a doubled count (1<Down> → 11
 -- lines, 2<Down> → 21 lines). Feedkeys queues the keys after our
--- callback returns, with no pending count from our side.
+-- callback returns, with no pending count from our side. At the front of
+-- the typeahead (`i`), for the reason given on vline_move above.
 local function arrow_or_motion(motion, resize_fn)
   return function()
     if sr.is_solo() then
       local count = vim.v.count
       local keys = (count > 0 and tostring(count) or "") .. motion
-      vim.api.nvim_feedkeys(keys, "m", false)
+      vim.api.nvim_feedkeys(keys, "mi", false)
     else
       resize_fn()
     end
