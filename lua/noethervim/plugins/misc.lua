@@ -73,6 +73,4 @@ return {
 			vim.keymap.set("n", "<C-w>=",  cmd("WindowsEqualize"))
 		end,
 	},
-
-	{ "nvzone/volt", lazy = true }, -- UI primitive used by popupmenu and nvim-utils/wrapped.nvim
 }

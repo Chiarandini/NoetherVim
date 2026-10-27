@@ -282,10 +282,6 @@ map("]ow", "<cmd>setlocal nowrap<cr>",         "no wrap")
 map("[ox", "<cmd>setlocal cursorline cursorcolumn<cr>",    "crosshair")
 map("]ox", "<cmd>setlocal nocursorline nocursorcolumn<cr>","no crosshair")
 
--- Illuminate (variable highlight)
-map("[oI", "<cmd>IlluminateResumeBuf<cr>",  "illuminate on")
-map("]oI", "<cmd>IlluminatePauseBuf<cr>",   "illuminate off")
-
 -- Window auto-width animation
 map("[oW", '<cmd>WindowsEnableAutowidth<cr>',  "animated windows")
 map("]oW", '<cmd>WindowsDisableAutowidth<cr>', "static windows")
