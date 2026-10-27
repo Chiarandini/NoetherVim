@@ -155,10 +155,11 @@ fire where they make sense.
 
 ### Preamble
 
-At the start of a line above `\begin{document}`, type `@` for a menu of the
-`.tex` fragments it can find. Nothing ships in it. A fragment is any `.tex`
-file in one of the preamble folders, and its first `%` comment line becomes
-the description shown in the menu:
+A preamble is built from fragments: `.tex` files in a preamble folder, each
+holding one piece. At the start of a line in a preamble, type `@` for a menu
+of the fragments it can find, or run `:NoetherTexFragment`. Nothing ships. A
+fragment is any `.tex` file in one of the preamble folders, and its first
+comment line becomes the description shown in the menu:
 
 ```tex
 % Standard mathematics packages
@@ -166,24 +167,35 @@ the description shown in the menu:
 \usepackage{cleveref}
 ```
 
-Saved as `preamble/packages.tex`, that appears as `packages` the next time `@`
-is typed.
+Saved as `preamble/packages.tex` in your config directory, that appears as
+`packages` the next time `@` is typed.
 
 Two folders are searched. `preamble` beside or above the document is the
 project's own, and accepting a fragment from it writes `\input{...}`, so a
 book's chapters share one file. `preamble/` inside your config directory is
-your library, and accepting from it inserts the contents, because an `\input`
-naming a path on your own machine stops compiling the moment the `.tex`
-reaches a co-author. The menu labels each item with which one it came from.
+your library. A document never references the library, because a path on
+your own machine stops compiling the moment the `.tex` reaches a co-author:
+accepting copies the fragment into the project's `preamble/` and writes
+`\input{preamble/packages}`. `:NoetherTexFragment!` pastes it inline instead,
+between two `% preamble:` marker lines, for a single self-contained file.
 
-`:checkhealth noethervim-tex` reports the folders it resolved and how many
-fragments each holds. Point the library elsewhere with an `opts` override:
+A template puts fragments together into the start of a whole document. Save
+one in `preamble/templates/`, with an `\input{name}` line per fragment and
+`<<title>>`-style placeholders, and `:NoetherTexNew` fills an empty buffer
+from it. `:checkhealth noethervim-tex` reports what each folder holds, and
+`:h noethervim-tex-templates` has the format.
+
+Point the library elsewhere, or paste inline by default, with an `opts`
+override:
 
 ```lua
 -- ~/.config/nvim/lua/user/plugins/noethervim-tex.lua
 return {
     { "Chiarandini/NoetherVim-tex",
-      opts = { preamble = { folders = { "preamble", "~/Documents/LaTeX/preamble" } } },
+      opts = { preamble = {
+          folders = { "preamble", "~/Documents/LaTeX/preamble" },
+          mode = "inline",
+      } },
     },
 }
 ```
@@ -325,14 +337,14 @@ vim.keymap.set("n", "<LocalLeader>c", "<Plug>(vimtex-compile)",
     { desc = "Compile (custom)" })
 ```
 
-**Point the preamble picker somewhere else,** if you keep shared macros
+**Point the preamble library somewhere else,** if you keep shared macros
 outside your config directory:
 
 ```lua
 -- ~/.config/nvim/lua/user/plugins/noethervim-tex.lua
 return {
     { "Chiarandini/NoetherVim-tex",
-      opts = { preamble_folder = "~/Documents/LaTeX/preamble/" },
+      opts = { preamble = { folders = { "preamble", "~/Documents/LaTeX/preamble" } } },
     },
 }
 ```

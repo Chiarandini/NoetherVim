@@ -626,10 +626,13 @@ return {
       -- See https://nathanaelsrawley.com/noethervim/guides/latex-setup/
       -- snippets            = { conventions = false, acronyms = false },
       --
-      -- Where `@` looks for preamble fragments, searched in order. A relative
-      -- entry is found by walking up from the document and is referenced with
-      -- \input; an absolute one is your library and is inserted inline.
-      -- preamble            = { folders = { "preamble", vim.fn.stdpath("config") .. "/preamble/" } },
+      -- Preamble fragments and templates (`@`, :NoetherTexFragment,
+      -- :NoetherTexNew). A relative folder is the project's, found by walking
+      -- up from the document and referenced with \input; an absolute one is
+      -- your library, whose fragments are copied into the project ("vendor")
+      -- or pasted between marker lines ("inline").
+      -- preamble            = { folders = { "preamble", vim.fn.stdpath("config") .. "/preamble/" },
+      --                         mode = "vendor", vars = { author = "A. Name" } },
       -- extra_snippet_paths = {},
       -- textobjects         = true,
       -- accent_spell        = { enabled = true, severity = vim.diagnostic.severity.INFO },

@@ -928,9 +928,9 @@ Move the cursor onto an equation's line to see the source again, unless
 Configuring noethervim-tex (latex bundle): ~
 
 The `latex` bundle includes `noethervim-tex`, which provides LaTeX snippets,
-treesitter navigation, preamble and figure completion sources, theorem-tag
-colouring, and a spell dictionary of common mathematical terms. Configure it
-via opts override in `user/plugins/`: >lua
+treesitter navigation, preamble fragments and templates, figure completion,
+theorem-tag coloring, and a spell dictionary of common mathematical terms.
+Configure it via opts override in `user/plugins/`: >lua
     { "Chiarandini/NoetherVim-tex", opts = {
         -- Both off by default: `conventions` needs preamble declarations
         -- yours may not have, `acronyms` is one writer's vocabulary.
@@ -1678,7 +1678,8 @@ These keymaps activate only in their respective filetype, except for the
     `<LocalLeader>P`    Paste an image from the clipboard as a figure
     `<C-S-c>`           Citation from a .bib file (insert)
     `@`                 Preamble fragment completion, at the start of a
-                       line above `\begin{document}`
+                       line in a preamble; `:NoetherTexNew` starts an
+                       empty buffer from a template
     `]g` `[g`           Next / previous theorem environment; `]p` `[p`
                        for proofs, `]x` `[x` for examples, and `]P` `]X`
                        for their `\end`
