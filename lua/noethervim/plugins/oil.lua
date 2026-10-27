@@ -88,6 +88,12 @@ local function decorate_oil_buffer(bufnr)
 	local gen = (decorate_gen[bufnr] or 0) + 1
 	decorate_gen[bufnr] = gen
 
+	-- The detail view (`gd`) shows size and mtime as real columns.
+	for _, col in ipairs(require("oil.config").columns) do
+		local name = type(col) == "table" and col[1] or col
+		if name == "size" or name == "mtime" then return end
+	end
+
 	local uv    = vim.uv or vim.loop
 	local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
 
