@@ -97,15 +97,15 @@ local SearchResults = {
   { provider = " " }, -- separator after, if section is active
 }
 
--- Oil select mode (noethervim.util.oil_select), which publishes its count
+-- Oil select mode (oil-extras), which publishes its count
 -- in a buffer variable so the statusline need not load the module. Ahead of
 -- the search count: while it is on, `<Space>`, `y` and `d` mean something
 -- else, and the chip is what says so.
 local OilSelect = {
   condition = function()
-    return vim.b.noethervim_oil_select ~= nil
+    return vim.b.oil_extras_select ~= nil
   end,
-  { provider = function() return chip(("SEL %d"):format(vim.b.noethervim_oil_select)) end },
+  { provider = function() return chip(("SEL %d"):format(vim.b.oil_extras_select)) end },
   { provider = " " },
 }
 
@@ -141,7 +141,7 @@ M.ViMode = {
     if has_luasnip and luasnip.jumpable() then
       return ctx.colors.light_green
     end
-    if vim.b.noethervim_oil_select then mode = "V" end
+    if vim.b.oil_extras_select then mode = "V" end
     return ctx.mode_colors[mode]
   end, {
     hl = function(self)
@@ -150,7 +150,7 @@ M.ViMode = {
       if has_luasnip and luasnip.jumpable() then
         return { bg = ctx.colors.light_green, fg = ctx.colors.dark_green, bold = true }
       end
-      if vim.b.noethervim_oil_select then mode = "V" end
+      if vim.b.oil_extras_select then mode = "V" end
       return { bg = ctx.mode_colors[mode], fg = ctx.colors.dark_green, bold = true }
     end,
     fallthrough = false, -- stop at first child that evaluates to true

@@ -18,38 +18,6 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
--- Oil floating-window navigation:
---   <c-h>/<c-l>  → jump to the other Oil float (dual-pane mode)
--- Only activates when Oil opens inside a floating window. Oil buffers are
--- editable, so there is no q-to-close (oil's own close keymaps apply).
-vim.api.nvim_create_autocmd("FileType", {
-  group = vim.api.nvim_create_augroup("noethervim_oil_float", { clear = true }),
-  pattern = "oil",
-  callback = function(ev)
-    local win = vim.api.nvim_get_current_win()
-    if vim.api.nvim_win_get_config(win).relative == "" then return end
-
-    local function other_oil_float()
-      for _, w in ipairs(vim.api.nvim_list_wins()) do
-        if w ~= win and vim.api.nvim_win_get_config(w).relative ~= "" then
-          local buf = vim.api.nvim_win_get_buf(w)
-          if vim.bo[buf].filetype == "oil" then return w end
-        end
-      end
-    end
-
-    local opts = { buffer = ev.buf, nowait = true, silent = true }
-    vim.keymap.set("n", "<c-h>", function()
-      local other = other_oil_float()
-      if other then vim.api.nvim_set_current_win(other) end
-    end, vim.tbl_extend("force", opts, { desc = "go to other Oil pane" }))
-    vim.keymap.set("n", "<c-l>", function()
-      local other = other_oil_float()
-      if other then vim.api.nvim_set_current_win(other) end
-    end, vim.tbl_extend("force", opts, { desc = "go to other Oil pane" }))
-  end,
-})
-
 -- ──────────────────────────────────────────────────────────────
 --  Auto-disable diff mode when a diff buffer is no longer visible.
 --  Closing one half of a `:diffthis` pair (or `:Gdiff`, gitsigns'

@@ -278,7 +278,6 @@ Core augroups (clear any of these to disable or replace the feature): ~
     `noethervim_autoread`     reload buffers when focus or edits change
     `noethervim_term`         terminal window tweaks (no numbers, scrolloff)
     `noethervim_diff_cleanup` auto diffoff when a diff half closes
-    `noethervim_oil_float`    Oil dual-pane navigation
 
                                                  *noethervim-filetype-profiles*
 Filetype profiles (writing and code): ~
@@ -1803,7 +1802,7 @@ Select mode in Oil: ~
                                                      *noethervim-oil-select*
     `gm` marks the entry under the cursor and turns select mode on; from
     visual mode it marks the whole range. Marked rows are highlighted
-    (`NoetherVimOilSelected`, linked to `Visual`) and the statusline chip
+    (`OilExtrasSelected`, linked to `Visual`) and the statusline chip
     reads `SEL` with the count. While it is on:
 
     `<Space>`           Mark or unmark the entry under the cursor. Over a
@@ -1835,8 +1834,17 @@ Select mode in Oil: ~
     entries from both.
 
     While select mode is on, `<Space>` is the toggle, so SearchLeader
-    mappings wait until you leave. To enter it from another key as well,
-    or to change the keys inside it, add a user override for oil: >lua
+    mappings wait until you leave. Select mode, dual pane, the entry picker
+    and the size and mtime text come from oil-extras, whose reference is
+    `:h oil-extras`. To change the keys inside select mode, override its
+    options: >lua
+        return {
+          "Chiarandini/oil-extras.nvim",
+          opts = { select = { keys = { rename = "R" } } },
+        }
+<
+    To enter select mode from another key as well, add it to Oil's
+    keymaps: >lua
         return {
           "stevearc/oil.nvim",
           opts = {
@@ -1844,9 +1852,7 @@ Select mode in Oil: ~
               ["<Space><Space>"] = {
                 desc = "select mode",
                 callback = function()
-                  require("noethervim.util.oil_select").enter({
-                    keys = { rename = "R" },  -- toggle, yank, cut,
-                  })                          -- trash, rename, leave
+                  require("oil_extras.select").enter()
                 end,
               },
             },

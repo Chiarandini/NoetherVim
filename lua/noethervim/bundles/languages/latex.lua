@@ -715,7 +715,7 @@ return {
   -- LaTeX-specific Oil keymaps -- open the .tex (gt) or .pdf (gP) file in the
   -- current Oil directory, or show a picker if there are multiple.
   --
-  -- `gt` is `noethervim.util.oil_pick` narrowed to .tex, so it inherits that
+  -- `gt` is oil-extras' entry picker narrowed to .tex, so it inherits that
   -- picker's two keys: <CR> opens the file exactly as <CR> on the Oil line
   -- would, <S-CR> only lands the Oil cursor on it. Opening goes through
   -- oil.select(), which is what keeps the float case -- close the float,
@@ -729,7 +729,7 @@ return {
           callback = function()
             local dir = require("oil").get_current_dir()
             if not dir then return end
-            require("noethervim.util.oil_pick").pick({
+            require("oil_extras.pick").pick({
               filter      = function(entry) return entry.name:match("%.tex$") ~= nil end,
               title       = "Select .tex file",
               empty       = "No .tex files in " .. dir,

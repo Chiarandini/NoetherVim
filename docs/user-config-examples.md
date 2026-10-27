@@ -166,9 +166,9 @@ without opening it, so you can act on it with the usual Oil keys.
 `<S-CR>` needs a terminal that distinguishes it from `<CR>` (the kitty
 keyboard protocol) — the same requirement as the `browse` picker.
 
-The picker itself ships with the distribution -- `gt` in the latex bundle is
-the same one, narrowed to `.tex` files -- so the override is a keymap and a
-call:
+The picker comes from oil-extras, which NoetherVim installs alongside Oil
+(`gt` in the latex bundle is the same picker, narrowed to `.tex` files), so
+the override is a keymap and a call:
 
 ```lua
 -- ~/.config/nvim/lua/user/plugins/oil-fuzzy.lua
@@ -176,7 +176,7 @@ vim.api.nvim_create_autocmd("FileType", {
     pattern = "oil",
     callback = function(args)
         vim.keymap.set("n", "/", function()
-            require("noethervim.util.oil_pick").pick()
+            require("oil_extras.pick").pick()
         end, {
             buffer = args.buf,
             desc = "fuzzy-find entries in this dir",
