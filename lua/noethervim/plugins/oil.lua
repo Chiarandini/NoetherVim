@@ -27,7 +27,7 @@
 --   Yp / Yd / Yn   Same, but straight to the system clipboard (+)
 
 -- Columns: only `icon` by default. Size/mtime metadata is rendered as
--- virt_text via the `User OilEnter` handler below, NOT as real oil
+-- virt_text by the decorator below, NOT as real oil
 -- columns. Why: real columns with `require_stat = true` make oil block
 -- on `cb_collect(#entries, ...)` for every fs_stat before rendering
 -- (see oil.nvim:adapters/files.lua:484). That visible "buffer empty for
@@ -43,11 +43,12 @@ local detail_columns  = { "icon", "permissions", "size", "mtime" }
 local detail = false
 
 -- ── Async virt_text metadata ──────────────────────────────────────────
--- Render size + mtime as eol virt_text on each oil row. We listen to
--- `User OilEnter` (fired by oil after every render -- entry, refresh,
--- toggle hidden, change sort) and async-stat each visible entry. The
--- buffer is already on screen by then; extmarks paint in as the stat
--- callbacks resolve. No render is blocked.
+-- Render size + mtime as eol virt_text on each oil row, async-statting
+-- each visible entry after the buffer is on screen; extmarks paint in as
+-- the stat callbacks resolve, so no render is blocked. `User OilEnter`
+-- fires only on a buffer's first render, while every later render (the
+-- watcher, a save, `g.`, `gs`) replaces all lines and invalidates the
+-- marks, so `config` below also repaints on line changes.
 local meta_ns = vim.api.nvim_create_namespace("noethervim.oil.meta")
 
 local function format_size(bytes)
@@ -70,12 +71,11 @@ local function format_mtime(sec)
 	return os.date("%b %d %H:%M", sec)
 end
 
--- Per-session stat cache. fs_stat is fast, but oil refires OilEnter on
--- every change-sort / toggle-hidden / cd, so caching saves a pile of
--- redundant calls. Keyed by absolute path; invalidated on directory
--- mutation by oil's own refresh, which renames buffers and changes
--- listings -- stale entries can't surface that way.
-local stat_cache = {}
+-- Per-buffer pass counter: a pass whose stats resolve after a newer
+-- render has started must not paint onto the new lines. No stat cache:
+-- one would serve stale size/mtime after a file changes, and a full
+-- uncached pass over 2000 entries measured 5ms.
+local decorate_gen = {}
 
 local function decorate_oil_buffer(bufnr)
 	if not vim.api.nvim_buf_is_valid(bufnr) then return end
@@ -85,6 +85,8 @@ local function decorate_oil_buffer(bufnr)
 	if not dir then return end
 
 	vim.api.nvim_buf_clear_namespace(bufnr, meta_ns, 0, -1)
+	local gen = (decorate_gen[bufnr] or 0) + 1
+	decorate_gen[bufnr] = gen
 
 	local uv    = vim.uv or vim.loop
 	local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
@@ -115,6 +117,7 @@ local function decorate_oil_buffer(bufnr)
 			local function paint(stat)
 				if not stat then return end
 				if not vim.api.nvim_buf_is_valid(bufnr) then return end
+				if decorate_gen[bufnr] ~= gen then return end
 				local size_txt  = (stat.type == "directory") and "      " or format_size(stat.size)
 				local mtime_txt = format_mtime(stat.mtime and stat.mtime.sec)
 				local text      = lead_pad .. size_txt .. "  " .. mtime_txt
@@ -126,17 +129,9 @@ local function decorate_oil_buffer(bufnr)
 				})
 			end
 
-			local cached = stat_cache[path]
-			if cached then
-				paint(cached)
-			else
-				uv.fs_stat(path, vim.schedule_wrap(function(err, stat)
-					if not err and stat then
-						stat_cache[path] = stat
-						paint(stat)
-					end
-				end))
-			end
+			uv.fs_stat(path, vim.schedule_wrap(function(err, stat)
+				if not err then paint(stat) end
+			end))
 		end
 	end
 end
@@ -303,7 +298,6 @@ local function zip_entries()
 							"Zipped %d entr%s → %s",
 							#names, #names == 1 and "y" or "ies", archive
 						))
-						require("oil.actions").refresh.callback()
 					else
 						vim.notify("Oil: zip failed (exit " .. code .. ")", vim.log.levels.ERROR)
 					end
@@ -367,7 +361,6 @@ local function unzip_entries()
 						vim.log.levels.ERROR
 					)
 				end
-				require("oil.actions").refresh.callback()
 			end)
 		end
 
@@ -403,8 +396,8 @@ return {
 		-- runtime plugins like netrw load. We:
 		--   1. Disable netrw early (same effect as oil's setup would have
 		--      had, just hoisted up so it's in place before netrw's plugin
-		--      file is sourced). Stays scoped to oil's spec -- remove the
-		--      oil bundle and netrw is back.
+		--      file is sourced). Stays scoped to oil's spec: disable oil and
+		--      netrw is back.
 		--   2. Register a one-shot BufAdd that pulls oil in the moment a
 		--      directory buffer is created. This covers `nvim .`, `:e dir/`,
 		--      session-restored directory buffers, anything. After the first
@@ -540,7 +533,7 @@ return {
 				autosave_changes = false,
 			},
 			constrain_cursor = "editable",
-			watch_for_changes = false,
+			watch_for_changes = true,
 			keymaps = {
 				["g?"] = { "actions.show_help", mode = "n" },
 				["<CR>"] = "actions.select",
@@ -769,7 +762,6 @@ return {
 						local link_name = vim.fn.input("Symlink name: ")
 						if link_name == "" then return end
 						vim.fn.system({ "ln", "-s", target, dir .. link_name })
-						require("oil.actions").refresh.callback()
 					end,
 				},
 			},
@@ -835,17 +827,51 @@ return {
 		},
 		config = function(_, opts)
 			require("oil").setup(opts)
-			-- Async metadata decoration: paint size/mtime as virt_text after
-			-- every oil render. `User OilEnter` fires once the buffer is ready
-			-- (see oil.nvim:view.lua:572). Wrapped in vim.schedule so the
-			-- decoration walk runs one tick later -- the buffer is already
-			-- visible by then, so stats trickle in without blocking.
+			local group = vim.api.nvim_create_augroup("noethervim_oil_meta", { clear = true })
+
+			-- Repaint size/mtime after every render. OilEnter covers the first
+			-- one (oil.nvim:view.lua:572); a line watch covers the rest. One
+			-- scheduled pass per tick, skipped while the user has pending edits
+			-- or oil is mid-render, since both are followed by another change.
+			local queued, attached = {}, {}
+			local function queue_decorate(bufnr)
+				if queued[bufnr] then return end
+				queued[bufnr] = true
+				vim.schedule(function()
+					queued[bufnr] = nil
+					if vim.api.nvim_buf_is_valid(bufnr)
+						and not vim.bo[bufnr].modified
+						and not vim.b[bufnr].oil_rendering
+					then
+						decorate_oil_buffer(bufnr)
+					end
+				end)
+			end
 			vim.api.nvim_create_autocmd("User", {
+				group = group,
 				pattern = "OilEnter",
 				callback = function(args)
-					vim.schedule(function()
-						decorate_oil_buffer(args.data.buf or 0)
-					end)
+					local bufnr = args.data.buf
+					queue_decorate(bufnr)
+					if attached[bufnr] then return end
+					attached[bufnr] = vim.api.nvim_buf_attach(bufnr, false, {
+						on_lines = function(_, b) queue_decorate(b) end,
+						on_detach = function(_, b) attached[b] = nil end,
+					})
+				end,
+			})
+
+			-- The watcher marks a hidden directory dirty and oil re-renders it
+			-- on return. Pin the cursor to the entry it is on now, or an entry
+			-- created above it while you were away shifts it onto a neighbor.
+			vim.api.nvim_create_autocmd("BufEnter", {
+				group = group,
+				callback = function(args)
+					if vim.bo[args.buf].filetype ~= "oil" or not vim.b[args.buf].oil_dirty then return end
+					local entry = require("oil").get_cursor_entry()
+					if entry then
+						require("oil.view").set_last_cursor(vim.api.nvim_buf_get_name(args.buf), entry.name)
+					end
 				end,
 			})
 		end,

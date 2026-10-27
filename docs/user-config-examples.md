@@ -199,9 +199,9 @@ A `.tex`-only variant, for instance, passes
 Bind it to a free key instead of `/` if you want the picker without giving
 up search. `g/` is free in Oil buffers: neither oil.nvim nor the distro
 binds it there, and the `wrapsearch` bundle's `g/` only acts in writing
-filetypes. Taken already are `g?`, `g.`, `g\`, `g~`, `gd`, `gf`, `gG`,
-`gs`, `gS`, `gV`, `gx`, `gX`, `gz` and `gZ`, plus `gt` and `gP` with the
-latex bundle on.
+filetypes. Taken already are `g?`, `g.`, `g\`, `g|`, `g~`, `gd`, `gf`,
+`gG`, `gm`, `gs`, `gS`, `gV`, `gx`, `gX`, `gz` and `gZ`, plus `gt` and `gP`
+with the latex bundle on.
 
 ## Mode colour in the number column
 
