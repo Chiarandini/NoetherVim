@@ -1,51 +1,17 @@
 ---@bundle editing-extras
----@desc argument-position marks and comment boxes
----@about argmark marks positions inside a function's argument list so you can
----       add, cycle and clear them without reselecting by hand. comment-
----       box.nvim draws decorative ASCII boxes and dividers around comments.
+---@desc decorative comment boxes
+---@about comment-box.nvim draws decorative ASCII boxes and dividers around
+---       comments.
 ---@requires none
 -- NoetherVim bundle: Editing Extras
 -- Enable with: { import = "noethervim.bundles.navigation.editing-extras" }
 --
 -- Provides:
---   argmark:          mark and navigate function argument positions
---     <leader>ae      edit argument marks
---     <leader>aa      add argument mark
---     <leader>ax      remove argument mark
---     <leader>aX      clear all argument marks
---     [a / ]a         cycle through arguments
---
 --   comment-box.nvim: decorative ASCII comment boxes
 --     <leader>bb      left-aligned fixed-size box
 --     <leader>bl      centered line separator
 
 return {
-
-	-- ── Argmark ───────────────────────────────────────────────────────────────
-	{
-		"BirdeeHub/argmark",
-		event = "BufReadPost",
-		opts = {
-			keys = {
-				edit = "<leader>ae",
-				rm = "<leader>ax",
-				go = "<leader>a<leader>",
-				add = "<leader>aa",
-				copy = "<leader>ay",
-				clear = "<leader>aX",
-				add_windows = "<leader>aA",
-			},
-			edit_opts = {
-				keys = {
-					cycle_right = "]a",
-					cycle_left = "[a",
-					go = "<CR>",
-					quit = "Q",
-					exit = "q",
-				}
-			}
-		},
-	},
 
 	-- ── Comment Box ───────────────────────────────────────────────────────────
 	{

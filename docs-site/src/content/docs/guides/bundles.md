@@ -279,7 +279,7 @@ The neotest framework, with results shown beside the code they cover. The runner
 
 ### `editing-extras`
 
-argmark marks positions inside a function's argument list so you can add, cycle and clear them without reselecting by hand. comment- box.nvim draws decorative ASCII boxes and dividers around comments.
+comment-box.nvim draws decorative ASCII boxes and dividers around comments.
 
 ```lua
 { import = "noethervim.bundles.navigation.editing-extras" }

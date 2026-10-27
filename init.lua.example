@@ -120,7 +120,7 @@ require("lazy").setup({
 		-- { import = "noethervim.bundles.navigation.flash" },          -- enhanced f/t and / motions
 		--   lighter alternative: drop yorickpeterse/nvim-jump into user/plugins/
 		-- { import = "noethervim.bundles.navigation.projects" },       -- project switcher (snacks.picker)
-		-- { import = "noethervim.bundles.navigation.editing-extras" }, -- argmark + comment boxes
+		-- { import = "noethervim.bundles.navigation.editing-extras" }, -- comment boxes
 		-- { import = "noethervim.bundles.navigation.yanky" },          -- yank ring (<C-p>/<C-n> after paste)
 
 		-- writing/
