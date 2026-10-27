@@ -153,17 +153,14 @@ function M.bundles()
   if not root then return vim.notify("NoetherVim: cannot locate source directory", vim.log.levels.ERROR) end
 
   -- Detect which bundles are enabled via lazy.nvim's imported modules.
-  -- Import keys look like "noethervim.bundles.<category>.<name>"; keep
-  -- only the trailing <name> so the lookup matches filesystem basenames.
+  -- Import keys look like "noethervim.bundles.<category>.<name>"; key on
+  -- "<category>.<name>" so same-named bundles in two categories stay apart.
   local enabled = {}
   local ok, lazy_cfg = pcall(require, "lazy.core.config")
   if ok and lazy_cfg.spec then
     for _, mod in ipairs(lazy_cfg.spec.modules) do
-      local tail = mod:match("^noethervim%.bundles%.(.+)$")
-      if tail then
-        local name = tail:match("([^.]+)$")
-        enabled[name] = true
-      end
+      local key = mod:match("^noethervim%.bundles%.(.+)$")
+      if key then enabled[key] = true end
     end
   end
 
@@ -172,7 +169,7 @@ function M.bundles()
   local items = {}
   for _, meta in ipairs(bundle_meta.scan(root .. "/lua/noethervim/bundles")) do
     local entry = { name = meta.name, category = meta.category, path = meta.path }
-    local is_enabled = enabled[entry.name] or false
+    local is_enabled = enabled[entry.category .. "." .. entry.name] or false
     local desc = meta.desc or "(no description)"
     local label = cat_label[entry.category] or entry.category
     table.insert(items, {
