@@ -525,7 +525,8 @@ M.HiddenModified = {
     local fg = utils.get_highlight("DiagnosticWarn").fg or ctx.colors.orange or "#fabd2f"
     return { fg = fg, italic = true }
   end),
-  update = { "BufModifiedSet", "BufWritePost", "BufHidden", "BufDelete", "BufWipeout", "WinEnter", "WinLeave", "TabEnter", "TabLeave", "ModeChanged" },
+  -- No `update`: the condition recounts on every render regardless, so a
+  -- cache would only save the format call and could show a stale count.
 }
 
 -- Lazy plugin has updates

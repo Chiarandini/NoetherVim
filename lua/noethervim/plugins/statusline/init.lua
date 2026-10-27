@@ -177,12 +177,17 @@ return {
       -- traceback that replaces the statusline. Wrap the eval entry points
       -- in pcall so we degrade to a marker instead of exploding, write
       -- the error to |:messages| (throttled to avoid feedback loops), and
-      -- enter a per-eval cooldown before auto-retrying so transient bad
-      -- state has time to settle. Override the delay via
-      -- `vim.g.heirline_recovery_ms` (default 1000).
+      -- enter a cooldown before auto-retrying so transient bad state has
+      -- time to settle. Override the delay via `vim.g.heirline_recovery_ms`
+      -- (default 1000).
+      --
+      -- The cooldown is per window, because heirline renders each window's
+      -- bar separately and the bad state is usually one buffer's; keyed on
+      -- the surface alone, one failing window would blank every other bar.
+      -- The tabline is drawn once for the whole screen, so it has one key.
       local last_err, last_err_time = nil, 0
       local cooldown_until = {}
-      local function report_heirline_error(err)
+      local function report_heirline_error(surface, err)
         local now = (vim.uv or vim.loop).now()
         if err == last_err and (now - last_err_time) < 5000 then return end
         last_err, last_err_time = err, now
@@ -193,28 +198,36 @@ return {
         -- painted over by the next redraw. Newlines are flattened
         -- because echomsg can't handle literal multi-line strings.
         vim.schedule(function()
-          local msg = ("heirline: %s"):format(tostring(err)):gsub("\n", " | ")
+          local msg = ("heirline %s: %s"):format(surface, tostring(err)):gsub("\n", " | ")
           pcall(vim.cmd, "echomsg " .. vim.fn.string(msg))
         end)
       end
-      for _, name in ipairs({ "eval_statusline", "eval_winbar", "eval_tabline", "eval_statuscolumn" }) do
+      -- How to redraw each surface once its cooldown ends. The broken window
+      -- need not be the current one, which a bare `:redrawstatus` skips.
+      local redraw = {
+        statusline = "redrawstatus!",
+        winbar     = "redrawstatus!",
+        tabline    = "redrawtabline",
+      }
+      for surface, redraw_cmd in pairs(redraw) do
+        local name = "eval_" .. surface
         local orig = heirline[name]
-        if type(orig) == "function" then
-          heirline[name] = function(...)
-            local now = (vim.uv or vim.loop).now()
-            if (cooldown_until[name] or 0) > now then
-              return "%#ErrorMsg# statusline recovering... %*"
-            end
-            local ok, result = pcall(orig, ...)
-            if ok then return result end
-            report_heirline_error(result)
-            local delay = tonumber(vim.g.heirline_recovery_ms) or 1000
-            cooldown_until[name] = now + delay
-            -- Kick off a redraw past the cooldown so the retry happens
-            -- even if no other event triggers one.
-            vim.defer_fn(function() pcall(vim.cmd.redrawstatus) end, delay + 50)
-            return "%#ErrorMsg# statusline recovering... %*"
-          end
+        local marker = ("%%#ErrorMsg# %s error, see :messages %%*"):format(surface)
+        heirline[name] = function(...)
+          -- Each window's bar is evaluated with that window current.
+          local key = surface == "tabline" and surface
+            or surface .. vim.api.nvim_get_current_win()
+          local now = (vim.uv or vim.loop).now()
+          if (cooldown_until[key] or 0) > now then return marker end
+          local ok, result = pcall(orig, ...)
+          if ok then return result end
+          report_heirline_error(surface, result)
+          local delay = tonumber(vim.g.heirline_recovery_ms) or 1000
+          cooldown_until[key] = now + delay
+          -- Kick off a redraw past the cooldown so the retry happens
+          -- even if no other event triggers one.
+          vim.defer_fn(function() pcall(vim.cmd, redraw_cmd) end, delay + 50)
+          return marker
         end
       end
 

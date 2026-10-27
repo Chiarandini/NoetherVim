@@ -2127,15 +2127,16 @@ defaults naturally: >lua
                                           *noethervim-statusline-error-boundary*
 Error recovery ~
 
-If any statusline component raises an error, the bar degrades to a
-`statusline recovering...` marker instead of letting the traceback
-replace the entire statusline. The full error is written to
-|:messages| for diagnosis. After a cooldown, the bar auto-retries;
-if the underlying state has cleared, normal rendering resumes.
+If any statusline component raises an error, the bar of the window it
+failed in reads `statusline error, see :messages` instead of letting the
+traceback replace the entire statusline. Every other window keeps its
+normal bar. The full error is written to |:messages| for diagnosis.
+After a cooldown, the bar auto-retries; if the underlying state has
+cleared, normal rendering resumes.
 
 Override the cooldown with `vim.g.heirline_recovery_ms` (default
-`1000`). The same protection applies to the tabline, winbar, and
-statuscolumn.
+`1000`). The same protection applies to the winbar and the tabline,
+whose markers name them.
 
 ------------------------------------------------------------------------------
 9.3 TABLINE                                              *noethervim-tabline*
