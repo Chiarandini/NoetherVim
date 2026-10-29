@@ -100,7 +100,7 @@ end
 --- Does the source at `file:line` contain a literal string matching a
 --- canonical form of the lhs? If yes, the frame is the "semantic"
 --- registration site. If no, we are probably inside a helper (e.g.
---- `toggles.lua`'s local `map()` that calls `vim.keymap.set(lhs, ...)`
+--- `toggles/init.lua`'s `map()` that calls `vim.keymap.set(lhs, ...)`
 --- with a variable), and the true registration site is further up.
 --- Key-notation synonyms that the API collapses but source code may
 --- still write in either form.

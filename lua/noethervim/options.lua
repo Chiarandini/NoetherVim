@@ -1,6 +1,8 @@
 -- NOETHERVIM OPTIONS
 -- see :help Noethervim -> Options for explanations of the more contentious choices (ex. autowrite
 -- and autowriteall)
+--
+-- Sourced by setup(), never required, so `:verbose set` names this file.
 
 -- Enable the Lua bytecode cache (must be first for maximum benefit)
 vim.loader.enable()
@@ -15,7 +17,18 @@ if vim.fn.has("mac") == 1 then
   end
 end
 
-local opt = vim.o
+-- Every default yields to a value you set before NoetherVim loaded (at the
+-- top of init.lua, or in a plugin's init): Neovim records who set each
+-- option, and an option that is yours is left as it is.
+local claimed = require("noethervim.default").claimed
+local opt = setmetatable({}, {
+  __newindex = function(_, name, value)
+    if not claimed(name) then vim.o[name] = value end
+  end,
+})
+local function append(name, value)
+  if not claimed(name) then vim.opt[name]:append(value) end
+end
 
 -- Line numbers
 opt.number         = true
@@ -39,21 +52,15 @@ opt.swapfile     = false
 opt.wrap          = false
 opt.breakindent   = true
 opt.linebreak     = true
-vim.opt.breakindentopt = "sbr,min:0,shift:0"
+opt.breakindentopt = "sbr,min:0,shift:0"
 -- Empty: the wrapped-line marker is drawn in the number column by the
 -- writing profile (autocmds.lua) instead, so it costs no text column and
 -- continuation lines align with the text they continue.
-vim.opt.showbreak  = ""
+opt.showbreak     = ""
 
 -- listchars: makes `list = true` (set by the code profile in autocmds.lua)
 -- readable. tab shows as arrow, trailing whitespace as middle dot.
-vim.opt.listchars = {
-  tab      = "→ ",
-  trail    = "·",
-  nbsp     = "␣",
-  extends  = "›",
-  precedes = "‹",
-}
+opt.listchars = "tab:→ ,trail:·,nbsp:␣,extends:›,precedes:‹"
 -- ── Filetype-scoped defaults (seeds) ──────────────────────────────────────
 -- These buffer-local options are set per filetype by the ftplugin layer
 -- (Neovim's bundled ftplugins, the language bundles, an after/ftplugin), which
@@ -79,7 +86,7 @@ opt.shiftwidth = 4
 opt.formatoptions = "croq1jn"
 
 -- Diff
-vim.opt.diffopt:append("vertical")
+append("diffopt", "vertical")
 
 -- Search
 opt.ignorecase = true
@@ -109,17 +116,17 @@ opt.splitright = true
 -- Scrolling
 opt.scrolloff     = 4
 opt.sidescrolloff = 8
-vim.opt.smoothscroll = true
+opt.smoothscroll  = true
 
 -- UI
-vim.opt.shortmess:append("T")
+append("shortmess", "T")
 opt.visualbell    = true
 opt.termguicolors = true
 opt.foldcolumn    = "0"
 opt.foldlevel     = 99
 opt.foldlevelstart = 99
 opt.foldenable    = true
-vim.opt.fillchars = { fold = " " }
+opt.fillchars     = "fold: "
 
 -- Autochdir
 opt.autochdir = false
@@ -142,11 +149,11 @@ opt.undoreload = 10000
 
 local undodir = vim.fn.stdpath("state") .. "/undo"
 vim.fn.mkdir(undodir, "p")
-vim.o.undodir = undodir
+opt.undodir = undodir
 
 -- Cache/swap dirs (use stdpath so they work regardless of appname)
 -- NOTE: swap file are off  by default (see Noethervim doc for the explanation)
-vim.o.dir = vim.fn.stdpath("state") .. "/swap"
+opt.dir = vim.fn.stdpath("state") .. "/swap"
 vim.fn.mkdir(vim.o.dir, "p")
 
 -- Spell

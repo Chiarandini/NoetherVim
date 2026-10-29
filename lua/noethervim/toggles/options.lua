@@ -1,69 +1,14 @@
--- NoetherVim toggle keymaps
+-- NoetherVim toggle keymaps. Sourced by setup(), never required, so each
+-- mapping here carries this file's script id.
+--
 -- Convention:
 --   [<suffix>   enable / "on"
 --   ]<suffix>   disable / "off"
 --   [o<suffix>  enable option
 --   ]o<suffix>  disable option
---
--- toggle(lhs, enable_rhs, disable_rhs, desc)  → maps [lhs and ]lhs
--- map(lhs, rhs, desc)                         → single directional map
 
-local M = {}
-
---- Style of confirmation message emitted when a toggle fires. Read each
---- time so a user can flip it at runtime without restarting. Values:
----   "notify" (default) -- vim.notify, picked up by snacks as a toast
----   "echo"             -- nvim_echo, classic cmdline message (kept in :messages)
----   "off"              -- silent
-local function feedback_style()
-  local ok, user = pcall(require, "user.config")
-  if ok and type(user) == "table" and type(user.toggle_feedback) == "string" then
-    return user.toggle_feedback
-  end
-  return "notify"
-end
-
---- Emit a toggle confirmation message via the user-chosen channel. Exposed
---- so the keymap RHS strings can route through a single dispatcher rather
---- than inlining vim.notify -- changing feedback_style flips every toggle
---- at once.
----@param text string
-function M._notify(text)
-  local style = feedback_style()
-  if style == "off" then return end
-  if style == "echo" then
-    vim.api.nvim_echo({ { text } }, true, {})
-    return
-  end
-  vim.notify(text, vim.log.levels.INFO)
-end
-
-local function map(lhs, rhs, desc, echo)
-  local descr = desc or ""
-  if type(rhs) == "string" then
-    if echo ~= false then
-      vim.keymap.set("n", lhs,
-        rhs .. '<cmd>lua require("noethervim.toggles")._notify("' .. descr .. '")<cr>',
-        { desc = descr })
-    else
-      vim.keymap.set("n", lhs, rhs, { desc = descr })
-    end
-  elseif type(rhs) == "function" then
-    if echo ~= false then
-      vim.keymap.set("n", lhs, function()
-        rhs()
-        M._notify(descr)
-      end, { desc = descr })
-    else
-      vim.keymap.set("n", lhs, rhs, { desc = descr })
-    end
-  end
-end
-
-local function toggle(lhs, enable, disable, desc)
-  map("[" .. lhs, enable,  "enabling: "  .. desc)
-  map("]" .. lhs, disable, "disabling: " .. desc)
-end
+local T = require("noethervim.toggles")
+local map, toggle = T.map, T.toggle
 
 -- ──────────────────────────────────────────────────────────────
 --  Option toggles  ([o<key> = on, ]o<key> = off)
@@ -198,7 +143,7 @@ local function image_math(on)
     -- what the inline renderer listens on that costs nothing to fake.
     vim.api.nvim_exec_autocmds("WinScrolled", { modeline = false })
   end
-  M._notify("inline math " .. (on and "enabled" or "disabled"))
+  T._notify("inline math " .. (on and "enabled" or "disabled"))
 end
 
 vim.keymap.set("n", "[om", function() image_math(true)  end, { desc = "enable inline math" })
@@ -208,7 +153,7 @@ vim.keymap.set("n", "]om", function() image_math(false) end, { desc = "disable i
 vim.g.blink_toggle = true
 local function toggle_cmp(bool)
   vim.g.blink_toggle = bool
-  M._notify("completion " .. (bool and "enabled" or "disabled"))
+  T._notify("completion " .. (bool and "enabled" or "disabled"))
 end
 vim.keymap.set("n", "[oC", function() toggle_cmp(true)  end, { desc = "enable completion" })
 vim.keymap.set("n", "]oC", function() toggle_cmp(false) end, { desc = "disable completion" })
@@ -360,5 +305,3 @@ xmap ]e <Plug>(nv-move-sel-down)
 nmap [<Space> <Plug>(nv-blank-up)
 nmap ]<Space> <Plug>(nv-blank-down)
 ]])
-
-return M

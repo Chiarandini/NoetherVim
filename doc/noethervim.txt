@@ -125,7 +125,7 @@ every step: >
     noethervim/options.lua   ->  user/options.lua
     noethervim/lsp/*.lua     ->  user/lsp/*.lua
     noethervim/keymaps.lua   \
-    noethervim/toggles.lua    >  user/keymaps.lua
+    noethervim/toggles/       >  user/keymaps.lua
     noethervim/autocmds.lua  ->  user/autocmds.lua
     noethervim/highlights.lua \
     colorscheme               >  user/highlights.lua

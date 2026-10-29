@@ -505,7 +505,7 @@ function M.find_lhs_line(lines, lhs, mode)
   end
 
   -- Pass 2.5: 2-char bracket-prefixed bare match restricted to
-  -- vimscript :map-family lines, e.g. toggles.lua's `nmap [e
+  -- vimscript :map-family lines, e.g. toggles/options.lua's `nmap [e
   -- <Plug>(nv-move-up)` heredoc inside `vim.cmd[[...]]`. These lhs
   -- (`[e`, `]e`, etc.) are too short for the multi-char bare pass but
   -- the vimscript-prefix context is specific enough to be safe.
@@ -521,7 +521,7 @@ function M.find_lhs_line(lines, lhs, mode)
 
   -- Pass 3: bare multi-char match in strong keymap-defining context.
   -- Includes vimscript `:nmap`/`:map`-style lines so we can pinpoint
-  -- toggles.lua's `nmap [<Space> <Plug>(nv-blank-up)` registrations
+  -- toggles/options.lua's `nmap [<Space> <Plug>(nv-blank-up)` registrations
   -- where the lhs is unquoted. Mode-checked so an `i`-only `nnoremap`
   -- block does not catch an `n`-mode lookup.
   for i, line in ipairs(lines) do

@@ -20,7 +20,7 @@ return {
 			-- blink v1: LuaSnip is wired via snippets.preset = "luasnip" below.
 		},
 		opts = {
-			-- [oC / ]oC keymaps in toggles.lua flip vim.g.blink_toggle.
+			-- [oC / ]oC keymaps in toggles/options.lua flip vim.g.blink_toggle.
 			enabled = function()
 				return vim.g.blink_toggle ~= false
 			end,

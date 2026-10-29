@@ -106,6 +106,19 @@ end
 
 -- ── Setup ────────────────────────────────────────────────────────
 
+--- Directory of this module: lua/noethervim.
+local here = (debug.getinfo(1, "S").source:sub(2):gsub("/init%.lua$", ""))
+
+--- Run one of NoetherVim's writing files with `:source` rather than
+--- `require`. A sourced file gets a script id of its own, so every option,
+--- mapping and autocmd it creates is signed with it: `:verbose set` and
+--- `:verbose map` name NoetherVim's file, and a value NoetherVim set can be
+--- told apart from one you set. These files are never required.
+---@param rel string path below lua/noethervim
+local function source(rel)
+  vim.cmd.source(vim.fn.fnameescape(here .. "/" .. rel))
+end
+
 --- Which user modules were actually found and loaded.
 --- Read by `:checkhealth noethervim`; not part of the public API.
 ---@private
@@ -120,35 +133,27 @@ M._user_overrides = {}
 --- Initialize NoetherVim. Called from the lazy.nvim `config` callback
 --- of the NoetherVim plugin spec.
 ---
---- All user-facing configuration lives in `lua/user/config.lua`; this
---- function reads it once, validates type-level shape, and distributes
---- values to the subsystems that need them. See |noethervim-user-config|.
-function M.setup()
-  -- Determine whether to load user overrides.
-  local load_user = not vim.env.NOETHERVIM_NO_USER
-                    and not vim.g.noethervim_no_user
+--- All user-facing configuration lives in `lua/user/config.lua`, read
+--- through `noethervim.config`. See |noethervim-user-config|.
+---@param _opts? table  the NoetherVim spec's merged opts (unused so far)
+function M.setup(_opts)
+  local config = require("noethervim.config")
+  local load_user = not config.user_off()
   M._user_loaded = load_user
-
-  -- Read the single user-facing config surface. Missing file is the
-  -- bare-Neovim case; defaults apply across the board.
-  local user_cfg = {}
-  if load_user then
-    local ok, loaded = pcall(require, "user.config")
-    if ok and type(loaded) == "table" then
-      user_cfg = loaded
-    elseif ok and loaded ~= nil then
-      vim.notify("user/config.lua: expected return table, got " .. type(loaded),
-        vim.log.levels.WARN)
-    end
-  end
+  local user_cfg = config.get()
 
   -- Type-check at the boundary. Bad values become a vim.notify warning
   -- rather than a hard crash; setup continues with whatever salvageable
   -- fields remain. Unknown-field (typo) detection runs in :checkhealth.
-  local cfg = require("noethervim.util.config")
-  for _, err in ipairs(cfg.validate_types(user_cfg)) do
+  for _, err in ipairs(config.validate()) do
     vim.notify("noethervim.setup: " .. err, vim.log.levels.WARN)
   end
+
+  -- Every mapping here with no script behind it is one of Neovim's own
+  -- defaults; record them before NoetherVim adds any. Then the broker,
+  -- which signs the writes plugin configs make later (noethervim.default).
+  require("noethervim.default").snapshot_defaults()
+  source("default/broker.lua")
 
   -- Setup-time keymap source registry: wraps vim.keymap.set so every
   -- imperative registration records file+line for the inspect picker and
@@ -179,7 +184,7 @@ function M.setup()
   vim.g.loaded_node_provider = 0
 
   -- ── Core options ───────────────────────────────────────────────
-  require("noethervim.options")
+  source("options.lua")
   if load_user then M._snapshots.options_before = snapshot_options() end
   user("options")
   if load_user then M._snapshots.options_after = snapshot_options() end
@@ -264,14 +269,14 @@ function M.setup()
   -- (Neovim defaults + lazy plugin handler keymaps).
   -- Used to filter Neovim defaults from the diff picker.
   if load_user then M._snapshots.keymaps_baseline = snapshot_keymaps() end
-  require("noethervim.keymaps")
-  require("noethervim.toggles")
+  source("keymaps.lua")
+  source("toggles/options.lua")
   if load_user then M._snapshots.keymaps_before = snapshot_keymaps() end
   user("keymaps")
   if load_user then M._snapshots.keymaps_after = snapshot_keymaps() end
 
   -- ── Autocommands ───────────────────────────────────────────────
-  require("noethervim.autocmds")
+  source("autocmds.lua")
   user("autocmds")
 
   -- ── Commands ───────────────────────────────────────────────────
@@ -286,7 +291,7 @@ function M.setup()
     pattern = "VeryLazy",
     once = true,
     callback = function()
-      require("noethervim.commands")
+      source("commands.lua")
       keymap_registry.uninstall()
     end,
   })
@@ -320,7 +325,7 @@ function M.setup()
     cs.apply(user_cfg.colorscheme or cs.DEFAULT,
       user_cfg.colorscheme and "config" or "default")
   end
-  require("noethervim.highlights")
+  source("highlights.lua")
   user("highlights")  -- after colorscheme so user highlights are not overwritten
 
   -- ── Imperative user overrides (last-resort solution) ───────
