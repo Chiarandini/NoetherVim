@@ -56,12 +56,9 @@
 --
 -- Override via: { "Chiarandini/vim-abolish", opts = { ... } }
 
-local fork_local = vim.fn.expand("~/programming/vim-abolish")
-local source = vim.fn.isdirectory(fork_local) == 1
-  and { name = "vim-abolish", dir = fork_local }
-  or  { "Chiarandini/vim-abolish", commit = "e79c5b2" }
-
-return vim.tbl_extend("force", source, {
+return {
+  "Chiarandini/vim-abolish",
+  commit = "e79c5b2",
   event = "VeryLazy",
   init = function()
     vim.g.abolish_default_expr = "NoetherAbolishSpell"
@@ -72,4 +69,4 @@ return vim.tbl_extend("force", source, {
       endfunction
     ]])
   end,
-})
+}

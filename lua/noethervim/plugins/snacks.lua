@@ -562,9 +562,6 @@ return {
 				},
 			},
 		},
-		lsp = {
-			progress = { enabled = true },
-		},
 		notifier = { enabled = true },
 		notify   = { enabled = true },
 		quickfile = { enabled = true },
