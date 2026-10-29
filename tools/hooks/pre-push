@@ -1,13 +1,19 @@
 #!/usr/bin/env bash
-# Run the type check CI runs, before the push rather than after it.
+# Run the type check CI runs, and the precedence sentinels, before the push
+# rather than after it.
 #
 # Why pre-push and not pre-commit: a round of work here is several commits
 # and one push, CI fires on the push, and the check is ~2.5s over 145 files.
 # On pre-commit that is paid per commit to catch a failure that can only
 # surface at push time, and it taxes the "commit now, tidy later" flow.
 #
+# The sentinels (tests/sentinel/run.sh, a few seconds) check that a user's
+# settings survive startup and every plugin load. They run only when the
+# push touches code that can change that, and only in a checkout that has
+# tests/; a fresh clone has none, so the hook skips them there.
+#
 # Blocks on failure, because a warning nobody is stopped by is one that ends
-# up in CI anyway. `git push --no-verify` skips it when you mean to.
+# up in CI anyway. `git push --no-verify` skips both when you mean to.
 #
 # Install (once per clone):
 #   git config core.hooksPath tools/hooks
@@ -15,41 +21,92 @@ set -euo pipefail
 
 repo="$(git rev-parse --show-toplevel)"
 
-if ! command -v lua-language-server >/dev/null 2>&1; then
-	echo "pre-push: lua-language-server not on PATH, skipping the type check." >&2
-	echo "          CI still runs it; install it to catch failures locally." >&2
-	exit 0
-fi
+# git passes one line per pushed ref: local ref, local sha, remote ref,
+# remote sha. Read it before anything else consumes stdin.
+refs="$(cat)"
 
-echo "pre-push: type-checking $(basename "$repo") ..."
+typecheck() {
+	if ! command -v lua-language-server >/dev/null 2>&1; then
+		echo "pre-push: lua-language-server not on PATH, skipping the type check." >&2
+		echo "          CI still runs it; install it to catch failures locally." >&2
+		return 0
+	fi
 
-# --check_format=pretty matches the CI invocation exactly, so what you read
-# here is what the workflow log will say.
-output="$(lua-language-server \
-	--check_format=pretty \
-	--check "$repo/." \
-	--configpath="$repo/.luarc.json" \
-	--checklevel=Warning 2>&1)" || true
+	echo "pre-push: type-checking $(basename "$repo") ..."
 
-if printf '%s\n' "$output" | grep -q "no problems found"; then
-	echo "pre-push: no problems found."
-	exit 0
-fi
+	# --check_format=pretty matches the CI invocation exactly, so what you
+	# read here is what the workflow log will say.
+	local output
+	output="$(lua-language-server \
+		--check_format=pretty \
+		--check "$repo/." \
+		--configpath="$repo/.luarc.json" \
+		--checklevel=Warning 2>&1)" || true
 
-# The progress meter is carriage-return separated and shares a line with the
-# first diagnostic, so split on \r before filtering or the bars come through
-# attached to the output that matters.
-printf '%s\n' "$output" \
-	| tr '\r' '\n' \
-	| grep -vE '^[[:space:]]*(Initializing \.\.\.)?[[:space:]]*(>+=*[[:space:]]+[0-9]+/[0-9]+.*)?[[:space:]]*$' >&2
-cat >&2 <<-EOF
+	if printf '%s\n' "$output" | grep -q "no problems found"; then
+		echo "pre-push: no problems found."
+		return 0
+	fi
 
-	pre-push: the type check failed, and CI will fail the same way.
+	# The progress meter is carriage-return separated and shares a line with
+	# the first diagnostic, so split on \r before filtering or the bars come
+	# through attached to the output that matters.
+	printf '%s\n' "$output" \
+		| tr '\r' '\n' \
+		| grep -vE '^[[:space:]]*(Initializing \.\.\.)?[[:space:]]*(>+=*[[:space:]]+[0-9]+/[0-9]+.*)?[[:space:]]*$' >&2
+	cat >&2 <<-EOF
 
-	Re-run it yourself with:
-	  lua-language-server --check_format=pretty --check . \\
-	    --configpath=.luarc.json --checklevel=Warning
+		pre-push: the type check failed, and CI will fail the same way.
 
-	Push anyway with:  git push --no-verify
-EOF
-exit 1
+		Re-run it yourself with:
+		  lua-language-server --check_format=pretty --check . \\
+		    --configpath=.luarc.json --checklevel=Warning
+
+		Push anyway with:  git push --no-verify
+	EOF
+	return 1
+}
+
+# Files the push changes, across every pushed ref. A new branch has no
+# remote sha, so its commits are the ones no remote ref has yet.
+pushed_files() {
+	local zero="0000000000000000000000000000000000000000"
+	local _lref lsha _rref rsha
+	while read -r _lref lsha _rref rsha; do
+		[ -z "$lsha" ] && continue
+		[ "$lsha" = "$zero" ] && continue
+		if [ "$rsha" = "$zero" ]; then
+			local c
+			for c in $(git rev-list "$lsha" --not --remotes); do
+				git diff-tree --no-commit-id --name-only -r "$c"
+			done
+		else
+			git diff --name-only "$rsha" "$lsha"
+		fi
+	done <<< "$refs"
+}
+
+sentinels() {
+	local runner="$repo/tests/sentinel/run.sh"
+	[ -x "$runner" ] || return 0
+	if ! pushed_files | grep -qE '^(lua/|after/|ftplugin/|plugin/|init\.lua\.example)'; then
+		return 0
+	fi
+	echo "pre-push: running the precedence sentinels ..."
+	if "$runner" >/tmp/noethervim-sentinel-prepush.log 2>&1; then
+		echo "pre-push: sentinels hold ($(tail -1 /tmp/noethervim-sentinel-prepush.log | sed 's/^summary: //'))."
+		return 0
+	fi
+	grep -vE '^[A-Z0-9.-]+ +(pass|xfail)( +(pass|xfail))* ' /tmp/noethervim-sentinel-prepush.log >&2
+	cat >&2 <<-EOF
+
+		pre-push: a sentinel regressed or failed for an undocumented reason.
+
+		Full report:  tests/sentinel/run.sh
+		Push anyway:  git push --no-verify
+	EOF
+	return 1
+}
+
+typecheck
+sentinels
