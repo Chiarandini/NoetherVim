@@ -27,13 +27,6 @@ return {
 		cond = function()
 			return require("noethervim.config").get().drop ~= false
 		end,
-		opts = {
-			max       = 40,
-			interval  = 150,
-			screensaver = (1000 * 60) * 8,
-			filetypes = {},
-			winblend  = 90,
-		},
 		-- The screensaver only stops on cursor activity, and an unfocused
 		-- pane (a detached tmux session above all) never produces any, so
 		-- the animation runs forever and pins a core. Gate it on terminal
@@ -60,7 +53,16 @@ return {
 				end,
 			})
 		end,
-		config = function(_, opts)
+		-- Themes are computed here rather than in `config`, so `themes` from
+		-- a spec of yours is merged over them instead of being replaced.
+		opts = function()
+			local opts = {
+				max       = 40,
+				interval  = 150,
+				screensaver = (1000 * 60) * 8,
+				filetypes = {},
+				winblend  = 90,
+			}
 			local curTime = tonumber(os.date("%H"))
 			if curTime >= 21 or curTime <= 6 then
 				opts.themes = {theme = "stars"}
@@ -81,8 +83,9 @@ return {
 					{ theme = "summer",  from = { month = 6,  day = 21 }, to = { month = 9,  day = 21 } },
 				}
 			end
-			require("drop").setup(opts)
+			return opts
 		end,
+		config = function(_, opts) require("drop").setup(opts) end,
 	},
 
 	{

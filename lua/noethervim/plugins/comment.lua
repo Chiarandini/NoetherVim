@@ -53,7 +53,7 @@ keys  =
 		},
 		{'<c-s-r>', comment_yank_paste, mode = {'n', 'v', 'x'}, desc = 'comment and paste text'},
 	},
-	config = function()
-		require('Comment').setup()
+	config = function(_, opts)
+		require('Comment').setup(opts)
 	end
 }

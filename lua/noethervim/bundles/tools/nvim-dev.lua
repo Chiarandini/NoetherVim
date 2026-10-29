@@ -35,8 +35,8 @@ return {
 	{ -- interactive Lua scratchpad
 		"rafcamlet/nvim-luapad",
 		cmd = "Luapad",
-		config = function()
-			require("luapad").setup()
+		config = function(_, opts)
+			require("luapad").setup(opts)
 		end,
 	},
 }

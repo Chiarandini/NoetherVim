@@ -16,3 +16,8 @@ where they are listed.
 - **`NOETHERVIM_NO_USER=1` hides your whole config:** besides `lua/user/`,
   Neovim no longer sources your `plugin/`, `after/` and `ftplugin/` files,
   and your LuaSnip snippets, preamble library and spellfile are not read.
+- **Bundle plugins take your `opts`:** `opts` from a spec of yours now reach
+  render-markdown, markdown-table-mode, betterTerm, nvim-luapad,
+  distant.nvim, nvim-dap-virtual-text, nvim-dap-python and obsidian.nvim.
+  For obsidian.nvim, `workspaces` in its `opts` wins over `obsidian_vault`;
+  for drop.nvim, `themes` in its `opts` is now kept.

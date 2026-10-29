@@ -22,8 +22,8 @@ return {
 		"chipsenkbeil/distant.nvim",
 		branch = "v0.3",
 		cmd    = "DistantConnect",
-		config = function()
-			require("distant"):setup()
+		config = function(_, opts)
+			require("distant"):setup(opts)
 		end,
 	},
 }

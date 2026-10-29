@@ -79,11 +79,11 @@ return {
 			{
 				"mfussenegger/nvim-dap-python",
 				ft = "python",
-				config = function()
+				config = function(_, opts)
 					local mason_python = vim.fs.joinpath(vim.fn.stdpath("data"),
 						"mason", "packages", "debugpy", "venv", "bin", "python")
 					require("dap-python").setup(
-						vim.uv.fs_stat(mason_python) and mason_python or "python3")
+						vim.uv.fs_stat(mason_python) and mason_python or "python3", opts)
 				end,
 			},
 		},

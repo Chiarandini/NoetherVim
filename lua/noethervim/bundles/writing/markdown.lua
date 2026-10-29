@@ -147,11 +147,11 @@ return {
   {
     "Kicamon/markdown-table-mode.nvim",
     ft = "markdown",
-    config = function() require("markdown-table-mode").setup() end,
+    config = function(_, opts) require("markdown-table-mode").setup(opts) end,
   },
   {
     "MeanderingProgrammer/render-markdown.nvim",
     ft = "markdown",
-    config = function() require("render-markdown").setup({}) end,
+    config = function(_, opts) require("render-markdown").setup(opts) end,
   },
 }

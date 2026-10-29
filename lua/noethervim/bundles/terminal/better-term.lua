@@ -40,8 +40,8 @@ return {
 				desc = "Select terminal",
 			},
 		},
-		config = function()
-			require("betterTerm").setup()
+		config = function(_, opts)
+			require("betterTerm").setup(opts)
 		end,
 	},
 }

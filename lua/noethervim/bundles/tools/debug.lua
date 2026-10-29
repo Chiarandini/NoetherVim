@@ -439,8 +439,8 @@ return {
 			{
 				"theHamsta/nvim-dap-virtual-text",
 				lazy = true,
-				config = function()
-					require("nvim-dap-virtual-text").setup()
+				config = function(_, opts)
+					require("nvim-dap-virtual-text").setup(opts)
 				end,
 			},
 			{

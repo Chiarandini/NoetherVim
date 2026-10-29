@@ -27,10 +27,12 @@ return {
     version = "*",
     ft = "markdown",
     dependencies = { "nvim-lua/plenary.nvim" },
-    config = function()
-      local ok_cfg, user_cfg = pcall(require, "user.config")
-      local vault = ok_cfg and type(user_cfg) == "table" and user_cfg.obsidian_vault
-      if not vault then
+    config = function(_, opts)
+      local vault = require("noethervim.config").get().obsidian_vault
+      if vault and not opts.workspaces then
+        opts.workspaces = { { name = "main", path = vault } }
+      end
+      if not opts.workspaces then
         vim.notify(
           "Obsidian bundle: set obsidian_vault in lua/user/config.lua "
             .. "(see :help noethervim-user-config-data)",
@@ -39,11 +41,9 @@ return {
         return
       end
 
-      require("obsidian").setup({
+      -- Your opts for obsidian.nvim win over these.
+      require("obsidian").setup(vim.tbl_deep_extend("keep", opts, {
         legacy_commands = false,
-        workspaces = {
-          { name = "main", path = vault },
-        },
         -- Completion is provided automatically via obsidian.nvim's built-in
         -- obsidian-ls LSP server (picked up through blink.cmp's lsp source);
         -- the old `nvim_cmp`/`blink` toggles are deprecated (removed in 4.0).
@@ -102,7 +102,7 @@ return {
             ObsidianHighlightText = { bg = "#75662e" },
           },
         },
-      })
+      }))
 
       -- follow link: jump directly if one link in buffer, else show picker
       local AsyncExecutor = require("obsidian.async").AsyncExecutor
