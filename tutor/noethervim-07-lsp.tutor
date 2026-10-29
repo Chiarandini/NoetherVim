@@ -1,0 +1,151 @@
+# NOETHERVIM: LANGUAGE SERVERS AND DIAGNOSTICS
+
+A language server reads your project the way a compiler does and answers
+questions about it: where is this defined, who calls it, what type is it,
+rename it everywhere. This lesson is the keys for asking.
+
+This is core. No bundle is needed, though a language bundle deepens it for
+the language it covers.
+
+Table of contents:
+
+- [What attached, and what did not](*attach*)
+- [Going places](*goto*)
+- [Changing code](*change*)
+- [Diagnostics](*diagnostics*)
+- [Formatting](*format*)
+- [Turning it off](*off*)
+- [Recap](*recap*)
+
+## WHAT ATTACHED, AND WHAT DID NOT *attach*
+
+Open a file in a language with a server available and it attaches on its
+own, installing the server first if it is missing.
+
+Two panels report on it:
+
+    `<C-w><C-l>`   what the server is doing right now
+    `<C-w><C-m>`   Mason, which installs servers, formatters and linters
+
+The statusline shows an indicator while a server is starting or indexing. A
+large project can take a while before answers are available, and a key that
+does nothing in the first few seconds is usually this rather than a missing
+binding.
+
+IMPORTANT every key in this lesson is **buffer-local**, bound when a server
+attaches. In a buffer with no server they do nothing, which is why this
+lesson cannot make you press them here: a tutorial buffer has no server.
+Open a real source file to try them.
+
+## GOING PLACES *goto*
+
+Navigation is under `g`, which is Vim's own prefix for going to things.
+
+    `gd`   the definition of the symbol under the cursor
+    `gD`   its declaration
+    `gt`   its type definition
+    `gi`   its implementations
+    `gR`   references, in a floating window
+    `gw`   search every symbol in the workspace by name
+    `go`   an outline of this file
+    `gs`   the signature of the function you are calling
+    `gy`   yank the type of the thing under the cursor
+
+`<C-o>` goes back where you came from, and `<C-i>` forward again. Those are
+Vim's own jump list and work across all of these.
+
+There are pickers for the same questions, when you would rather search a
+list than jump straight there:
+
+    `<Space>ld`   definitions
+    `<Space>lr`   references
+    `<Space>lo`   this file's symbols
+    `<Space>lp`   the project's symbols
+
+And two for call hierarchy: `<Space>li` for what calls this, `<Space>lO`
+for what this calls.
+
+Fill in the key that jumps to a definition:
+
+Go to the definition under the cursor: ___
+
+## CHANGING CODE *change*
+
+    `<F2>`   rename this symbol everywhere, reporting how many it changed
+    `<F1>`   code actions: the fixes and refactors the server offers here
+    `<F4>`   the same as `<F1>`, for keyboards where `<F1>` is taken
+
+`<F1>` in visual mode offers actions for the selection rather than the
+cursor.
+
+Rename is the one worth building a habit around. It is not a search and
+replace; the server knows which occurrences of the name are this symbol and
+which are a different one that happens to share it.
+
+NOTE on macOS the function keys need `fn` held unless "Use F1, F2, etc. as
+standard function keys" is on.
+
+## DIAGNOSTICS *diagnostics*
+
+Errors, warnings and hints arrive in the margin, inline, and in the
+statusline count.
+
+Moving between them is directional, so it is on the bracket pair:
+
+    `]d` `[d`   next and previous diagnostic in this buffer
+    `]D` `[D`   the last and first one
+
+Reading them:
+
+    `gl`          the full message for this line, in a float
+    `<C-w>d`      the diagnostics under the cursor
+    `<Space>dd`   a searchable list for this buffer
+    `<Space>dp`   the same for the whole project
+    `<C-w>Q`      the diagnostics panel, across every file at once
+
+The panel is the one to reach for when you have a real list to work
+through; it stays open beside the code and follows as you fix things.
+
+Fill in the key that opens the panel across every file:
+
+The multi-file diagnostics panel is ___
+
+## FORMATTING *format*
+
+`<Leader>ff` formats the buffer, or the selection in visual mode. It
+prefers a real formatter for the filetype and falls back to the language
+server when there is none.
+
+Note the pair that catches people: `<Space>ff` **finds** a file and
+`<Leader>ff` **formats** one. That is the namespace split doing its job;
+SearchLeader never changes your buffer.
+
+Which formatter runs for which filetype is a plugin option, so it is
+changed in `lua/user/plugins/`. Remember that the list of formatters for a
+filetype is an array, and merging replaces arrays rather than extending
+them; see [array-valued options](noethervim-user-plugins-arrays).
+
+## TURNING IT OFF *off*
+
+Sometimes a server is wrong, slow, or noisy in one file.
+
+    `]oL` `[oL`   the language server off and on
+    `]oC` `[oC`   the completion menu off and on
+    `]oT` `[oT`   treesitter off and on
+
+These are per-buffer, and the completion one falls back to Neovim's native
+keyword completion rather than leaving you with nothing.
+
+## RECAP *recap*
+
+Fill in each answer at the end of its line.
+
+Jump to where a symbol is defined: ___
+Rename a symbol everywhere: ___
+Next diagnostic in this buffer: ___
+Format this buffer: ___
+
+## WHERE TO GO NEXT
+
+[Lesson eight](@tutor:noethervim-08-terminal) covers running the code once
+the server says it is correct.

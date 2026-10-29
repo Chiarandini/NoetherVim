@@ -57,6 +57,30 @@ jobs:
           checklevel: Warning
           directories: "."
 
+  tutor-sidecars:
+    name: lesson exercises point at the right lines
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: stable
+
+      # A lesson's exercises are checked by ABSOLUTE line number, held in a
+      # separate .tutor.json. Editing a lesson's prose shifts every number
+      # below the edit and silently detaches each check from its line: the
+      # exercise then grades a paragraph of prose instead, with no error
+      # anywhere. Nothing about the lesson looks wrong until someone tries it.
+      #
+      # gen-tutor-json.lua resolves those numbers from tutor/answers.lua,
+      # which keys each exercise by the placeholder text on the line. This is
+      # the drift gate for it, and it also fails when a placeholder was
+      # reworded without answers.lua being updated, or appears twice.
+      - name: Sidecars match the lessons
+        run: nvim --headless -l tools/gen-tutor-json.lua --check
+
   keymap-citations:
     name: notable keybindings still exist
     runs-on: ubuntu-latest

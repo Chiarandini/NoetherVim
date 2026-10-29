@@ -1,0 +1,10 @@
+{
+  "expect": {
+    "70": "Go to the definition under the cursor: gd",
+    "111": "The multi-file diagnostics panel is <C-w>Q",
+    "143": "Jump to where a symbol is defined: gd",
+    "144": "Rename a symbol everywhere: <F2>",
+    "145": "Next diagnostic in this buffer: ]d",
+    "146": "Format this buffer: <Leader>ff"
+  }
+}

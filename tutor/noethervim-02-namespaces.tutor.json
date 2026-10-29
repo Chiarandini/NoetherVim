@@ -1,0 +1,11 @@
+{
+  "expect": {
+    "30": "this line is right",
+    "69": "The find-a-file picker is <Space>ff",
+    "112": "The prefix that turns an option on is [o",
+    "161": "Fuzzy-finding a file lives under: <Space>",
+    "162": "Turning line numbers back on lives under: [o",
+    "163": "Splitting the window lives under: <C-w>",
+    "164": "Closing this window and nothing else is: ZA"
+  }
+}

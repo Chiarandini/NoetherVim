@@ -1,0 +1,10 @@
+{
+  "expect": {
+    "55": "The config key for the Tab philosophy is completion_style",
+    "83": "Stop all snippets, from insert mode: <C-u>",
+    "148": "Jump to the next placeholder: <Tab>",
+    "149": "Jump back into the snippet under the cursor: <Leader>j",
+    "150": "The picker listing every loaded snippet: <Space>cs",
+    "151": "Open a snippet file for this filetype: <Space>es"
+  }
+}

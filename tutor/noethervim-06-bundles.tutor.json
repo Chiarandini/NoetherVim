@@ -1,0 +1,9 @@
+{
+  "expect": {
+    "72": "In the bundle picker, enable with <C-y>",
+    "143": "The picker that lists every bundle: <Space>cb",
+    "144": "The key that enables one: <C-y>",
+    "145": "The window showing what lazy.nvim installed: <C-w>ll",
+    "146": "The option key that merges rather than replaces: opts"
+  }
+}

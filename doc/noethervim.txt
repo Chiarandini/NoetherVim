@@ -77,10 +77,27 @@ Both the bundle and template flows show a diff prompt before writing.
 
 The keymap prefixes are the fastest thing to learn: |noethervim-keymaps|.
 
-A longer walkthrough for a first session, including the prefixes and the
-defaults worth reviewing, lives in `docs/onboarding/first-session.md` in the
-project root; `docs/onboarding/mathematicians.md` continues it for LaTeX
-work.
+                                                        *noethervim-lessons*
+Lessons: ~
+
+    `:Tutor noethervim`
+
+Eleven interactive lessons, run inside the editor. Each is about ten
+minutes and ends with something done rather than read: a configuration
+file written, a bundle enabled, a prefix pressed against the live
+which-key panel. Exercise lines mark themselves ✓ or ✗ as you type, and
+`>>` on a command line runs it for you.
+
+That command opens the index, which links each lesson and the two Neovim
+ships for Vim itself. `:Tutor <Tab>` lists them all by name. The one to do
+first is `noethervim-02-namespaces`, the keymap prefixes.
+
+Lessons teach a path through something; this help file answers a question
+about it. Neither replaces the other.
+
+A written walkthrough of a first session, for reading before or outside
+the editor, lives in `docs/onboarding/first-session.md` in the project
+root; `docs/onboarding/mathematicians.md` continues it for LaTeX work.
 
 ==============================================================================
 4. USER CONFIGURATION                                  *noethervim-user-config*

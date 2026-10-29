@@ -1,0 +1,151 @@
+# NOETHERVIM: WRITING AND CODE PROFILES
+
+Open a `.tex` file and a `.py` file and they behave differently before you
+touch anything. That is not the plugins disagreeing; it is one deliberate
+split. This lesson explains which buffer gets which treatment, and how to
+disagree with it per window.
+
+Table of contents:
+
+- [Two profiles](*profiles*)
+- [What the writing profile does](*writing*)
+- [What the code profile does](*code*)
+- [Buffers in neither](*neither*)
+- [Disagreeing, per window](*toggles*)
+- [Spelling](*spell*)
+- [Changing the lists](*config*)
+- [Recap](*recap*)
+
+## TWO PROFILES *profiles*
+
+Prose and code want opposite things from the same options. A line break in
+prose is a rendering detail; in code it is syntax. So NoetherVim sorts every
+filetype into one of three groups and sets a handful of window options to
+match.
+
+    writing    tex, markdown, norg, text, gitcommit, mail, rst, typst
+    code       every filetype that is not in the other two groups
+    neither    json, yaml, toml, help, man, quickfix, oil, terminal,
+             and the plugin panels
+
+The full statement of what each sets lives in
+[the filetype profiles](noethervim-filetype-profiles).
+
+## WHAT THE WRITING PROFILE DOES *writing*
+
+    `wrap` and `linebreak`   long lines fold at the window edge, at spaces
+    `spell`                  spellcheck on
+    `conceallevel = 2`       markup renders rather than showing its source
+    `formatoptions` plus `t`   typing past the text width breaks the line
+
+Wrapped lines are marked. A continuation row shows `↳` in the number
+column, so a line that ran past the edge is never mistaken for a line of its
+own. It costs no text cell, so continuation rows stay lined up under the
+text they continue. See [the wrap marker](noethervim-wrap-marker).
+
+That last option is the one to know about: the writing profile **hard
+wraps**, inserting a real line break at the text width as you type. That is
+what you want for prose in version control, and it has one consequence. A
+phrase can end up split across two lines, and `/brown fox` then finds
+nothing. The `wrapsearch` bundle makes `/` and `?` match across the break.
+See [hard wrapping](noethervim-hard-wrap).
+
+## WHAT THE CODE PROFILE DOES *code*
+
+    `list`     tabs and trailing spaces are drawn
+    `nowrap`   long lines run off the edge rather than folding
+
+With `wrap` off, a line running past the window is marked `›` at the edge,
+and `‹` on the other side when it continues back. Vim draws those only while
+`list` is on, which is why they arrive together.
+
+`formatoptions` omits `t` globally, so typing past the text width in code
+does not break the line. Formatters handle line length instead.
+
+## BUFFERS IN NEITHER *neither*
+
+Structured text and plugin panels are left alone on purpose. A JSON file is
+not prose, but drawing whitespace in it is noise; a terminal has its own
+ideas about wrapping. These keep whatever their own plugin or ftplugin set.
+
+This tutorial is one of them, which is why it is not showing you trailing
+whitespace while you read it.
+
+## DISAGREEING, PER WINDOW *toggles*
+
+The profile is a default, not a ruling. Every option it sets has a toggle
+pair, and the toggles are window-local, so disagreeing in one place does not
+follow you everywhere.
+
+    `[ow` `]ow`   wrap on / off
+    `[os` `]os`   spell on / off
+    `[ol` `]ol`   whitespace characters on / off
+    `[on` `]on`   line numbers on / off
+    `[oc` `]oc`   cursorline on / off
+    `[ot` `]ot`   the color column on / off
+
+Try it here. Press `[ow` and the long paragraphs in this lesson start
+folding at the window edge, with `↳` marking each continuation row. Press
+`]ow` to put it back.
+
+Because these are window-local, a toggle lasts until that window shows a
+different buffer, at which point the profile applies again. That is the
+intended behavior rather than a limitation: the profile is the default you
+keep, and the toggle is for the file in front of you.
+
+Fill in the pair member that turns wrapping on:
+
+Wrap on, in this window: ___
+
+## SPELLING *spell*
+
+Spellcheck is on in writing buffers and off in code, and three keys make it
+usable rather than a source of underlines.
+
+    `<C-l>`   insert mode: fix the nearest misspelling behind the cursor
+            and carry on typing, leaving the cursor where it was
+    `zg`      add the word under the cursor to your dictionary
+    `zG`      the same, for this session only
+
+`zg` also adds the possessive form, which Vim does not derive on its own for
+a lowercase entry and which you would otherwise come back for. It leaves the
+lowercase form of a capitalized word alone, so a proper noun is still
+flagged in lowercase. See [adding a word](noethervim-spell-add).
+
+To spellcheck code comments too, set `spell_in_code` in your config; it
+scopes spelling to comments and strings rather than identifiers.
+
+## CHANGING THE LISTS *config*
+
+If a filetype is in the wrong group, move it rather than fighting the
+options. In `lua/user/config.lua`:
+
+~~~ cmd
+    :NoetherVim templates
+~~~
+
+    `writing_filetypes`    extra filetypes that count as prose
+    `non_code_filetypes`   extra filetypes that skip both profiles
+    `spell_in_code`        spellcheck comments and strings in code
+
+All three are additive; the defaults stay.
+[Lesson five](@tutor:noethervim-05-your-config) covers writing that file.
+
+There is also a statusline marker for this, off by default. `<C-w>sf` turns
+it on: a pencil for writing, angle brackets for code, nothing for a buffer
+in neither. Clicking it reports the live value of every option the profile
+set, so your toggles show up too.
+
+## RECAP *recap*
+
+Fill in each answer at the end of its line.
+
+The profile a markdown file gets: ___
+The profile a python file gets: ___
+Turn wrapping off in this window: ___
+Fix the nearest misspelling, from insert mode: ___
+
+## WHERE TO GO NEXT
+
+[Lesson five](@tutor:noethervim-05-your-config) writes your first
+configuration file, which is where the lists above are changed.

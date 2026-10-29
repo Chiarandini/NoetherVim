@@ -1,0 +1,159 @@
+# NOETHERVIM: SNIPPETS
+
+A snippet turns a short trigger into a block of text with holes in it, and
+moves you between the holes. It is the difference between typing
+`\begin{theorem}` ... `\end{theorem}` and typing three letters.
+
+This is core. LuaSnip is always there; the LaTeX bundle adds a large
+library on top of it.
+
+Table of contents:
+
+- [Expanding and jumping](*expand*)
+- [The Tab question](*tab*)
+- [Getting unstuck](*unstuck*)
+- [Finding out what you have](*browse*)
+- [Writing your own](*writing*)
+- [Switching one off](*disable*)
+- [Recap](*recap*)
+
+## EXPANDING AND JUMPING *expand*
+
+Type a trigger and press `<Tab>`. The snippet expands and the cursor lands
+on the first placeholder.
+
+    `<Tab>`     expand, or jump to the next placeholder
+    `<S-Tab>`   jump to the previous placeholder
+
+Type over a placeholder and `<Tab>` again to move on. Tabbing past the last
+one finishes the snippet.
+
+Snippets also appear in the completion menu as you type, so you do not have
+to remember a trigger exactly. `<C-Space>` opens the menu on demand,
+`<C-n>` and `<C-p>` move through it, and `<C-y>` accepts.
+
+## THE TAB QUESTION *tab*
+
+Tab is contested: it could jump a snippet, accept a completion, or insert a
+tab. Rather than have you write keymaps, NoetherVim exposes the whole
+philosophy as one setting in `lua/user/config.lua`.
+
+    `"snippet"`    the default. Tab is reserved for snippet jumps. Pick
+                 from the menu with `<C-n>` and `<C-p>`, accept with
+                 `<C-y>`. Nothing competes for Tab.
+    `"supertab"`   Tab accepts the highlighted completion, selecting the
+                 top one if none is. Falls back to a snippet jump, then
+                 to a literal tab. IDE muscle memory.
+    `"navigate"`   Tab cycles the menu without accepting; `<C-y>` or
+                 `<CR>` commits. The classic nvim-cmp behavior.
+
+Set `completion_style` to one of those three. See
+[the completion styles](noethervim-completion-style).
+
+Fill in the setting that changes what Tab does:
+
+The config key for the Tab philosophy is ___
+
+## GETTING UNSTUCK *unstuck*
+
+Occasionally a buffer behaves as though a snippet is still active when you
+thought you had left it: text highlights oddly, or a new expansion lands in
+the wrong place. LuaSnip leaves marks behind, and these clear them.
+
+    `<C-u>`        insert or select mode: stop every snippet in the buffer
+    `<Leader>U`    the same, from normal mode
+    `<Leader>u`    unlink only the snippet you are in
+    `<Leader>j`    jump back into the snippet under the cursor
+
+Stopping and unlinking are different. Unlinking drops one snippet and hands
+the cursor to its neighbor, leaving the marks; **stopping** unlinks
+everything and clears the marks. Reach for `<C-u>` when a buffer feels
+haunted. Your text is never touched either way.
+
+`<Leader>j` is the useful one in daily work. Finishing a snippet is
+normally the end of it, but if you filled a placeholder in wrongly, put the
+cursor back in the snippet's text, press `<Leader>j`, and `<Tab>` moves
+between its placeholders again without expanding a second copy.
+
+With no snippet active and no marks left behind, `<C-u>` is just Vim's own
+"delete what you typed on this line", untouched.
+
+Fill in the key that stops every snippet in the buffer, from insert mode:
+
+Stop all snippets, from insert mode: ___
+
+## FINDING OUT WHAT YOU HAVE *browse*
+
+    `<Space>cs`   every snippet loaded, for every filetype you have opened
+    `<Space>gs`   grep the snippet sources
+    `<Space>es`   open a snippet file for this filetype
+
+`<Space>cs` is the catalogue. It lists each snippet, where it came from,
+and whether it is switched on. `<CR>` opens the definition, so it doubles
+as a way to read how a shipped snippet is built before writing your own.
+
+`:checkhealth noethervim` counts how many are loaded per filetype and warns
+when the same trigger is defined twice, which otherwise shows up only as a
+duplicated entry in the completion menu.
+
+## WRITING YOUR OWN *writing*
+
+Snippets live in `LuaSnip/<filetype>/` inside your config directory. A file
+there returns a list of snippets, and LuaSnip loads it alongside everything
+the plugins ship.
+
+`<Space>es` is the way in. It asks which filetype, then which file, listing
+yours and the ones plugins ship together. A filetype you have no snippets
+for yet says so and offers to create the file, seeded with a skeleton.
+
+    `~/.config/nvim   · preamble.lua`
+    `NoetherVim-Tex   · commands.lua`
+
+**Saving the file puts it to work immediately.** That holds for a brand new
+file for a filetype you had nothing for, and it holds in every other Neovim
+you have open at the time. Nothing needs restarting.
+
+Two cautions. A file owned by a plugin opens read-only, because a snippet
+saved there is lost on the next update. And do not empty a snippet file: a
+Lua file returning nothing errors the next time LuaSnip loads that
+filetype. Delete the file instead.
+
+## SWITCHING ONE OFF *disable*
+
+A snippet whose trigger collides with a word you actually type is worse
+than no snippet. In `<Space>cs`:
+
+    `<C-x>`   switch it off
+    `<C-y>`   switch it back on
+    `<A-o>`   show only what is switched off
+    `<C-o>`   copy a config entry for it
+    `<Tab>`   add to the selection, so one key acts on several
+
+Off means it leaves the completion menu and stops expanding.
+
+There are two places to remember the choice, and they answer different
+questions. `<C-x>` writes to Neovim's state directory: this machine, not
+copied with your config. `snippets_disabled` in `lua/user/config.lua`
+travels with your config and means you never want it anywhere. Where they
+disagree the machine wins for the session, and the health check names the
+snippet and both ways to settle it.
+
+Nothing writes your config file for you; `<C-o>` puts the entry on the
+clipboard with its owner and file already filled in.
+
+## RECAP *recap*
+
+Fill in each answer at the end of its line.
+
+Jump to the next placeholder: ___
+Jump back into the snippet under the cursor: ___
+The picker listing every loaded snippet: ___
+Open a snippet file for this filetype: ___
+
+## WHERE TO GO NEXT
+
+That is the last lesson. The index lists them all:
+[the NoetherVim lessons](@tutor:noethervim).
+
+For reference rather than walkthrough, `:help noethervim` is the manual,
+and `<Space>?` shows every key live in your own install.

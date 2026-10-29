@@ -1,0 +1,9 @@
+{
+  "expect": {
+    "24": "I have read this far: yes",
+    "101": "The health check is :checkhealth noethervim",
+    "125": "Every active keymap, grouped by prefix: <Space>?",
+    "126": "The catalogue of things you can turn on: <Space>cb",
+    "127": "The report that says whether anything is wrong: :checkhealth noethervim"
+  }
+}

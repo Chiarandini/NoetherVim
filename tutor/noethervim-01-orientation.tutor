@@ -1,0 +1,137 @@
+# NOETHERVIM: ORIENTATION
+
+This is the first five minutes. It does not teach you to edit text; it tells
+you what you are looking at, what happened when you opened a file, and the
+four questions you can always ask the editor about itself.
+
+Nothing here can damage your setup. A tutorial buffer is never written to
+disk, so edit it freely.
+
+Table of contents:
+
+- [Reading this lesson](*howto*)
+- [The dashboard](*dashboard*)
+- [What happens when you open a file](*attach*)
+- [The four questions](*questions*)
+- [Where things live](*layout*)
+- [Recap](*recap*)
+
+## READING THIS LESSON *howto*
+
+Lines with a ✗ in the left margin are exercises; they turn into ✓ when the
+text is right. Fix this one by changing `no` into `yes`.
+
+I have read this far: no
+
+Put the cursor on an indented command and press `>>` to run it. In an
+ordinary buffer `>>` indents a line; inside a tutorial it executes one.
+
+## THE DASHBOARD *dashboard*
+
+Running `nvim` with no arguments opens a dashboard rather than an empty
+buffer: a header and a short menu, each row showing the key that runs it.
+
+    `f`   find a file          `o`   recent files
+    `i`   new file, insert     `e`   new file, normal
+    `r`   restore last session `s`   pick a session
+    `c`   open your init.lua   `q`   quit
+
+The session rows are the ones worth knowing early. NoetherVim remembers
+where you were, so `r` puts back the windows and buffers you left.
+
+You can come back to it at any time. `:Reset` closes every buffer and
+returns you here, refusing if anything is unsaved; `:Reset!` discards
+instead. If you would rather start in an empty buffer, set
+`vim.g.noethervim_dashboard = false` in your init.lua; see
+[the dashboard flag](noethervim-dashboard).
+
+## WHAT HAPPENS WHEN YOU OPEN A FILE *attach*
+
+Opening a file in a language NoetherVim knows sets up more than syntax
+coloring, without being asked:
+
+    a language server attaches, giving definitions, references and renames
+    treesitter parses the file, giving structural highlighting and motions
+    completion turns on, drawing on the server, the buffer and your snippets
+    a formatter and a linter are selected for the filetype
+    diagnostics start reporting in the margin and the statusline
+
+If the server or the parser is not installed yet, which is normal on a fresh
+install, it is fetched for you. That is what the activity in the corner
+during your first few minutes is. To decline and manage toolchains yourself,
+see [declining auto-install](noethervim-auto-install).
+
+Two panels report on this. `<C-w><C-l>` shows what the language server is
+doing, and `<C-w><C-m>` opens Mason, which is what installs the tools.
+
+## THE FOUR QUESTIONS *questions*
+
+Almost everything you will want to ask in the first week is one of four
+questions, and each has one answer.
+
+**What is bound?** `<Space>?` opens every active keymap, grouped by prefix,
+read from the live state rather than a list someone maintained. `<CR>` on a
+line jumps to the file that defined it.
+
+**What can I turn on?** `<Space>cb` opens the bundle catalogue. NoetherVim
+starts with no bundles enabled; the core is complete on its own.
+
+**What else can this do?** `:NoetherVim` with no argument prints every
+subcommand it has. Run it:
+
+~~~ cmd
+    :NoetherVim
+~~~
+
+**Is anything wrong?** `:checkhealth noethervim` reports your Neovim
+version, terminal capabilities, missing tools, which of your own files
+loaded, and whether any has drifted from what it overrides. Run it now and
+read it; warnings here are worth meeting on purpose rather than later as a
+bug.
+
+~~~ cmd
+    :checkhealth noethervim
+~~~
+
+Come back here with `[b` when you have read it, or reopen this lesson with
+`:Tutor noethervim-01-orientation`.
+
+Fill in the command that tells you whether anything is wrong:
+
+The health check is ___
+
+NOTE the terminal section of that report is a guess. A terminal cannot be
+asked what it supports, so it goes by environment variables that can be
+wrong. See [the terminal caveat](noethervim-health-terminal).
+
+## WHERE THINGS LIVE *layout*
+
+Three directories, and you only ever write in the second.
+
+    the distribution   `lua/noethervim/`, read-only as far as you care
+    your config        `lua/user/`, never touched by an update
+    plugins            installed and pinned by lazy.nvim, managed for you
+
+That split is the whole update story: upstream changes land in the first,
+yours stay in the second, and nothing you wrote is overwritten.
+
+You do not have a `lua/user/` yet.
+[Lesson five](@tutor:noethervim-05-your-config) creates it.
+
+## RECAP *recap*
+
+Fill in each answer at the end of its line, after the existing space.
+
+Every active keymap, grouped by prefix: ___
+The catalogue of things you can turn on: ___
+The report that says whether anything is wrong: ___
+
+## WHERE TO GO NEXT
+
+[Lesson two](@tutor:noethervim-02-namespaces) is the one that pays for
+itself fastest: the six key prefixes and what each owns. Do it before you
+try to memorize any individual key.
+
+If modes and motions are still new, start with the two tutorials Neovim
+ships instead: [lesson one](@tutor:vim-01-beginner) and
+[lesson two](@tutor:vim-02-beginner).

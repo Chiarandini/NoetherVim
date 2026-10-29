@@ -37,6 +37,7 @@ noethervim-inspect	noethervim.txt	/*noethervim-inspect*
 noethervim-install	noethervim.txt	/*noethervim-install*
 noethervim-keymaps	noethervim.txt	/*noethervim-keymaps*
 noethervim-leader	noethervim.txt	/*noethervim-leader*
+noethervim-lessons	noethervim.txt	/*noethervim-lessons*
 noethervim-line-objects	noethervim.txt	/*noethervim-line-objects*
 noethervim-load-order	noethervim.txt	/*noethervim-load-order*
 noethervim-localleader	noethervim.txt	/*noethervim-localleader*

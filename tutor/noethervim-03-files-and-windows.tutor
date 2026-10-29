@@ -1,0 +1,153 @@
+# NOETHERVIM: FILES AND WINDOWS
+
+Three ways to reach a file, and one way to arrange what you reached. This
+lesson covers the file browser, the pickers, and the window namespace.
+
+It assumes you know the prefixes from
+[lesson two](@tutor:noethervim-02-namespaces).
+
+Table of contents:
+
+- [Oil, the editable directory](*oil*)
+- [Pickers, for finding by name](*pickers*)
+- [Windows and splits](*windows*)
+- [Panels](*panels*)
+- [Closing what you opened](*closing*)
+- [Recap](*recap*)
+
+## OIL, THE EDITABLE DIRECTORY *oil*
+
+Press `<C-w><C-o>`. A floating window opens on the current directory.
+
+The idea worth absorbing: **this is a normal buffer, and the file system is
+what it edits**. You do not use a menu of operations.
+
+    rename a file      change its line
+    delete a file      `dd` the line
+    create a file      add a line
+    create a directory add a line ending in `/`
+    move a file        `dd` in one directory, `p` in another
+
+Nothing touches disk until you `:w`, and a confirmation lists every change
+first. Until then it is ordinary text editing, with ordinary undo.
+
+Moving around:
+
+    `<CR>`    enter a directory, or open a file
+    `-`       go to the parent directory
+    `g?`      every Oil key, including the ones NoetherVim adds
+    `<C-p>`   preview the entry under the cursor, following as you move
+    `gV`      a second pane beside this one, for moving files between
+            directories; `<C-h>` and `<C-l>` switch panes
+
+Some NoetherVim additions worth knowing: `gf` finds files under this
+directory, `gG` greps inside it, `yp` yanks the full path, `g.` toggles
+hidden files, and `gd` toggles permissions and sizes.
+
+IMPORTANT `q` does not close Oil, because it is a buffer you are expected to
+type into and `q` would shadow macro recording. Leave with `<C-c>` or `ZA`.
+If you want `q` anyway, add `oil` to `q_close_filetypes` in your config; see
+[q to close](noethervim-q-close).
+
+Oil replaces Neovim's own directory listing, including `:e .`.
+
+Fill in the key that opens it:
+
+The file browser opens with ___
+
+## PICKERS, FOR FINDING BY NAME *pickers*
+
+When you know part of a name, do not navigate; search. Everything here is
+under SearchLeader, because none of it changes anything.
+
+    `<Space>ff`   find a file by name
+    `<Space>fp`   find a file in the project
+    `<Space>fo`   recently opened files
+    `<Space>fb`   switch between open buffers
+    `<Space>gg`   grep this directory for text
+    `<Space>gp`   grep the project
+    `<Space>/`    fuzzy search inside this buffer
+    `<Space>fh`   search Neovim's help tags
+    `<Space>fk`   search every key currently mapped, including plugins
+
+Two habits make these much better.
+
+**`<F1>` lists the keys a picker binds.** Every picker has extras, and they
+are not the same from one to the next. The overlay says how to dismiss it in
+its own title. See [the picker key list](noethervim-picker-help).
+
+**`<Space>r` resumes the last picker**, with your query still in it, which
+is what you want after opening the wrong result.
+
+Fill in the key that lists a picker's own keys:
+
+Inside any picker, the key list is ___
+
+## WINDOWS AND SPLITS *windows*
+
+Everything that makes, moves, sizes or fills a window is under `<C-w>`.
+
+Splitting and moving:
+
+    `<C-w>v`             split vertically
+    `<C-w>s`             split horizontally
+    `<C-h>` `<C-j>` `<C-k>` `<C-l>`   move to the window in that direction
+    `<C-w><M-h>` `<C-w><M-l>`         move this tab left or right
+
+Resizing is on the arrow keys, which is worth trying rather than reading:
+an arrow pushes the near edge of the window that way, so the window grows;
+`<S-Arrow>` pulls the far edge in, so it shrinks. With only one window and
+nothing to resize against, the arrows fall back to moving the cursor. See
+[the resize arrows](noethervim-resize-arrows).
+
+Three keys make a split on a scratch buffer, for when you want somewhere to
+put text rather than a second view of this file:
+
+    `|`   vertical split, scratch buffer
+    `_`   horizontal split, scratch buffer
+    `+`   new tab, scratch buffer
+
+Try it now: press `|`, type a word in the new window, then come back with
+`<C-h>`. The scratch buffer is real but unnamed, and `ZR` later deletes
+every one of them at once.
+
+Tabs are under the bracket pair rather than `<C-w>`, since moving between
+them is directional: `]t` and `[t`.
+
+## PANELS *panels*
+
+A panel is a window, so panels are under `<C-w>` too. Each of these toggles.
+
+    `<C-w>t`        a terminal along the bottom, reusing the same one
+    `<C-w><C-e>`    the file explorer sidebar
+    `<C-w><C-q>`    the quickfix list
+    `<C-w>Q`        the diagnostics panel, across every file
+    `<C-w><C-u>`    the undo tree
+    `<C-w><C-m>`    Mason, which installs language servers and tools
+    `<C-w><C-l>`    what the language server is doing
+    `<C-w>ll`       lazy.nvim, which manages plugins
+
+In the terminal, `<Esc><Esc>` returns you to normal mode.
+
+## CLOSING WHAT YOU OPENED *closing*
+
+Most of these panels close with a bare `q`, because they are windows you
+read rather than type into. Editable buffers deliberately do not, so `q`
+keeps its meaning as macro recording where you might actually use it.
+
+For everything else there is the `Z` grid from lesson two: `ZA` closes this
+window, `ZD` deletes this buffer, `ZW` leaves Neovim.
+
+## RECAP *recap*
+
+Fill in each answer at the end of its line.
+
+The editable directory browser: ___
+Grep this directory for text: ___
+Split the window vertically: ___
+List the keys the picker you are in binds: ___
+
+## WHERE TO GO NEXT
+
+[Lesson four](@tutor:noethervim-04-profiles) explains why a `.md` file and a
+`.py` file behave differently the moment you open them.

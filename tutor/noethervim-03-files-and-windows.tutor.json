@@ -1,0 +1,10 @@
+{
+  "expect": {
+    "56": "The file browser opens with <C-w><C-o>",
+    "84": "Inside any picker, the key list is <F1>",
+    "145": "The editable directory browser: <C-w><C-o>",
+    "146": "Grep this directory for text: <Space>gg",
+    "147": "Split the window vertically: <C-w>v",
+    "148": "List the keys the picker you are in binds: <F1>"
+  }
+}

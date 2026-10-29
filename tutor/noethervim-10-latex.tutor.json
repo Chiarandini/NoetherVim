@@ -1,0 +1,10 @@
+{
+  "expect": {
+    "46": "Compile this document: ,ll",
+    "113": "Jump to a label, through the tag stack: <C-]>",
+    "171": "Compile the document: ,ll",
+    "172": "View the PDF at the cursor: ,lv",
+    "173": "Jump to the label under the cursor: <C-]>",
+    "174": "Come back from that jump: <C-t>"
+  }
+}

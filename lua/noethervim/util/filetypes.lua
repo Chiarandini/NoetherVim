@@ -13,7 +13,7 @@ M.writing = {
 M.non_code = {
   json = true, jsonc = true, yaml = true, toml = true,
   help = true, man = true, lspinfo = true, query = true,
-  qf = true, oil = true, terminal = true,
+  qf = true, oil = true, terminal = true, tutor = true,
   snacks_dashboard = true, snacks_picker_input = true,
   snacks_layout_box = true, snacks_notif = true,
   snacks_terminal = true,

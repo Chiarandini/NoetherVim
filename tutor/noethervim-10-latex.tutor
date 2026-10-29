@@ -1,0 +1,179 @@
+# NOETHERVIM: LATEX
+
+This lesson needs the `languages/latex` bundle and a working TeX
+installation with `latexmk`. Enable it with `<Space>cb`, restart, and run
+`:checkhealth noethervim`, which reports the LaTeX toolchain once the
+bundle is on.
+
+Most of what follows is buffer-local to `.tex` files, so open a real
+document to try any of it.
+
+Table of contents:
+
+- [Compiling](*compile*)
+- [The PDF](*pdf*)
+- [Moving around a document](*nav*)
+- [Labels and references](*labels*)
+- [Writing faster](*writing*)
+- [Spelling in LaTeX](*spell*)
+- [Big projects](*projects*)
+- [Recap](*recap*)
+
+## COMPILING *compile*
+
+`<LocalLeader>` is `,` by default, and VimTeX's commands live under
+`<LocalLeader>l`.
+
+    `,ll`   compile
+    `,lk`   stop compiling
+    `,le`   the error and warning list
+    `,lt`   the table of contents
+
+The compile model is worth stating, because it differs from VimTeX's own
+default. `,ll` compiles **once** rather than leaving a process watching the
+file. After that first compile, saving the file recompiles it. So the habit
+is: `,ll` once when you sit down, then just write and save.
+
+`:VimtexStop` ends compilation and disarms that on-save rebuild; the next
+manual `,ll` re-arms it. `:VimtexStopAll` does it for every open project.
+
+Documents are compiled with LuaLaTeX, which handles `fontspec` and unicode
+mathematics that pdflatex cannot. Both that and the one-shot behavior are
+ordinary `vim.g` values you can override in `lua/user/plugins/`.
+
+Fill in the key that compiles the document:
+
+Compile this document: ___
+
+## THE PDF *pdf*
+
+    `,lv`   view the PDF at the cursor position
+    `,lf`   toggle the PDF following the cursor as you move
+    `:PDF`  open the compiled PDF in the system viewer
+    `yP`    put the compiled PDF on the system clipboard
+
+`,lv` is forward search: it asks your viewer to jump to the line you are
+on. It resolves against the **last build**, so if the PDF is behind the
+buffer it says so rather than sending you to the wrong place.
+
+`,lf` is the one to try if you have a second monitor. The viewer tracks
+your cursor until you press it again.
+
+`:PDF`, `yP` and Oil's `gP` treat the PDF as a file and need no viewer
+configured. `,lv` is the one that drives your viewer and syncs with it.
+
+Inverse search, clicking in the PDF to jump to the source, is set up by the
+bundle; which viewer you use decides how it is triggered.
+
+## MOVING AROUND A DOCUMENT *nav*
+
+Structural motions, on the bracket pair as usual:
+
+    `]g` `[g`   next and previous theorem environment
+    `]p` `[p`   proofs
+    `]x` `[x`   examples
+    `]P` `]X`   the matching `\end` of a theorem or example
+
+There is also a paragraph text object that understands LaTeX rather than
+blank lines:
+
+    `ig` `ag`   a paragraph, stopping at display math, environments,
+              `\item` and sectioning
+
+So `dag` deletes a paragraph without swallowing the equation after it,
+which `dap` would.
+
+Two pickers for jumping by name:
+
+    `,w`          every label and heading in the project
+    `,vw`         the word count
+
+## LABELS AND REFERENCES *labels*
+
+This is the part that saves the most time in a long document.
+
+    `<C-]>`   jump to the label under the cursor, through the tag stack
+    `<C-t>`   come back
+    `gd`      the same jump, without the tag stack
+
+Put the cursor on a `\cref{thm:main}`, `\ref{...}` or `\eqref{...}` and
+`<C-]>` takes you to where that label is defined, **across subfiles and
+nested sub-books**. `<C-t>` returns, and the two nest, so you can follow a
+chain of references and walk back out of it.
+
+Completion knows your labels too: typing inside `\cref{` offers them with
+the theorem statement as documentation, so you pick the right one by
+reading it rather than by remembering the key.
+
+If a label you just wrote is not offered yet, `,vul` rebuilds the label
+cache and `,vuh` the heading cache.
+
+Fill in the key that jumps to a label and can be returned from:
+
+Jump to a label, through the tag stack: ___
+
+## WRITING FASTER *writing*
+
+    `<S-CR>`     insert mode: continue the structure you are in, closing
+               environments and continuing `\item` lists
+    `,P`         paste an image from the clipboard as a figure
+    `<C-S-c>`    insert mode: a citation from your `.bib` file
+    `@`          at the start of a line above `\begin{document}`, complete
+               a preamble fragment
+    `.`          on a line of its own in a `.tex` file, complete an image
+               from `./images/` into a full figure block
+
+`<S-CR>` needs a terminal that sends it distinctly from `<CR>`; kitty,
+WezTerm, Ghostty and most GUIs do, Apple Terminal does not.
+`:checkhealth noethervim` guesses for your terminal.
+
+The `writing/zotero` bundle adds `,z`, a citation picker over a local
+Zotero library, if that is where your references live.
+
+Snippets are where most of the typing saving is, and they have their own
+lesson: [lesson eleven](@tutor:noethervim-11-snippets).
+
+## SPELLING IN LATEX *spell*
+
+Spellcheck understands LaTeX rather than treating macros as misspellings.
+
+    `zg`   add the word under the cursor to your dictionary
+    `zw`   mark it wrong
+    `z=`   suggestions
+
+On `K\"ahler` these read the decoded word rather than the fragment, so you
+are adding "Kähler" and not `"ahler`.
+
+The capitalization operators know LaTeX too. `gZ` on `\emph{the cat}` gives
+`\emph{The cat}` rather than capitalizing the macro name.
+
+## BIG PROJECTS *projects*
+
+For a document split across files with `subfiles.cls`, a buffer starts in
+**local mode**: compiling from a chapter builds that chapter's own PDF, not
+the whole book. That keeps the edit and compile loop fast while you are
+working inside one chapter.
+
+`:VimtexToggleMain` switches the buffer to the full project and back, for
+when you want the real thing with all its cross-references resolved.
+
+Oil helps here too: `gt` opens a `.tex` file from the directory you are
+browsing, and `gP` opens a `.pdf` from it in the system viewer.
+
+Some of the bundle's snippets expect particular preamble declarations. What
+they are, and a preamble that satisfies them, is written up at
+https://nathanaelsrawley.com/noethervim/guides/latex-setup/
+
+## RECAP *recap*
+
+Fill in each answer at the end of its line.
+
+Compile the document: ___
+View the PDF at the cursor: ___
+Jump to the label under the cursor: ___
+Come back from that jump: ___
+
+## WHERE TO GO NEXT
+
+[Lesson eleven](@tutor:noethervim-11-snippets) covers snippets, which is
+where LaTeX typing actually gets fast.

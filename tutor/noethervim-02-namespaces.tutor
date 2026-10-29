@@ -1,0 +1,176 @@
+# NOETHERVIM: KEYMAP NAMESPACES
+
+NoetherVim binds more keys than anyone memorizes, and you are not meant to
+memorize them. Every binding lives under a prefix, and each prefix owns one
+kind of action. Learn the six prefixes and the editor tells you the rest.
+
+This lesson takes about ten minutes. Nothing in it can damage your setup:
+a tutorial buffer is never written to disk, so edit it freely.
+
+Table of contents:
+
+- [How this lesson works](*howto*)
+- [SearchLeader, for finding things](*searchleader*)
+- [Leader, for acting on the editor](*leader*)
+- [Square brackets, for moving through lists](*brackets*)
+- [Bracket-o, for turning options on and off](*options*)
+- [Ctrl-W, for windows and panels](*windows*)
+- [Z, for closing things](*closing*)
+- [The prefixes this lesson skips](*rest*)
+- [Recap](*recap*)
+
+## HOW THIS LESSON WORKS *howto*
+
+Two mechanics first, then the content.
+
+**Exercise lines check themselves.** A line marked ✗ in the left margin is
+waiting on you, and becomes ✓ the moment its text is right. Fix the line
+below by changing `wrong` into `right`.
+
+this line is wrong
+
+**`>>` runs a command for you.** Put the cursor on an indented command and
+press `>>`. In an ordinary buffer `>>` indents a line; inside a tutorial it
+executes one, so you never have to retype what you are reading about.
+
+Try it on this one, which prints everything `:NoetherVim` can do:
+
+~~~ cmd
+    :NoetherVim
+~~~
+
+That output goes to a notification. TIP if it clears before you finish
+reading, `<Space>fn` brings back the list of recent notifications.
+
+## SEARCHLEADER, FOR FINDING THINGS *searchleader*
+
+SearchLeader is `<Space>` by default. It owns one job: **finding something
+and going there**. Nothing under it changes your text, your files or your
+options, which is what makes it safe to explore by pressing keys.
+
+Press `<Space>` now and wait a moment without pressing anything else.
+
+A panel lists every group underneath it. `f` is find, `g` is grep, `l` is
+LSP, `c` is configuration, `d` is diagnostics, `G` is git. Press `f` and
+the panel narrows to the file pickers. Press `<Esc>` to back out.
+
+That pattern is the whole skill: press a prefix, read, and keep going.
+
+Two worth knowing right now. `<Space>ff` finds a file by name, and
+`<Space>?` opens a list of every keymap currently active, grouped the way
+this lesson groups them. Run the guide and press `q` to come back:
+
+~~~ cmd
+    :NoetherVim keymap-guide
+~~~
+
+Fill in the two-letter key that fuzzy-finds a file by name:
+
+The find-a-file picker is ___
+
+NOTE this lesson writes `<Space>` because that is the default. If you
+rebind SearchLeader, every `<Space>` here means your key instead. See
+[the SearchLeader option](noethervim-mapsearchleader).
+
+## LEADER, FOR ACTING ON THE EDITOR *leader*
+
+Leader is `\` by default, and it is the counterpart to SearchLeader: where
+SearchLeader finds, **Leader acts**. Formatting a buffer, running the file,
+yanking to the system clipboard, starting a debug session.
+
+Press `\` now and wait. Read the panel, then press `<Esc>`.
+
+The split matters more than the individual keys. When you want to *go*
+somewhere, reach for `<Space>`. When you want something *done*, reach for
+`\`. A key that changes your buffer will never be under `<Space>`.
+
+## SQUARE BRACKETS, FOR MOVING THROUGH LISTS *brackets*
+
+`[` and `]` move backward and forward through whatever kind of thing you
+name next. `]b` is the next buffer, `[b` the previous one; `]t` and `[t`
+walk tabs; `]d` and `[d` walk diagnostics; `]q` and `[q` walk the quickfix
+list.
+
+The direction is always the same. `[` goes back, `]` goes forward, for
+every kind of list, so a list you have never used still moves the way you
+expect.
+
+## BRACKET-O, FOR TURNING OPTIONS ON AND OFF *options*
+
+Adding `o` to the pair changes it from movement to a switch: `[o` turns an
+option **on**, `]o` turns it **off**. The letter after names the option.
+
+Try it. Press `]on` and the line numbers disappear; press `[on` and they
+come back.
+
+Now `[ox`, which turns on a crosshair through the cursor, and `]ox` to turn
+it off again. Others follow the same shape: `w` is wrap, `s` is spell, `h`
+is search highlighting, `l` is whitespace characters.
+
+Fill in the half of the pair that turns an option on:
+
+The prefix that turns an option on is ___
+
+The full list is in [the option toggle reference](noethervim-option-toggles).
+
+## CTRL-W, FOR WINDOWS AND PANELS *windows*
+
+Everything that makes, moves, sizes or fills a window is under `<C-w>`,
+extending the prefix Vim already uses for window commands.
+
+Walk through it once. Press `<C-w>v` to split this window in two, then
+`<C-w>h` and `<C-w>l` to move between the halves. Leave the extra one open
+for the next section.
+
+Panels live here too, because a panel is a window: `<C-w><C-o>` opens the
+file browser, `<C-w>l` the plugin manager, `<C-w>t` a terminal.
+
+## Z, FOR CLOSING THINGS *closing*
+
+`Z` closes things, and its keys form a grid rather than a list of initials.
+The row says how much you are willing to lose, the column says what you are
+closing. Vim's own `ZZ` and `ZQ` sit in the first column.
+
+                    this window   everything    this buffer
+    force             ZQ            ZW            ZE
+    refuse if dirty   ZA            ZS            ZD
+    save first        ZZ            ZX            ZC
+
+Close the split you opened a moment ago with `ZA`. It refuses if the buffer
+has unsaved changes, which is the row you want almost always.
+
+`ZW` is the one to remember for later: it leaves Neovim from anywhere.
+
+## THE PREFIXES THIS LESSON SKIPS *rest*
+
+Two more exist, and both need a real file to be worth practicing on.
+
+`g` covers going to things a language server knows about: `gd` to a
+definition, `gR` to references, `go` to an outline. It needs an attached
+language server, so it does nothing in this buffer.
+
+`<LocalLeader>` is `,` and holds actions belonging to one filetype, such as
+compiling a LaTeX document. It is always buffer-local, so the keys under it
+change as you move between files.
+
+## RECAP *recap*
+
+Fill in the prefix that owns each action. Each answer goes at the end of
+its line, after the existing space.
+
+Fuzzy-finding a file lives under: ___
+Turning line numbers back on lives under: ___
+Splitting the window lives under: ___
+Closing this window and nothing else is: ___
+
+When all four are ✓, you are done.
+
+## WHERE TO GO NEXT
+
+If modes and motions are still new, the two tutorials Neovim ships are the
+better next step: [lesson one](@tutor:vim-01-beginner) covers moving,
+editing and saving, and [lesson two](@tutor:vim-02-beginner) continues it.
+
+To read the namespaces as reference rather than a walkthrough, see
+[the keymap chapter](noethervim-keymaps). To see every key live in your own
+install, with a jump to the line that defined it, press `<Space>?`.

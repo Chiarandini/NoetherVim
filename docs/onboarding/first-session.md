@@ -23,7 +23,9 @@ keeping open the first week:
 
 - **`:Tutor`** runs inside any Neovim install. About thirty minutes, covering
   modes, motions, `dd`/`yy`/`p`, search, and writing buffers. This is the
-  single best use of your time as a new Vim user.
+  single best use of your time as a new Vim user. NoetherVim adds eleven
+  lessons of its own to the same command: `:Tutor noethervim` opens the
+  index, and `:Tutor <Tab>` lists them by name.
 - **[vimtutor-sequel](https://github.com/micahkepe/vimtutor-sequel)** numbers
   its lessons 8 through 16, picking up where `:Tutor` ends: splits,
   spellcheck, advanced search and replace, macros, sessions and registers,
@@ -94,6 +96,11 @@ thing you want and read the panel. `<Space>` searches for something,
 `<Leader>` acts on the editor, `[` and `]` move backwards and forwards through
 lists, `[o` and `]o` enabled/disable options, and `<C-w>` manipulates windows. The full table is in [keybinding
 philosophy](../../README.md#keybinding-philosophy).
+
+This page moves on after naming the prefixes. To drill them instead, run
+`:Tutor noethervim-02-namespaces`: ten minutes inside the editor, with each
+prefix pressed against a live panel and answers checked in the margin as you
+type them. It is one of eleven lessons; `:Tutor noethervim` is the index.
 
 ## 4. See every keymap at once
 

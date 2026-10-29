@@ -1,0 +1,157 @@
+# NOETHERVIM: BUNDLES
+
+NoetherVim starts with no bundles enabled, and that is not an incomplete
+install. The core edits any file well: language servers, completion,
+treesitter, formatting, git signs, pickers and the file browser are all
+there before you turn anything on.
+
+A bundle deepens **one subject**. LaTeX, debugging, a git interface,
+Obsidian notes, a test runner. You add the ones you actually work in.
+
+Table of contents:
+
+- [The catalogue](*catalogue*)
+- [Turning one on](*enable*)
+- [What lazy.nvim does with it](*lazy*)
+- [Bundles that need each other](*pairs*)
+- [Changing how a bundle is configured](*override*)
+- [When something does not load](*trouble*)
+- [Recap](*recap*)
+
+## THE CATALOGUE *catalogue*
+
+Press `<Space>cb`, or run:
+
+~~~ cmd
+    :NoetherVim bundles
+~~~
+
+Each row is a bundle: its name, what it provides, and whether it is already
+active. The text is searchable, so typing `git` or `latex` narrows the list.
+
+The categories say what kind of thing each is:
+
+    `languages/`    a language worked in seriously: latex, rust, go, python,
+                  java, c-cpp, web-dev
+    `tools/`        debug, test, git, repl, database, http, ai, task-runner,
+                  refactoring, octo, nvim-dev
+    `navigation/`   harpoon, flash, projects, yanky, editing-extras
+    `writing/`      markdown, obsidian, neorg, zotero, wrapsearch,
+                  presentation
+    `terminal/`     better-term, tmux, remote-dev
+    `ui/`           colorscheme, eye-candy, minimap, helpview, tableaux
+    `practice/`     training, hardtime
+
+Each bundle's own file documents what it installs, what it binds, and what
+it needs on your system. `<CR>` in the picker opens it, which is the honest
+answer to "what will this actually do".
+
+## TURNING ONE ON *enable*
+
+In the picker:
+
+    `<C-y>`   enable: uncomments its import line in your init.lua
+    `<C-x>`   disable: comments that line back out
+    `<CR>`    open the bundle's source, unchanged
+    `<C-o>`   seed a file for overriding how it is configured
+    `<F1>`    list every key the picker binds
+
+`<C-y>` shows a diff of the exact change before writing anything, the same
+prompt the templates picker uses. If your init.lua has been restructured
+past recognition, it copies the import line to the clipboard and says so
+rather than guessing.
+
+Pick one you actually want and enable it. If nothing obvious appeals,
+`tools/git` is a good first one.
+
+Then **restart Neovim**. lazy.nvim installs the plugins on the next start;
+they do not appear in the running session.
+
+Fill in the key that enables the bundle under the cursor:
+
+In the bundle picker, enable with ___
+
+## WHAT LAZY.NVIM DOES WITH IT *lazy*
+
+Enabling a bundle adds one `import` line to your init.lua. lazy.nvim reads
+it, downloads what is missing, and pins the versions in a lock file.
+
+Almost nothing loads at startup. A bundle declares when each of its plugins
+is needed, and lazy waits for that moment: a filetype being opened, a
+command being run, a key being pressed. This is why enabling several
+bundles does not slow the editor down.
+
+`<C-w>ll` opens lazy's own window: what is installed, what loaded, and how
+long each took. `<C-w>ls` syncs, `<C-w>li` installs.
+
+A bundle that needs an external tool says so, and NoetherVim fetches what
+it can through Mason. Enabling `languages/rust` alongside `tools/debug`
+gets you the Rust debug adapter, because the pair implies it. To manage
+toolchains yourself, see [declining auto-install](noethervim-auto-install).
+
+## BUNDLES THAT NEED EACH OTHER *pairs*
+
+Two bundles are deliberately empty on their own, and this surprises people.
+
+`tools/test` installs the test runner and **no adapters**. `tools/debug`
+installs the debugger and almost no adapters. An adapter arrives from the
+language bundle, and only when both are enabled:
+
+    `tools/test` plus `languages/python`   pytest and unittest
+    `tools/test` plus `languages/go`       go test
+    `tools/debug` plus `languages/rust`    the Rust debug adapter
+
+So `tools/test` alone gives you a panel with nothing to run, which reads as
+a broken install and is not one. Enable the language bundle too. See
+[test adapters](noethervim-test-adapters).
+
+## CHANGING HOW A BUNDLE IS CONFIGURED *override*
+
+Press `<C-o>` on a bundle in the picker, or `<Leader>e` from its source
+file. A file is seeded in `lua/user/plugins/` listing the repository strings
+that bundle configures, as commented stubs.
+
+One rule decides whether your change works:
+
+    `opts`     merges into what the bundle already set
+    `config`   replaces it entirely
+
+Reach for `opts` unless you mean to throw the existing configuration away.
+An override that silently does nothing is almost always this distinction.
+
+One more trap: merging does not extend lists. A key whose value is an array,
+like a list of formatters or servers to install, is **replaced** rather than
+appended to. To add to one, use the function form of `opts` and insert into
+the table you are handed. See
+[array-valued options](noethervim-user-plugins-arrays).
+
+## WHEN SOMETHING DOES NOT LOAD *trouble*
+
+If a bundle was renamed or removed upstream, lazy reports that no specs were
+found for it. NoetherVim surfaces this as a notification after startup
+rather than a message lost on the command line, and the notification carries
+the key that opens your init.lua.
+
+`:checkhealth noethervim` lists the same thing under spec errors, names the
+current path when a bundle was renamed rather than deleted, and flags an
+override left behind with nothing to extend.
+
+## RECAP *recap*
+
+Fill in each answer at the end of its line.
+
+The picker that lists every bundle: ___
+The key that enables one: ___
+The window showing what lazy.nvim installed: ___
+The option key that merges rather than replaces: ___
+
+## WHERE TO GO NEXT
+
+That is the core of NoetherVim. From here the lessons cover one subject
+each, in any order you like:
+
+- [Language servers and diagnostics](@tutor:noethervim-07-lsp)
+- [Running code and terminals](@tutor:noethervim-08-terminal)
+- [Git](@tutor:noethervim-09-git)
+- [LaTeX](@tutor:noethervim-10-latex)
+- [Snippets](@tutor:noethervim-11-snippets)

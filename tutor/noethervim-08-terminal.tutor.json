@@ -1,0 +1,10 @@
+{
+  "expect": {
+    "33": "Toggle the terminal along the bottom: <C-w>t",
+    "86": "Next entry in the quickfix list: ]q",
+    "115": "Toggle the bottom terminal: <C-w>t",
+    "116": "Leave terminal mode and get the keys back: <Esc><Esc>",
+    "117": "Run the file you are editing: <Leader>rf",
+    "118": "Previous entry in the quickfix list: [q"
+  }
+}

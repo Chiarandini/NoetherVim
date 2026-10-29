@@ -1,0 +1,123 @@
+# NOETHERVIM: RUNNING CODE AND TERMINALS
+
+Four ways to run what you are editing, and the list that collects what went
+wrong. Most of this is core; two sections name the bundle they need.
+
+Table of contents:
+
+- [The terminal](*terminal*)
+- [Running the file you are in](*run*)
+- [File or project](*scope*)
+- [The quickfix list](*quickfix*)
+- [Task runners and REPLs](*bundles*)
+- [Recap](*recap*)
+
+## THE TERMINAL *terminal*
+
+`<C-w>t` toggles a terminal along the bottom of the window and drops you
+into it ready to type.
+
+It reuses the same terminal each time rather than opening a new one, so the
+shell keeps its history and its working directory between toggles.
+
+`<Esc><Esc>` leaves terminal mode and gives the keys back to Neovim, so you
+can scroll the output, search it, and yank from it like any other buffer.
+A single `<Esc>` goes to the shell, which is what you want when the program
+running inside it expects one.
+
+This replaces Vim's `<C-w>t` ("go to the top window"); `1<C-w>w` still does
+that.
+
+Fill in the key that toggles the terminal:
+
+Toggle the terminal along the bottom: ___
+
+## RUNNING THE FILE YOU ARE IN *run*
+
+    `<Leader>rf`   run this file
+    `<Leader>rp`   run the project around it
+    `<Leader>rc`   run this file in a floating window
+    `<Leader>rT`   send the run command to a named terminal
+
+What each language runs is one table, so all four agree about what "run"
+means for a given filetype.
+
+`rc` and `rT` are core. `rf` and `rp` need the `task-runner` bundle, and
+`rT` also needs `better-term`.
+
+Version managers are honored. The interpreter is resolved through mise,
+asdf, pyenv, rbenv, nodenv or goenv for the buffer's own directory before
+anything runs, so a project pinned to an older Python gets that one rather
+than whichever happens to be first on your PATH.
+
+## FILE OR PROJECT *scope*
+
+The difference between `rf` and `rp` is the project around the file.
+
+In a Cargo crate, `rf` runs `cargo run`; on a loose `.rs` file with no
+project, it compiles that one file. `rp` always runs the project's own
+entry point, found from `Cargo.toml`, `go.mod`, `package.json`, a Maven
+file or a makefile, and does nothing when there is no project around the
+buffer.
+
+Interpreted languages have `rf` only, since running the file and running
+the project are the same act.
+
+## THE QUICKFIX LIST *quickfix*
+
+When a build or a search produces a list of places to visit, it lands in
+the quickfix list.
+
+    `<C-w><C-q>`   open the list
+    `<Leader>q`    toggle it
+    `]q` `[q`      next and previous entry
+    `]Q` `[Q`      last and first entry
+
+Inside the list, `<CR>` jumps to an entry and leaves the list open;
+`<S-CR>` jumps and closes it. `q` closes it, since it is a list you read
+rather than type into.
+
+The bracket pair here is the same grammar as everywhere else: `[` back, `]`
+forward, over whatever kind of list you named. That is why moving through
+build errors uses the same two keys as moving through buffers.
+
+Fill in the key that moves to the next quickfix entry:
+
+Next entry in the quickfix list: ___
+
+## TASK RUNNERS AND REPLS *bundles*
+
+Two bundles extend this, and both are opt-in.
+
+**`tools/task-runner`** adds a real task runner: `<C-w><C-r>` opens the task
+list, and it is what gives `<Leader>rf` and `<Leader>rp` something to drive.
+If those two keys do nothing on a fresh install, this is the bundle you are
+missing.
+
+**`tools/repl`** adds an interactive REPL beside the buffer, for languages
+where you work by evaluating pieces rather than running the whole file.
+
+    `<Leader>rs`   start the REPL
+    `<Leader>rr`   restart it
+    `<Leader>rh`   hide it
+    `<Leader>rF`   focus it
+
+**`terminal/better-term`** adds named terminals, so a long-running server
+and a shell can both stay open and be reached by name.
+
+Enable any of them from the bundle picker; see
+[lesson six](@tutor:noethervim-06-bundles).
+
+## RECAP *recap*
+
+Fill in each answer at the end of its line.
+
+Toggle the bottom terminal: ___
+Leave terminal mode and get the keys back: ___
+Run the file you are editing: ___
+Previous entry in the quickfix list: ___
+
+## WHERE TO GO NEXT
+
+[Lesson nine](@tutor:noethervim-09-git) covers the git tooling, which is
+partly core and partly a bundle.

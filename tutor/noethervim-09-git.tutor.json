@@ -1,0 +1,9 @@
+{
+  "expect": {
+    "52": "Next hunk in this buffer: ]h",
+    "104": "Preview the hunk under the cursor: <Leader>hp",
+    "105": "Stage the hunk under the cursor: <Leader>hs",
+    "106": "Previous hunk in this buffer: [h",
+    "107": "The picker listing every changed file: <Space>Gs"
+  }
+}

@@ -1,0 +1,151 @@
+# NOETHERVIM: YOUR CONFIGURATION
+
+This lesson ends with a file of your own on disk. It is the point where the
+distribution stops being someone else's and starts being yours.
+
+The whole design is one rule: **the distribution lives in one directory and
+you live in another**. An update rewrites the first and never touches the
+second.
+
+Table of contents:
+
+- [The user directory](*userdir*)
+- [Writing your first file](*templates*)
+- [Which file holds what](*surfaces*)
+- [Seeing what you changed](*diff*)
+- [When something breaks](*bisect*)
+- [Overriding the distribution itself](*overrides*)
+- [Recap](*recap*)
+
+## THE USER DIRECTORY *userdir*
+
+Everything you write lives in `lua/user/`, inside your Neovim config
+directory. Each file has one job, and each is optional.
+
+    `config.lua`       the settings NoetherVim's own code reads
+    `options.lua`      anything with a `vim.o` equivalent
+    `keymaps.lua`      your keymaps, added or overriding
+    `autocmds.lua`     your autocommands
+    `highlights.lua`   colors, applied after the colorscheme
+    `plugins/`         new plugins, and changes to the ones shipped
+    `lsp/`             language server settings
+    `overrides/`       last-resort hooks, after everything else
+
+NoetherVim loads each of yours immediately after its own counterpart, so
+yours wins by running second. The full order is in
+[the load order](noethervim-load-order).
+
+## WRITING YOUR FIRST FILE *templates*
+
+Do not create these by hand. Every one has an annotated template.
+
+Press `<Space>ct`, or run:
+
+~~~ cmd
+    :NoetherVim templates
+~~~
+
+Highlight `user/config.example.lua` and press `<C-y>`. A diff appears
+showing exactly what is about to be written; `y` or `<CR>` accepts, `n`
+rejects, `q` cancels. Nothing is written before you agree to it.
+
+On accept the new file opens, with every key commented out, so it changes
+nothing until you decide it should.
+
+Read it top to bottom once. It is the complete list of what the
+distribution lets you change about its own behavior: the colorscheme, the
+statusline shape, the Tab-key philosophy for completion, which filetypes
+count as prose, what a bare `q` closes. `<C-/>` toggles a comment on the
+line you are on.
+
+The file is typed. With `---@type noethervim.UserConfig` at the top,
+`<C-Space>` inside the table completes key names and shows what each does,
+and a typo is flagged rather than silently ignored.
+
+Fill in the key that opens the template picker:
+
+The template picker is ___
+
+## WHICH FILE HOLDS WHAT *surfaces*
+
+This is the distinction people get wrong, and it costs an afternoon when
+they do. Four places, four rules.
+
+    `config.lua`     values NoetherVim's own code branches on, with no
+                   `vim.o` or plugin option of their own
+    `options.lua`    anything Vim already has an option for
+    `plugins/`       anything a plugin exposes through its own options
+    `init.lua`       leaders and the dashboard flag, which have to be set
+                   before plugins load
+
+The test: if Vim has an option for it, it goes in `options.lua`. If a plugin
+has an option for it, go straight to the plugin in `plugins/`. `config.lua`
+is only for the things that belong to NoetherVim itself.
+
+Your `init.lua` is separate from all of this and holds the bootstrap.
+`<Leader>i` opens it from anywhere.
+
+## SEEING WHAT YOU CHANGED *diff*
+
+Once you have written something, three pickers tell you whether it took.
+
+    `<Space>ck`   every keymap, marked core, user, override or deleted
+    `<Space>co`   every tracked option, marked core or override
+    `<Space>ca`   every autocommand group, marked core, override or cleared
+
+These answer the question "did my change actually apply", which is
+otherwise guesswork. `<CR>` on a row opens the file and line responsible.
+
+`:NoetherVim status` lists which of your files loaded at all.
+
+## WHEN SOMETHING BREAKS *bisect*
+
+One environment variable tells you whether a problem is yours or the
+distribution's. Start Neovim with:
+
+~~~ sh
+    $ NOETHERVIM_NO_USER=1 nvim
+~~~
+
+Every file in `lua/user/` is skipped. If the problem goes away, it is
+yours; if it stays, it is not. This is the first thing to try and it
+settles the question in one launch. See [toggling](noethervim-toggle).
+
+Three more places worth knowing when something is wrong:
+
+    `:messages`              what scrolled past during startup
+    `<C-w>ll`               plugin status and load times
+    `:checkhealth noethervim` missing tools, drift, and spec errors
+
+Fill in the variable that skips your own config:
+
+Start Neovim ignoring lua/user/ with ___=1 nvim
+
+## OVERRIDING THE DISTRIBUTION ITSELF *overrides*
+
+Sometimes you want to change how NoetherVim configures a plugin, not add
+one. Open the distribution file you want to change and press `<Leader>e`.
+
+An override file is created in the right place, seeded with the repository
+strings the upstream spec declares as commented stubs, and opened in a split
+beside the source. Uncomment the one you want and set your options.
+
+NoetherVim records which version of the upstream file you wrote that
+against. When upstream later changes, `:checkhealth noethervim` tells you,
+under "Override drift". Without that, an upstream fix simply never reaches
+you and nothing says so. The record lives in Neovim's state directory, never
+in your file, so you are free to rewrite and reformat your own override.
+See [override drift](noethervim-override-drift).
+
+## RECAP *recap*
+
+Fill in each answer at the end of its line.
+
+The directory your own configuration lives in: ___
+The picker that writes a starting template: ___
+The picker that shows whether your keymap override took: ___
+
+## WHERE TO GO NEXT
+
+[Lesson six](@tutor:noethervim-06-bundles) turns features on. You have the
+file it writes to now, so the two fit together.

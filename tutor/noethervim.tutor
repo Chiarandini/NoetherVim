@@ -1,0 +1,76 @@
+# THE NOETHERVIM LESSONS
+
+Eleven short lessons, run inside the editor, each one ending with something
+you have actually done rather than read. Press `<CR>` on a lesson to open
+it.
+
+None of them can damage your setup. A tutorial buffer is never written to
+disk, so you can edit freely in any of them.
+
+## START HERE
+
+If Neovim itself is new to you, do these two first. They ship with Neovim
+and teach modes, motions, editing and saving. Nothing below will make sense
+without them, and they are the best half hour you can spend.
+
+    [Vim lesson 1](@tutor:vim-01-beginner)   moving, editing, saving
+    [Vim lesson 2](@tutor:vim-02-beginner)   search, replace, files, windows
+
+## THE CORE
+
+Six lessons covering what NoetherVim is, in the order they build on each
+other. About an hour in total, and you can stop after any of them.
+
+    1. [Orientation](@tutor:noethervim-01-orientation)
+       What you are looking at, and the four questions you can ask the
+       editor about itself.
+
+    2. [Keymap namespaces](@tutor:noethervim-02-namespaces)
+       The six key prefixes and what each owns. **Do this one first** if
+       you do nothing else; it is what makes the rest discoverable.
+
+    3. [Files and windows](@tutor:noethervim-03-files-and-windows)
+       The editable directory browser, the pickers, splits and panels.
+
+    4. [Writing and code profiles](@tutor:noethervim-04-profiles)
+       Why a `.tex` file and a `.py` file behave differently, and how to
+       disagree per window.
+
+    5. [Your configuration](@tutor:noethervim-05-your-config)
+       Ends with a configuration file of your own on disk.
+
+    6. [Bundles](@tutor:noethervim-06-bundles)
+       Turning subjects on: LaTeX, debugging, git, tests.
+
+## BY SUBJECT
+
+Five more, in any order. Each says at the top which bundle it needs, if
+any.
+
+    7. [Language servers and diagnostics](@tutor:noethervim-07-lsp)
+       Definitions, references, renames, errors. Core.
+
+    8. [Running code and terminals](@tutor:noethervim-08-terminal)
+       The terminal, the run keys, the quickfix list. Core.
+
+    9. [Git](@tutor:noethervim-09-git)
+       Hunks and blame are core; the interfaces are the `tools/git` bundle.
+
+   10. [LaTeX](@tutor:noethervim-10-latex)
+       Compiling, the PDF, labels and references. Needs `languages/latex`.
+
+   11. [Snippets](@tutor:noethervim-11-snippets)
+       Expanding, jumping, and writing your own. Core.
+
+## REFERENCE, ONCE YOU ARE PAST THE LESSONS
+
+A lesson teaches a path through something; these answer a question about it.
+
+    `<Space>?`                  every key active right now, grouped by
+                              prefix, with a jump to what defined it
+    `:NoetherVim`               every subcommand the distribution adds
+    `:checkhealth noethervim`   whether anything is wrong
+    `:help noethervim`          the reference manual
+
+There is also a written walkthrough of a first session, outside the editor,
+in `docs/onboarding/first-session.md` in the project root.

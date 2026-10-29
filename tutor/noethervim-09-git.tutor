@@ -1,0 +1,113 @@
+# NOETHERVIM: GIT
+
+Git in NoetherVim comes in two layers. The signs in the margin and the
+hunk keys are **core** and work on a fresh install. A full git interface,
+the log graph and the diff viewer come from the `tools/git` bundle.
+
+This lesson covers both and says which is which.
+
+Table of contents:
+
+- [The margin](*signs*)
+- [Working with hunks](*hunks*)
+- [Searching git](*pickers*)
+- [The git bundle](*bundle*)
+- [Resolving conflicts](*conflicts*)
+- [Recap](*recap*)
+
+## THE MARGIN *signs*
+
+In a file inside a git repository, the left margin marks every line you have
+changed since the last commit: added, changed or removed. The statusline
+carries the branch name and a count of the three.
+
+A run of adjacent changed lines is a **hunk**, which is the unit git thinks
+in and the unit these keys act on.
+
+Moving between them is directional, so it is the bracket pair:
+
+    `]h` `[h`   next and previous hunk
+
+## WORKING WITH HUNKS *hunks*
+
+All of these are core, under `<Leader>h`.
+
+    `<Leader>hp`   preview this hunk, without leaving the buffer
+    `<Leader>hs`   stage this hunk
+    `<Leader>hr`   reset this hunk, discarding the change
+    `<Leader>hu`   undo the last stage
+    `<Leader>hS`   stage the whole buffer
+    `<Leader>hR`   reset the whole buffer
+    `<Leader>hb`   blame this line: who changed it, when, and in what commit
+    `<Leader>hd`   diff this file against the index
+
+In visual mode, `<Leader>hs` and `<Leader>hr` act on the selected lines
+rather than the whole hunk, which is how you stage part of a change.
+
+`<Leader>hp` is the one to build a habit around. Reviewing a hunk before
+staging it catches the debug line you left in, and it costs one key.
+
+Fill in the key that moves to the next changed hunk:
+
+Next hunk in this buffer: ___
+
+## SEARCHING GIT *pickers*
+
+Under SearchLeader, because none of these change anything:
+
+    `<Space>Gs`   status: every changed file
+    `<Space>Gc`   the commit log
+    `<Space>Gb`   commits touching this buffer
+    `<Space>Gf`   files tracked by git
+    `<Space>GS`   stashes
+    `<Space>fG`   find a file among the changed ones
+
+`<Space>Gb` is the fastest way to answer "when did this file last change
+and why". `<Space>Gc` with a search term is the fastest way to find the
+commit you half remember.
+
+## THE GIT BUNDLE *bundle*
+
+Everything above is core. `tools/git` adds the interfaces:
+
+    `<C-w>F`    a full TUI git client: stage, commit, push, branch
+    `<C-w>[d`   open the diff viewer
+    `<C-w>]d`   close it
+    `:Git`      any git command, with the output in a buffer
+    `:Flog`     the log graph
+
+The diff viewer is the one worth the bundle on its own. It shows every
+changed file in a project side by side, with the file list down one edge,
+and it does the same for any commit or range in the history.
+
+`:Git` is fugitive. `:Git blame` opens an interactive blame beside the
+file; `:Git log`, `:Git commit` and the rest behave as you would expect
+with the output in a real buffer you can search and yank from.
+
+Enable it with `<Space>cb`, then restart. It needs `libgit2` on your system
+for the TUI client; `:checkhealth noethervim` says so if it is missing.
+
+## RESOLVING CONFLICTS *conflicts*
+
+The bundle also handles merge conflicts. When a file has conflict markers,
+the two sides are highlighted rather than left as raw `<<<<<<<` text, and
+keys are offered to take one side, the other, both, or neither, and to move
+between the conflicts in the file.
+
+This is the part that most repays having the bundle enabled before you need
+it, since a conflict is a bad moment to be installing tooling.
+
+## RECAP *recap*
+
+Fill in each answer at the end of its line.
+
+Preview the hunk under the cursor: ___
+Stage the hunk under the cursor: ___
+Previous hunk in this buffer: ___
+The picker listing every changed file: ___
+
+## WHERE TO GO NEXT
+
+[Lesson ten](@tutor:noethervim-10-latex) covers the LaTeX workflow, and
+[lesson eleven](@tutor:noethervim-11-snippets) covers snippets, which is
+where a lot of the typing saving actually lives.

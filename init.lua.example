@@ -171,9 +171,11 @@ require("lazy").setup({
 			-- Keep the user config dir on the rtp after lazy's reset,
 			-- so that user.plugins and user.configs are importable.
 			paths = { vim.fn.stdpath("config") },
+			-- `tutor` is deliberately absent: it defines `:Tutor`, which
+			-- NoetherVim's own lessons are delivered through.
 			disabled_plugins = {
 				"gzip", "matchit", "matchparen", "netrwPlugin",
-				"tarPlugin", "tutor", "zipPlugin",
+				"tarPlugin", "zipPlugin",
 			},
 		},
 	},
