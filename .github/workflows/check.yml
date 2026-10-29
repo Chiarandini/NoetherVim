@@ -57,6 +57,26 @@ jobs:
           checklevel: Warning
           directories: "."
 
+  layers:
+    name: distro code reads user config only through the ingress
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: stable
+
+      # Under NOETHERVIM_NO_USER nothing of the user's may be read, and only
+      # lua/noethervim/config.lua knows that, so every read of lua/user/ or
+      # of the config directory goes through it. The same pass checks that
+      # the files setup() sources are never required, and that a plugin
+      # config hands the spec's opts to setup(). tools/lint-layers.lua
+      # explains each rule.
+      - name: Layer rules
+        run: nvim --headless -l tools/lint-layers.lua
+
   tutor-sidecars:
     name: lesson exercises point at the right lines
     runs-on: ubuntu-latest
