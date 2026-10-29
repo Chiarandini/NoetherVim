@@ -40,7 +40,8 @@ opts = {
 },
 config = function(_, opts)
 	require("todo-comments").setup(opts)
-	vim.keymap.set("n", "]T", function() require("todo-comments").jump_next() end, { desc = "Next todo comment" })
-	vim.keymap.set("n", "[T", function() require("todo-comments").jump_prev() end, { desc = "Previous todo comment" })
+	local map = require("noethervim.default").map
+	map("n", "]T", function() require("todo-comments").jump_next() end, { desc = "Next todo comment" })
+	map("n", "[T", function() require("todo-comments").jump_prev() end, { desc = "Previous todo comment" })
 end
 }

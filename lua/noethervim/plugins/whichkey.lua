@@ -184,8 +184,10 @@ return {
 			local nv = require("noethervim.util")
 			local icons = nv.icons
 			local SearchLeader = nv.search_leader
-			vim.o.timeout = true
-			vim.o.timeoutlen = 1500
+			-- Through noethervim.default: a timeoutlen of yours stays.
+			local default = require("noethervim.default")
+			default.o("timeout", true)
+			default.o("timeoutlen", 1500)
 			local wk = require("which-key")
 			wk.setup(opts)
 			wk.add({

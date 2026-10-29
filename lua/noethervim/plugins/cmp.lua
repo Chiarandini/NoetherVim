@@ -283,13 +283,15 @@ return {
 			-- Disable Neovim's built-in wildchar (Tab) so blink fully owns
 			-- cmdline completion. Without this, both wildmenu and blink
 			-- fight over Tab in cmdline mode.
-			vim.o.wildchar = 0
-			vim.o.wildcharm = vim.fn.char2nr(vim.api.nvim_replace_termcodes("<C-z>", true, false, true))
+			-- Through noethervim.default, so a wildchar of yours stays.
+			local default = require("noethervim.default")
+			default.o("wildchar", 0)
+			default.o("wildcharm", vim.fn.char2nr(vim.api.nvim_replace_termcodes("<C-z>", true, false, true)))
 
 			-- Native <C-Space> fallback: blink overrides this with buffer-local
 			-- keymaps on InsertEnter; when blink is disabled (]oC toggle), blink
 			-- skips the buffer-local keymap and this global mapping fires instead.
-			vim.keymap.set("i", "<C-Space>", function()
+			default.map("i", "<C-Space>", function()
 				vim.api.nvim_feedkeys(vim.keycode("<C-n>"), "n", false)
 			end, { desc = "native keyword completion" })
 

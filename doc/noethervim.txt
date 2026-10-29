@@ -137,18 +137,27 @@ and each lazy-loaded plugin whenever its trigger fires.
                                               *noethervim-override-timing*
 What stage 3 means for overrides: ~
 
-`user/overrides/*.lua` is the last thing in stage 2, not the last thing
-overall. It wins against everything the distribution sets in stage 2, and
-against a plugin's `keys` entries: once you remap one of those, it stays
-remapped whether or not the plugin later loads.
+Stage 3 is mostly a lazy-loaded plugin's `config` running the first time
+the plugin loads. Where that `config` is NoetherVim's and sets an option,
+a global mapping or a command, it first checks whether you set it, and
+keeps yours if so: a `timeoutlen` from `user/options.lua` survives
+which-key loading, and a `<leader>j` of yours survives LuaSnip loading.
+`:NoetherVim where <key>` shows a mapping of NoetherVim's that stepped
+aside for yours.
 
-It does NOT win against stage 3, which is mainly a lazy-loaded plugin's
-own `config` function and buffer-local LSP keymaps applied on
-`LspAttach`. Those run later and overwrite you.
+Three things in stage 3 still run after your files and win:
 
-For those, override at the layer that runs at the same time: an
-`LspAttach` autocmd for LSP keymaps, or a `config` wrapper in your
-`user/plugins/` spec for a plugin's own bindings.
+  - A key in a plugin spec's `keys` list. lazy.nvim maps it again each
+    time the plugin loads, so a `vim.keymap.set` or `vim.keymap.del` in
+    `user/keymaps.lua` lasts only until then. Change the key on the spec
+    instead, from `user/plugins/`: >lua
+        return { "kevinhwang91/nvim-ufo", keys = { { "L", my_peek } } }
+<   `{ "L", false }` in place of `{ "L", my_peek }` removes it.
+    `:NoetherVim where L` prints both lines for any such key.
+  - A plugin's own default mappings, made when it loads (Comment.nvim's
+    `gb`, nvim-surround's `ys`).
+  - Buffer-local LSP keymaps applied on `LspAttach`. Make yours in an
+    `LspAttach` autocmd of your own.
 
 ------------------------------------------------------------------------------
 4.1 DIRECTORY STRUCTURE                                  *noethervim-user-dir*
@@ -229,11 +238,11 @@ See `noethervim/options.lua` for all defaults.
 4.3 KEYMAPS                                          *noethervim-user-keymaps*
 
 Create `lua/user/keymaps.lua`. It runs after core keymaps and toggles: >lua
-    -- Override a core keymap (last-write wins)
+    -- Override a core keymap
     vim.keymap.set("n", ";", ";")   -- revert ; to default
 
     -- Remove a core keymap entirely
-    vim.keymap.del("n", "<C-a>")
+    vim.keymap.del("n", "S")
 
     -- Add personal keymaps
     vim.keymap.set("n", "<space>ev", "<cmd>e $MYVIMRC<cr>", { desc = "edit vimrc" })
@@ -731,15 +740,8 @@ when opts merging and module hooks are insufficient: >lua
     vim.diagnostic.config({ virtual_text = { prefix = ">>" } })
 <
 "After everything else" means everything in stage 2 of
-|noethervim-load-order|. Overrides also beat plugin `keys` entries: once
-you remap one, lazy.nvim leaves it alone, before and after the plugin
-loads.
-
-They do NOT beat stage 3: a lazy-loaded plugin's own `config` function,
-or buffer-local LSP keymaps applied on `LspAttach`. Those run later and
-win. For a plugin's own bindings use |noethervim-user-plugins| (spec
-merging), which lazy.nvim times correctly; for LSP keymaps use your own
-`LspAttach` autocmd. See |noethervim-override-timing|.
+|noethervim-load-order|. What can still run later, and how to change it,
+is in |noethervim-override-timing|.
 
 ==============================================================================
 5. BUNDLES                                 *noethervim-bundles* *neothervim-bundles*
@@ -1355,20 +1357,14 @@ default are argued for individually, with a standalone snippet for
 each, at:
     https://nathanaelsrawley.com/noethervim/guides/notable-keybindings/
 
-The which-key popup appears after a 1500 ms delay by default. To
-change this, add to `lua/user/plugins/whichkey.lua`: >lua
-    return {
-      { "folke/which-key.nvim",
-        -- Remember that setting `config` would override, not extend,
-        -- the behavior, and passing `opts= {...}` would override the
-        -- default optoins
-        opts = function(_, opts)
-          vim.o.timeoutlen = 500
-          opts.delay = 500
-          return opts
-        end,
-      },
-    }
+The which-key popup appears 1500 ms after a prefix key. That wait is
+which-key's `delay`, and 'timeoutlen' is set to match, so the prefix is
+not abandoned before the popup shows. To shorten both: >lua
+    -- lua/user/options.lua
+    vim.o.timeoutlen = 500
+
+    -- lua/user/plugins/whichkey.lua
+    return { "which-key.nvim", opts = { delay = 500 } }
 <
 
 Prefixes: ~

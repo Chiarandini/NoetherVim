@@ -1,25 +1,27 @@
--- Statusline toggle keymaps.
+-- Statusline toggle keymaps, bound when heirline loads (UIEnter), through
+-- noethervim.default so a mapping of yours on the same key stays.
 
 local M = {}
 
 function M.setup()
-  vim.keymap.set("n", "<c-w>sg", function()
+  local map = require("noethervim.default").map
+  map("n", "<c-w>sg", function()
     vim.api.nvim_exec_autocmds("User", { pattern = "HeirlineGitToggle" })
   end, { desc = "statusline git toggle" })
 
-  vim.keymap.set("n", "<c-w>sp", function()
+  map("n", "<c-w>sp", function()
     vim.api.nvim_exec_autocmds("User", { pattern = "HeirlinePdfSizeToggle" })
   end, { desc = "statusline pdf-size toggle" })
 
-  vim.keymap.set("n", "<c-w>sl", function()
+  map("n", "<c-w>sl", function()
     vim.api.nvim_exec_autocmds("User", { pattern = "HeirlineLspToggle" })
   end, { desc = "statusline lsp toggle" })
 
-  vim.keymap.set("n", "<c-w>sf", function()
+  map("n", "<c-w>sf", function()
     vim.api.nvim_exec_autocmds("User", { pattern = "HeirlineProfileToggle" })
   end, { desc = "statusline [f]iletype-profile toggle" })
 
-  vim.keymap.set("n", "<c-w>sP", function()
+  map("n", "<c-w>sP", function()
     if vim.g.heirline_directory_show == false then
       vim.api.nvim_exec_autocmds("User", {
         pattern = "HeirlineDirectoryOn",
@@ -33,13 +35,13 @@ function M.setup()
 
   -- Pressing this again goes to the `standard` preset, not back to whatever
   -- was showing beforehand: a named destination needs nothing remembered.
-  vim.keymap.set("n", "<c-w>s<c-p>", function()
+  map("n", "<c-w>s<c-p>", function()
     vim.api.nvim_exec_autocmds("User", {
       pattern = "HeirlinePresetPdfToggle",
     })
   end, { desc = "statusline pdf-mode toggle" })
 
-  vim.keymap.set("n", "<c-w>s<c-s>", function()
+  map("n", "<c-w>s<c-s>", function()
     vim.api.nvim_exec_autocmds("User", {
       pattern = "HeirlinePresetStandard",
     })

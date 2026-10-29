@@ -274,7 +274,7 @@ return {
 				for lhs, value in pairs(textobjects.swap[direction] or {}) do
 					local query, group, desc = capture(value)
 					local fallback = type(value) == "table" and value.fallback
-					vim.keymap.set("n", lhs, function()
+					require("noethervim.default").map("n", lhs, function()
 						local before = vim.b.changedtick
 						swap[direction](query, group)
 						if fallback and vim.b.changedtick == before then

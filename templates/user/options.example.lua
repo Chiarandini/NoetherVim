@@ -4,7 +4,8 @@
 -- `git pull` and `:Lazy update` never touch it.
 --
 -- This file runs immediately after noethervim/options.lua, so any value
--- you set here overwrites the distro default (last-write-wins).
+-- you set here replaces the distro default, and a plugin that would set the
+-- same option when it loads later leaves yours alone.
 --
 -- See noethervim/options.lua for the full list of defaults.
 -- See :help noethervim-user-options for documentation.

@@ -21,8 +21,9 @@ return {
 		config = function(_, opts)
 			-- v4: keymaps no longer set via setup(); defaults apply, then patch the two custom ones
 			require("nvim-surround").setup(opts)
-			vim.keymap.set("n", "yc", "<Plug>(nvim-surround-normal-cur)",      { desc = "surround current line (was yss)" })
-			vim.keymap.set("n", "yC", "<Plug>(nvim-surround-normal-cur-line)", { desc = "surround current line full (was ySS)" })
+			local map = require("noethervim.default").map
+			map("n", "yc", "<Plug>(nvim-surround-normal-cur)",      { desc = "surround current line (was yss)" })
+			map("n", "yC", "<Plug>(nvim-surround-normal-cur-line)", { desc = "surround current line full (was ySS)" })
 			pcall(vim.keymap.del, "n", "yss")
 			pcall(vim.keymap.del, "n", "ySS")
 		end

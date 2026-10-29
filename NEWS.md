@@ -6,5 +6,10 @@ where they are listed.
 
 ## 2026-10-29
 
+- **Your settings survive plugin loads:** a plugin's configuration no longer
+  overwrites an option, global mapping or command you set. `timeoutlen`
+  survives which-key loading, `wildchar` blink.cmp, `winwidth` windows.nvim,
+  a `<leader>j` of yours LuaSnip. Nothing to do; `:NoetherVim where <key>`
+  shows a NoetherVim mapping that stepped aside for yours.
 - **Options at the top of `init.lua` are kept:** NoetherVim's defaults no
   longer replace an option set before `lazy.setup()`.

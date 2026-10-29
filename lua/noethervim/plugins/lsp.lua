@@ -320,7 +320,7 @@ return {
 					end)
 				end)
 			end
-			vim.api.nvim_create_user_command('LspRename', LspRename, {})
+			require('noethervim.default').command('LspRename', LspRename, {})
 
 			vim.api.nvim_create_autocmd('LspAttach', {
 				callback = function(args)

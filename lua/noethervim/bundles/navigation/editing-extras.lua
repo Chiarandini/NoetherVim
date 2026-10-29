@@ -20,8 +20,9 @@ return {
 		opts = {},
 		config = function(_, opts)
 			require("comment-box").setup(opts)
-			vim.keymap.set({ "n", "v" }, "<Leader>bb", "<cmd>CBalbox7<cr>", { desc = "comment box" })
-			vim.keymap.set("n",          "<Leader>bl", "<cmd>CBcline<cr>",  { desc = "comment line" })
+			local map = require("noethervim.default").map
+			map({ "n", "v" }, "<Leader>bb", "<cmd>CBalbox7<cr>", { desc = "comment box" })
+			map("n",          "<Leader>bl", "<cmd>CBcline<cr>",  { desc = "comment line" })
 		end,
 	},
 }

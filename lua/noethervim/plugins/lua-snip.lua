@@ -130,10 +130,12 @@ config = function(_, opts)
 		return plugins
 	end
 
-	vim.api.nvim_create_user_command('LuaSnipEdit', function()
+	local default = require('noethervim.default')
+
+	default.command('LuaSnipEdit', function()
 		local plugins   = lazy_plugins()
-		local cfg       = vim.fn.stdpath("config")
-		local shown_cfg = vim.fn.fnamemodify(cfg, ":~")
+		local cfg       = require('noethervim.config').user_dir()
+		local shown_cfg = cfg and vim.fn.fnamemodify(cfg, ":~")
 		-- Set by `extend` when its offer is the only entry, which is the case
 		-- LuaSnip opens without asking. Per invocation, so it cannot leak.
 		local unprompted_create = false
@@ -241,6 +243,8 @@ config = function(_, opts)
 				-- and is opened without a prompt, so the `(new)` label is never
 				-- seen and a file appears in your config unasked. Remember that,
 				-- and confirm at the point of writing instead.
+				-- With the user layer off there is no config to write into.
+				if not cfg then return {} end
 				unprompted_create = #existing == 0
 				local target = cfg .. "/LuaSnip/" .. ft .. ".lua"
 				return { { ("%-16s · %s (new)"):format(shown_cfg, ft .. ".lua"), target } }
@@ -297,17 +301,16 @@ config = function(_, opts)
 			error(edit_err)
 		end
 	end, { desc = "edit snippet files (plugin-owned ones read-only)" })
-	vim.keymap.set('n', SearchLeader .. 'es', '<cmd>LuaSnipEdit<cr>', { desc = 'edit snippets' })
+	default.map('n', SearchLeader .. 'es', '<cmd>LuaSnipEdit<cr>', { desc = 'edit snippets' })
 
 	-- Tab/S-Tab snippet navigation is handled by blink.cmp (snippets.preset = "luasnip").
 	-- <c-q> for choice nodes stays as a raw Vimscript expr-map (not in blink's domain).
-	vim.cmd([[
-imap <silent><expr> <c-q> luasnip#choice_active() ? '<Plug>luasnip-next-choice' : '<c-q>'
-smap <silent><expr> <c-q> luasnip#choice_active() ? '<Plug>luasnip-next-choice' : '<c-q>'
-	]])
+	default.map({ 'i', 's' }, '<c-q>',
+		"luasnip#choice_active() ? '<Plug>luasnip-next-choice' : '<c-q>'",
+		{ expr = true, silent = true, remap = true, desc = 'next choice' })
 	-- jk expand/jump: personal preference -- add to lua/user/ if desired.
 
-	vim.keymap.set('n', '<leader>u', require('luasnip').unlink_current, { desc = 'unlink current snippet' })
+	default.map('n', '<leader>u', require('luasnip').unlink_current, { desc = 'unlink current snippet' })
 
 	-- Put the cursor back inside a snippet you have already walked out of, so
 	-- a tabstop you filled in wrongly can be filled in again without retyping
@@ -315,7 +318,7 @@ smap <silent><expr> <c-q> luasnip#choice_active() ? '<Plug>luasnip-next-choice' 
 	-- to be somewhere in the snippet's text, and a snippet nested inside
 	-- another is reached the same way. Raises when there is nothing there,
 	-- which is a routine miss rather than a fault, so it is reported plainly.
-	vim.keymap.set('n', '<leader>j', function()
+	default.map('n', '<leader>j', function()
 		if not pcall(ls.activate_node) then
 			vim.notify("no snippet under the cursor", vim.log.levels.WARN)
 		end
@@ -359,7 +362,7 @@ smap <silent><expr> <c-q> luasnip#choice_active() ? '<Plug>luasnip-next-choice' 
 		end
 	end
 
-	vim.api.nvim_create_user_command('LuaSnipStop', stop_all_and_report,
+	default.command('LuaSnipStop', stop_all_and_report,
 		{ desc = 'Stop every snippet in the buffer and clear leftover marks' })
 
 	--- Whether this buffer has anything for a stop to act on: a live snippet,
@@ -380,7 +383,7 @@ smap <silent><expr> <c-q> luasnip#choice_active() ? '<Plug>luasnip-next-choice' 
 	--
 	-- Select mode has no comparable native <C-u>, and reaching it at all
 	-- almost always means sitting on a tabstop, so there it always stops.
-	vim.keymap.set('i', '<c-u>', function()
+	default.map('i', '<c-u>', function()
 		if has_snippet_state() then
 			stop_all_and_report()
 		else
@@ -392,13 +395,13 @@ smap <silent><expr> <c-q> luasnip#choice_active() ? '<Plug>luasnip-next-choice' 
 		end
 	end, { desc = 'stop all snippets, else delete entered text' })
 
-	vim.keymap.set('s', '<c-u>', stop_all_and_report, { desc = 'stop all snippets' })
+	default.map('s', '<c-u>', stop_all_and_report, { desc = 'stop all snippets' })
 
 	-- <Leader>, not <LocalLeader>: stopping snippets is a global action that
 	-- happens to act on this buffer, not a filetype action, and LocalLeader
 	-- mappings have to be buffer-local. Capital for the stronger of the pair,
 	-- next to <Leader>u, which unlinks only the snippet you are in.
-	vim.keymap.set('n', '<leader>U', stop_all_and_report,
+	default.map('n', '<leader>U', stop_all_and_report,
 		{ desc = 'stop all snippets' })
 
 end

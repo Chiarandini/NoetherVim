@@ -137,11 +137,19 @@ return {
 
       -- ── Setup ────────────────────────────────────────────────
 
+      -- A statusline, tabline or winbar you set yourself is not handed to
+      -- heirline (noethervim.default reads who set each option).
+      local claimed = require("noethervim.default").claimed
+      local function bar(name, component)
+        if claimed(name) then return nil end
+        return component
+      end
+
       local heirline = require("heirline")
       heirline.setup({
-        statusline = StatusLines,
-        winbar = winbar.DiffLabel,
-        tabline = tabline.TabPages,
+        statusline = bar("statusline", StatusLines),
+        winbar = bar("winbar", winbar.DiffLabel),
+        tabline = bar("tabline", tabline.TabPages),
         opts = {
           -- The DiffLabel winbar is meaningful only on diff windows (its
           -- `condition` is `vim.wo.diff`), which are normal splits. Heirline

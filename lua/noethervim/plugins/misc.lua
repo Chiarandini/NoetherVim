@@ -60,17 +60,18 @@ return {
 			},
 		},
 		config = function(_, opts)
-			vim.o.winwidth    = 10
-			vim.o.winminwidth = 10
-			vim.o.equalalways = false
+			local default = require("noethervim.default")
+			default.o("winwidth", 10)
+			default.o("winminwidth", 10)
+			default.o("equalalways", false)
 			require("windows").setup(opts)
 			local function cmd(command)
 				return table.concat({ "<Cmd>", command, "<CR>" })
 			end
-			vim.keymap.set("n", "<C-w>z",  cmd("WindowsMaximize"))
-			vim.keymap.set("n", "<C-w>_",  cmd("WindowsMaximizeVertically"))
-			vim.keymap.set("n", "<C-w>|",  cmd("WindowsMaximizeHorizontally"))
-			vim.keymap.set("n", "<C-w>=",  cmd("WindowsEqualize"))
+			default.map("n", "<C-w>z",  cmd("WindowsMaximize"))
+			default.map("n", "<C-w>_",  cmd("WindowsMaximizeVertically"))
+			default.map("n", "<C-w>|",  cmd("WindowsMaximizeHorizontally"))
+			default.map("n", "<C-w>=",  cmd("WindowsEqualize"))
 		end,
 	},
 }

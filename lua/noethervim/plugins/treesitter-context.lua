@@ -20,9 +20,10 @@ return {
 		require("treesitter-context").setup(opts)
 		-- upstream replaced :TSContextEnable/:TSContextDisable with a
 		-- single :TSContext {enable|disable|toggle} command
-		vim.keymap.set("n", "[oX", "<cmd>TSContext enable<cr>" , {desc = "TSContext enable"})
-		vim.keymap.set("n", "]oX", "<cmd>TSContext disable<cr>", {desc = "TSContext disable"})
-		vim.keymap.set("n", "<c-w>[T", "<cmd>TSContext enable<cr>", {desc = "TSContext enable"})
-		vim.keymap.set("n", "<c-w>]T", "<cmd>TSContext disable<cr>", {desc = "TSContext disable"})
+		local map = require("noethervim.default").map
+		map("n", "[oX", "<cmd>TSContext enable<cr>" , {desc = "TSContext enable"})
+		map("n", "]oX", "<cmd>TSContext disable<cr>", {desc = "TSContext disable"})
+		map("n", "<c-w>[T", "<cmd>TSContext enable<cr>", {desc = "TSContext enable"})
+		map("n", "<c-w>]T", "<cmd>TSContext disable<cr>", {desc = "TSContext disable"})
 	end,
 }

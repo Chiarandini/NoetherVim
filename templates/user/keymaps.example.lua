@@ -6,8 +6,11 @@
 -- lua/user/keymaps.lua lives in your config, not in the distribution:
 -- `git pull` and `:Lazy update` never touch it.
 --
--- This file runs after noethervim/keymaps.lua AND noethervim/toggles.lua,
--- so any keymap you set here overwrites the distro default.
+-- This file runs after noethervim/keymaps.lua and noethervim/toggles/,
+-- so any keymap you set here replaces the distro default. The exception is
+-- a key a plugin spec declares in `keys`: lazy.nvim maps it again when the
+-- plugin loads. `:NoetherVim where <key>` says when that is the case and
+-- prints the spec line that changes it.
 --
 -- NoetherVim keymap philosophy:
 --   SearchLeader   fuzzy navigation / search (default: <Space>, set vim.g.mapsearchleader)
@@ -17,7 +20,7 @@
 --   [x / ]x        prev / next directional navigation
 --   [ox / ]ox      toggle option on / off
 --
--- See noethervim/keymaps.lua and noethervim/toggles.lua for all defaults.
+-- See noethervim/keymaps.lua and noethervim/toggles/options.lua for all defaults.
 -- See :help noethervim-user-keymaps for documentation.
 
 -- ── Override a core keymap ───────────────────────────────────────────────────

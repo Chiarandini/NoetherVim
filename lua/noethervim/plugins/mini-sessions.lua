@@ -8,8 +8,8 @@ return {
 	config = function(_, opts)
 		local mini_sessions = require('mini.sessions')
 		mini_sessions.setup(opts)
-		-- Create the User Command
-		vim.api.nvim_create_user_command('SaveSession', function(opts)
+		-- Create the User Command, unless you already have one by this name
+		require('noethervim.default').command('SaveSession', function(opts)
 		  local session_name = opts.args
 
 		  if session_name == "" then
