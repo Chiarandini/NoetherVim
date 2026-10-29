@@ -16,6 +16,10 @@ where they are listed.
 - **`NOETHERVIM_NO_USER=1` hides your whole config:** besides `lua/user/`,
   Neovim no longer sources your `plugin/`, `after/` and `ftplugin/` files,
   and your LuaSnip snippets, preamble library and spellfile are not read.
+- **Colorscheme pick moved** to `stdpath("state")/noethervim/colorscheme`:
+  pick your scheme with SearchLeader+C once more after updating.
+- **Deadcolumn state moved** to `stdpath("state")/noethervim/deadcolumn`: if
+  you had the guide off, press `]oG` once more.
 - **Bundle plugins take your `opts`:** `opts` from a spec of yours now reach
   render-markdown, markdown-table-mode, betterTerm, nvim-luapad,
   distant.nvim, nvim-dap-virtual-text, nvim-dap-python and obsidian.nvim.

@@ -2679,7 +2679,7 @@ A: Set `colorscheme` in `lua/user/config.lua`:
    When the `colorscheme` bundle is enabled, your SearchLeader+C pick
    is persisted and takes priority over the configured default on
    subsequent launches. To reset the saved pick, delete
-   `stdpath("data") .. "/noethervim_colorscheme"`.
+   `stdpath("state") .. "/noethervim/colorscheme"`.
 
 Q: Why is spell check on in markdown / tex / gitcommit files?~
 A: Writing filetypes (tex, markdown, norg, text, gitcommit, rst, typst)

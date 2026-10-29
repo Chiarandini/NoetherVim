@@ -11,7 +11,7 @@
 ---@diagnostic disable: undefined-doc-name
 
 local M = {}
-local _file = vim.fn.stdpath("data") .. "/noethervim_colorscheme"
+local _file = vim.fn.stdpath("state") .. "/noethervim/colorscheme"
 local _tweaks = {} ---@type table<string, vim.api.keyset.highlight>
 
 --- The scheme the distribution ships and pins. `util.palette` hand-tunes the
@@ -61,6 +61,7 @@ end
 -- ── Persistence ─────────────────────────────────────────────────────────────
 
 local function save(name)
+  vim.fn.mkdir(vim.fs.dirname(_file), "p")
   local f = io.open(_file, "w")
   if f then f:write(name); f:close() end
 end
