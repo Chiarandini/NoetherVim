@@ -35,6 +35,32 @@ return {
 			filetypes = {},
 			winblend  = 90,
 		},
+		-- The screensaver only stops on cursor activity, and an unfocused
+		-- pane (a detached tmux session above all) never produces any, so
+		-- the animation runs forever and pins a core. Gate it on terminal
+		-- focus. Lives in init, not config, so a user spec that overrides
+		-- config keeps the gate. Under tmux this needs focus-events on.
+		init = function()
+			local group = vim.api.nvim_create_augroup("noethervim_drop_focus", { clear = true })
+			vim.api.nvim_create_autocmd("FocusLost", {
+				group = group,
+				callback = function()
+					local cfg = package.loaded["drop.config"]
+					if not cfg then return end
+					-- disarm a pending screensaver countdown too; already
+					-- armed, it would fire while unfocused
+					if cfg.timer then cfg.timer:stop() end
+					require("drop").hide()
+				end,
+			})
+			vim.api.nvim_create_autocmd("FocusGained", {
+				group = group,
+				callback = function()
+					local cfg = package.loaded["drop.config"]
+					if cfg then cfg.sleep() end
+				end,
+			})
+		end,
 		config = function(_, opts)
 			local curTime = tonumber(os.date("%H"))
 			if curTime >= 21 or curTime <= 6 then
