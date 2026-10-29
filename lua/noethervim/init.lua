@@ -244,6 +244,11 @@ function M.setup(_opts)
               or ft == "alpha" or ft == "lazy" then
             return
           end
+        elseif vim.bo[args.buf].buftype ~= ""
+            or vim.fn.isdirectory(vim.api.nvim_buf_get_name(args.buf)) == 1 then
+          -- A directory or plugin buffer is read too (`nvim .`), and needs
+          -- no language server either.
+          return
         end
         local buf = args.buf
         vim.schedule(function()
