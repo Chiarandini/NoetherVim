@@ -60,6 +60,9 @@ return {
   "Chiarandini/vim-abolish",
   commit = "e79c5b2",
   event = "VeryLazy",
+  -- So `:Abolish` works before VeryLazy too: an ftplugin of yours can run
+  -- `Abolish -buffer ...` for the session's first buffer.
+  cmd = { "Abolish", "Subvert" },
   specs = { { "NoetherVim", optional = true, opts = {
     g = { abolish_default_expr = "NoetherAbolishSpell", abolish_no_mappings = 1 },
     -- The gate every :Abolish line is registered with; it has to exist

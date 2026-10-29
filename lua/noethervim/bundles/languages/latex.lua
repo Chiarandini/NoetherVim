@@ -341,28 +341,33 @@ return {
           -- against the cwd, so it missed whenever the cwd was not the
           -- document's directory, whenever out_dir was set, and for an
           -- \input child, which has no PDF of its own.
-          vim.api.nvim_buf_create_user_command(ev.buf, "PDF", function()
-            local pdf
-            if vim.fn.exists("b:vimtex") == 1 then
-              local ok, out = pcall(vim.fn.eval, "b:vimtex.compiler.get_file('pdf')")
-              if ok and type(out) == "string" and out ~= "" then pdf = out end
-            end
-            pdf = pdf or (vim.fn.expand("%:p:r") .. ".pdf")
+          --
+          -- A :PDF of yours, from your ftplugin/tex.lua (which runs before
+          -- this), stays.
+          if not vim.api.nvim_buf_get_commands(ev.buf, {}).PDF then
+            vim.api.nvim_buf_create_user_command(ev.buf, "PDF", function()
+              local pdf
+              if vim.fn.exists("b:vimtex") == 1 then
+                local ok, out = pcall(vim.fn.eval, "b:vimtex.compiler.get_file('pdf')")
+                if ok and type(out) == "string" and out ~= "" then pdf = out end
+              end
+              pdf = pdf or (vim.fn.expand("%:p:r") .. ".pdf")
 
-            if vim.fn.filereadable(pdf) == 0 then
-              vim.notify(("no compiled PDF at %s (:VimtexCompile builds it)"):format(pdf),
-                vim.log.levels.WARN)
-              return
-            end
+              if vim.fn.filereadable(pdf) == 0 then
+                vim.notify(("no compiled PDF at %s (:VimtexCompile builds it)"):format(pdf),
+                  vim.log.levels.WARN)
+                return
+              end
 
-            if vim.fn.has("macunix") == 1 then
-              vim.fn.jobstart({ "open", pdf }, { detach = true })
-            elseif vim.fn.has("win32") == 1 then
-              vim.fn.jobstart({ "cmd.exe", "/c", "start", "", pdf }, { detach = true })
-            else
-              vim.fn.jobstart({ "xdg-open", pdf }, { detach = true })
-            end
-          end, { desc = "open compiled PDF in the system viewer" })
+              if vim.fn.has("macunix") == 1 then
+                vim.fn.jobstart({ "open", pdf }, { detach = true })
+              elseif vim.fn.has("win32") == 1 then
+                vim.fn.jobstart({ "cmd.exe", "/c", "start", "", pdf }, { detach = true })
+              else
+                vim.fn.jobstart({ "xdg-open", pdf }, { detach = true })
+              end
+            end, { desc = "open compiled PDF in the system viewer" })
+          end
 
           -- Stopping: vimtex's stop() is a no-op unless a compile is
           -- mid-run, which with single-shot latexmk (continuous = 0) it
