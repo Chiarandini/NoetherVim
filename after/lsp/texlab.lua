@@ -1,4 +1,6 @@
-vim.lsp.config('texlab', {
+if require("noethervim.config").lsp_off("texlab") then return {} end
+
+return {
 	settings = {
 		texlab = {
 			chktex = {
@@ -27,6 +29,4 @@ vim.lsp.config('texlab', {
 			},
 		},
 	},
-})
-
-vim.lsp.enable('texlab')
+}

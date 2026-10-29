@@ -3,8 +3,9 @@
 --  ║                        LSP Setup                         ║
 --  ╚══════════════════════════════════════════════════════════╝
 -- Uses Neovim built-in LSP (vim.lsp.config / vim.lsp.enable) for all servers.
--- nvim-lspconfig is kept only for mason-lspconfig compatibility.
--- Per-server config lives in lua/noethervim/lsp/ (user overrides in lua/user/lsp/).
+-- nvim-lspconfig supplies each server's base config (its lsp/<name>.lua).
+-- NoetherVim's settings for a server are in after/lsp/<name>.lua, which a
+-- user's own after/lsp/<name>.lua and vim.lsp.config() calls override.
 -- Formatting is handled by conform.nvim; linting by nvim-lint; none-ls is gone.
 --
 -- Override data values via a user plugin spec:
@@ -252,7 +253,11 @@ return {
 	-- ── nvim-lspconfig + Mason + LSP keymaps ─────────────────────────────
 	{
 		"neovim/nvim-lspconfig",
-		event = "BufReadPre",
+		-- Eager: a server's config is resolved from the lsp/ files on
+		-- 'runtimepath' the first time a buffer asks for it, and a scratch
+		-- buffer can ask before any file is read. Enabling at startup also
+		-- puts `vim.lsp.enable(name, false)` in lua/user/options.lua last.
+		lazy = false,
 		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("nvim-lspconfig", {
 			{
 				"<c-w><c-l>",
@@ -297,69 +302,18 @@ return {
 			{ SearchLeader .. "lO", function() vim.lsp.buf.outgoing_calls() end, lsp = "callHierarchy/outgoingCalls", set = "lsp", silent = true, desc = "[l]sp [O]utgoing calls" },
 			{ "gy",    yank_type, lsp = "textDocument/hover", set = "lsp", silent = true, desc = "[y]ank type at cursor" },
 		}) } },
-		dependencies = {
-			-- lazydev: Neovim-API completions for lua_ls. luvit-meta covers vim.uv types.
-			{
-				"folke/lazydev.nvim",
-				ft = "lua",
-				opts = {
-					library = {
-						{ path = "${3rd}/luv/library", words = { "vim%.uv" } },
-						-- Surface noethervim.UserConfig (and any other public
-						-- LuaCATS class under the noethervim.* namespace) in
-						-- lua/user/*.lua so the popup menu shows field docs
-						-- and typos are flagged. Gated by `words` so the
-						-- distribution source only loads into lua_ls when
-						-- the buffer actually references it.
-						{ path = "NoetherVim",         words = { "noethervim%." } },
-					},
-				},
-			},
-			{ "Bilal2453/luvit-meta", lazy = true },
-			{
-				"williamboman/mason.nvim",
-				build = function()
-					pcall(vim.cmd, "MasonUpdate")
-				end,
-				-- mason.setup() is what appends the package registries, and
-				-- the keymap below can load mason.nvim on its own without
-				-- loading nvim-lspconfig. Setting it up from the parent's
-				-- config would leave the registry empty on that path, so
-				-- every installed package reads as "removed from the
-				-- registry" and nothing is available to install.
-				opts = {
-					ui = {
-						border = 'rounded',
-						icons = {
-							package_installed   = '✓',
-							package_pending     = '➜',
-							package_uninstalled = '✗',
-						},
-					},
-				},
-				cmd = { "Mason", "MasonInstall", "MasonUninstall", "MasonUpdate", "MasonLog" },
-				specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("mason.nvim", {
-					{ "<c-w><c-m>", function() require("mason.ui").open() end,
-						desc = require("noethervim.util.icons").mason .. " Mason" },
-				}) } },
-			},
-			{ "artemave/workspace-diagnostics.nvim" },
-			{ "williamboman/mason-lspconfig.nvim" },
-			{
-				"hedyhli/outline.nvim",
-				cmd = { "Outline", "OutlineOpen" },
-				opts = {
-					outline_window = { auto_close = true },
-					preview_window = { auto_preview = true },
-					symbol_folding = { autofold_depth = 1 },
-				},
-			},
-		},
-
 		-- ── Overridable data ─────────────────────────────────────────
 		-- Note: ensure_installed is an array -- overriding it REPLACES
 		-- the entire list (lazy.nvim does not merge arrays).
+		-- `servers` is the enable list. A server whose binary is not
+		-- installed stays idle. Turn one off with vim.lsp.enable(name, false)
+		-- in lua/user/options.lua.
+		opts_extend = { "servers" },
 		opts = {
+			servers = {
+				"basedpyright", "clangd", "cssls", "eslint", "gopls", "lua_ls",
+				"marksman", "ruff", "texlab", "ts_ls", "vimls",
+			},
 			ensure_installed = {
 				'lua_ls', 'basedpyright', 'ruff',
 			},
@@ -439,12 +393,26 @@ return {
 				end,
 			})
 
-			require('mason-lspconfig').setup({
-				ensure_installed   = opts.ensure_installed,
-				automatic_enable   = false,
-			})
+			vim.lsp.enable(opts.servers)
 
-			require('workspace-diagnostics').setup({})
+			-- Installing the servers in `ensure_installed` waits for the editor
+			-- to be up; it is not startup work. `vim.g.noethervim_auto_install
+			-- = false` declines it, as it does every other install.
+			vim.api.nvim_create_autocmd("User", {
+				pattern  = "VeryLazy",
+				once     = true,
+				callback = function()
+					if vim.g.noethervim_auto_install == false then return end
+					local plugins = require("lazy.core.config").plugins
+					for _, name in ipairs({ "mason.nvim", "mason-lspconfig.nvim" }) do
+						if not plugins[name] or plugins[name]._.cond == false then return end
+					end
+					require("mason-lspconfig").setup({
+						ensure_installed = opts.ensure_installed,
+						automatic_enable = false,
+					})
+				end,
+			})
 
 			vim.diagnostic.config(opts.diagnostic)
 
@@ -462,6 +430,68 @@ return {
 			vim.api.nvim_set_hl(0, 'DiagnosticUnderlineHint', { link = 'NONE' })
 			vim.api.nvim_set_hl(0, 'DiagnosticUnderlineInfo', { link = 'NONE' })
 		end,
+	},
+
+	-- Siblings of nvim-lspconfig rather than its dependencies: lspconfig loads
+	-- at startup, and none of these needs to.
+	--
+	-- lazydev: Neovim-API completions for lua_ls. luvit-meta covers vim.uv types.
+	{
+		"folke/lazydev.nvim",
+		ft = "lua",
+		opts = {
+			library = {
+				{ path = "${3rd}/luv/library", words = { "vim%.uv" } },
+				-- Surface noethervim.UserConfig (and any other public
+				-- LuaCATS class under the noethervim.* namespace) in
+				-- lua/user/*.lua so the popup menu shows field docs
+				-- and typos are flagged. Gated by `words` so the
+				-- distribution source only loads into lua_ls when
+				-- the buffer actually references it.
+				{ path = "NoetherVim",         words = { "noethervim%." } },
+			},
+		},
+	},
+	{ "Bilal2453/luvit-meta", lazy = true },
+	{
+		"williamboman/mason.nvim",
+		build = function()
+			pcall(vim.cmd, "MasonUpdate")
+		end,
+		-- mason.setup() is what appends the package registries, and
+		-- the keymap below can load mason.nvim on its own without
+		-- loading nvim-lspconfig. Setting it up from lspconfig's
+		-- config would leave the registry empty on that path, so
+		-- every installed package reads as "removed from the
+		-- registry" and nothing is available to install.
+		opts = {
+			ui = {
+				border = 'rounded',
+				icons = {
+					package_installed   = '✓',
+					package_pending     = '➜',
+					package_uninstalled = '✗',
+				},
+			},
+		},
+		cmd = { "Mason", "MasonInstall", "MasonUninstall", "MasonUpdate", "MasonLog" },
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("mason.nvim", {
+			{ "<c-w><c-m>", function() require("mason.ui").open() end,
+				desc = require("noethervim.util.icons").mason .. " Mason" },
+		}) } },
+	},
+	-- Loaded by the first ts_ls attach (lspconfig's LspAttach handler).
+	{ "artemave/workspace-diagnostics.nvim", lazy = true, opts = {} },
+	-- Loaded at VeryLazy by lspconfig's config to install `ensure_installed`.
+	{ "williamboman/mason-lspconfig.nvim", lazy = true, dependencies = { "williamboman/mason.nvim" } },
+	{
+		"hedyhli/outline.nvim",
+		cmd = { "Outline", "OutlineOpen" },
+		opts = {
+			outline_window = { auto_close = true },
+			preview_window = { auto_preview = true },
+			symbol_folding = { autofold_depth = 1 },
+		},
 	},
 
 	{

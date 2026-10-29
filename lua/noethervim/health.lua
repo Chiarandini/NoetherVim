@@ -495,17 +495,23 @@ function M.check()
     end
   end
 
-  -- Report which user override files were loaded
+  -- Report which hook files the user layer sourced
   if #nv._user_modules > 0 then
-    h.ok("Loaded user modules: " .. table.concat(nv._user_modules, ", "))
+    h.ok("Sourced from lua/user/: " .. table.concat(nv._user_modules, ", "))
   else
-    h.info("No user module overrides found (options, keymaps, etc.)")
+    h.info("No hook files in lua/user/ (options, keymaps, autocmds, highlights)")
   end
-  if #nv._user_lsp > 0 then
-    h.ok("Loaded user LSP files: " .. table.concat(nv._user_lsp, ", "))
-  end
-  if #nv._user_overrides > 0 then
-    h.ok("Loaded user imperative overrides: " .. table.concat(nv._user_overrides, ", "))
+  -- Directories NoetherVim no longer reads: say where their contents go.
+  local udir = require("noethervim.config").user_dir()
+  local moved = {
+    lsp       = "after/lsp/<server>.lua, returning the settings table",
+    overrides = "after/plugin/, which runs after everything NoetherVim does",
+  }
+  for name, where in pairs(udir and moved or {}) do
+    local dir = udir .. "/lua/user/" .. name
+    if vim.fn.isdirectory(dir) == 1 and #vim.fn.glob(dir .. "/*.lua", false, true) > 0 then
+      h.warn("lua/user/" .. name .. "/ is no longer read; move its files to " .. where)
+    end
   end
 
   -- ── Override drift ───────────────────────────────────────────────────
@@ -837,21 +843,23 @@ function M.check()
   end
 
   -- ── Override conflicts ───────────────────────────────────────────────
-  -- Diff the keymap snapshots captured by init.lua around user.keymaps load
-  -- to surface every core mapping the user redefined. Informational only --
+  -- Diff the keymap snapshots (end of setup, and now) to surface
+  -- every core mapping one of your files redefined. Informational only --
   -- redefining a core mapping is a supported pattern, not an error.
   h.start("Override conflicts")
   if not nv._user_loaded then
     h.info("Skipped (user overrides disabled)")
-  elseif not (nv._snapshots and nv._snapshots.keymaps_before and nv._snapshots.keymaps_after) then
+  elseif not (nv._snapshots and nv._snapshots.keymaps_before) then
     h.info("Snapshots unavailable -- keymap diff cannot be computed")
   else
-    local before = nv._snapshots.keymaps_before
-    local after  = nv._snapshots.keymaps_after
+    local snap   = nv._snapshots_now()
+    local before = snap.keymaps_before
+    local after  = snap.keymaps_after
     local conflicts = {}
+    local yours = require("noethervim.user_layer").is_yours
     for key, after_km in pairs(after) do
       local before_km = before[key]
-      if before_km and before_km.desc ~= after_km.desc then
+      if before_km and before_km.desc ~= after_km.desc and yours(after_km.sid) then
         table.insert(conflicts, string.format("[%s] %s  '%s' -> '%s'",
           after_km.mode, after_km.lhs,
           before_km.desc ~= "" and before_km.desc or "(no desc)",
@@ -868,21 +876,36 @@ function M.check()
   end
 
   -- ── LSP servers ──────────────────────────────────────────────────────
-  -- List the LSP configs NoetherVim ships in lua/noethervim/lsp/. Server
-  -- binaries can come from Mason or the system; checking each individually
-  -- requires a server-name -> binary-name map we don't maintain here, so
-  -- defer detail to :Mason / :LspInfo.
+  -- The servers NoetherVim enables, and which of them are switched off.
+  -- Server binaries can come from Mason or the system; checking each
+  -- individually requires a server-name -> binary-name map we don't
+  -- maintain here, so defer detail to :Mason / :checkhealth vim.lsp.
   h.start("LSP servers")
-  local lsp_files = vim.api.nvim_get_runtime_file("lua/noethervim/lsp/*.lua", true)
-  local server_names = {}
-  for _, p in ipairs(lsp_files) do
-    table.insert(server_names, vim.fn.fnamemodify(p, ":t:r"))
+  local ok_plugin, lspconfig = pcall(function()
+    return require("lazy.core.config").plugins["nvim-lspconfig"]
+  end)
+  local servers = ok_plugin and lspconfig
+    and require("lazy.core.plugin").values(lspconfig, "opts", false).servers or {}
+  local on, off = {}, {}
+  for _, name in ipairs(servers) do
+    table.insert(vim.lsp.is_enabled(name) and on or off, name)
   end
-  table.sort(server_names)
-  if #server_names > 0 then
-    h.ok(("Core LSP configs (%d): %s"):format(#server_names, table.concat(server_names, ", ")))
-  else
-    h.warn("No LSP configs found in lua/noethervim/lsp/")
+  table.sort(on)
+  table.sort(off)
+  if #on > 0 then
+    h.ok(("Enabled (%d): %s"):format(#on, table.concat(on, ", ")))
+  end
+  if #off > 0 then
+    h.info("Switched off: " .. table.concat(off, ", "))
+  end
+  local dropped = {}
+  local lsp_cfg = require("noethervim.config").get().lsp
+  for name, v in pairs(type(lsp_cfg) == "table" and lsp_cfg or {}) do
+    if v == false then table.insert(dropped, name) end
+  end
+  if #dropped > 0 then
+    table.sort(dropped)
+    h.info("NoetherVim's settings dropped (config.lua lsp): " .. table.concat(dropped, ", "))
   end
   if pcall(require, "mason") then
     h.ok("mason.nvim loaded -- run :Mason to inspect installation status")

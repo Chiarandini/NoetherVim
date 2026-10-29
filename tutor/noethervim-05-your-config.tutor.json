@@ -1,9 +1,9 @@
 {
   "expect": {
-    "67": "The template picker is <Space>ct",
-    "122": "Start Neovim ignoring lua/user/ with NOETHERVIM_NO_USER=1 nvim",
-    "144": "The directory your own configuration lives in: lua/user/",
-    "145": "The picker that writes a starting template: <Space>ct",
-    "146": "The picker that shows whether your keymap override took: <Space>ck"
+    "66": "The template picker is <Space>ct",
+    "121": "Start Neovim ignoring lua/user/ with NOETHERVIM_NO_USER=1 nvim",
+    "143": "The directory your own configuration lives in: lua/user/",
+    "144": "The picker that writes a starting template: <Space>ct",
+    "145": "The picker that shows whether your keymap override took: <Space>ck"
   }
 }

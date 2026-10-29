@@ -40,7 +40,7 @@ end
 
 --- Get snapshot data from the init module.
 local function snapshots()
-  return require("noethervim")._snapshots
+  return require("noethervim")._snapshots_now()
 end
 
 --- Confirm callback for pickers that should open files readonly.
@@ -598,16 +598,9 @@ function M.status()
   end
 
   if #nv._user_modules > 0 then
-    table.insert(lines, "Loaded modules: " .. table.concat(nv._user_modules, ", "))
-  end
-  if #nv._user_lsp > 0 then
-    table.insert(lines, "Loaded user LSP files: " .. table.concat(nv._user_lsp, ", "))
-  end
-  if #nv._user_overrides > 0 then
-    table.insert(lines, "Loaded overrides: " .. table.concat(nv._user_overrides, ", "))
-  end
-  if #nv._user_modules == 0 and #nv._user_lsp == 0 and #nv._user_overrides == 0 and nv._user_loaded then
-    table.insert(lines, "No user override files found.")
+    table.insert(lines, "Sourced from lua/user/: " .. table.concat(nv._user_modules, ", "))
+  elseif nv._user_loaded then
+    table.insert(lines, "No hook files in lua/user/.")
   end
 
   vim.notify(table.concat(lines, "\n"), vim.log.levels.INFO, { title = "NoetherVim" })
@@ -664,6 +657,7 @@ function M.diff_keymaps(opts)
   local before = snap.keymaps_before
   local after  = snap.keymaps_after
   local items  = {}
+  local yours  = require("noethervim.user_layer").is_yours
 
   -- Map resolved keymaps to lazy plugin modules for source navigation.
   -- `managed` includes ALL lazy handler keys (even user-only dev plugins
@@ -711,8 +705,10 @@ function M.diff_keymaps(opts)
     -- at by a real keymap. The guide filters them for the same reason.
     if (a or b).lhs:find("<Plug>", 1, true) then goto continue end
 
+    -- Between the two snapshots the other start plugins are configured as
+    -- well as your files; only a mapping one of your files made is yours.
     if a and not b then
-      -- New keymap added by user
+      if not yours(a.sid) then goto continue end
       tag  = "[USER]"
       mode = a.mode
       lhs  = a.lhs
@@ -726,7 +722,7 @@ function M.diff_keymaps(opts)
     elseif a and b then
       -- Check if changed
       local changed = (a.rhs ~= b.rhs) or (a.callback ~= b.callback)
-      if changed then
+      if changed and yours(a.sid) then
         tag  = "[OVERRIDE]"
         mode = a.mode
         lhs  = a.lhs
@@ -1027,9 +1023,11 @@ function M.diff_options()
   local after  = snap.options_after
   local items  = {}
 
+  local yours = require("noethervim.user_layer").is_yours
   for name, default_val in pairs(before) do
     local current_val = after[name]
-    local tag = (current_val ~= default_val) and "[OVERRIDE]" or "[CORE]"
+    local sid = vim.api.nvim_get_option_info2(name, { scope = "global" }).last_set_sid
+    local tag = (current_val ~= default_val and yours(sid)) and "[OVERRIDE]" or "[CORE]"
     table.insert(items, {
       text        = tag .. " " .. name .. " " .. tostring(current_val) .. " " .. tostring(default_val),
       tag         = tag,
@@ -1233,7 +1231,7 @@ local function open_diff_split(module_name)
   local candidates = {
     root .. "/lua/noethervim/" .. module_name .. ".lua",
     root .. "/lua/noethervim/plugins/" .. module_name .. ".lua",
-    root .. "/lua/noethervim/lsp/" .. module_name .. ".lua",
+    root .. "/after/lsp/" .. module_name .. ".lua",
   }
   for _, path in ipairs(candidates) do
     if vim.uv.fs_stat(path) then
@@ -1260,8 +1258,7 @@ local function open_diff_split(module_name)
   local user_candidates = {
     udir .. module_name .. ".lua",
     udir .. "plugins/" .. module_name .. ".lua",
-    udir .. "overrides/" .. module_name .. ".lua",
-    udir .. "lsp/" .. module_name .. ".lua",
+    vim.fn.stdpath("config") .. "/after/lsp/" .. module_name .. ".lua",
   }
   for _, path in ipairs(user_candidates) do
     if vim.uv.fs_stat(path) then
@@ -1300,7 +1297,7 @@ function M.diff_file(module_name)
   local groups = {
     { cat = "Core",   dir = root .. "/lua/noethervim",         user_dirs = { udir } },
     { cat = "Plugin", dir = root .. "/lua/noethervim/plugins", user_dirs = { udir .. "plugins/" } },
-    { cat = "LSP",    dir = root .. "/lua/noethervim/lsp",     user_dirs = { udir .. "lsp/" } },
+    { cat = "LSP",    dir = root .. "/after/lsp",              user_dirs = { vim.fn.stdpath("config") .. "/after/lsp/" } },
   }
 
   -- Detect which bundles are enabled (same logic as M.bundles()).
@@ -1325,10 +1322,6 @@ function M.diff_file(module_name)
         user_path = candidate
         break
       end
-    end
-    if not user_path then
-      local override = udir .. "overrides/" .. name .. ".lua"
-      if vim.uv.fs_stat(override) then user_path = override end
     end
     table.insert(items, {
       text      = cat .. " " .. name
@@ -1440,7 +1433,7 @@ local function diff_targets()
   for _, dir in ipairs({
     root .. "/lua/noethervim",
     root .. "/lua/noethervim/plugins",
-    root .. "/lua/noethervim/lsp",
+    root .. "/after/lsp",
   }) do
     for _, mod in ipairs(scan_lua_modules(dir)) do
       if mod ~= "init" and not seen[mod] then
@@ -1642,13 +1635,14 @@ end
 
 -- ── Override: open user file for current source ─────────────
 
---- Core modules with direct user overrides in lua/user/.
+--- Hook files that sit on top of a distro file of the same name.
 local CORE_OVERRIDE_MODULES = {
   options = true, keymaps = true, autocmds = true, highlights = true,
 }
 
---- Map a NoetherVim source file to its user override path.
---- Returns (user_path, category) or (nil, nil).
+--- Map a NoetherVim source file to the file of yours that changes it.
+--- Returns (user_path, category) or (nil, nil) for a file nothing of yours
+--- can stand in for.
 local function map_to_user_path(bufpath)
   local root = effective_root()
   if not root then return nil, nil end
@@ -1674,20 +1668,24 @@ local function map_to_user_path(bufpath)
   -- subdirectory is purely organizational in the distro.
   local bundle = rel:match("^lua/noethervim/bundles/[^/]+/([^/]+%.lua)$")
   if bundle then return udir .. "plugins/" .. bundle, "bundle" end
-  -- lua/noethervim/lsp/<name>.lua → user/lsp/<name>.lua
-  local lsp = rel:match("^lua/noethervim/lsp/(.+%.lua)$")
-  if lsp then return udir .. "lsp/" .. lsp, "lsp" end
-  -- lua/noethervim/<name>.lua → user/<name>.lua or user/overrides/<name>.lua
+  -- after/lsp/<name>.lua → your after/lsp/<name>.lua, which loads after it
+  local lsp = rel:match("^after/lsp/(.+%.lua)$")
+  if lsp then return config .. "/after/lsp/" .. lsp, "lsp" end
+  -- lua/noethervim/{options,keymaps,autocmds,highlights}.lua → the hook file
   local core = rel:match("^lua/noethervim/([^/]+)%.lua$")
-  if core then
-    if CORE_OVERRIDE_MODULES[core] then
-      return udir .. core .. ".lua", "core"
-    end
-    return udir .. "overrides/" .. core .. ".lua", "override"
+  if core and CORE_OVERRIDE_MODULES[core] then
+    return udir .. core .. ".lua", core == "keymaps" and "keys" or "core"
   end
-  -- ftplugin/<path> → <config>/ftplugin/<path>
+  if rel == "lua/noethervim/toggles/options.lua" then
+    return udir .. "keymaps.lua", "keys"
+  end
+  -- the profiles → after/ftplugin/<ft>.lua, the native per-filetype place
+  if rel == "lua/noethervim/profiles/apply.lua" then
+    return config .. "/after/ftplugin/", "profile"
+  end
+  -- ftplugin/<path> → after/ftplugin/<path>, which runs after it
   local ft = rel:match("^ftplugin/(.+)$")
-  if ft then return config .. "/ftplugin/" .. ft, "ftplugin" end
+  if ft then return config .. "/after/ftplugin/" .. ft, "ftplugin" end
 
   return nil, nil
 end
@@ -1715,25 +1713,79 @@ local function spec_repos(path)
   return out
 end
 
---- Seed content for a new override file.
----
---- Plugin and bundle overrides get the upstream spec's repo strings as
---- commented stubs. `return {}` on its own is technically enough but says
---- nothing about *how* an override attaches: lazy.nvim merges by repo
---- string, and that is the one thing a reader has to know before the file is
---- useful.
----@param rel_path string       upstream path, relative to the distribution root
----@param category string? nil only when the caller ignored map_to_user_path
----@param upstream_path string  absolute path to the upstream file
-local function seed_content(rel_path, category, upstream_path)
-  local name = vim.fn.fnamemodify(rel_path, ":t:r")
-  local lines = { "-- Override: " .. rel_path }
+--- The distro's option defaults in `path` (options.lua writes them as
+--- `opt.name = value` and `append("name", value)`), as commented lines for
+--- your options file.
+---@param path string
+---@return string[]
+local function option_lines(path)
+  local out = {}
+  for _, line in ipairs(vim.fn.readfile(path)) do
+    local code = line:gsub("%s*%-%-.*$", "")
+    local name, value = code:match("^%s*opt%.([%w_]+)%s*=%s*(.-)%s*$")
+    if name then
+      out[#out + 1] = ("-- vim.o.%s = %s"):format(name, value)
+    else
+      local aname, avalue = code:match('^%s*append%(%s*"([%w_]+)"%s*,%s*(.-)%)%s*$')
+      if aname then out[#out + 1] = ("-- vim.opt.%s:append(%s)"):format(aname, avalue) end
+    end
+  end
+  return out
+end
 
+--- `vim.keymap.del` lines for every key NoetherVim mapped from `path`.
+---@param path string
+---@return string[]
+local function key_del_lines(path)
+  local tail = vim.fn.fnamemodify(path, ":~")
+  local out, seen = {}, {}
+  for _, rec in pairs(require("noethervim.default").owned.map) do
+    if type(rec.source) == "string" and vim.startswith(rec.source, tail .. ":") then
+      local line = ('-- vim.keymap.del(%q, %q)'):format(rec.mode, rec.name)
+      if not seen[line] then
+        seen[line] = true
+        out[#out + 1] = line
+      end
+    end
+  end
+  table.sort(out)
+  return out
+end
+
+--- What the writing profile sets, as `vim.opt_local` lines for one filetype.
+local PROFILE_LINES = {
+  writing = {
+    "-- vim.opt_local.wrap = true",
+    "-- vim.opt_local.linebreak = true",
+    "-- vim.opt_local.spell = true",
+    "-- vim.opt_local.conceallevel = 2",
+    "-- vim.opt_local.list = false",
+    "-- vim.opt_local.formatoptions:append(\"t\")",
+  },
+  code = {
+    "-- vim.opt_local.list = true",
+  },
+}
+
+--- Lines to add to the file of yours for `rel`, given what it already holds.
+---@param rel string            upstream path, relative to the distribution root
+---@param category string
+---@param upstream string       absolute path to the upstream file
+---@param existing string[]     the file's current lines, empty when new
+---@param ft? string            the filetype, for a profile
+---@return string[]
+local function seed_lines(rel, category, upstream, existing, ft)
+  local marker = "-- NoetherVim's " .. (ft and (ft .. " profile") or rel) .. ":"
+  for _, line in ipairs(existing) do
+    if line == marker then return {} end
+  end
+  local lines = {}
   if category == "plugin" or category == "bundle" then
-    lines[#lines + 1] = "-- Specs merge with the upstream file by repo string."
-    lines[#lines + 1] = "-- See :help noethervim-user-plugins"
-    lines[#lines + 1] = "return {"
-    local repos = spec_repos(upstream_path)
+    if #existing > 0 then return {} end
+    lines = { "-- Override: " .. rel,
+      "-- Specs merge with the upstream file by repo string.",
+      "-- See :help noethervim-user-plugins", "return {" }
+    local repos = spec_repos(upstream)
     if #repos == 0 then
       lines[#lines + 1] = "  -- { \"owner/repo\", opts = {} },"
     else
@@ -1742,49 +1794,44 @@ local function seed_content(rel_path, category, upstream_path)
       end
     end
     lines[#lines + 1] = "}"
-  elseif category == "lsp" then
-    lines[#lines + 1] = "-- See :help noethervim-user-lsp"
-    lines[#lines + 1] = 'vim.lsp.config("' .. name .. '", {'
-    lines[#lines + 1] = "})"
-  elseif category == "core" then
-    lines[#lines + 1] = "-- See noethervim/" .. name .. ".lua for defaults."
-  elseif category == "override" then
-    lines[#lines + 1] = "-- Imperative override (runs after all other setup)."
-    lines[#lines + 1] = "-- See :help noethervim-user-overrides"
-  elseif category == "ftplugin" then
-    lines[#lines + 1] = "-- Filetype settings -- runs after the distribution ftplugin."
+    return lines
   end
-  lines[#lines + 1] = ""
-  return table.concat(lines, "\n")
+  if category == "lsp" then
+    if #existing > 0 then return {} end
+    lines = { "-- Merged over NoetherVim's " .. rel .. "; a key you set here wins.",
+      "-- To start from lspconfig's settings alone instead, set",
+      "-- `lsp = { " .. vim.fn.fnamemodify(rel, ":t:r") .. " = false }` in lua/user/config.lua." }
+    for _, line in ipairs(vim.fn.readfile(upstream)) do
+      if not line:find("lsp_off(", 1, true) then lines[#lines + 1] = line end
+    end
+    return lines
+  end
+  lines = { marker }
+  if category == "core" and rel:match("options%.lua$") then
+    vim.list_extend(lines, option_lines(upstream))
+  elseif category == "keys" then
+    lines[#lines + 1] = "-- Remove any of them here; to drop every key that changes a Vim key,"
+    lines[#lines + 1] = "-- set `keymaps = { remaps = false }` in lua/user/config.lua."
+    vim.list_extend(lines, key_del_lines(upstream))
+  elseif category == "profile" then
+    local class = require("noethervim.profiles").class(ft or "")
+    lines[#lines + 1] = "-- A value set here is kept; see :help noethervim-filetype-profiles"
+    vim.list_extend(lines, PROFILE_LINES[class or "writing"])
+  elseif category == "ftplugin" then
+    lines[#lines + 1] = "-- Runs after NoetherVim's " .. rel .. "."
+  else
+    lines[#lines + 1] = "-- See " .. rel .. " for what NoetherVim sets."
+  end
+  return lines
 end
 
---- Header prepended to a full copy, explaining why it is usually the wrong
---- shape. Written into the file rather than shown as a toast: whoever opens
---- this file in six months is the reader who needs it.
-local function copy_header(rel_path)
-  return table.concat({
-    "-- Full copy of " .. rel_path,
-    "--",
-    "-- This shadows every spec in the upstream file, not just the ones you",
-    "-- meant to change: upstream edits to any of them stop reaching you, and",
-    "-- a copied `config = function()` no longer deep-merges the way `opts`",
-    "-- does.  Prefer `:NoetherVim override` (no bang), which seeds a file",
-    "-- holding only the keys you want to touch.",
-    "--",
-    "-- `:checkhealth noethervim` reports when the upstream file moves on.",
-    "",
-  }, "\n")
-end
-
---- Open the user override file for the current buffer, creating it if it
---- does not exist.
+--- Open the file of yours that changes the current distro file, creating
+--- or extending it with a commented starting point.
 ---
 --- Everything written here is a starting point, not a format: the baseline
 --- used by the drift check lives in NoetherVim's state directory, so the file
 --- can be rewritten from scratch without breaking anything.
----
----@param bang boolean? copy the upstream file wholesale instead of seeding
-function M.override(_, bang)
+function M.override()
   local bufpath = vim.api.nvim_buf_get_name(0)
   if bufpath == "" then
     return vim.notify("NoetherVim: current buffer has no file", vim.log.levels.WARN)
@@ -1792,55 +1839,39 @@ function M.override(_, bang)
 
   local user_path, category = map_to_user_path(bufpath)
   if not user_path then
-    return vim.notify("NoetherVim: no override mapping for this file", vim.log.levels.WARN)
+    return vim.notify("NoetherVim: nothing of yours stands in for this file; "
+      .. "lua/user/config.lua or after/plugin/ change what it does", vim.log.levels.WARN)
   end
 
-  -- Create parent directory if needed
-  local parent = vim.fn.fnamemodify(user_path, ":h")
-  if vim.fn.isdirectory(parent) == 0 then
-    vim.fn.mkdir(parent, "p")
-  end
-
-  -- Seed the file if it's new. An existing override is never rewritten --
-  -- including under `!`, which would otherwise discard work on the way to
-  -- doing something already discouraged.
-  local base = require("noethervim.util.override_base")
   local root = vim.fs.normalize(effective_root())
   local rel  = vim.fs.normalize(bufpath):sub(#root + 2)
 
-  local is_new = not vim.uv.fs_stat(user_path)
-  if is_new then
-    local content
-    if bang then
-      local ok, lines = pcall(vim.fn.readfile, bufpath)
-      content = copy_header(rel) .. (ok and table.concat(lines, "\n") or "") .. "\n"
-    else
-      content = seed_content(rel, category, bufpath)
+  ---@cast category string
+  local function finish(path, ft)
+    local parent = vim.fn.fnamemodify(path, ":h")
+    if vim.fn.isdirectory(parent) == 0 then vim.fn.mkdir(parent, "p") end
+    local is_new = not vim.uv.fs_stat(path)
+    local existing = is_new and {} or vim.fn.readfile(path)
+    local add = seed_lines(rel, category, bufpath, existing, ft)
+    if #add > 0 then
+      if #existing > 0 and existing[#existing] ~= "" then table.insert(add, 1, "") end
+      vim.fn.writefile(add, path, is_new and "" or "a")
     end
-
-    local fd = vim.uv.fs_open(user_path, "w", 420) -- 0644
-    if fd then
-      vim.uv.fs_write(fd, content)
-      vim.uv.fs_close(fd)
-    end
-  elseif bang then
-    vim.notify("NoetherVim: " .. vim.fn.fnamemodify(user_path, ":~")
-      .. " already exists -- opening it rather than overwriting", vim.log.levels.WARN)
+    -- Record what this override is being written against. Re-running the
+    -- command re-baselines it, which is how you clear a drift warning once
+    -- you have read the upstream change.
+    require("noethervim.util.override_base").record(path, rel, bufpath)
+    vim.cmd("vsplit " .. vim.fn.fnameescape(path))
+    vim.notify(("NoetherVim: %s %s"):format(is_new and "created" or (#add > 0 and "extended" or "opened"),
+      vim.fn.fnamemodify(path, ":~")), vim.log.levels.INFO)
   end
 
-  -- Record what this override is being written against. Re-running the
-  -- command on an existing override re-baselines it, which is how you clear a
-  -- drift warning once you have read the upstream change.
-  base.record(user_path, rel, bufpath)
-
-  vim.cmd("vsplit " .. vim.fn.fnameescape(user_path))
-  if is_new then
-    vim.notify(("NoetherVim: created %s%s"):format(
-      vim.fn.fnamemodify(user_path, ":~"),
-      bang and " (full copy)" or ""), vim.log.levels.INFO)
+  if category == "profile" then
+    vim.ui.input({ prompt = "Filetype: " }, function(ft)
+      if ft and ft ~= "" then finish(user_path .. ft .. ".lua", ft) end
+    end)
   else
-    vim.notify(("NoetherVim: baseline for %s set to the current %s"):format(
-      vim.fn.fnamemodify(user_path, ":t"), rel), vim.log.levels.INFO)
+    finish(user_path)
   end
 end
 
@@ -1858,13 +1889,14 @@ local subcommand_descriptions = {
   ["keymap-guide"]  = "Keymap namespace reference buffer",
   status            = "Show which user override files are loaded",
   diff              = "Compare overrides vs distro defaults (keymaps / options / autocmds / module)",
-  override          = "Open the user override file matching the current buffer (! copies it wholesale)",
+  override          = "Open the file of yours that changes the current distro file",
   ["debug-keymaps"] = "Trace where each keymap was registered",
   where             = "Who maps a key, and the line that changes it: `where <key>`",
 }
 
---- Each entry receives (arg, bang). Only `override` reads the bang so far;
---- passing it to all of them keeps the dispatcher from growing a special case.
+--- Each entry receives (arg, bang), so the dispatcher needs no special case
+--- for a subcommand that reads the bang.
+---@type table<string, fun(arg: string?, bang: boolean?)>
 local subcommands = {
   files             = M.files,
   grep              = M.grep,

@@ -28,11 +28,10 @@ directory. Each file has one job, and each is optional.
     `autocmds.lua`     your autocommands
     `highlights.lua`   colors, applied after the colorscheme
     `plugins/`         new plugins, and changes to the ones shipped
-    `lsp/`             language server settings
-    `overrides/`       last-resort hooks, after everything else
 
-NoetherVim loads each of yours immediately after its own counterpart, so
-yours wins by running second. The full order is in
+NoetherVim runs yours once everything it starts is set up, so yours wins
+by running last. Language server settings live outside `lua/user/`, in
+Neovim's own `after/lsp/`. The full order is in
 [the load order](noethervim-load-order).
 
 ## WRITING YOUR FIRST FILE *templates*

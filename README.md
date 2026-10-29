@@ -293,7 +293,7 @@ Plugins deliberately left out of the distribution (AI completion, translation, A
 
 ### Overriding options, keymaps, and more
 
-NoetherVim loads user override files after each core module. Create any of these in `~/.config/nvim/lua/user/`:
+NoetherVim runs these files from `~/.config/nvim/lua/user/` once every plugin it starts is set up, so a value in them wins. Create any you need:
 
 | File | What it overrides |
 |---|---|
@@ -301,8 +301,9 @@ NoetherVim loads user override files after each core module. Create any of these
 | `keymaps.lua` | Keymaps (add, change, or remove) |
 | `autocmds.lua` | Autocommands |
 | `highlights.lua` | Highlight groups (runs after colorscheme) |
-| `lsp/<server>.lua` | Per-server LSP settings |
 | `config.lua` | Config data table: vault paths, feature flags, filetype lists (`:help noethervim-user-config-data`) |
+
+Language server settings go in Neovim's own `after/lsp/<server>.lua`, which is merged over NoetherVim's settings for that server.
 
 Template files are provided in `templates/user/` in the installed distro - copy the ones you want and uncomment the relevant lines. The fastest way to grab one is `:NoetherVim templates` (or SearchLeader+ct): pick a template and press `<C-y>` to write it into `lua/user/`. A diff prompt shows the change first, `y` or `<CR>` accepts, and the new file opens for editing.
 
@@ -311,6 +312,8 @@ Your config ends up laid out like this:
 ```
 ~/.config/nvim/
 ├── init.lua                ← lazy.setup() entry - enable bundles here
+├── after/
+│   └── lsp/                ← per-server LSP settings
 └── lua/
     └── user/
         ├── plugins/        ← your plugins and opts overrides on distro plugins
@@ -318,7 +321,6 @@ Your config ends up laid out like this:
         ├── keymaps.lua     ← keymap overrides and additions
         ├── autocmds.lua    ← autocommand additions
         ├── highlights.lua  ← highlight overrides (runs after colorscheme)
-        ├── lsp/            ← per-server LSP overrides
         └── config.lua      ← data table (vault paths, filetype lists, flags)
 ```
 

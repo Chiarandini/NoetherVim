@@ -1,4 +1,6 @@
-vim.lsp.config('basedpyright', {
+if require("noethervim.config").lsp_off("basedpyright") then return {} end
+
+return {
 	settings = {
 		python = {
 			analysis = {
@@ -8,6 +10,4 @@ vim.lsp.config('basedpyright', {
 			},
 		},
 	},
-})
-
-vim.lsp.enable('basedpyright')
+}

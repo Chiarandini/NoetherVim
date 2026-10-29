@@ -217,18 +217,22 @@ local held
 --- NoetherVim's own files run in that window, and a mapping NoetherVim made
 --- in it is one a later row may replace anyway.
 ---@param on boolean
+---@return table<string, table[]>? lists nvim_get_keymap() per mode, read once
 function M.hold(on)
   held = nil
   if not on then return end
   held = {}
-  for _, mode in ipairs({ "n", "x", "s", "o", "i", "c", "t" }) do
+  local lists = {}
+  for _, mode in ipairs({ "n", "x", "s", "o", "i", "c", "t", "v" }) do
+    lists[mode] = vim.api.nvim_get_keymap(mode)
     local by = {}
-    for _, m in ipairs(vim.api.nvim_get_keymap(mode)) do
+    for _, m in ipairs(lists[mode]) do
       by[m.lhsraw] = m
       if m.lhsrawalt then by[m.lhsrawalt] = m end
     end
     held[mode] = by
   end
+  return lists
 end
 
 --- The global mapping currently on `lhs` in `mode`, if any.

@@ -18,7 +18,7 @@ CONTENTS                                                  *noethervim-contents*
        4.6 Bundle data table ............... |noethervim-user-config-data|
        4.7 Plugins ......................... |noethervim-user-plugins|
        4.8 LSP servers ..................... |noethervim-user-lsp|
-       4.9 Imperative overrides ............ |noethervim-user-overrides|
+       4.9 Running code last ............... |noethervim-user-overrides|
     5. Bundles ............................. |noethervim-bundles|
     6. Inspection .......................... |noethervim-inspect|
     7. Comparison .......................... |noethervim-diff|
@@ -108,9 +108,9 @@ live-grep them with SearchLeader+cg. All source files open read-only to
 prevent accidental edits. See |noethervim-inspect| for the full set of
 navigation commands.
 
-NoetherVim loads user override files automatically after each core module.
-User files live in your config directory's `lua/user/` folder and are
-never touched by upstream updates.
+NoetherVim runs your files in `lua/user/` once everything it starts is
+set up, so a value in them wins. They live in your config directory and
+are never touched by upstream updates.
 
                                                      *noethervim-load-order*
 Loading happens in three stages. ~
@@ -120,17 +120,16 @@ files are merged last, so your `opts` win over both the distro's and any
 bundle's. A bundle sits in between: it can change a core plugin's `opts`,
 and you can change a bundle's.
 
-Stage 2 runs the configuration files, distro first and yours second at
-every step: >
-    noethervim/options.lua   ->  user/options.lua
-    noethervim/lsp/*.lua     ->  user/lsp/*.lua
-    noethervim/keymaps.lua   \
-    noethervim/toggles/       >  user/keymaps.lua
-    noethervim/autocmds.lua  ->  user/autocmds.lua
-    noethervim/highlights.lua \
-    colorscheme               >  user/highlights.lua
-    user/overrides/*.lua         (last-resort hooks)
+Stage 2 runs the configuration, NoetherVim's first and yours last: >
+    NoetherVim's options, keys, profiles, autocmds, colorscheme
+    the other plugins NoetherVim starts (snacks, VimTeX, lspconfig, ...)
+    your plugin/ files
+    user/options.lua, user/keymaps.lua, user/autocmds.lua,
+      user/highlights.lua, in that order
+    your after/plugin/ files
 <
+Language server settings follow Neovim's own order: NoetherVim's
+`after/lsp/<server>.lua`, then yours (|noethervim-user-lsp|).
 Stage 3 is deferred until after the screen is drawn: the extra commands,
 and each lazy-loaded plugin whenever its trigger fires.
 
@@ -170,18 +169,19 @@ plugin's opts.
 4.1 DIRECTORY STRUCTURE                                  *noethervim-user-dir*
 
 >
-    ~/.config/nvim/lua/user/
-    |-- config.lua           Config data table  (|noethervim-user-config-data|)
-    |-- options.lua          vim.o overrides
-    |-- keymaps.lua          Keymap overrides and additions
-    |-- autocmds.lua         Autocommand additions
-    |-- highlights.lua       Highlight overrides (after colorscheme)
-    |-- lsp/                 LSP server config overrides
-    |   `-- lua_ls.lua       e.g., override lua_ls workspace settings
-    |-- plugins/             Personal plugins and distro opts overrides
-    |   `-- snacks.lua       e.g., override snacks.nvim opts
-    `-- overrides/           Imperative after-hooks (last resort)
-        `-- *.lua
+    ~/.config/nvim/
+    |-- after/
+    |   |-- lsp/             LSP server settings (|noethervim-user-lsp|)
+    |   |   `-- lua_ls.lua   e.g., lua_ls workspace settings
+    |   `-- plugin/          Code that runs after everything
+    `-- lua/user/
+        |-- config.lua       Config data table (|noethervim-user-config-data|)
+        |-- options.lua      vim.o overrides
+        |-- keymaps.lua      Keymap overrides and additions
+        |-- autocmds.lua     Autocommand additions
+        |-- highlights.lua   Highlight overrides (after colorscheme)
+        `-- plugins/         Personal plugins and distro opts overrides
+            `-- snacks.lua   e.g., override snacks.nvim opts
 <
 Template files are provided in the `templates/user/` directory of the
 NoetherVim repo. Copy the ones you need to your `lua/user/` and
@@ -739,12 +739,28 @@ See `templates/user/plugins/example.lua` for more examples.
 ------------------------------------------------------------------------------
 4.8 LSP SERVERS                                         *noethervim-user-lsp*
 
-Create files in `lua/user/lsp/`. This is where you both add new server
-configs and adjust the ones the distro already ships
-(see `lua/noethervim/lsp/` for the bundled list).
+NoetherVim enables these servers, each idle until its binary is
+installed: basedpyright, clangd, cssls, eslint, gopls, lua_ls, marksman,
+ruff, texlab, ts_ls, vimls. Its own settings for a server are in
+`after/lsp/<server>.lua` in the distribution.
 
-To add a new server, call `vim.lsp.config()` and `vim.lsp.enable()`: >lua
-    -- lua/user/lsp/gleam.lua
+To change a server's settings, create the same file in your config
+directory. Neovim merges it over NoetherVim's, so a key you set wins and
+the rest stay: >lua
+    -- after/lsp/lua_ls.lua
+    return {
+      settings = {
+        Lua = { workspace = { library = { "/my/custom/lib" } } },
+      },
+    }
+<
+`:NoetherVim override` in a distro `after/lsp/` file creates yours with a
+copy to start from. To start from lspconfig's settings alone, without
+NoetherVim's, set `lsp = { lua_ls = false }` in `lua/user/config.lua`.
+
+To stop a server, or add one, use Neovim's own calls in
+`lua/user/options.lua`: >lua
+    vim.lsp.enable("marksman", false)
     vim.lsp.config("gleam", {
       cmd = { "gleam", "lsp" },
       filetypes = { "gleam" },
@@ -752,31 +768,20 @@ To add a new server, call `vim.lsp.config()` and `vim.lsp.enable()`: >lua
     })
     vim.lsp.enable("gleam")
 <
-To adjust a server the distro already configures, call `vim.lsp.config()`
-again with the same name, and Neovim deep-merges the tables: >lua
-    -- lua/user/lsp/lua_ls.lua
-    vim.lsp.config("lua_ls", {
-      settings = {
-        Lua = {
-          workspace = { library = { "/my/custom/lib" } },
-        },
-      },
-    })
-    -- No need to call vim.lsp.enable() again.
-<
+A `vim.lsp.config()` call outranks every `after/lsp/` file, NoetherVim's
+and yours.
 
 ------------------------------------------------------------------------------
-4.9 IMPERATIVE OVERRIDES                          *noethervim-user-overrides*
+4.9 RUNNING CODE LAST                             *noethervim-user-overrides*
 
-Create files in `lua/user/overrides/`. These run at the very end of
-`noethervim.setup()`, after everything else has loaded. Use this only
-when opts merging and module hooks are insufficient: >lua
-    -- lua/user/overrides/custom-diagnostics.lua
+Code that has to run after everything NoetherVim does, and after your
+hook files, goes in `after/plugin/` in your config directory, where
+Neovim runs it once every plugin has started: >lua
+    -- after/plugin/diagnostics.lua
     vim.diagnostic.config({ virtual_text = { prefix = ">>" } })
 <
-"After everything else" means everything in stage 2 of
-|noethervim-load-order|. What can still run later, and how to change it,
-is in |noethervim-override-timing|.
+What can still run later, a plugin that loads on demand, and how to
+change it, is in |noethervim-override-timing|.
 
 ==============================================================================
 5. BUNDLES                                 *noethervim-bundles* *neothervim-bundles*
@@ -1652,8 +1657,8 @@ would leave you with.
 
 `gz` leaves the short function words lowercase unless they fall first or
 last in the run, so `of mice and men` becomes `Of Mice and Men`. The list
-lives in `util/case.lua` and can be replaced from `lua/user/`: >lua
-    -- lua/user/overrides/case.lua
+lives in `util/case.lua` and can be replaced from your config: >lua
+    -- after/plugin/case.lua
     local case = require("noethervim.util.case")
     case.minor_words = {}                 -- capitalize every word
     case.minor_words = { ["über"] = true } -- or supply your own set
@@ -2260,44 +2265,41 @@ straightforward. See the example in
                               Run with no subcommand to print the full
                               subcommand list with descriptions.
 
-`:NoetherVim override`        Open the user override file corresponding to
-                              the current buffer's NoetherVim source file.
-                              Creates the file (and parent directories) if it
-                              does not exist, seeding it with minimal
-                              boilerplate. Opens the override in a vertical
-                              split so you can read the source alongside your
-                              customization.
-                              Path mapping:
-                                `plugins/<name>.lua`              -> `user/plugins/<name>.lua`
-                                `bundles/<cat>/<name>.lua`        -> `user/plugins/<name>.lua`
-                                `lsp/<name>.lua`                  -> `user/lsp/<name>.lua`
-                                `options.lua` etc.                -> `user/<name>.lua`
-                                `ftplugin/<ft>.lua`               -> `<config>/ftplugin/<ft>.lua`
-                              For internal modules (util/, sources/) or files
-                              outside the NoetherVim tree, a warning is shown.
+`:NoetherVim override`        Open the file of yours that changes the
+                              current buffer's NoetherVim source file, in a
+                              vertical split so you can read the source
+                              alongside it. Creates the file (and parent
+                              directories) when needed, or adds a commented
+                              starting point to the end of one you have:
+                                a spec      `user/plugins/<name>.lua`
+                                `after/lsp/`  your `after/lsp/<server>.lua`
+                                options     `user/options.lua`
+                                keymaps     `user/keymaps.lua`
+                                toggles     `user/keymaps.lua`
+                                autocmds    `user/autocmds.lua`
+                                highlights  `user/highlights.lua`
+                                profiles    `after/ftplugin/<ft>.lua`
+                                `ftplugin/`   `after/ftplugin/<ft>.lua`
+                              For other modules (util/, sources/) a warning
+                              names `lua/user/config.lua` and `after/plugin/`
+                              instead.
 
                               For a plugin or bundle, the seeded file lists
                               every repo string the upstream spec declares, as
                               commented-out stubs. lazy.nvim merges by repo
                               string, so those are the keys an override
-                              attaches to; uncomment the one you want.
+                              attaches to; uncomment the one you want. For
+                              `options.lua` it adds NoetherVim's values,
+                              commented; for the keymaps, a commented
+                              `vim.keymap.del` line per key; for a profile,
+                              the options it sets, for the filetype you name.
 
                               `:NoetherVim bundles` binds `<C-o>` to the same
                               thing, so you can seed an override straight from
                               the catalogue without opening the source first.
 
-`:NoetherVim override!`       Copy the upstream file wholesale instead of
-                              seeding stubs. A last resort, and the file says
-                              so in its own header: a full copy shadows every
-                              spec in the original, not just the ones you meant
-                              to change, so later upstream edits to any of them
-                              stop reaching you, and a copied
-                              `config = function()` no longer deep-merges the
-                              way `opts` does. An override that already exists
-                              is never overwritten, with or without the bang.
-
                                                         *noethervim-override-drift*
-                              Both forms record which distribution file the
+                              It records which distribution file the
                               override was written against, and a hash of its
                               contents at that moment. The record lives in
                               `stdpath('state')/noethervim/override-base.json`,
@@ -2542,9 +2544,9 @@ glyphs instead; if they render as boxes, the font is missing.
 13. FAQ                                          *noethervim-faq* *neothervim-faq*
 
 Q: How do I add a new LSP server?~
-A: Create `lua/user/lsp/<server>.lua` with `vim.lsp.config()` and
-   `vim.lsp.enable()` calls. Add the server to Mason's ensure_installed
-   via a plugin override:
+A: Call `vim.lsp.config()` and `vim.lsp.enable()` in
+   `lua/user/options.lua`; see |noethervim-user-lsp|. To have Mason
+   install it, add it to `ensure_installed` with a plugin override:
 >lua
     { "neovim/nvim-lspconfig",
       opts = { ensure_installed = { "lua_ls", "basedpyright", ..., "gopls" } } }

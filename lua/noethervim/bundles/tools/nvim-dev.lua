@@ -16,8 +16,8 @@
 
 return {
 	-- ── vimls LSP (Mason install scoped to this bundle) ──────────────────
-	-- Per-server config lives in lua/noethervim/lsp/vimls.lua; that file is
-	-- a no-op when the binary isn't installed.
+	-- vimls is in core's enable list (plugins/lsp.lua) and idle until its
+	-- binary is installed; this only installs it.
 	{ "neovim/nvim-lspconfig",
 		opts = function(_, opts)
 			opts.ensure_installed = opts.ensure_installed or {}

@@ -37,7 +37,7 @@ return {
 	-- gopls is not installed by go.nvim (its `lsp_cfg` defaults to off), and
 	-- core's list does not carry it, so without this the Go bundle gives you
 	-- tooling with no language server behind it. The matching
-	-- `vim.lsp.enable` lives in lua/noethervim/lsp/gopls.lua.
+	-- gopls is in core's enable list (plugins/lsp.lua).
 	{ "neovim/nvim-lspconfig",
 		opts = function(_, opts)
 			opts.ensure_installed = opts.ensure_installed or {}

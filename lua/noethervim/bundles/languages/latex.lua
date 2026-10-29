@@ -68,8 +68,8 @@ return {
   },
 
   -- ── texlab LSP (Mason install scoped to this bundle) ──────────────────────
-  -- Per-server config lives in lua/noethervim/lsp/texlab.lua; that file is a
-  -- no-op when the binary isn't installed, so it can stay always-loaded.
+  -- texlab's settings are in after/lsp/texlab.lua, and texlab is in core's
+  -- enable list (plugins/lsp.lua), idle until its binary is installed.
   { "neovim/nvim-lspconfig",
     opts = function(_, opts)
       opts.ensure_installed = opts.ensure_installed or {}

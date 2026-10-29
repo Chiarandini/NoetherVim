@@ -47,6 +47,7 @@ local SCHEMA = {
   snippets_disabled            = "table",
   keymaps                      = "table",
   profiles                     = { "boolean", "table" },
+  lsp                          = "table",
 }
 
 --- Permitted values for the small enum fields. Validated alongside the

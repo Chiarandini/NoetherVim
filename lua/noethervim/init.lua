@@ -1,10 +1,10 @@
 --- NoetherVim distribution entry point.
---- Called as the `config` function of the NoetherVim lazy plugin spec.
---- Runs after lazy.nvim has resolved all specs and loaded eager plugins.
+--- Called as the `config` function of the NoetherVim lazy plugin spec,
+--- first among the start plugins.
 ---
---- User override files in lua/user/ are automatically loaded after each
---- core module. Set NOETHERVIM_NO_USER=1 or vim.g.noethervim_no_user
---- to skip all user overrides (useful for debugging).
+--- Your hook files in lua/user/ run later, from after/plugin/noethervim.lua
+--- (noethervim.user_layer). Set NOETHERVIM_NO_USER=1 or
+--- vim.g.noethervim_no_user to skip them (useful for debugging).
 ---
 --- See init.lua.example for the recommended user setup pattern.
 --- See :help noethervim-user-config for the override system.
@@ -84,19 +84,22 @@ end
 ---@field lhs string
 ---@field rhs string
 ---@field desc string
+---@field sid integer
 ---@field callback? function
 
 --- Capture all keymaps across all modes, keyed by "mode|lhs".
+---@param lists? table<string, table[]> nvim_get_keymap() per mode, if read already
 ---@return table<string, noethervim.KeymapSnapshot>
-local function snapshot_keymaps()
+local function snapshot_keymaps(lists)
   local snap = {}
   for _, mode in ipairs({ "n", "i", "v", "x", "s", "o", "c", "t" }) do
-    for _, km in ipairs(vim.api.nvim_get_keymap(mode)) do
+    for _, km in ipairs(lists and lists[mode] or vim.api.nvim_get_keymap(mode)) do
       snap[mode .. "|" .. km.lhs] = {
         mode     = mode,
         lhs      = km.lhs,
         rhs      = km.rhs or "",
         desc     = km.desc or "",
+        sid      = km.sid,
         callback = km.callback,
       }
     end
@@ -124,11 +127,18 @@ end
 ---@private
 M._user_loaded = false
 ---@private
-M._user_modules   = {}
+M._user_modules = {}
+
+--- The snapshots :NoetherVim diff compares: NoetherVim's state at the end
+--- of setup, and the state now. Only what your files changed counts as
+--- yours there, so reading "now" late includes nothing it should not.
 ---@private
-M._user_lsp       = {}
----@private
-M._user_overrides = {}
+function M._snapshots_now()
+  return vim.tbl_extend("force", M._snapshots, {
+    options_after = snapshot_options(),
+    keymaps_after = snapshot_keymaps(),
+  })
+end
 
 --- What units contributed through NoetherVim's spec: rows, g, startup.
 ---@private
@@ -175,18 +185,6 @@ function M.setup(opts)
   end
 
 
-  --- Attempt to load a user override module. Silent no-op if the file
-  --- doesn't exist. Tracks successfully loaded modules for health/status.
-  local function user(mod)
-    if not load_user then return end
-    local ok, err = pcall(require, "user." .. mod)
-    if ok then
-      table.insert(M._user_modules, mod)
-    elseif err and not err:match("module 'user%." .. mod .. "' not found") then
-      vim.notify("user/" .. mod .. ".lua: " .. err, vim.log.levels.WARN)
-    end
-  end
-
   -- Forward statusline overrides to the registry that the heirline
   -- config callback reads at UIEnter.
   require("noethervim.statusline").configure(user_cfg.statusline)
@@ -198,9 +196,6 @@ function M.setup(opts)
 
   -- ── Core options ───────────────────────────────────────────────
   source("options.lua")
-  if load_user then M._snapshots.options_before = snapshot_options() end
-  user("options")
-  if load_user then M._snapshots.options_after = snapshot_options() end
   apply_win_local_defaults()
 
   -- Lazy management keymaps (under <C-w>l prefix, Window namespace)
@@ -212,94 +207,21 @@ function M.setup(opts)
   vim.keymap.set("n", "<c-w><c-g>",
     "<cmd>lua Snacks.terminal('lazygit')<cr>", { desc = "lazygit" })
 
-  -- ── LSP server configs ─────────────────────────────────────────
-  -- Core servers (lua/noethervim/lsp/*.lua). Just registrations via
-  -- `vim.lsp.config()`; the server starts when a matching FileType is
-  -- triggered. Deferred to first real-file FileType (oil/dashboard
-  -- buffers don't need LSP), then on demand. This shaves ~4ms off
-  -- `nvim .` startup since the directory buffer never triggers LSP.
-  do
-    local lsp_loaded = false
-    local function load_lsp_configs()
-      if lsp_loaded then return end
-      lsp_loaded = true
-      for _, path in ipairs(vim.api.nvim_get_runtime_file("lua/noethervim/lsp/*.lua", true)) do
-        local name = vim.fn.fnamemodify(path, ":t:r")
-        require("noethervim.lsp." .. name)
-      end
-      -- User LSP overrides (vim.lsp.config deep-merges when called again)
-      if load_user then
-        for _, path in ipairs(vim.api.nvim_get_runtime_file("lua/user/lsp/*.lua", true)) do
-          local name = vim.fn.fnamemodify(path, ":t:r")
-          local ok = pcall(require, "user.lsp." .. name)
-          if ok then table.insert(M._user_lsp, name) end
-        end
-      end
-    end
-    -- Trigger before the first language-bearing buffer attaches to LSP.
-    -- FileType fires for every buffer including `oil`/`snacks_dashboard`;
-    -- gate on a real on-disk filename so directory browsing doesn't pay
-    -- the cost. BufReadPost is a belt-and-suspenders fallback.
-    --
-    -- We `vim.schedule` the actual load so the FileType handler returns
-    -- immediately -- the file is visible the moment treesitter / syntax
-    -- finishes, and LSP attaches one tick later. Re-fire FileType after
-    -- registration so `vim.lsp.enable`'s autocmd actually picks up the
-    -- current buffer (it normally only fires for buffers opened after
-    -- `enable()`).
-    local lsp_group = vim.api.nvim_create_augroup("NoetherVimLspLoader", { clear = true })
-    vim.api.nvim_create_autocmd({ "FileType", "BufReadPost" }, {
-      group = lsp_group,
-      callback = function(args)
-        if args.event == "FileType" then
-          local ft = args.match
-          if ft == "" or ft == "oil" or ft == "snacks_dashboard"
-              or ft == "alpha" or ft == "lazy" then
-            return
-          end
-        elseif vim.bo[args.buf].buftype ~= ""
-            or vim.fn.isdirectory(vim.api.nvim_buf_get_name(args.buf)) == 1 then
-          -- A directory or plugin buffer is read too (`nvim .`), and needs
-          -- no language server either.
-          return
-        end
-        local buf = args.buf
-        vim.schedule(function()
-          load_lsp_configs()
-          -- Replay FileType for the buffer so the LSP autostart autocmds
-          -- (registered by the per-server `vim.lsp.enable` calls) see it.
-          -- Skip buffers without a window: re-firing FileType on a hidden
-          -- buffer runs ftplugin code (treesitter.start, etc.) that
-          -- assumes a window context and errors out. LSP can only attach
-          -- to a displayed buffer anyway.
-          if vim.api.nvim_buf_is_valid(buf)
-              and #vim.fn.win_findbuf(buf) > 0 then
-            vim.api.nvim_exec_autocmds("FileType", { buffer = buf })
-          end
-        end)
-        vim.api.nvim_del_augroup_by_id(lsp_group)
-      end,
-    })
-  end
-
   -- ── Core keymaps + toggles ─────────────────────────────────────
   -- Baseline: keymaps that exist before NoetherVim core loads
   -- (Neovim defaults + lazy plugin handler keymaps).
   -- Used to filter Neovim defaults from the diff picker.
-  if load_user then M._snapshots.keymaps_baseline = snapshot_keymaps() end
-  require("noethervim.default").hold(true)
+  -- One read of every mode's mappings answers both.
+  local held = require("noethervim.default").hold(true)
+  if load_user then M._snapshots.keymaps_baseline = snapshot_keymaps(held) end
   source("keymaps.lua")
   source("toggles/options.lua")
   source("keymaps/apply.lua")
   require("noethervim.default").hold(false)
-  if load_user then M._snapshots.keymaps_before = snapshot_keymaps() end
-  user("keymaps")
-  if load_user then M._snapshots.keymaps_after = snapshot_keymaps() end
 
   -- ── Autocommands ───────────────────────────────────────────────
   source("profiles/apply.lua")
   source("autocmds.lua")
-  user("autocmds")
 
   -- ── Commands ───────────────────────────────────────────────────
   -- :Reset, :DiffOrig, :Redir, etc. Deferred to keep `nvim .` fast;
@@ -340,17 +262,13 @@ function M.setup(opts)
       user_cfg.colorscheme and "config" or "default")
   end
   source("highlights.lua")
-  user("highlights")  -- after colorscheme so user highlights are not overwritten
 
-  -- ── Imperative user overrides (last-resort solution) ───────
-  -- Files in lua/user/overrides/*.lua run after everything else.
-  -- See :help noethervim-user-overrides for when to use this.
+  -- What NoetherVim set up, for :NoetherVim diff to compare the session
+  -- against. Your hook files run later, from after/plugin/noethervim.lua
+  -- (noethervim.user_layer).
   if load_user then
-    for _, path in ipairs(vim.api.nvim_get_runtime_file("lua/user/overrides/*.lua", true)) do
-      local name = vim.fn.fnamemodify(path, ":t:r")
-      local ok = pcall(require, "user.overrides." .. name)
-      if ok then table.insert(M._user_overrides, name) end
-    end
+    M._snapshots.options_before = snapshot_options()
+    M._snapshots.keymaps_before = snapshot_keymaps()
   end
 
   -- ── :NoetherVim ────────────────────────────────────────────────

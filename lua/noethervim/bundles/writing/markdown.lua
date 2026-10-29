@@ -34,8 +34,9 @@
 return {
 
   -- ── marksman LSP (Mason install scoped to this bundle) ────────────────────
-  -- Per-server config lives in lua/noethervim/lsp/marksman.lua; that file is
-  -- a no-op when the binary isn't installed, so it can stay always-loaded.
+  -- marksman is in core's enable list (plugins/lsp.lua), idle until its
+  -- binary is installed. Cross-file completion needs a project root: an
+  -- empty .marksman.toml at the repo root, or a git repo.
   { "neovim/nvim-lspconfig",
     opts = function(_, opts)
       opts.ensure_installed = opts.ensure_installed or {}

@@ -219,6 +219,14 @@ return {
     -- keymaps = { remaps = false },
 
 
+    -- ── Language servers ──────────────────────────────────────────────────────
+    -- NoetherVim's settings for a server live in its after/lsp/<name>.lua, and
+    -- yours in your own after/lsp/<name>.lua merge over them. `false` drops
+    -- NoetherVim's for that server, leaving lspconfig's and yours. To stop a
+    -- server, use vim.lsp.enable(name, false) in lua/user/options.lua.
+    -- lsp = { lua_ls = false },
+
+
     -- ── Snippets you never want ───────────────────────────────────────────────
     -- Snippets listed here stay switched off, on every machine this config
     -- reaches. Open the snippet picker (SearchLeader+cs), put the cursor on

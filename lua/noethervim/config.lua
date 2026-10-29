@@ -21,6 +21,15 @@ function M.user_dir()
   return vim.fn.stdpath("config")
 end
 
+--- True when `lsp = { [name] = false }` in lua/user/config.lua drops
+--- NoetherVim's settings for server `name` (after/lsp/<name>.lua).
+---@param name string
+---@return boolean
+function M.lsp_off(name)
+  local lsp = M.get().lsp
+  return type(lsp) == "table" and lsp[name] == false
+end
+
 local cache ---@type noethervim.UserConfig?
 
 --- `lua/user/config.lua`, or `{}`.

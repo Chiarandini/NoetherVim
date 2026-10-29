@@ -6,6 +6,23 @@ where they are listed.
 
 ## 2026-10-29
 
+- **Your hook files run last:** `lua/user/{options,keymaps,autocmds,highlights}.lua`
+  now run once every plugin NoetherVim starts is set up, so a value in them
+  wins over those plugins too. A `vim.g` value a plugin reads the moment it
+  loads at startup belongs at the top of `init.lua` instead.
+- **`lua/user/lsp/` and `lua/user/overrides/` are no longer read:** move a
+  server's settings to `after/lsp/<server>.lua` returning the settings
+  table (it merges over NoetherVim's), and other code to `after/plugin/`.
+  `:checkhealth noethervim` names the files still there.
+- **Language servers are enabled at startup:** `vim.lsp.enable(name, false)`
+  in `lua/user/options.lua` now sticks, and `lsp = { [name] = false }` in
+  `lua/user/config.lua` drops NoetherVim's settings for a server.
+- **`vim.g.noethervim_auto_install = false` also covers language servers:**
+  the servers in lspconfig's `ensure_installed` are no longer fetched with it
+  set; install them with `:Mason`.
+- **`:NoetherVim override!` is gone:** `:NoetherVim override` opens the file
+  of yours that changes the current one, adding a commented starting point.
+  `:NoetherVim diff` lists only what your own files changed.
 - **Your buffer settings beat the filetype profiles:** a `spell`,
   `conceallevel`, `list`, `wrap` or `linebreak` you set for a buffer
   (`after/ftplugin/`, a `FileType` autocmd, a modeline, `:setlocal`, `]os`)

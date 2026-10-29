@@ -3,16 +3,17 @@
 -- lua/user/options.lua lives in your config, not in the distribution:
 -- `git pull` and `:Lazy update` never touch it.
 --
--- This file runs immediately after noethervim/options.lua, so any value
--- you set here replaces the distro default, and a plugin that would set the
--- same option when it loads later leaves yours alone.
+-- This file runs once every plugin NoetherVim starts is set up, so any
+-- value you set here replaces the distro default, and a plugin that would
+-- set the same option when it loads later leaves yours alone. A global
+-- spell, conceallevel or list here also holds in prose and code buffers.
 --
 -- See noethervim/options.lua for the full list of defaults.
 -- See :help noethervim-user-options for documentation.
 
 -- ── Text layout ──────────────────────────────────────────────────────────────
 -- vim.o.textwidth     = 120   -- default: 100
--- vim.o.wrap          = true  -- default: false (writing profile enables it)
+-- vim.o.wrap          = true  -- default: false (prose wraps regardless)
 -- vim.o.formatoptions = "tcq" -- default: "croq1jn" (writing profile adds "t")
 
 -- Wrapped lines are marked with an arrow in the number column, not with

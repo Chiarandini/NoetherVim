@@ -26,8 +26,8 @@
 
 return {
 	-- ── Web LSPs (Mason install scoped to this bundle) ─────────────────────
-	-- Per-server config lives in lua/noethervim/lsp/{ts_ls,cssls,eslint}.lua;
-	-- those files are no-ops when the binaries aren't installed.
+	-- ts_ls, cssls and eslint are in core's enable list (plugins/lsp.lua)
+	-- and idle until their binaries are installed; this only installs them.
 	{ "neovim/nvim-lspconfig",
 		opts = function(_, opts)
 			opts.ensure_installed = opts.ensure_installed or {}
