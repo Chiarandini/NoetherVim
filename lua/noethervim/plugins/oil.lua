@@ -25,106 +25,23 @@
 return {
 	{
 		"stevearc/oil.nvim",
-		-- ── Lazy-load oil on demand instead of `lazy = false`. ─────────────
-		-- `init` runs at spec-resolution time (during lazy.setup), BEFORE
-		-- runtime plugins like netrw load. We:
-		--   1. Disable netrw early (same effect as oil's setup would have
-		--      had, just hoisted up so it's in place before netrw's plugin
-		--      file is sourced). Stays scoped to oil's spec: disable oil and
-		--      netrw is back.
-		--   2. Register a one-shot BufAdd that pulls oil in the moment a
-		--      directory buffer is created. This covers `nvim .`, `:e dir/`,
-		--      session-restored directory buffers, anything. After the first
-		--      hit we delete the augroup -- oil's own BufAdd takes over from
-		--      then on.
-		--
-		-- Load triggers (besides the directory shim above):
-		--   * `cmd = "Oil"`           -- `:Oil` from anywhere
-		--   * `keys = <c-w><c-o>`     -- float open from anywhere
-		init = function()
-			vim.g.loaded_netrw       = 1
-			vim.g.loaded_netrwPlugin = 1
+		-- Loaded on demand rather than at startup, which costs ~3.5 ms on
+		-- every launch. Nothing is lost in exchange: netrw is off from the
+		-- start (`g` data below), and the startup entry loads oil the moment
+		-- a directory buffer exists, `nvim .` included.
+		lazy = true,
+		config = function(_, opts)
+			local oil = require("oil")
+			oil.setup(opts)
 
-			-- Future directory buffers (`:e somedir/`, session restore, etc.)
-			-- get caught by this BufAdd autocmd, which loads oil on demand.
-			local group = vim.api.nvim_create_augroup("noethervim_oil_lazy", { clear = true })
-			vim.api.nvim_create_autocmd("BufAdd", {
-				group   = group,
-				nested  = true,
-				callback = function(args)
-					local name = vim.api.nvim_buf_get_name(args.buf)
-					if name ~= "" and vim.fn.isdirectory(name) == 1 then
-						require("oil")  -- triggers lazy load + oil.setup
-
-						-- oil.setup() hijacks the *current* buffer into an
-						-- oil:// buffer, but the buffer that tripped us here
-						-- (args.buf) is often NOT current yet: `:e .` from a
-						-- non-reusable buffer (the dashboard, or any open file)
-						-- creates a NEW directory buffer while the old one is
-						-- still current, so setup's hijack checks the wrong
-						-- buffer -- and oil's own BufAdd handler can't retro-fire
-						-- for a buffer whose BufAdd is already in flight. That
-						-- directory buffer would then reach its BufReadCmd still
-						-- named `/path` (not `oil://`), match oil's BufReadCmd
-						-- pattern nowhere, and sit blank *forever* -- the
-						-- intermittent "`:e .` opens an empty buffer" bug. So we
-						-- hijack args.buf ourselves (the same rename oil's own
-						-- maybe_hijack_directory_buffer does) unless setup
-						-- already renamed it. Its upcoming BufReadCmd then
-						-- matches `oil://*` and renders as normal.
-						if vim.api.nvim_buf_is_valid(args.buf)
-							and not vim.api.nvim_buf_get_name(args.buf):find("://", 1, true)
-						then
-							pcall(function()
-								local ocfg  = require("oil.config")
-								local ofs   = require("oil.fs")
-								local outil = require("oil.util")
-								outil.rename_buffer(
-									args.buf,
-									outil.addslash(
-										ocfg.adapter_to_scheme.files
-											.. ofs.os_to_posix_path(vim.fn.fnamemodify(name, ":p"))
-									)
-								)
-							end)
-						end
-
-						pcall(vim.api.nvim_del_augroup_by_id, group)
-					end
-				end,
-			})
-
-			-- `nvim .` case: argv buffer is created during argv processing,
-			-- BEFORE init.lua sources, so the BufAdd autocmd above never sees
-			-- it. Check the current buffer ourselves -- if it's a directory,
-			-- load oil now (during lazy.setup, before BufRead fires) so oil
-			-- can rename the buffer to `oil:///path/` in time for its
-			-- BufReadCmd to take over.
+			-- `nvim .`: paint the listing now. Oil renders from an async
+			-- scandir callback, and once VimEnter fires lazy loads the
+			-- VeryLazy wave (treesitter, blink.cmp, gitsigns, which-key, ...),
+			-- which holds the main thread for a few hundred ms; the listing
+			-- would paint after it. Opening it here and waiting for the first
+			-- render shows it first and the wave streams in behind.
 			local cur = vim.api.nvim_buf_get_name(0)
-			if cur ~= "" and vim.fn.isdirectory(cur) == 1 then
-				local oil = require("oil")
-				pcall(vim.api.nvim_del_augroup_by_id, group)
-
-				-- ── Paint Oil FIRST, before the post-VimEnter load wave ──────
-				-- Oil's directory listing is rendered from an async libuv
-				-- scandir callback. Just `require("oil")` here loads the *code*
-				-- but the *render* is still an async callback -- and the moment
-				-- VimEnter fires, lazy pulls in the whole VeryLazy/BufRead wave
-				-- (treesitter, LSP, blink.cmp, gitsigns, which-key, ...). That
-				-- ~50-plugin wave hogs the main thread for a few hundred ms, so
-				-- Oil's scandir callback is serviced LAST and the listing only
-				-- paints ~250-400ms after launch -- the long-standing "Oil
-				-- isn't instant on `nvim .`" gripe.
-				--
-				-- So we open oil on the dir right here and pump the event loop
-				-- (vim.wait) until its first render fires. The scan is serviced
-				-- immediately, during startup, and the wave streams in behind
-				-- an already-visible listing. Net: same total startup work,
-				-- just reordered so the thing you're staring at comes first.
-				-- Drops time-to-paint from ~300ms to ~80ms here.
-				--
-				-- pcall-guarded so a failure can never break startup; the
-				-- BufReadCmd path still renders oil even if open() is skipped.
+			if vim.v.vim_did_enter == 0 and cur ~= "" and vim.fn.isdirectory(cur) == 1 then
 				local painted = false
 				local au = vim.api.nvim_create_autocmd("User", {
 					pattern  = "OilEnter",
@@ -136,10 +53,55 @@ return {
 				pcall(vim.api.nvim_del_autocmd, au)
 			end
 		end,
+		specs = {
+			{ "NoetherVim", optional = true, opts = {
+				g = { loaded_netrw = 1, loaded_netrwPlugin = 1 },
+				startup = { ["oil.directories"] = function()
+					local group = vim.api.nvim_create_augroup("noethervim.oil", { clear = true })
+					-- A directory buffer made later (`:e somedir/`, a session)
+					-- loads oil, and oil's own BufAdd takes over from then on.
+					vim.api.nvim_create_autocmd("BufAdd", {
+						group    = group,
+						nested   = true,
+						callback = function(args)
+							local name = vim.api.nvim_buf_get_name(args.buf)
+							if name == "" or vim.fn.isdirectory(name) == 0 then return end
+							require("oil")
+							-- oil.setup() hijacks the *current* buffer into an
+							-- oil:// buffer, but the buffer that tripped this
+							-- (args.buf) is often not current yet: `:e .` from
+							-- the dashboard or an open file makes a new directory
+							-- buffer while the old one is still current. It would
+							-- reach its BufReadCmd still named `/path`, match no
+							-- oil pattern, and stay blank. So rename it the way
+							-- oil's own maybe_hijack_directory_buffer does.
+							if vim.api.nvim_buf_is_valid(args.buf)
+								and not vim.api.nvim_buf_get_name(args.buf):find("://", 1, true)
+							then
+								pcall(function()
+									local ocfg  = require("oil.config")
+									local ofs   = require("oil.fs")
+									local outil = require("oil.util")
+									outil.rename_buffer(args.buf, outil.addslash(
+										ocfg.adapter_to_scheme.files .. ofs.os_to_posix_path(vim.fn.fnamemodify(name, ":p"))))
+								end)
+							end
+							pcall(vim.api.nvim_del_augroup_by_id, group)
+						end,
+					})
+					-- `nvim .`: the argv buffer was made before any of this.
+					local cur = vim.api.nvim_buf_get_name(0)
+					if cur ~= "" and vim.fn.isdirectory(cur) == 1 then
+						pcall(vim.api.nvim_del_augroup_by_id, group)
+						require("oil")
+					end
+				end },
+			} },
+			{ "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("oil.nvim", {
+				{ "<c-w><c-o>", function() require("oil").open_float() end, desc = "Oil Mode" },
+			}) },
+		},
 		cmd  = { "Oil" },
-		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("oil.nvim", {
-			{ "<c-w><c-o>", function() require("oil").open_float() end, desc = "Oil Mode" },
-		}) } },
 		dependencies = { "nvim-tree/nvim-web-devicons", "Chiarandini/oil-extras.nvim" },
 		-- A function, so the oil-extras actions are read once the dependency
 		-- has loaded rather than while lazy is still reading specs.

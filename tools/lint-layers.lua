@@ -45,12 +45,6 @@ local USER_TREE_OK = {
   ["plugins/snacks.lua"] = true,
 }
 
--- R6 exceptions, each with the phase that removes it.
-local INIT_OK = {
-  -- the directory shim that lazy-loads oil; oil becomes eager in 1c
-  ["plugins/oil.lua"] = true,
-}
-
 local hits = {}
 local function hit(rel, lnum, rule, msg)
   table.insert(hits, ("lua/noethervim/%s:%d: %s: %s"):format(rel, lnum, rule, msg))
@@ -93,7 +87,7 @@ for _, rel in ipairs(files()) do
 
     -- R6: a spec init. Heirline components take `self`; a spec's init
     -- takes the plugin, which distro specs never use.
-    if spec_file and not INIT_OK[rel] and code:find("^%s*init%s*=%s*function%s*%(%s*%)") then
+    if spec_file and code:find("^%s*init%s*=%s*function%s*%(%s*%)") then
       hit(rel, i, "R6", "spec init runs before setup(); use the NoetherVim fragment's `g` or `startup`")
     end
 

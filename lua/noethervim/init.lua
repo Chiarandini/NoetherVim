@@ -172,18 +172,10 @@ function M.setup(opts)
   source("default/broker.lua")
 
   -- Plugin globals units declare, set only while still unset, so one you
-  -- set before NoetherVim loads stays; then the registrations that must
-  -- exist from the start, in id order.
+  -- set before NoetherVim loads stays.
   for name, value in pairs(M._host.g or {}) do
     if vim.g[name] == nil then vim.g[name] = value end
   end
-  local startup = M._host.startup or {}
-  local ids = vim.tbl_keys(startup)
-  table.sort(ids)
-  for _, id in ipairs(ids) do
-    if startup[id] then startup[id]() end
-  end
-
 
   -- Forward statusline overrides to the registry that the heirline
   -- config callback reads at UIEnter.
@@ -262,6 +254,15 @@ function M.setup(opts)
       user_cfg.colorscheme and "config" or "default")
   end
   source("highlights.lua")
+
+  -- Registrations units need from the start, in id order, once NoetherVim
+  -- itself is set up.
+  local startup = M._host.startup or {}
+  local ids = vim.tbl_keys(startup)
+  table.sort(ids)
+  for _, id in ipairs(ids) do
+    if startup[id] then startup[id]() end
+  end
 
   -- What NoetherVim set up, for :NoetherVim diff to compare the session
   -- against. Your hook files run later, from after/plugin/noethervim.lua
