@@ -374,8 +374,9 @@ layout's edge markers: `›` and `‹` where a line runs past the window, which
 Vim draws only while 'list' is on, so tabs and trailing space become visible
 with them. Prose that scrolls sideways has left the profile's assumption.
 
-A 'statuscolumn' you define in `lua/user/options.lua` is never touched,
-and switches the marker off for that window: >lua
+A 'statuscolumn' you define in `lua/user/options.lua` is never touched. It
+takes over the whole column for that window, so the marker and the
+clickable glyphs below both give way to it: >lua
     vim.o.statuscolumn = "%l "
 <
 To go back to an inline 'showbreak' arrow, set both in
@@ -384,8 +385,27 @@ To go back to an inline 'showbreak' arrow, set both in
     vim.o.statuscolumn = "%s%=%l "
 <
 Setting 'statuscolumn' to an empty string does NOT opt out: empty means
-"nothing set yet", so the writing profile fills it in. Give it a value of
-your own, or clear the `noethervim_profiles` augroup entirely.
+"nothing set yet", so the profiles fill it in. Give it a value of your
+own, or clear the `noethervim_profiles` augroup entirely.
+
+                                                 *noethervim-gutter-clicks*
+Clicking a gutter glyph ~
+
+The marks beside your code answer to the mouse. Click one and it does what
+it stands for, acting on the window you clicked in, which need not be the
+window you were working in.
+
+With the `test` bundle enabled (see |noethervim-bundles|), the test marks
+are live:
+
+    pass, fail or skip mark   opens that test's output
+    unrun test or namespace   runs it
+    spinner                   stops the run
+
+A line can carry marks from more than one source, and only the top one is
+drawn; the click follows the glyph you can see rather than the line. The
+left button is the only one taken, so the right button still opens the
+context menu.
 
 ------------------------------------------------------------------------------
 4.5 HIGHLIGHTS                                    *noethervim-user-highlights*

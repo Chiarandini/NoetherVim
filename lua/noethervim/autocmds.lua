@@ -287,21 +287,42 @@ local spell_in_code = ok_cfg and type(user_cfg) == "table" and user_cfg.spell_in
 -- half has to check both options itself -- otherwise `]on` would appear to
 -- do nothing in a writing buffer. With both off the column keeps only the
 -- wrap marker, which is the point of it.
+--
+-- Both strings put the sign item inside a click region. A sign has no click
+-- callback of its own, and `%@...@` in a 'statuscolumn' is the only hook
+-- Neovim offers, which is why the column is set even where there is no wrap
+-- marker to draw. What a click does lives in util/gutter.lua.
+local sign_click = "%@v:lua.require'noethervim.util.gutter'.on_click@%s%X"
+
 local wrap_statuscolumn =
-  [[%C%s%=%{v:virtnum > 0 ? "↳" : (v:virtnum < 0 ? "" : ]]
+  "%C" .. sign_click
+  .. [[%=%{v:virtnum > 0 ? "↳" : (v:virtnum < 0 ? "" : ]]
   .. [[(!&number && !&relativenumber ? "" : ]]
   .. [[(&relativenumber && v:relnum > 0 ? v:relnum : (&number ? v:lnum : v:relnum))))} ]]
 
---- Keep the marker column in step with 'wrap'. It belongs to the option, not
---- to the filetype: a code buffer someone ran `[ow` in has exactly the same
---- ambiguity a wrapped prose buffer does, and writing buffers are only the
---- common case because they wrap by default.
+-- The unwrapped half, where there are no continuation rows to mark. `%l` is
+-- the number column itself rather than a reimplementation of it: it renders
+-- whatever 'number' and 'relativenumber' ask for and carries LineNrAbove,
+-- LineNrBelow and CursorLineNr on its own, so this draws the same cells the
+-- native column it replaces would have drawn.
+local code_statuscolumn = "%C" .. sign_click .. "%=%l "
+
+local owned_statuscolumn = {
+  [wrap_statuscolumn] = true,
+  [code_statuscolumn] = true,
+}
+
+--- Keep the gutter in step with 'wrap'. The marker belongs to the option,
+--- not to the filetype: a code buffer someone ran `[ow` in has exactly the
+--- same ambiguity a wrapped prose buffer does, and writing buffers are only
+--- the common case because they wrap by default.
 ---
---- Wrap off means no continuation rows to mark, so the column comes off
---- again and the native number column takes over. Only ever sets or clears
---- our own expression -- a 'statuscolumn' from `lua/user/options.lua` is
---- left alone, which matters because the profiles run on every
---- FileType/BufWinEnter, long after user config has loaded.
+--- Wrap off swaps in the marker-free half rather than clearing the option,
+--- because the sign column's click region rides along with it and tests,
+--- breakpoints and the rest of the gutter live in unwrapped code buffers.
+--- Only ever replaces one of our own expressions -- a 'statuscolumn' from
+--- `lua/user/options.lua` is left alone, which matters because the profiles
+--- run on every FileType/BufWinEnter, long after user config has loaded.
 ---
 --- `writing` also hands 'list' over, for the other half of the same
 --- problem. A line that runs off the right edge is marked by 'listchars'
@@ -314,13 +335,13 @@ local wrap_statuscolumn =
 --- the tab and trailing-space glyphs that come with them.
 ---@param win integer
 ---@param writing boolean  true when the writing profile owns this window
-local function set_wrap_marker(win, writing)
+local function set_statuscolumn(win, writing)
   local wrap = vim.wo[win].wrap
   local current = vim.wo[win].statuscolumn
-  if wrap then
-    if current == "" then vim.wo[win].statuscolumn = wrap_statuscolumn end
-  elseif current == wrap_statuscolumn then
-    vim.wo[win].statuscolumn = ""
+  -- Empty means nothing has claimed the column yet; anything we did not
+  -- write ourselves belongs to the user or another plugin.
+  if current == "" or owned_statuscolumn[current] then
+    vim.wo[win].statuscolumn = wrap and wrap_statuscolumn or code_statuscolumn
   end
   if writing then vim.wo[win].list = not wrap end
 end
@@ -354,7 +375,7 @@ local function apply_writing_profile(buf)
     vim.wo[win].linebreak    = true
     vim.wo[win].conceallevel = 2
     vim.wo[win].spell        = true
-    set_wrap_marker(win, true)
+    set_statuscolumn(win, true)
   end
 end
 
@@ -370,7 +391,7 @@ local function apply_code_profile(buf)
     -- what makes it look intermittent.
     vim.wo[win].wrap = false
     -- Clears the marker column with it, since nothing wraps any more.
-    set_wrap_marker(win, false)
+    set_statuscolumn(win, false)
     if spell_in_code then
       -- Treesitter @spell captures (shipped with most parsers)
       -- restrict spellcheck to comments and string nodes; identifiers
@@ -415,7 +436,7 @@ vim.api.nvim_create_autocmd("OptionSet", {
   callback = function()
     local win = vim.api.nvim_get_current_win()
     local profile = profile_of(vim.api.nvim_win_get_buf(win))
-    if profile then set_wrap_marker(win, profile == "writing") end
+    if profile then set_statuscolumn(win, profile == "writing") end
   end,
 })
 
