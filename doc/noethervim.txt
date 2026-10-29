@@ -146,8 +146,11 @@ which-key loading.
 Keys work the same way without waiting for stage 3. Every key NoetherVim
 maps, a lazily loaded plugin's included, is mapped in stage 2, before
 `user/keymaps.lua`, and nothing maps it again when the plugin loads. A
-`vim.keymap.set` or `vim.keymap.del` there lasts for the session. A key
-of yours made earlier, at the top of `init.lua`, keeps NoetherVim off it.
+`vim.keymap.set` or `vim.keymap.del` there lasts for the session. The
+plugins NoetherVim configures make none of their own default mappings
+over yours: most have them switched off, and the keys NoetherVim wants
+from them are among its own. A key of yours made earlier, at the top of
+`init.lua`, keeps NoetherVim off it.
 `:NoetherVim where <key>` shows who maps a key, and a mapping of
 NoetherVim's that stepped aside for yours.
 
@@ -156,9 +159,6 @@ attaches, are NoetherVim's too, mapped on `FileType` and `LspAttach`. One
 you map in `after/ftplugin/<ft>.lua` is kept. A `FileType` or `LspAttach`
 autocmd in `user/autocmds.lua` runs after NoetherVim's, so a key it maps
 replaces the distro's.
-
-A plugin's own default mappings, made when it loads (nvim-surround's
-`ys`), still replace yours.
 
 Two kinds of key stay with their plugin: blink.cmp's completion keys in
 the command line and the terminal, changed through blink's

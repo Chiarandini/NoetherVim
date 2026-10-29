@@ -319,18 +319,16 @@ do
 end
 
 -- ──────────────────────────────────────────────────────────────
---  Normal mode -- disable overlapping ghost keys
+--  Comments
 -- ──────────────────────────────────────────────────────────────
 
--- Prevent ys/yS from interfering with ySS/yss
-map("n", "yS",  "", { desc = "disabled (use ySS)" })
-map("n", "ys",  "", { desc = "disabled (use yss)" })
-map("n", "yss", "", { desc = "disabled" })
-
--- Toggle comment (Neovim 0.10+ builtin gc/gcc)
-map("n", "<C-/>", "gcc", { remap = true, desc = "toggle comment" })
-map("v", "<C-/>", "gc",  { remap = true, desc = "toggle comment" })
-map("i", "<C-/>", "<Esc>gcc", { remap = true, desc = "toggle comment" })
+-- Toggle comment (Neovim 0.10+ builtin gc/gcc). A terminal without
+-- modified-key reporting sends <C-_> for <C-/>.
+for _, lhs in ipairs({ "<C-/>", "<C-_>" }) do
+  map("n", lhs, "gcc", { remap = true, desc = "toggle comment" })
+  map("v", lhs, "gc",  { remap = true, desc = "toggle comment" })
+  map("i", lhs, "<Esc>gcc", { remap = true, desc = "toggle comment" })
+end
 
 -- Comment-yank-paste: comment original lines, paste uncommented copy below
 local function comment_yank_paste()
@@ -355,7 +353,8 @@ local function comment_yank_paste()
       vim.cmd.put()
       set_cur(win, { vim.fn.line("."), cur[2] })
     end
-    vim.cmd("normal! gvgc")
+    -- gc is a mapping (Neovim's default), so not `normal!`.
+    vim.cmd("normal gvgc")
   end
 end
 map({ "n", "v", "x" }, "<C-S-r>", comment_yank_paste, { desc = "comment and paste text" })

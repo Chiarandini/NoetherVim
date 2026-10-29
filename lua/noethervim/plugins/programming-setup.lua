@@ -3,6 +3,30 @@
 --  ║                       programming                        ║
 --  ╚══════════════════════════════════════════════════════════╝
 
+-- marks.nvim's own default keys, as rows.
+local function marks_rows()
+	local function call(fn) return function() require("marks")[fn]() end end
+	local rows = {
+		{ "m",         call("set"),             desc = "marks: set",                         set = "remaps" },
+		{ "m,",        call("set_next"),        desc = "marks: set the next free letter" },
+		{ "m;",        call("toggle"),          desc = "marks: toggle at the line" },
+		{ "m]",        call("next"),            desc = "marks: next",                        set = "remaps" },
+		{ "m[",        call("prev"),            desc = "marks: previous",                    set = "remaps" },
+		{ "m:",        call("preview"),         desc = "marks: preview" },
+		{ "m}",        call("next_bookmark"),   desc = "marks: next bookmark" },
+		{ "m{",        call("prev_bookmark"),   desc = "marks: previous bookmark" },
+		{ "dm",        call("delete"),          desc = "marks: delete" },
+		{ "dm-",       call("delete_line"),     desc = "marks: delete on the line" },
+		{ "dm=",       call("delete_bookmark"), desc = "marks: delete the bookmark" },
+		{ "dm<space>", call("delete_buf"),      desc = "marks: delete in the buffer" },
+	}
+	for i = 0, 9 do
+		table.insert(rows, { "m" .. i,  call("set_bookmark" .. i),    desc = "marks: set bookmark " .. i })
+		table.insert(rows, { "dm" .. i, call("delete_bookmark" .. i), desc = "marks: delete bookmark " .. i })
+	end
+	return rows
+end
+
 return {
 	{
 		-- context-smart comment adder
@@ -23,24 +47,45 @@ return {
 	{
 		"echasnovski/mini.ai",
 		version = false,
-		event = "BufReadPost",
-		opts = {
-			-- mini.ai's search modifiers default to `an`/`in` for the next
-			-- textobject and `al`/`il` for the last one, and `il` is the
-			-- inner-line object from keymaps.lua -- documented, older, and
-			-- reached far more often than "inside the previous quote".
-			--
-			-- Last moves to the capitalised form of next, which is the
-			-- relationship `n` and `N` already have in search. That also
-			-- leaves `al`/`il` free for treesitter's loop objects to stay
-			-- off, which they now are (they sit on `aL`/`iL`).
-			mappings = {
-				around_next  = "an",
-				inside_next  = "in",
-				around_last  = "aN",
-				inside_last  = "iN",
-			},
-		},
+		event = "VeryLazy",
+		-- mini.ai's search modifiers default to `an`/`in` for the next
+		-- textobject and `al`/`il` for the last one, and `il` is the
+		-- inner-line object from keymaps.lua -- documented, older, and
+		-- reached far more often than "inside the previous quote".
+		--
+		-- Last moves to the capitalised form of next, which is the
+		-- relationship `n` and `N` already have in search. That also
+		-- leaves `al`/`il` free for treesitter's loop objects to stay
+		-- off, which they now are (they sit on `aL`/`iL`).
+		--
+		-- mini.ai maps its keys itself, to functions a row cannot call, so
+		-- they are not rows. A key a row would yield (one of yours is on
+		-- it, or it is off) is emptied instead, which mini.ai skips.
+		opts = function(_, opts)
+			local rows = require("noethervim.keymaps.rows")
+			local keys = {
+				around      = { "a",  { "x", "o" } },
+				inside      = { "i",  { "x", "o" } },
+				around_next = { "an", { "x", "o" } },
+				inside_next = { "in", { "x", "o" } },
+				around_last = { "aN", { "x", "o" } },
+				inside_last = { "iN", { "x", "o" } },
+				goto_left   = { "g[", { "n", "x", "o" } },
+				goto_right  = { "g]", { "n", "x", "o" }, "remaps" },
+			}
+			opts.mappings = opts.mappings or {}
+			for name, k in pairs(keys) do
+				local lhs = opts.mappings[name] or k[1]
+				opts.mappings[name] = lhs
+				for _, mode in ipairs(k[2]) do
+					if lhs ~= "" and not rows.free({ lhs, owner = "mini.ai", set = k[3], desc = "mini.ai " .. name }, mode) then
+						opts.mappings[name] = ""
+						break
+					end
+				end
+			end
+			return opts
+		end,
 	},
 
 	-- For pop-up
@@ -62,8 +107,9 @@ return {
 	{ -- better marks visualization
 		"chentoast/marks.nvim",
 		event = "BufReadPost",
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("marks.nvim", marks_rows()) } },
 		opts = {
-			default_mappings = true,
+			default_mappings = false,
 			builtin_marks = {},
 			cyclic = true,
 			force_write_shada = false,

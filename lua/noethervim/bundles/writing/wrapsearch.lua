@@ -41,6 +41,13 @@ return {
 				"tex", "latex", "plaintex", "markdown", "norg", "text",
 				"rst", "typst", "mail", "gitcommit", "gitsendemail",
 			},
+			keys = false,
 		},
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("wrapsearch.nvim", {
+			{ "g/", function() return require("wrapsearch").literal("/") end, mode = { "n", "x" }, expr = true,
+			  desc = "search (verbatim, ignore hard wraps)" },
+			{ "g?", function() return require("wrapsearch").literal("?") end, mode = { "n", "x" }, expr = true,
+			  desc = "search backward (verbatim, ignore hard wraps)", set = "remaps" },
+		}) } },
 	},
 }

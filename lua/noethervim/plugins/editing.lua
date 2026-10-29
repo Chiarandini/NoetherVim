@@ -3,6 +3,9 @@
 --  ║                   Better file editing                    ║
 --  ╚══════════════════════════════════════════════════════════╝
 
+-- vim-visual-multi's leader, two backslashes.
+local VM = [[\\]]
+
 return {
 	{ -- vim-matchup: smarter % matching
 		"andymass/vim-matchup",
@@ -18,34 +21,55 @@ return {
 		"kylechui/nvim-surround",
 		event = "VeryLazy",
 		opts = {},
-		config = function(_, opts)
-			-- v4: keymaps no longer set via setup(); defaults apply, then patch the two custom ones
-			require("nvim-surround").setup(opts)
-			local map = require("noethervim.default").map
-			map("n", "yc", "<Plug>(nvim-surround-normal-cur)",      { desc = "surround current line (was yss)" })
-			map("n", "yC", "<Plug>(nvim-surround-normal-cur-line)", { desc = "surround current line full (was ySS)" })
-			pcall(vim.keymap.del, "n", "yss")
-			pcall(vim.keymap.del, "n", "ySS")
-		end
+		specs = {
+			{ "NoetherVim", optional = true, opts = { g = { nvim_surround_no_mappings = true } } },
+			{ "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("nvim-surround", {
+				{ "<C-g>s", "<Plug>(nvim-surround-insert)",          mode = "i", desc = "surround the cursor" },
+				{ "<C-g>S", "<Plug>(nvim-surround-insert-line)",     mode = "i", desc = "surround the cursor, on new lines" },
+				{ "ys",     "<Plug>(nvim-surround-normal)",          desc = "surround a motion" },
+				{ "yS",     "<Plug>(nvim-surround-normal-line)",     desc = "surround a motion, on new lines" },
+				{ "yc",     "<Plug>(nvim-surround-normal-cur)",      desc = "surround the current line" },
+				{ "yC",     "<Plug>(nvim-surround-normal-cur-line)", desc = "surround the current line, on new lines" },
+				{ "ds",     "<Plug>(nvim-surround-delete)",          desc = "delete a surrounding pair" },
+				{ "cs",     "<Plug>(nvim-surround-change)",          desc = "change a surrounding pair" },
+				{ "cS",     "<Plug>(nvim-surround-change-line)",     desc = "change a surrounding pair, on new lines" },
+				{ "S",      "<Plug>(nvim-surround-visual)",          mode = "x", desc = "surround the selection", set = "remaps" },
+				{ "gS",     "<Plug>(nvim-surround-visual-line)",     mode = "x", desc = "surround the selection, on new lines" },
+			}) },
+		},
 	},
 
 	--<c-n> in visual mode for multiple cursors
 	-- Tutorial: vim -Nu path/to/visual-multi/tutorialrc
+	--
+	-- VM maps its start keys globally and maps them again each time a
+	-- session ends. With its defaults off and <C-n> emptied, it maps none,
+	-- and the start keys are rows. <S-Left>/<S-Right> stay free for split
+	-- resizing (keymaps.lua).
 	{
 		"mg979/vim-visual-multi",
 		event = "BufReadPost",
-		init = function()
-			-- Free <S-Arrow> in normal mode -- we use them for split
-			-- resizing (see keymaps.lua). VM still has <C-N> to start a
-			-- multi-cursor session; the "Select h/j/k/l" extenders
-			-- become available only after VM is active via other means.
-			vim.g.VM_maps = vim.tbl_extend("force", vim.g.VM_maps or {}, {
-				["Select h"] = "",
-				["Select j"] = "",
-				["Select k"] = "",
-				["Select l"] = "",
-			})
-		end,
+		specs = {
+			{ "NoetherVim", optional = true, opts = { g = {
+				VM_default_mappings = 0,
+				VM_maps = { ["Find Under"] = "", ["Find Subword Under"] = "" },
+			} } },
+			{ "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("vim-visual-multi", {
+				{ "<C-n>",    "<Plug>(VM-Find-Under)",         nowait = true, desc = "multi-cursor: add the word under the cursor", set = "remaps" },
+				{ "<C-n>",    "<Plug>(VM-Find-Subword-Under)", nowait = true, mode = "x", desc = "multi-cursor: add the selection", set = "remaps" },
+				{ "<C-Down>", "<Plug>(VM-Add-Cursor-Down)",    nowait = true, desc = "multi-cursor: add a cursor below" },
+				{ "<C-Up>",   "<Plug>(VM-Add-Cursor-Up)",      nowait = true, desc = "multi-cursor: add a cursor above" },
+				{ VM .. "gS",  "<Plug>(VM-Reselect-Last)",      nowait = true, desc = "multi-cursor: reselect the last cursors" },
+				{ VM .. "\\",  "<Plug>(VM-Add-Cursor-At-Pos)",  nowait = true, desc = "multi-cursor: add a cursor here" },
+				{ VM .. "/",   "<Plug>(VM-Start-Regex-Search)", nowait = true, desc = "multi-cursor: add cursors by regex" },
+				{ VM .. "A",   "<Plug>(VM-Select-All)",         nowait = true, desc = "multi-cursor: add every match of the word" },
+				{ VM .. "/",   "<Plug>(VM-Visual-Regex)",       nowait = true, mode = "x", desc = "multi-cursor: add cursors by regex in the selection" },
+				{ VM .. "A",   "<Plug>(VM-Visual-All)",         nowait = true, mode = "x", desc = "multi-cursor: add every match of the selection" },
+				{ VM .. "a",   "<Plug>(VM-Visual-Add)",         nowait = true, mode = "x", desc = "multi-cursor: add the selection as a region" },
+				{ VM .. "f",   "<Plug>(VM-Visual-Find)",        nowait = true, mode = "x", desc = "multi-cursor: find in the selection" },
+				{ VM .. "c",   "<Plug>(VM-Visual-Cursors)",     nowait = true, mode = "x", desc = "multi-cursor: a cursor on each selected line" },
+			}) },
+		},
 	},
 
 	--  delete extra white space
@@ -68,7 +92,32 @@ return {
 	},
 
 	-- better "." feature
-	{ "tpope/vim-repeat", event = "BufReadPost" },
+	--
+	-- vim-repeat maps . u U <C-R> the first time a plugin calls repeat#set,
+	-- unless a mapping already leads to its <Plug> targets. The four
+	-- <Plug>(noethervim-repeat-*) rows are such mappings, so it never does;
+	-- the keys themselves are rows that call it.
+	{
+		"tpope/vim-repeat",
+		lazy = false,
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("vim-repeat", {
+			{ "<Plug>(noethervim-repeat-dot)",      "<Plug>(RepeatDot)" },
+			{ "<Plug>(noethervim-repeat-undo)",     "<Plug>(RepeatUndo)" },
+			{ "<Plug>(noethervim-repeat-undoline)", "<Plug>(RepeatUndoLine)" },
+			{ "<Plug>(noethervim-repeat-redo)",     "<Plug>(RepeatRedo)" },
+			{ ".", function()
+				if vim.fn["repeat#run"](vim.v.count) == 0 then
+					vim.notify(vim.fn["repeat#errmsg"](), vim.log.levels.ERROR)
+				end
+			end, desc = "repeat, plugin actions included", set = "remaps" },
+			{ "u",     function() return vim.fn["repeat#wrap"]("u", vim.v.count) end,
+			  expr = true, desc = "undo", set = "remaps" },
+			{ "U",     function() return vim.fn["repeat#wrap"]("U", vim.v.count) end,
+			  expr = true, desc = "undo line", set = "remaps" },
+			{ "<C-R>", function() return vim.fn["repeat#wrap"]("\18", vim.v.count) end,
+			  expr = true, desc = "redo", set = "remaps" },
+		}) } },
+	},
 
 	-- smart-enter.nvim: context dispatched <S-CR>. Owns the global insert
 	-- mode <S-CR> (a newline that skips the comment leader) and continues
@@ -80,9 +129,12 @@ return {
 	-- their rules in the bundle, as latex does.
 	{
 		"Chiarandini/smart-enter.nvim",
-		event = "InsertEnter",
+		lazy = true,
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("smart-enter.nvim", {
+			{ "<S-CR>", function() require("smart_enter").dispatch() end, mode = "i", silent = true, desc = "smart enter" },
+		}) } },
 		opts = {
-			key      = "<S-CR>",
+			key      = false,
 			fallback = "newline",
 			filetypes = {
 				markdown = { preset = "markdown" },

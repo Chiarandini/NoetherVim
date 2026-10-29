@@ -60,6 +60,12 @@ return {
   "Chiarandini/vim-abolish",
   commit = "e79c5b2",
   event = "VeryLazy",
+  specs = {
+    { "NoetherVim", optional = true, opts = { g = { abolish_no_mappings = 1 } } },
+    { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("vim-abolish", {
+      { "cr", "<Plug>(abolish-coerce-word)", desc = "coerce the word's case (crs, crc, cru, ...)" },
+    }) },
+  },
   init = function()
     vim.g.abolish_default_expr = "NoetherAbolishSpell"
     vim.cmd([[
