@@ -339,22 +339,9 @@ return {
 				if vim.api.nvim_win_get_config(win).relative ~= "" then return end
 				if vim.bo.buftype ~= "" then return end
 
-				local user            = require("noethervim.config").get()
-				local conservative_ft = user.blink_conservative_filetypes or { "tex", "latex" }
-				local size_limit      = (user.blink_conservative_size_kb or 500) * 1024
-
-				for _, ft in ipairs(conservative_ft) do
-					if vim.bo.filetype == ft then
-						blink_cfg.completion.trigger.show_on_keyword = false
-						return
-					end
-				end
-				local size = vim.fn.getfsize(vim.api.nvim_buf_get_name(0))
-				if size > size_limit then
-					blink_cfg.completion.trigger.show_on_keyword = false
-					return
-				end
-				blink_cfg.completion.trigger.show_on_keyword = true
+				-- The writing system decides which buffers are conservative
+				-- (profiles/apply.lua sets the flag on FileType).
+				blink_cfg.completion.trigger.show_on_keyword = vim.b.noethervim_conservative ~= true
 			end
 
 			local grp = vim.api.nvim_create_augroup("noethervim_blink_keyword", { clear = true })

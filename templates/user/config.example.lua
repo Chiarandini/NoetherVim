@@ -166,6 +166,13 @@ return {
     -- drop = false,
 
     -- ── Filetype profiles ─────────────────────────────────────────────────────
+    -- A value you set for a buffer always beats the profiles: after/ftplugin,
+    -- a FileType autocmd, a modeline, :setlocal, ]os. So does a global
+    -- spell, conceallevel or list in lua/user/options.lua; prose wraps
+    -- whatever your global wrap says. `false` turns both profiles off;
+    -- `classes` moves a filetype to "writing" or "code", or drops it.
+    -- profiles = { classes = { tex = false, vimwiki = "writing" } },
+
     -- Extra filetypes to treat as writing (wrap, linebreak, spell, conceallevel=2,
     -- formatoptions+t, and a statuscolumn marking wrapped lines). Defaults: tex,
     -- markdown, norg, text, gitcommit, gitsendemail, mail, rst, typst.

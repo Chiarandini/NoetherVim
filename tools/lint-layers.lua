@@ -26,7 +26,7 @@ local lua_dir = root .. "/lua/noethervim"
 
 local SOURCED = {
   "options", "keymaps", "autocmds", "highlights", "commands",
-  "toggles.options", "default.broker", "keymaps.apply",
+  "toggles.options", "default.broker", "keymaps.apply", "profiles.apply",
 }
 
 -- Modules allowed to read the user's tree: the ingress, the loader, and

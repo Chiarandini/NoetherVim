@@ -1,9 +1,9 @@
 {
   "expect": {
-    "98": "Wrap on, in this window: [ow",
-    "143": "The profile a markdown file gets: writing",
-    "144": "The profile a python file gets: code",
-    "145": "Turn wrapping off in this window: ]ow",
-    "146": "Fix the nearest misspelling, from insert mode: <C-l>"
+    "98": "Wrap on, for this buffer: [ow",
+    "144": "The profile a markdown file gets: writing",
+    "145": "The profile a python file gets: code",
+    "146": "Turn wrapping off in this window: ]ow",
+    "147": "Fix the nearest misspelling, from insert mode: <C-l>"
   }
 }

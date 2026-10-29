@@ -297,6 +297,7 @@ function M.setup(opts)
   if load_user then M._snapshots.keymaps_after = snapshot_keymaps() end
 
   -- ── Autocommands ───────────────────────────────────────────────
+  source("profiles/apply.lua")
   source("autocmds.lua")
   user("autocmds")
 

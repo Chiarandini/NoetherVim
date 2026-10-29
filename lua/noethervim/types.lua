@@ -36,6 +36,9 @@
 ---@field nowait? boolean passed to vim.keymap.set
 ---@field _source? string `file:line` of the declaration, for rows mapped from core files
 
+---@class noethervim.ProfilesConfig
+---@field classes? table<string, "writing"|"code"|false> Per filetype: the profile it gets, or `false` for none.
+
 ---@class noethervim.HostOpts
 ---@field rows? noethervim.Row[] distro mappings, appended by each spec through rows.contribute()
 ---@field g? table<string, any> plugin globals set at startup when still nil
@@ -84,6 +87,7 @@
 ---@field non_code_filetypes? string[] Extra filetypes that skip BOTH the writing and code profiles, leaving their own ftplugin settings in charge. Added to the defaults.
 ---@field q_close_filetypes? string[] Extra filetypes where a bare `q` closes the window. Added to the defaults; editable filetypes (`oil`, `markdown`, ...) are excluded because `q` would shadow macro recording. To drop one of the defaults instead, clear the `noethervim_q_close` augroup and recreate the autocmd.
 ---@field spell_in_code? boolean If true, the code profile enables spellcheck, scoped to comments and strings via treesitter `@spell` captures so identifiers are not flagged. Default: false.
+---@field profiles? false|noethervim.ProfilesConfig `false` turns the writing and code profiles off. `classes` moves a filetype to "writing" or "code", or leaves it alone with `false`.
 ---@field toggle_feedback? "notify"|"echo"|"off" Channel for the confirmation message emitted when a bracket-prefix toggle (`[ox` / `]ox`) fires. `"notify"` (default) routes through `vim.notify`, which snacks renders as a toast; `"echo"` uses `nvim_echo` for the classic cmdline message; `"off"` suppresses it.
 ---@field snippets_disabled? noethervim.DisabledSnippet[] Snippets to keep switched off wherever this config is used. The snippet picker (`:NoetherVim snippets`, or SearchLeader+cs) copies a correct entry to your clipboard with `<C-o>`, filling in the owner and file. `<C-x>` there switches one off on this machine only, and that choice wins over this list for the session.
 ---@field keymaps? table<string, boolean> Key sets to switch off. `remaps = false` keeps every key whose Vim meaning NoetherVim changes (`;`, `s`, `n`, ... as Vim has it, while keeping NoetherVim's added keys; `lsp = false` skips the keys mapped when a language server attaches.

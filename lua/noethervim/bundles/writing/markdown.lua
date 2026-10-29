@@ -154,6 +154,15 @@ return {
   {
     "MeanderingProgrammer/render-markdown.nvim",
     ft = "markdown",
+    -- render-markdown sets 'conceallevel' itself whenever it renders. A
+    -- global conceallevel of yours is kept while rendering too.
+    opts = function(_, opts)
+      if require("noethervim.default").claimed("conceallevel") then
+        opts.win_options = vim.tbl_deep_extend("keep", opts.win_options or {},
+          { conceallevel = { rendered = vim.o.conceallevel } })
+      end
+      return opts
+    end,
     config = function(_, opts) require("render-markdown").setup(opts) end,
   },
 }

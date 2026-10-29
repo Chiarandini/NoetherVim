@@ -225,13 +225,10 @@ M.FileType = {
 -- reports what the profile actually turned on, read from the live window
 -- so per-buffer toggles ([ow, ]os, ...) show up too.
 
---- Classify the current buffer. Mirrors the dispatch in autocmds.lua.
+--- Classify the current buffer.
 ---@return "writing"|"code"|"none"
 local function current_profile()
-  local fts = require("noethervim.util.filetypes")
-  local ft = vim.bo.filetype
-  if ft == "" or fts.non_code[ft] then return "none" end
-  return fts.writing[ft] and "writing" or "code"
+  return require("noethervim.profiles").of(0) or "none"
 end
 
 -- `icons.text` is the LSP completion-kind glyph for Text, so the code

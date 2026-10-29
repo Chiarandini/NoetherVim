@@ -53,9 +53,9 @@ See [hard wrapping](noethervim-hard-wrap).
 ## WHAT THE CODE PROFILE DOES *code*
 
     `list`     tabs and trailing spaces are drawn
-    `nowrap`   long lines run off the edge rather than folding
 
-With `wrap` off, a line running past the window is marked `›` at the edge,
+Long lines run off the edge rather than folding, since `wrap` is off
+everywhere but prose. A line running past the window is marked `›` at the edge,
 and `‹` on the other side when it continues back. Vim draws those only while
 `list` is on, which is why they arrive together.
 
@@ -71,11 +71,11 @@ ideas about wrapping. These keep whatever their own plugin or ftplugin set.
 This tutorial is one of them, which is why it is not showing you trailing
 whitespace while you read it.
 
-## DISAGREEING, PER WINDOW *toggles*
+## DISAGREEING, PER BUFFER *toggles*
 
 The profile is a default, not a ruling. Every option it sets has a toggle
-pair, and the toggles are window-local, so disagreeing in one place does not
-follow you everywhere.
+pair, and a toggle is yours: it holds for that buffer, in every window
+showing it, while other buffers keep the profile.
 
     `[ow` `]ow`   wrap on / off
     `[os` `]os`   spell on / off
@@ -88,14 +88,14 @@ Try it here. Press `[ow` and the long paragraphs in this lesson start
 folding at the window edge, with `↳` marking each continuation row. Press
 `]ow` to put it back.
 
-Because these are window-local, a toggle lasts until that window shows a
-different buffer, at which point the profile applies again. That is the
-intended behavior rather than a limitation: the profile is the default you
-keep, and the toggle is for the file in front of you.
+The same goes for a setting in your own files: a `vim.opt_local.spell =
+false` in `after/ftplugin/markdown.lua` holds in every markdown buffer, and
+`vim.o.spell = false` in your options file turns spelling off in prose too.
+Prose still wraps whatever your global `wrap` says; set it per filetype.
 
 Fill in the pair member that turns wrapping on:
 
-Wrap on, in this window: ___
+Wrap on, for this buffer: ___
 
 ## SPELLING *spell*
 
@@ -118,7 +118,8 @@ scopes spelling to comments and strings rather than identifiers.
 ## CHANGING THE LISTS *config*
 
 If a filetype is in the wrong group, move it rather than fighting the
-options. In `lua/user/config.lua`:
+options. In `lua/user/config.lua`, `profiles = { classes = { tex = false } }`
+leaves one filetype alone, and `profiles = false` turns both off. The lists:
 
 ~~~ cmd
     :NoetherVim templates

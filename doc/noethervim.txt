@@ -322,7 +322,6 @@ not want. `templates/user/autocmds.example.lua` has the full snippet.
 
 Core augroups (clear any of these to disable or replace the feature): ~
     `noethervim_q_close`      q-to-close in non-editing windows
-    `noethervim_profiles`     the writing / code filetype profiles
     `noethervim_lastplace`    restore last cursor position on read
     `noethervim_autoread`     reload buffers when focus or edits change
     `noethervim_term`         terminal window tweaks (no numbers, scrolloff)
@@ -331,39 +330,47 @@ Core augroups (clear any of these to disable or replace the feature): ~
                                                  *noethervim-filetype-profiles*
 Filetype profiles (writing and code): ~
 
-NoetherVim applies two FileType autocmds that layer opinionated
-settings on top of the globals:
+NoetherVim layers settings on prose and on code buffers:
 
-    `noethervim_writing`  Matches: tex, markdown, norg, text, gitcommit,
-                        gitsendemail, mail, rst, typst. Sets `wrap`,
-                        `linebreak`, `spell`, `conceallevel = 2`, appends
-                        `t` to `formatoptions` (auto-wrap at textwidth),
-                        and hides list chars. Also binds `<C-l>` in
-                        insert mode for spell-fix. Wrapped lines get a
-                        marker column (see |noethervim-wrap-marker|).
-    `noethervim_code`     Matches: every filetype NOT in the writing list,
-                        structured-text set (json, jsonc, yaml, toml),
-                        or special-buffer set (help, man, lspinfo, query,
-                        qf, oil, terminal, snacks_*, lazy, mason,
-                        checkhealth, notify, Trouble, dap / dap-float /
-                        dapui_*). Sets `list` on so trailing whitespace and
-                        tabs are visible, and `wrap` off, the counterpart to
-                        the writing profile turning it on. `[ow` therefore
-                        lasts until the window shows a buffer again, the
-                        same as `]ow` in a writing buffer.
-                        `formatoptions` omits `t` globally, so typing past
-                        textwidth in code does NOT auto-break mid-line;
-                        formatters handle line length instead. When
-                        `spell_in_code = true` is set in
-                        |noethervim-user-config-data|, also turns on
-                        `spell`; spellcheck is then scoped to comments
-                        and strings via treesitter @spell captures.
-                        Use `[os` / `]os` to toggle per-buffer and `zg`
-                        to add a word to your spellfile. For CamelCase
-                        identifier splitting, append `camel` to
-                        `spelloptions` yourself in
-                        `lua/user/options.lua`; the distro leaves
-                        `spelloptions` untouched.
+    writing   tex, markdown, norg, text, gitcommit, gitsendemail, mail,
+              rst, typst. Sets `wrap`, `linebreak`, `spell`,
+              `conceallevel = 2`, appends `t` to `formatoptions`
+              (auto-wrap at textwidth), and hides list chars. Also binds
+              `<C-l>` in insert mode for spell-fix, and `zg`/`zG` add a
+              word with its variants. Wrapped lines get a marker column
+              (see |noethervim-wrap-marker|).
+    code      every other filetype, except structured text (json,
+              jsonc, yaml, toml) and special buffers (help, man, qf, oil,
+              terminal, snacks_*, lazy, mason, checkhealth, Trouble, the
+              debugger panels). Sets `list`, so trailing whitespace and
+              tabs are visible. When `spell_in_code = true` is set in
+              |noethervim-user-config-data|, also turns on `spell`,
+              scoped to comments and strings by treesitter's @spell
+              captures. For CamelCase splitting, append `camel` to
+              `spelloptions` yourself; the distro leaves it untouched.
+
+A value of yours always wins, in every window showing the buffer: one
+set in `ftplugin/` or `after/ftplugin/`, by a `FileType` autocmd
+anywhere, by a modeline, or typed with `:setlocal` or a toggle such as
+`]os` while you edit. A global of yours in `lua/user/options.lua` wins
+for `spell`, `conceallevel` and `list`: `vim.o.spell = false` keeps
+spell off in prose too. `wrap` and `linebreak` are the exception: prose
+wraps whatever your global says, since wrapping is what makes it
+readable. To change them, set them for the filetype: >lua
+    -- after/ftplugin/markdown.lua
+    vim.opt_local.wrap = false
+<
+`:verbose set conceallevel?` names NoetherVim when a profile set the
+value. A window's next buffer starts from your global values, not from
+the profile of the buffer it showed before.
+
+To turn both profiles off, or to move or drop one filetype, use
+`profiles` in `lua/user/config.lua`: >lua
+    return { profiles = false }
+    return { profiles = { classes = { tex = false, vimwiki = "writing" } } }
+<
+`writing_filetypes` and `non_code_filetypes` there still add filetypes to
+the defaults.
 
                                                     *noethervim-hard-wrap*
 The writing profile hard wraps: `formatoptions+t` breaks a line at
@@ -374,20 +381,9 @@ Enable the `wrapsearch` bundle to make `/` and `?` match across the
 break; see |noethervim-bundles|. To stop hard wrapping instead, remove
 `t` from `formatoptions` in an `after/ftplugin/<ft>.lua`.
 
-FileType autocmds fire AFTER `ftplugin/*.lua`, so these profiles win
-over same-named ftplugin settings. To extend the lists (e.g. treat
-`vimwiki` as writing, or skip the code profile for a custom filetype),
-set `writing_filetypes` / `non_code_filetypes` in `lua/user/config.lua`;
-see |noethervim-user-config-data|.
-
-Both profiles are applied by a single augroup, `noethervim_profiles`. To
-override the whole profile, clear it and re-create: >lua
-    vim.api.nvim_create_augroup("noethervim_profiles", { clear = true })
-    -- then register your own FileType autocmd
-<
-The global `wrap` default is OFF; the writing profile re-enables it
-for writing filetypes. Global `list` is OFF; the code profile re-enables
-it for code filetypes. Listchars are styled in `noethervim/options.lua`.
+The global `wrap` default is OFF; the writing profile turns it on for
+writing filetypes. Global `list` is OFF; the code profile turns it on for
+code filetypes. Listchars are styled in `noethervim/options.lua`.
 
                                                   *noethervim-wrap-marker*
 Wherever 'wrap' is on, a continuation row is marked `↳` in the number
@@ -418,7 +414,7 @@ To go back to an inline 'showbreak' arrow, set both in
 <
 Setting 'statuscolumn' to an empty string does NOT opt out: empty means
 "nothing set yet", so the profiles fill it in. Give it a value of your
-own, or clear the `noethervim_profiles` augroup entirely.
+own, or set `profiles = false`.
 
                                                  *noethervim-gutter-clicks*
 Clicking a gutter glyph ~
@@ -623,6 +619,13 @@ Current keys: ~
                                   stay in place. `{ "oil" }` is the
                                   common addition. See
                                   |noethervim-q-close|. Default: `{}`.
+    `profiles`                      `false` turns the writing and code
+                                  profiles off. `{ classes = { [ft] =
+                                  "writing" | "code" | false } }` moves
+                                  a filetype to a profile or leaves it
+                                  alone. See
+                                  |noethervim-filetype-profiles|.
+                                  Default: both on.
     `spell_in_code`                 If `true`, the code profile turns on
                                   `spell`. Spellcheck is scoped to
                                   comments and strings via treesitter
@@ -2717,11 +2720,11 @@ Q: Why is spell check on in markdown / tex / gitcommit files?~
 A: Writing filetypes (tex, markdown, norg, text, gitcommit, rst, typst)
    get a "writing profile" that enables wrap, linebreak, spell, and
    `conceallevel = 2`. See |noethervim-filetype-profiles| for the
-   full picture. Toggle spell per buffer with `[os` / `]os`. To
-   disable the profile entirely, clear the augroup in
-   `lua/user/autocmds.lua`:
+   full picture. Toggle spell per buffer with `[os` / `]os`, turn it
+   off everywhere with `vim.o.spell = false` in `lua/user/options.lua`,
+   or turn the profiles off in `lua/user/config.lua`:
 >lua
-    vim.api.nvim_create_augroup("noethervim_writing", { clear = true })
+    return { profiles = false }
 <
 
 Q: How do I restore my last session?~

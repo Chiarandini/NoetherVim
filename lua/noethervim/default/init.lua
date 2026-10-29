@@ -10,6 +10,7 @@
 ---   o(name, value)               a global option
 ---   map(mode, lhs, rhs, opts)    a global mapping
 ---   command(name, fn, opts)      a user command
+---   setlocal(buf, name, value)   a buffer or window option for a buffer
 ---
 --- Every other source counts as yours: your files wherever they live,
 --- `init.lua`, a modeline, `-c`, another plugin. A skipped write is
@@ -129,8 +130,22 @@ local function own(rec)
   end
 end
 
+--- True while the broker performs NoetherVim's writes, so the claim
+--- observer (profiles/apply.lua) can tell them from yours.
+M.writing = false
+
 local function apply(item)
-  if item.kind == "o" then
+  if item.kind == "local" then
+    if item.scope == "buf" then
+      if vim.api.nvim_buf_is_valid(item.buf) then vim.bo[item.buf][item.name] = item.value end
+    else
+      for _, win in ipairs(item.wins) do
+        if vim.api.nvim_win_is_valid(win) and vim.api.nvim_win_get_buf(win) == item.buf then
+          vim.wo[win][0][item.name] = item.value
+        end
+      end
+    end
+  elseif item.kind == "o" then
     vim.o[item.name] = item.value
     M.owned.o[item.name] = item.record
   elseif item.kind == "map" then
@@ -147,7 +162,15 @@ end
 function M._flush()
   local items = queue
   queue = {}
-  for _, item in ipairs(items) do apply(item) end
+  M.writing = true
+  for _, item in ipairs(items) do
+    local ok, err = pcall(apply, item)
+    if not ok then
+      M.writing = false
+      error(err)
+    end
+  end
+  M.writing = false
 end
 
 local function enqueue(item)
@@ -285,6 +308,88 @@ function M.map(modes, lhs, rhs, opts, meta)
       enqueue({ kind = "map", mode = mode, lhs = lhs, rhs = rhs, opts = opts, record = rec })
     end
   end
+end
+
+-- ── Buffer and window options ─────────────────────────────────────────
+
+--- Per buffer, the options that are yours there, each with who set it.
+---@type table<integer, table<string, string>>
+local claims = {}
+
+--- Record that `name` is yours in `buf`; NoetherVim no longer writes it
+--- there. The first claim's description is kept.
+---@param buf integer
+---@param name string
+---@param by string
+function M.claim(buf, name, by)
+  claims[buf] = claims[buf] or {}
+  claims[buf][name] = claims[buf][name] or by
+end
+
+--- The options that are yours in `buf`, each with who set it.
+---@param buf integer
+---@return table<string, string>
+function M.claims(buf)
+  return claims[buf] or {}
+end
+
+---@param buf integer
+function M.forget(buf)
+  claims[buf] = nil
+end
+
+--- Who set the local value `info` describes, when that is you.
+---@param name string
+---@param info table nvim_get_option_info2() for the local value
+---@param layout? boolean a value inherited from your global is not yours
+---@return string?
+local function local_claim(name, info, layout)
+  local sid = info.last_set_sid
+  if M.class(sid) ~= "claim" then return nil end
+  if layout and sid == vim.api.nvim_get_option_info2(name, { scope = "global" }).last_set_sid then
+    return nil
+  end
+  return M.describe(sid)
+end
+
+--- Set a buffer or window option for `buf` unless it is yours there: in
+--- every window showing the buffer, floats aside, with `:setlocal`
+--- semantics, so the window's next buffer starts from the global again.
+---
+--- A value is yours when a file that is neither NoetherVim's nor Neovim's
+--- set it (in any window showing the buffer), or when a claim is recorded
+--- (`:setlocal`, a toggle, a timer). A `layout` option yields only to a
+--- value set for the buffer: one inherited from your global does not count.
+---@param buf integer
+---@param name string
+---@param value any
+---@param opts? { layout?: boolean, win?: integer } `win`: that window only
+---@return boolean written
+function M.setlocal(buf, name, value, opts)
+  local layout = opts and opts.layout
+  local scope = vim.api.nvim_get_option_info2(name, {}).scope
+  local wins = {}
+  if scope == "win" then
+    for _, win in ipairs(opts and opts.win and { opts.win } or vim.fn.win_findbuf(buf)) do
+      if vim.api.nvim_win_get_config(win).relative == "" then table.insert(wins, win) end
+    end
+    if #wins == 0 then return false end
+  end
+  local by = claims[buf] and claims[buf][name] ---@type string?
+  if not by then
+    if scope == "buf" then
+      by = local_claim(name, vim.api.nvim_get_option_info2(name, { buf = buf }), layout)
+    else
+      for _, win in ipairs(wins) do
+        by = local_claim(name, vim.api.nvim_get_option_info2(name, { win = win }), layout)
+        if by then break end
+      end
+    end
+    if by then M.claim(buf, name, by) end
+  end
+  if by then return false end
+  enqueue({ kind = "local", scope = scope, buf = buf, wins = wins, name = name, value = value })
+  return true
 end
 
 --- Create a user command unless one of that name already exists.

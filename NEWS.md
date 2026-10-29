@@ -6,6 +6,19 @@ where they are listed.
 
 ## 2026-10-29
 
+- **Your buffer settings beat the filetype profiles:** a `spell`,
+  `conceallevel`, `list`, `wrap` or `linebreak` you set for a buffer
+  (`after/ftplugin/`, a `FileType` autocmd, a modeline, `:setlocal`, `]os`)
+  is kept in every window showing it, across window switches. A global
+  `spell`, `conceallevel` or `list` in `lua/user/options.lua` now holds in
+  prose and code buffers too; prose still wraps whatever your global `wrap`
+  says, so set `wrap` per filetype instead.
+- **Profiles switch:** `profiles = false` in `lua/user/config.lua` turns the
+  writing and code profiles off, and `profiles = { classes = { tex = false } }`
+  drops one filetype. If you cleared the `noethervim_profiles` augroup to
+  turn them off, use `profiles = false` instead.
+- **The code profile no longer turns `wrap` off:** a code buffer starts from
+  your global `wrap`, and `[ow` in a code buffer stays on for that buffer.
 - **Your keys stick:** every NoetherVim key, a lazily loaded plugin's
   included (ufo's `L`, dial's `<C-a>`, the test and debug keys), is mapped
   once at startup, before `lua/user/keymaps.lua`, and never again. A

@@ -1,15 +1,14 @@
 local M = {}
 
-local fts = require("noethervim.util.filetypes")
 
 function M.in_spell_region(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
 
   if vim.b[bufnr].noethervim_abolish_force then return true end
 
-  local ft = vim.bo[bufnr].filetype
-  if fts.writing[ft] then return true end
-  if fts.non_code[ft] then return false end
+  local class = require("noethervim.profiles").of(bufnr)
+  if class == "writing" then return true end
+  if not class then return false end
 
   local pos = vim.api.nvim_win_get_cursor(0)
   local row = pos[1] - 1

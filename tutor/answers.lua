@@ -61,8 +61,8 @@ return {
   },
 
   ["noethervim-04-profiles"] = {
-    { "Wrap on, in this window: ___",
-      "Wrap on, in this window: [ow" },
+    { "Wrap on, for this buffer: ___",
+      "Wrap on, for this buffer: [ow" },
     { "The profile a markdown file gets: ___",
       "The profile a markdown file gets: writing" },
     { "The profile a python file gets: ___",
