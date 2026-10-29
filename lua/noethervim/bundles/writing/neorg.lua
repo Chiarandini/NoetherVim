@@ -28,14 +28,14 @@ return {
 	{
 		"nvim-neorg/neorg",
 		dependencies = { "3rd/image.nvim" },
-		keys = {
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("neorg", {
 			{ "<leader>ww", "<cmd>Neorg index<cr>",              desc = "Neorg wiki" },
 			{ "<leader>wt", "<cmd>tabe<cr><cmd>Neorg index<cr>", desc = "Neorg wiki (new tab)" },
 			{ "<leader>wv", "<cmd>vs<cr><cmd>Neorg index<cr>",   desc = "Neorg wiki (vsplit)" },
 			{ "<leader>wr", "<cmd>Neorg return<cr>",             desc = "Close Neorg buffers" },
 			{ "<localleader>nr", "<cmd>Neorg return<cr>", ft = "norg", desc = "return from Neorg" },
 			{ "<localleader>nc", "<cmd>Neorg toc<cr>",    ft = "norg", desc = "Neorg TOC" },
-		},
+		}) } },
 		cmd = "Neorg",
 		ft  = "norg",
 		opts = {

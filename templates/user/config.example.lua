@@ -203,6 +203,15 @@ return {
     -- toggle_feedback = "echo",
 
 
+    -- ── Key sets ──────────────────────────────────────────────────────────────
+    -- Switch off a whole set of NoetherVim's keys. `remaps` is every key that
+    -- changes what one of Vim's or Neovim's own keys does (j, k, s, ;, n,
+    -- ...): with it off, those keys do what Vim does and the additions stay.
+    -- `lsp` is the keys mapped when a language server attaches (gd, gD,
+    -- <F2>, ...). A single key is lua/user/keymaps.lua's job.
+    -- keymaps = { remaps = false },
+
+
     -- ── Snippets you never want ───────────────────────────────────────────────
     -- Snippets listed here stay switched off, on every machine this config
     -- reaches. Open the snippet picker (SearchLeader+cs), put the cursor on

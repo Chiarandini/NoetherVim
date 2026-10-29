@@ -236,7 +236,7 @@ end
 ---
 --- Both tables are keyed by `<mode>|<resolved_lhs>` (e.g. `"n|<Space>fb"`).
 --- Keymaps set directly via vim.keymap.set (not in a lazy spec) are absent
---- from both tables; those are tracked by util.keymap_registry instead.
+--- from both tables; util.keymap_source.lookup attributes those instead.
 ---
 ---@return table<string, string> sources
 ---     Mapping from `<mode>|<resolved_lhs>` to absolute path of the spec
@@ -266,7 +266,7 @@ function M.keymap_sources()
     return _content[path]
   end
 
-  local registry = require("noethervim.util.keymap_registry")
+  local registry = require("noethervim.util.keymap_forms")
 
   --- Pick the file from `candidates` that actually mentions a source
   --- form of `lhs`; falls back to the first candidate if none match.

@@ -98,22 +98,29 @@ function M.key(lhs)
     if not vim.tbl_isempty(m) or #yielded > 0 or #specs > 0 then
       local active = "(nothing)"
       local who = nil
+      -- A NoetherVim mapping carries NoetherVim's script id; one made over
+      -- it later (yours) does not.
+      local ours = owned and not vim.tbl_isempty(m) and default.class(m.sid) == "distro"
       if not vim.tbl_isempty(m) then
         local where
         who, where = origin(m)
-        if owned then
+        if ours then
           who = "NoetherVim"
-          where = owned.source .. (owned.plugin and (", " .. owned.plugin .. "'s config") or "")
+          where = owned.source .. (owned.plugin and (", " .. owned.plugin) or "")
         end
         active = ("%s: %s%s%s"):format(who, where,
           m.desc and m.desc ~= "" and (' "' .. m.desc .. '"') or "",
           m.buffer == 1 and " (this buffer only)" or "")
       end
       table.insert(lines, ("  %s  active   %s"):format(mode, active))
+      if owned and not ours then
+        table.insert(lines, ("     replaced NoetherVim, %s%s%s, by a mapping made later"):format(
+          owned.plugin and (owned.plugin .. ", ") or "", owned.source, owned.desc and (' "' .. owned.desc .. '"') or ""))
+      end
       for _, r in ipairs(yielded) do
         table.insert(lines, ("     yielded  NoetherVim, %s%s: %s%s"):format(
-          r.plugin and (r.plugin .. "'s config, ") or "", r.source, r.desc and ('"' .. r.desc .. '" ') or "",
-          "skipped because yours was there first"))
+          r.plugin and (r.plugin .. ", ") or "", r.source, r.desc and ('"' .. r.desc .. '" ') or "",
+          "skipped because " .. (r.by and r.by:find("set `") and r.by or "yours was there first")))
       end
       for _, s in ipairs(specs) do
         local url = s.plugin[1] or s.plugin.name
@@ -124,7 +131,7 @@ function M.key(lhs)
         table.insert(lines, ('                { "%s", keys = { { "%s", <your rhs> } } }   to replace it'):format(url, lhs))
         table.insert(lines, ('                { "%s", keys = { { "%s", false } } }   to remove it'):format(url, lhs))
       end
-      if #yielded > 0 and who == "yours" then
+      if (#yielded > 0 or (owned and not ours)) and who == "yours" then
         table.insert(lines, "     undo     remove your mapping and restart, and NoetherVim's comes back")
       end
     end

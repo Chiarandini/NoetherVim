@@ -445,14 +445,16 @@ return {
 			},
 			{
 				"jbyuki/one-small-step-for-vimkind",
-				keys = { {
+				lazy = true,
+				specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("one-small-step-for-vimkind", { {
 					"<leader>dal",
 					function() require("osv").launch({ port = 8086 }) end,
 					desc = "DAP: attach Lua",
-				} },
+				} }) } },
 			},
 		},
-		keys = vim.list_extend(stepping_keys(), {
+		lazy = true,
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("nvim-dap", vim.list_extend(stepping_keys(), {
 			{ "<leader>db", function() require("dap").toggle_breakpoint()                          end, desc = "DAP: Toggle Breakpoint" },
 			{ "<leader>dc", function()
 				require("dap").clear_breakpoints()
@@ -460,9 +462,9 @@ return {
 			end, desc = "DAP: Clear Breakpoints" },
 			{ "<leader>dR", function() require("dap").run_to_cursor()                              end, desc = "DAP: Run to Cursor" },
 			{ "<leader>dj", function() require("dap").focus_frame()                                end, desc = "DAP: Jump to Current Frame" },
-			{ "<leader>dr", "<cmd>DapVirtualTextForceRefresh<cr>",                                     desc = "DAP: Refresh Virtual Text" },
+			{ "<leader>dr", function() require("dap"); vim.cmd("DapVirtualTextForceRefresh") end,      desc = "DAP: Refresh Virtual Text" },
 			{ "<leader>di", function() require("dap.ui.widgets").hover()                           end, desc = "DAP: Information" },
-			{ "<leader>de", function() require("dapui").eval()                                     end, mode = { "n", "v" }, desc = "DAP: Evaluate" },
+			{ "<leader>de", function() require("dapui").eval()                                     end, mode = { "n", "x" }, desc = "DAP: Evaluate" },
 			{ "<leader>dE", function() require("dapui").eval(vim.fn.input("Expression > "))        end, desc = "DAP: Evaluate Input" },
 			{ "<leader>dC", function() require("dap").set_breakpoint(vim.fn.input("[Condition] > ")) end, desc = "DAP: Conditional Breakpoint" },
 			{ "<leader>dl", function() require("dap").set_breakpoint(nil, nil, vim.fn.input("Log point message: ")) end, desc = "DAP: Log Breakpoint" },
@@ -473,7 +475,7 @@ return {
 			{ "<leader>dq", function() require("dap").close()                                      end, desc = "DAP: Quit" },
 			{ "<leader>dw", function() require("dapui").elements.watches.add(vim.fn.expand("<cword>")) end, desc = "DAP: Watch Word" },
 			{ "<leader>dt", function() require("dap").disconnect()                                 end, desc = "DAP: Disconnect" },
-		}),
+		})) } },
 		config = function(_, opts)
 			local dap   = require("dap")
 			local dapui = require("dapui")
@@ -593,13 +595,13 @@ return {
 	{
 		"mfussenegger/nvim-dap",
 		dependencies = { "folke/snacks.nvim" },
-		keys = {
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("nvim-dap", {
 			{ SearchLeader .. "Dc", function() dap_pickers.commands()         end, desc = "[d]ebug [c]ommands" },
 			{ SearchLeader .. "DC", function() dap_pickers.configurations()   end, desc = "[d]ebug [C]onfigurations" },
 			{ SearchLeader .. "Db", function() dap_pickers.list_breakpoints() end, desc = "[d]ebug [b]reakpoints" },
 			{ SearchLeader .. "Dv", function() dap_pickers.variables()        end, desc = "[d]ebug [v]ariables" },
 			{ SearchLeader .. "Df", function() dap_pickers.frames()           end, desc = "[d]ebug [f]rames" },
-		},
+		}) } },
 	},
 
 }

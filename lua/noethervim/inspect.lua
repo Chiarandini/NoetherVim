@@ -765,13 +765,12 @@ function M.diff_keymaps(opts)
     ::continue::
   end
 
-  -- Refine [CORE] → [USER]: a key is user-owned if either the registry
-  -- (imperative `vim.keymap.set` callsite) or the lazy-handler
-  -- attribution (lazy `keys = {...}` spec file) places its definition
-  -- under `lua/user/`. The lazy path matters because user plugin specs
-  -- bypass the setup-time wrapper, so the registry alone misses them.
+  -- Refine [CORE] → [USER]: a key is user-owned if either its recorded
+  -- source (util.keymap_source.lookup) or the lazy-handler attribution
+  -- (lazy `keys = {...}` spec file) places its definition under
+  -- `lua/user/`.
   local udir_norm = vim.fs.normalize(user_dir())
-  local registry = require("noethervim.util.keymap_registry")
+  local registry = require("noethervim.util.keymap_source")
   for _, item in ipairs(items) do
     if item.tag == "[CORE]" then
       local owner_file
@@ -1095,7 +1094,7 @@ end
 
 --- Show the source attribution for every tracked keymap. For each key
 --- in the diff set, report the data source that would drive a jump:
----   REG   — captured by the setup-time registry (exact file + line)
+---   REG   — a row, a write through noethervim.default, or a mapping made by a sourced file
 ---   LAZY  — attributed via lazy.nvim handler metadata (spec file)
 ---   CB    — inferred from the callback function's defining file
 ---   ----  — no source available; jump would notify and do nothing
@@ -1107,7 +1106,7 @@ function M.debug_keymaps()
   end
 
   local key_sources, lazy_managed = require("noethervim.util").keymap_sources()
-  local registry = require("noethervim.util.keymap_registry")
+  local registry = require("noethervim.util.keymap_source")
 
   local baseline = snap.keymaps_baseline or {}
   local before   = snap.keymaps_before

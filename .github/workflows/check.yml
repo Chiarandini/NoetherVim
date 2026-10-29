@@ -140,7 +140,9 @@ jobs:
             sed 's/{[^}]*}//g' | perl -pe 's/(<[^>]*>)/lc($1)/ge; s/,\s+/, /g'
           }
 
-          haystack=$(grep -rh 'keymap\.set' lua/ | norm)
+          # Core keys are declared with `map(` (keymaps.lua) and `row(`
+          # (toggles/options.lua), the rows helpers, not vim.keymap.set.
+          haystack=$(grep -rhE 'keymap\.set|^[[:space:]]*map\(|^[[:space:]]*row\(' lua/ | norm)
 
           # A here-string, not `printf | grep -q`. `grep -q` exits on its
           # first match and closes the pipe, so printf takes SIGPIPE; under

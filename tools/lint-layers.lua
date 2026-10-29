@@ -12,6 +12,9 @@
 --      would run them a second time, unsigned.
 -- R7   A `config` function that calls setup() passes it the spec's opts, so
 --      `opts` from a user's spec reach the plugin.
+-- KEYS No lazy.nvim `keys` list in a distro spec. lazy maps those again each
+--      time the plugin loads, over the user's own keys; distro keys are rows
+--      (lua/noethervim/keymaps/rows.lua).
 --
 -- Prints file:line: rule: message for each hit and exits non-zero on any.
 
@@ -20,7 +23,7 @@ local lua_dir = root .. "/lua/noethervim"
 
 local SOURCED = {
   "options", "keymaps", "autocmds", "highlights", "commands",
-  "toggles.options", "default.broker",
+  "toggles.options", "default.broker", "keymaps.apply",
 }
 
 -- Modules allowed to read the user's tree: the ingress, the loader, and
@@ -34,7 +37,6 @@ local USER_TREE_OK = {
   ["util/templates.lua"] = true,
   ["util/bundle_toggle.lua"] = true,
   ["util/keymap_source.lua"] = true,
-  ["util/keymap_registry.lua"] = true,
   ["util/init.lua"] = true,
   -- the SearchLeader+c pickers, which open the config directory on request
   ["plugins/snacks.lua"] = true,
@@ -75,6 +77,16 @@ for _, rel in ipairs(files()) do
     for _, mod in ipairs(SOURCED) do
       if code:find("require%s*%(?%s*[\"']noethervim%." .. vim.pesc(mod) .. "[\"']") then
         hit(rel, i, "SRC", "noethervim." .. mod .. " is sourced by setup(), never required")
+      end
+    end
+
+    local spec_file = vim.startswith(rel, "plugins/") or vim.startswith(rel, "bundles/")
+
+    -- KEYS: `keys = {` opening a list of key specs, `{ "lhs", ... }`
+    if spec_file and code:find("keys%s*=%s*{") then
+      local nxt = (lines[i + 1] or ""):gsub("%-%-.*$", "")
+      if code:find("keys%s*=%s*{%s*{%s*[\"']") or (code:find("keys%s*=%s*{%s*$") and nxt:find("^%s*{%s*[\"']")) then
+        hit(rel, i, "KEYS", "lazy keys are mapped again on every load; declare rows (keymaps/rows.lua)")
       end
     end
 

@@ -23,6 +23,8 @@ return {
   {
     'rebelot/heirline.nvim',
     event = 'UIEnter',
+    specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute(
+      "heirline.nvim", require("noethervim.plugins.statusline.keymaps").rows()) } },
     -- Hard opt-out: user.config.statusline_enabled = false skips heirline
     -- entirely so a replacement plugin (lualine, mini.statusline, etc.)
     -- can take over without conflict. Bundle-level toggles still go
@@ -251,9 +253,6 @@ return {
           require("heirline").reset_highlights()
         end,
       })
-
-      -- Toggle keymaps.
-      require("noethervim.plugins.statusline.keymaps").setup()
     end
   }
 }

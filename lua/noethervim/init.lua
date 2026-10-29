@@ -130,13 +130,19 @@ M._user_lsp       = {}
 ---@private
 M._user_overrides = {}
 
+--- What units contributed through NoetherVim's spec: rows, g, startup.
+---@private
+---@type noethervim.HostOpts
+M._host = {}
+
 --- Initialize NoetherVim. Called from the lazy.nvim `config` callback
---- of the NoetherVim plugin spec.
+--- of the NoetherVim plugin spec, first among the start plugins.
 ---
 --- All user-facing configuration lives in `lua/user/config.lua`, read
 --- through `noethervim.config`. See |noethervim-user-config|.
----@param _opts? table  the NoetherVim spec's merged opts (unused so far)
-function M.setup(_opts)
+---@param opts? noethervim.HostOpts  the NoetherVim spec's merged opts
+function M.setup(opts)
+  M._host = opts or {}
   local config = require("noethervim.config")
   local load_user = not config.user_off()
   M._user_loaded = load_user
@@ -155,12 +161,19 @@ function M.setup(_opts)
   require("noethervim.default").snapshot_defaults()
   source("default/broker.lua")
 
-  -- Setup-time keymap source registry: wraps vim.keymap.set so every
-  -- imperative registration records file+line for the inspect picker and
-  -- the guide jumper. Uninstalled at the end of setup() so user-time
-  -- calls hit the stock function.
-  local keymap_registry = require("noethervim.util.keymap_registry")
-  keymap_registry.install()
+  -- Plugin globals units declare, set only while still unset, so one you
+  -- set before NoetherVim loads stays; then the registrations that must
+  -- exist from the start, in id order.
+  for name, value in pairs(M._host.g or {}) do
+    if vim.g[name] == nil then vim.g[name] = value end
+  end
+  local startup = M._host.startup or {}
+  local ids = vim.tbl_keys(startup)
+  table.sort(ids)
+  for _, id in ipairs(ids) do
+    if startup[id] then startup[id]() end
+  end
+
 
   --- Attempt to load a user override module. Silent no-op if the file
   --- doesn't exist. Tracks successfully loaded modules for health/status.
@@ -274,8 +287,11 @@ function M.setup(_opts)
   -- (Neovim defaults + lazy plugin handler keymaps).
   -- Used to filter Neovim defaults from the diff picker.
   if load_user then M._snapshots.keymaps_baseline = snapshot_keymaps() end
+  require("noethervim.default").hold(true)
   source("keymaps.lua")
   source("toggles/options.lua")
+  source("keymaps/apply.lua")
+  require("noethervim.default").hold(false)
   if load_user then M._snapshots.keymaps_before = snapshot_keymaps() end
   user("keymaps")
   if load_user then M._snapshots.keymaps_after = snapshot_keymaps() end
@@ -287,18 +303,10 @@ function M.setup(_opts)
   -- ── Commands ───────────────────────────────────────────────────
   -- :Reset, :DiffOrig, :Redir, etc. Deferred to keep `nvim .` fast;
   -- the commands aren't typed in the first ~100ms of a session.
-  --
-  -- commands.lua also registers keymaps (`<C-w>u`, `\s`), so the
-  -- source registry has to still be recording when it loads. The
-  -- uninstall below is therefore deferred to this callback rather than
-  -- happening at the end of setup(); see the note there.
   vim.api.nvim_create_autocmd("User", {
     pattern = "VeryLazy",
     once = true,
-    callback = function()
-      source("commands.lua")
-      keymap_registry.uninstall()
-    end,
+    callback = function() source("commands.lua") end,
   })
 
   -- ── Highlights & colorscheme ───────────────────────────────────
@@ -343,13 +351,6 @@ function M.setup(_opts)
       if ok then table.insert(M._user_overrides, name) end
     end
   end
-
-  -- The keymap.set wrapper stays installed past this point: it is
-  -- released in the VeryLazy callback above, once commands.lua (the
-  -- last core module to register keymaps) has loaded. Everything that
-  -- registers in that window -- ftplugins for the first buffer, plugin
-  -- config bodies -- gets an exact file+line for the diff picker
-  -- instead of a callback-file guess.
 
   -- ── :NoetherVim ────────────────────────────────────────────────
   -- Registered now, not at VeryLazy. The name has to exist from the start:

@@ -345,6 +345,13 @@ local function set_statuscolumn(win, writing)
   if writing then vim.wo[win].list = not wrap end
 end
 
+--- Whether a buffer key is free of the distro's `ft` rows, which are mapped
+--- before this file's FileType autocmd runs: a filetype's own key (the latex
+--- bundle's accent-aware zg) is more specific than the profile's.
+local function row_free(buf, mode, lhs)
+  return not (vim.b[buf].noethervim_rows or {})[mode .. " " .. vim.keycode(lhs)]
+end
+
 local function apply_writing_profile(buf)
   -- Buffer-local: formatoptions, the keymap.
   -- Guarded: this runs on BufWinEnter as well as FileType, so an
@@ -356,17 +363,23 @@ local function apply_writing_profile(buf)
     -- `<Cmd>` runs the fix without leaving insert mode, so the cursor never
     -- takes the trip out and back that the old <Esc>...`]a sequence relied
     -- on. `<c-g>u` either side keeps the correction its own undo step.
-    vim.keymap.set("i", "<c-l>",
-      "<c-g>u<Cmd>lua require('noethervim.util.spell').fix_previous()<CR><c-g>u",
-      { buffer = buf, silent = true, desc = "fix spelling" })
+    if row_free(buf, "i", "<c-l>") then
+      vim.keymap.set("i", "<c-l>",
+        "<c-g>u<Cmd>lua require('noethervim.util.spell').fix_previous()<CR><c-g>u",
+        { buffer = buf, silent = true, desc = "fix spelling" })
+    end
     -- Adding a word also adds the forms you will go on to write; see
     -- util/spell.lua for which, and why those.
-    vim.keymap.set("n", "zg", function()
-      require("noethervim.util.spell").add_under_cursor(false)
-    end, { buffer = buf, desc = "add word to spellfile (with variants)" })
-    vim.keymap.set("n", "zG", function()
-      require("noethervim.util.spell").add_under_cursor(true)
-    end, { buffer = buf, desc = "add word for this session (with variants)" })
+    if row_free(buf, "n", "zg") then
+      vim.keymap.set("n", "zg", function()
+        require("noethervim.util.spell").add_under_cursor(false)
+      end, { buffer = buf, desc = "add word to spellfile (with variants)" })
+    end
+    if row_free(buf, "n", "zG") then
+      vim.keymap.set("n", "zG", function()
+        require("noethervim.util.spell").add_under_cursor(true)
+      end, { buffer = buf, desc = "add word for this session (with variants)" })
+    end
     vim.b[buf].noethervim_writing_keymap = true
   end
   for _, win in ipairs(vim.fn.win_findbuf(buf)) do

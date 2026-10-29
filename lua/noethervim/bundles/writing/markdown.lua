@@ -49,11 +49,11 @@ return {
   {
     "HakonHarnes/img-clip.nvim",
     ft   = { "markdown" },
-    keys = {
+    specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("img-clip.nvim", {
       { "<localleader>P", "<cmd>PasteImage<cr>",
         desc = "paste image from clipboard",
         ft   = { "markdown" } },
-    },
+    }) } },
     opts = {
       filetypes = {
         markdown = {

@@ -136,8 +136,10 @@ return {
 				pcall(vim.api.nvim_del_autocmd, au)
 			end
 		end,
-		keys = { {'<c-w><c-o>', function() require('oil').open_float() end, desc = "Oil Mode"}, },
 		cmd  = { "Oil" },
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("oil.nvim", {
+			{ "<c-w><c-o>", function() require("oil").open_float() end, desc = "Oil Mode" },
+		}) } },
 		dependencies = { "nvim-tree/nvim-web-devicons", "Chiarandini/oil-extras.nvim" },
 		-- A function, so the oil-extras actions are read once the dependency
 		-- has loaded rather than while lazy is still reading specs.

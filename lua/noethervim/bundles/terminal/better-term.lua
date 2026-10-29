@@ -26,7 +26,7 @@ return {
 	{
 		"CRAG666/betterTerm.nvim",
 		event  = "TermOpen",
-		keys   = {
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("betterTerm.nvim", {
 			{
 				"<c-w><c-t>",
 				function() require("betterTerm").open() end,
@@ -39,7 +39,7 @@ return {
 				mode = { "n", "t" },
 				desc = "Select terminal",
 			},
-		},
+		}) } },
 		config = function(_, opts)
 			require("betterTerm").setup(opts)
 		end,

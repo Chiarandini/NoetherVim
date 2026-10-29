@@ -7,18 +7,24 @@
 --   [x / ]x       prev/next directional navigation
 --   [ox / ]ox     toggle option on/off
 
+-- Every key here is a row (keymaps/rows.lua): mapped once, unless a mapping
+-- of yours is already on it. `set = "remaps"` marks a key that changes what
+-- one of Vim's or Neovim's own keys does; `keymaps = { remaps = false }` in
+-- lua/user/config.lua leaves all of those alone.
+local map = require("noethervim.keymaps.rows").map
+
 -- ──────────────────────────────────────────────────────────────
 --  Insert mode
 -- ──────────────────────────────────────────────────────────────
 
-vim.keymap.set("i", "<M-BS>",  "<c-w>",      { desc = "delete word backward" })
-vim.keymap.set("i", "<D-BS>",  "<c-o>dd",    { desc = "delete line" })
-vim.keymap.set("i", "<c-w>",   "<nop>",      { desc = "disable.. too many windows accidentally close" })
-vim.keymap.set("i", "<C-a>",   "<Esc>ggVG",  { desc = "select all" })
-vim.keymap.set("i", "<C-v>",   '<Esc>"*pa',  { desc = "paste from clipboard" })
-vim.keymap.set("i", "<C-p>",   "<nop>",      { desc = "disabled" })
-vim.keymap.set("i", "<C-s>",   "<nop>",      { desc = "disabled" })
-vim.keymap.set("i", "<C-=>",   "<C-r>=",     { desc = "expression register" })
+map("i", "<M-BS>",  "<c-w>",      { desc = "delete word backward" })
+map("i", "<D-BS>",  "<c-o>dd",    { desc = "delete line" })
+map("i", "<c-w>",   "<nop>",      { set = "remaps", desc = "disable.. too many windows accidentally close" })
+map("i", "<C-a>",   "<Esc>ggVG",  { set = "remaps", desc = "select all" })
+map("i", "<C-v>",   '<Esc>"*pa',  { set = "remaps", desc = "paste from clipboard" })
+map("i", "<C-p>",   "<nop>",      { set = "remaps", desc = "disabled" })
+map("i", "<C-s>",   "<nop>",      { set = "remaps", desc = "disabled" })
+map("i", "<C-=>",   "<C-r>=",     { desc = "expression register" })
 
 -- ──────────────────────────────────────────────────────────────
 --  Normal mode -- general
@@ -54,34 +60,34 @@ local function vline_move(key)
     vim.api.nvim_feedkeys(keys, "ni", false)
   end
 end
-vim.keymap.set("n", "j", vline_move("j"),
-  { desc = "visual-line down (jumplist for >5)" })
-vim.keymap.set("n", "k", vline_move("k"),
-  { desc = "visual-line up (jumplist for >5)" })
+map("n", "j", vline_move("j"),
+  { set = "remaps", desc = "visual-line down (jumplist for >5)" })
+map("n", "k", vline_move("k"),
+  { set = "remaps", desc = "visual-line up (jumplist for >5)" })
 
 -- Scroll view without moving cursor
-vim.keymap.set("n", "zv", "zz10<c-e>", { desc = "scroll view down" })
-vim.keymap.set("n", "zx", "zz10<c-y>", { desc = "scroll view up" })
+map("n", "zv", "zz10<c-e>", { set = "remaps", desc = "scroll view down" })
+map("n", "zx", "zz10<c-y>", { set = "remaps", desc = "scroll view up" })
 
 -- s: s does not pollute unnamed register;
-vim.keymap.set("n", "s",  '"_s',  { desc = "substitute without register" })
+map("n", "s",  '"_s',  { set = "remaps", desc = "substitute without register" })
 
 -- S: triggers global substitution
-vim.keymap.set("n", "S",  ":%s/", { desc = "global search/replace" })
+map("n", "S",  ":%s/", { set = "remaps", desc = "global search/replace" })
 
 -- Consistent n/N direction regardless of search direction
-vim.keymap.set({ "n", "v" }, "n",
+map({ "n", "v" }, "n",
   function() return vim.v.searchforward == 1 and "n" or "N" end,
-  { expr = true, silent = true, desc = "search forward" })
-vim.keymap.set({ "n", "v" }, "N",
+  { set = "remaps", expr = true, silent = true, desc = "search forward" })
+map({ "n", "v" }, "N",
   function() return vim.v.searchforward == 1 and "N" or "n" end,
-  { expr = true, silent = true, desc = "search backward" })
+  { set = "remaps", expr = true, silent = true, desc = "search backward" })
 
 -- ; as :
-vim.keymap.set("n", ";", ":", { desc = "command-line" })
+map("n", ";", ":", { set = "remaps", desc = "command-line" })
 
 -- <C-g> shows extended file info
-vim.keymap.set("n", "<c-g>", "g<c-g>", { desc = "file info" })
+map("n", "<c-g>", "g<c-g>", { set = "remaps", desc = "file info" })
 
 -- ──────────────────────────────────────────────────────────────
 --  Normal mode -- window / tab management  (<C-w> namespace)
@@ -95,27 +101,27 @@ vim.keymap.set("n", "<c-g>", "g<c-g>", { desc = "file info" })
 -- plugin ever remaps `<c-w>`, not because the key form was misbehaving --
 -- the delay that prompted this turned out to be in the Oil dual-pane
 -- bindings, not here.
-vim.keymap.set("n", "<c-h>", "<cmd>wincmd h<cr>", { desc = "window left" })
-vim.keymap.set("n", "<c-j>", "<cmd>wincmd j<cr>", { desc = "window down" })
-vim.keymap.set("n", "<c-k>", "<cmd>wincmd k<cr>", { desc = "window up" })
-vim.keymap.set("n", "<c-l>", "<cmd>wincmd l<cr>", { desc = "window right" })
+map("n", "<c-h>", "<cmd>wincmd h<cr>", { set = "remaps", desc = "window left" })
+map("n", "<c-j>", "<cmd>wincmd j<cr>", { set = "remaps", desc = "window down" })
+map("n", "<c-k>", "<cmd>wincmd k<cr>", { set = "remaps", desc = "window up" })
+map("n", "<c-l>", "<cmd>wincmd l<cr>", { set = "remaps", desc = "window right" })
 
-vim.keymap.set("n", "<c-w><a-h>", "<cmd>tabm -<cr>", { desc = "move tab left" })
-vim.keymap.set("n", "<c-w><a-l>", "<cmd>tabm +<cr>", { desc = "move tab right" })
-vim.keymap.set("n", "<c-w><c-q>", "<cmd>copen<cr>",  { desc = "open quickfix" })
+map("n", "<c-w><a-h>", "<cmd>tabm -<cr>", { desc = "move tab left" })
+map("n", "<c-w><a-l>", "<cmd>tabm +<cr>", { desc = "move tab right" })
+map("n", "<c-w><c-q>", "<cmd>copen<cr>",  { set = "remaps", desc = "open quickfix" })
 -- Undo tree: mbbill/undotree. Selecting a node shows the diff in a
 -- side pane WITHOUT applying it; press <CR> to actually move the
 -- buffer to that state. This is the non-destructive counterpart to
 -- Neovim's builtin nvim.undotree, which applies state on every
 -- CursorMoved.
-vim.keymap.set("n", "<c-w><c-u>", "<cmd>UndotreeToggle<cr>", { desc = "toggle undo tree" })
+map("n", "<c-w><c-u>", "<cmd>UndotreeToggle<cr>", { desc = "toggle undo tree", owner = "undotree" })
 
 -- Toggle a 12-line terminal along the bottom, reusing the same terminal
 -- buffer every time rather than stacking a new one per press. This
 -- shadows Vim's builtin <C-w>t (go to the top window); `1<C-w>w` does
 -- that instead.
 local term_buf
-vim.keymap.set("n", "<c-w>t", function()
+map("n", "<c-w>t", function()
   local wins = vim.api.nvim_tabpage_list_wins(0)
   for _, win in ipairs(wins) do
     if vim.api.nvim_win_get_buf(win) == term_buf then
@@ -132,16 +138,16 @@ vim.keymap.set("n", "<c-w>t", function()
     vim.cmd.term()
     term_buf = vim.api.nvim_get_current_buf()
   end
-end, { desc = "toggle terminal" })
+end, { set = "remaps", desc = "toggle terminal" })
 
 -- <Esc><Esc> leaves terminal mode. A single <Esc> still reaches the
 -- program, and autocmds.lua shortens 'timeoutlen' while terminal mode is
 -- active so it is not held back for the full default second.
-vim.keymap.set("t", "<esc><esc>", "<c-\\><c-n>", { desc = "exit terminal mode" })
+map("t", "<esc><esc>", "<c-\\><c-n>", { desc = "exit terminal mode" })
 
 -- Toggle the quickfix window. A one-shot action rather than a search, so it
 -- lives under <Leader> and not in the SearchLeader namespace.
-vim.keymap.set("n", "<leader>q", function()
+map("n", "<leader>q", function()
   for _, win in ipairs(vim.api.nvim_list_wins()) do
     if vim.fn.getwinvar(win, "&buftype") == "quickfix" then
       vim.cmd("cclose")
@@ -179,14 +185,14 @@ local function arrow_or_motion(motion, resize_fn)
     end
   end
 end
-vim.keymap.set("n", "<up>",      arrow_or_motion("k", sr.grow_up),    { desc = "grow up / move up (solo)" })
-vim.keymap.set("n", "<down>",    arrow_or_motion("j", sr.grow_down),  { desc = "grow down / move down (solo)" })
-vim.keymap.set("n", "<left>",    arrow_or_motion("h", sr.grow_left),  { desc = "grow left / move left (solo)" })
-vim.keymap.set("n", "<right>",   arrow_or_motion("l", sr.grow_right), { desc = "grow right / move right (solo)" })
-vim.keymap.set("n", "<S-up>",    function() sr.shrink_down()  end, { desc = "pull bottom edge up" })
-vim.keymap.set("n", "<S-down>",  function() sr.shrink_up()    end, { desc = "pull top edge down" })
-vim.keymap.set("n", "<S-left>",  function() sr.shrink_right() end, { desc = "pull right edge left" })
-vim.keymap.set("n", "<S-right>", function() sr.shrink_left()  end, { desc = "pull left edge right" })
+map("n", "<up>",      arrow_or_motion("k", sr.grow_up),    { set = "remaps", desc = "grow up / move up (solo)" })
+map("n", "<down>",    arrow_or_motion("j", sr.grow_down),  { set = "remaps", desc = "grow down / move down (solo)" })
+map("n", "<left>",    arrow_or_motion("h", sr.grow_left),  { set = "remaps", desc = "grow left / move left (solo)" })
+map("n", "<right>",   arrow_or_motion("l", sr.grow_right), { set = "remaps", desc = "grow right / move right (solo)" })
+map("n", "<S-up>",    function() sr.shrink_down()  end, { set = "remaps", desc = "pull bottom edge up" })
+map("n", "<S-down>",  function() sr.shrink_up()    end, { set = "remaps", desc = "pull top edge down" })
+map("n", "<S-left>",  function() sr.shrink_right() end, { set = "remaps", desc = "pull right edge left" })
+map("n", "<S-right>", function() sr.shrink_left()  end, { set = "remaps", desc = "pull left edge right" })
 
 -- Quick splits, all three opening an empty scratch buffer rather than a
 -- second view of the current one (save with `:w <name>` to keep it).
@@ -206,9 +212,9 @@ local function scratch(cmd)
     vim.bo.swapfile = false
   end
 end
-vim.keymap.set("n", "|", scratch("vnew"),   { desc = "vertical split scratch" })
-vim.keymap.set("n", "+", scratch("tabnew"), { desc = "new tab scratch" })
-vim.keymap.set("n", "_", scratch("new"),    { desc = "horizontal split scratch" })
+map("n", "|", scratch("vnew"),   { set = "remaps", desc = "vertical split scratch" })
+map("n", "+", scratch("tabnew"), { set = "remaps", desc = "new tab scratch" })
+map("n", "_", scratch("new"),    { set = "remaps", desc = "horizontal split scratch" })
 
 -- ──────────────────────────────────────────────────────────────
 --  Normal mode -- closing things  (Z prefix)
@@ -224,14 +230,14 @@ vim.keymap.set("n", "_", scratch("new"),    { desc = "horizontal split scratch" 
 --   home    refuse if dirty   ZA  :q        ZS  :qa         ZD  :bd
 --   bottom  save first        ZZ  :x        ZX  :wa|qa! ZC  :w|bd
 
-vim.keymap.set("n", "ZA", "<cmd>q<cr>",            { desc = "close window" })
-vim.keymap.set("n", "ZS", "<cmd>qa<cr>",           { desc = "quit all" })
-vim.keymap.set("n", "ZW", "<cmd>qa!<cr>",          { desc = "quit all! (kill nvim)" })
-vim.keymap.set("n", "ZX", "<cmd>wa<bar>qa!<cr>",   { desc = "save what you can, then force-quit" })
-vim.keymap.set("n", "ZD", "<cmd>bdelete<cr>",      { desc = "delete buffer" })
-vim.keymap.set("n", "ZE", "<cmd>bdelete!<cr>",     { desc = "delete buffer force" })
-vim.keymap.set("n", "ZC", "<cmd>write<bar>bdelete<cr>", { desc = "save and delete buffer" })
-vim.keymap.set("n", "ZR", function()
+map("n", "ZA", "<cmd>q<cr>",            { desc = "close window" })
+map("n", "ZS", "<cmd>qa<cr>",           { desc = "quit all" })
+map("n", "ZW", "<cmd>qa!<cr>",          { desc = "quit all! (kill nvim)" })
+map("n", "ZX", "<cmd>wa<bar>qa!<cr>",   { desc = "save what you can, then force-quit" })
+map("n", "ZD", "<cmd>bdelete<cr>",      { desc = "delete buffer" })
+map("n", "ZE", "<cmd>bdelete!<cr>",     { desc = "delete buffer force" })
+map("n", "ZC", "<cmd>write<bar>bdelete<cr>", { desc = "save and delete buffer" })
+map("n", "ZR", function()
   for _, buf in pairs(vim.api.nvim_list_bufs()) do
     if vim.api.nvim_buf_is_loaded(buf)
       and vim.api.nvim_buf_get_name(buf) == ""
@@ -246,10 +252,10 @@ end, { desc = "delete scratch buffers" })
 -- ──────────────────────────────────────────────────────────────
 
 -- Highlight all instances of word under cursor (count + jump to next occurrence)
-vim.keymap.set("n", "-",
+map("n", "-",
   ":let save_cursor=getcurpos()|let @/ = '\\<'.expand('<cword>').'\\>'|set hlsearch<CR>" ..
   "w?<CR>:%s///gn<CR>:call setpos('.', save_cursor)<CR>",
-  { silent = true, desc = "highlight word under cursor" })
+  { set = "remaps", silent = true, desc = "highlight word under cursor" })
 
 -- Path/file utilities (cp, cm, gp) removed from core -- they shadow Vim's
 -- c+p / c+m / g+p operator sequences. See templates/user/keymaps.example.lua
@@ -278,15 +284,15 @@ do
     return function() return require("noethervim.util.case").operator(kind) end
   end
 
-  vim.keymap.set("n", "gz", case("title"),    { expr = true, desc = "Title Case operator" })
-  vim.keymap.set("n", "gZ", case("sentence"), { expr = true, desc = "[Z] sentence case operator" })
+  map("n", "gz", case("title"),    { expr = true, desc = "Title Case operator" })
+  map("n", "gZ", case("sentence"), { expr = true, desc = "[Z] sentence case operator" })
 
   -- `:<C-u>` rather than a plain Lua callback: entering the command line from
   -- Visual mode is what sets `< and `>, and the operator needs them set
   -- before it can reselect the region.
-  vim.keymap.set("x", "gz", ":<C-u>lua require('noethervim.util.case').visual('title')<CR>",
+  map("x", "gz", ":<C-u>lua require('noethervim.util.case').visual('title')<CR>",
     { silent = true, desc = "Title Case selection" })
-  vim.keymap.set("x", "gZ", ":<C-u>lua require('noethervim.util.case').visual('sentence')<CR>",
+  map("x", "gZ", ":<C-u>lua require('noethervim.util.case').visual('sentence')<CR>",
     { silent = true, desc = "[Z] sentence case selection" })
 end
 
@@ -308,8 +314,8 @@ do
       end
     end
   end
-  vim.keymap.set("n", "]f", function() navigate_file( 1) end, { desc = "next file in directory" })
-  vim.keymap.set("n", "[f", function() navigate_file(-1) end, { desc = "prev file in directory" })
+  map("n", "]f", function() navigate_file( 1) end, { set = "remaps", desc = "next file in directory" })
+  map("n", "[f", function() navigate_file(-1) end, { set = "remaps", desc = "prev file in directory" })
 end
 
 -- ──────────────────────────────────────────────────────────────
@@ -317,14 +323,14 @@ end
 -- ──────────────────────────────────────────────────────────────
 
 -- Prevent ys/yS from interfering with ySS/yss
-vim.keymap.set("n", "yS",  "", { desc = "disabled (use ySS)" })
-vim.keymap.set("n", "ys",  "", { desc = "disabled (use yss)" })
-vim.keymap.set("n", "yss", "", { desc = "disabled" })
+map("n", "yS",  "", { desc = "disabled (use ySS)" })
+map("n", "ys",  "", { desc = "disabled (use yss)" })
+map("n", "yss", "", { desc = "disabled" })
 
 -- Toggle comment (Neovim 0.10+ builtin gc/gcc)
-vim.keymap.set("n", "<C-/>", "gcc", { remap = true, desc = "toggle comment" })
-vim.keymap.set("v", "<C-/>", "gc",  { remap = true, desc = "toggle comment" })
-vim.keymap.set("i", "<C-/>", "<Esc>gcc", { remap = true, desc = "toggle comment" })
+map("n", "<C-/>", "gcc", { remap = true, desc = "toggle comment" })
+map("v", "<C-/>", "gc",  { remap = true, desc = "toggle comment" })
+map("i", "<C-/>", "<Esc>gcc", { remap = true, desc = "toggle comment" })
 
 -- Comment-yank-paste: comment original lines, paste uncommented copy below
 local function comment_yank_paste()
@@ -352,7 +358,7 @@ local function comment_yank_paste()
     vim.cmd("normal! gvgc")
   end
 end
-vim.keymap.set({ "n", "v", "x" }, "<C-S-r>", comment_yank_paste, { desc = "comment and paste text" })
+map({ "n", "v", "x" }, "<C-S-r>", comment_yank_paste, { desc = "comment and paste text" })
 
 -- gC (visual): per-line comment toggle.
 -- Vim's builtin `gc` operator picks one direction for the whole range
@@ -395,7 +401,7 @@ local function invert_comment_visual()
   end
   pcall(vim.api.nvim_win_set_cursor, 0, saved_pos)
 end
-vim.keymap.set({ "v", "x" }, "gC", function()
+map({ "v", "x" }, "gC", function()
   -- Exit visual first so '< / '> are populated, then run.
   vim.api.nvim_feedkeys(
     vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "nx", false)
@@ -406,12 +412,12 @@ end, { silent = true, desc = "invert comment per-line" })
 --  Visual mode
 -- ──────────────────────────────────────────────────────────────
 
-vim.keymap.set("v", "<", "<gv",  { desc = "indent left (keep selection)" })
-vim.keymap.set("v", ">", ">gv",  { desc = "indent right (keep selection)" })
-vim.keymap.set("v", "K", "JVgq", { desc = "join and reflow" })
-vim.keymap.set("v", "j", "gj", { desc = "visual-line down" })
-vim.keymap.set("v", "k", "gk", { desc = "visual-line up" })
-vim.keymap.set("v", ";", ":",    { desc = "command-line" })
+map("v", "<", "<gv",  { set = "remaps", desc = "indent left (keep selection)" })
+map("v", ">", ">gv",  { set = "remaps", desc = "indent right (keep selection)" })
+map("v", "K", "JVgq", { set = "remaps", desc = "join and reflow" })
+map("v", "j", "gj", { set = "remaps", desc = "visual-line down" })
+map("v", "k", "gk", { set = "remaps", desc = "visual-line up" })
+map("v", ";", ":",    { set = "remaps", desc = "command-line" })
 
 -- Paste over a selection without the replaced text landing in a register.
 --
@@ -421,11 +427,11 @@ vim.keymap.set("v", ";", ":",    { desc = "command-line" })
 -- the last word leaves the cursor on the character before it, so `P` pasted
 -- one column early -- `alpha beta gamma` became `alpha betaX ` instead of
 -- `alpha beta X`.
-vim.keymap.set("v", "p", "P", { desc = "paste over (keep register)" })
+map("v", "p", "P", { set = "remaps", desc = "paste over (keep register)" })
 
 -- Inner-line text object: il = between first non-blank and last non-blank char
-vim.keymap.set("x", "il", "g_o^",          { desc = "inner line (keeps indent)" })
-vim.keymap.set("o", "il", ":normal vil<CR>", { desc = "inner line (keeps indent)" })
+map("x", "il", "g_o^",          { desc = "inner line (keeps indent)" })
+map("o", "il", ":normal vil<CR>", { desc = "inner line (keeps indent)" })
 -- al: the whole line, charwise, stopping before the line break. `V` and `yy`
 -- are linewise, so their register pastes as a new line; this yanks a line to
 -- drop inside another one, and `dal` empties a line without removing it.
@@ -449,15 +455,15 @@ do
     vim.api.nvim_win_set_cursor(win, { lnum, len - 1 })
   end
 
-  vim.keymap.set("x", "al", around_line, { desc = "around line (no line break)" })
-  vim.keymap.set("o", "al", function()
+  map("x", "al", around_line, { desc = "around line (no line break)" })
+  map("o", "al", function()
     return vim.api.nvim_get_current_line() == "" and "<Esc>" or ":normal val<CR>"
   end, { expr = true, desc = "around line (no line break)" })
 end
 
 -- Move block of text (respects indentation)
-vim.keymap.set("v", "<down>", ":m '>+1<CR>gv=gv", { desc = "move block down" })
-vim.keymap.set("v", "<up>",   ":m '<-2<CR>gv=gv", { desc = "move block up" })
+map("v", "<down>", ":m '>+1<CR>gv=gv", { set = "remaps", desc = "move block down" })
+map("v", "<up>",   ":m '<-2<CR>gv=gv", { set = "remaps", desc = "move block up" })
 
 -- ──────────────────────────────────────────────────────────────
 --  Clipboard bridges  (unnamed register != system clipboard)
@@ -482,21 +488,21 @@ vim.keymap.set("v", "<up>",   ":m '<-2<CR>gv=gv", { desc = "move block up" })
 -- sequence (immediately below) that preserves both registers, so the
 -- {n,v} table on those lines would otherwise be a write that we then
 -- immediately overwrite.
-vim.keymap.set({ "n", "v" }, "<leader>y", '"*y', { desc = "yank to clipboard" })
-vim.keymap.set("n",          "<leader>p", '"*p', { desc = "paste from clipboard" })
-vim.keymap.set("n",          "<leader>P", '"*P', { desc = "paste before from clipboard" })
-vim.keymap.set("n",          "<leader>Y", '"*yy', { desc = "yank line to clipboard" })
+map({ "n", "v" }, "<leader>y", '"*y', { desc = "yank to clipboard" })
+map("n",          "<leader>p", '"*p', { desc = "paste from clipboard" })
+map("n",          "<leader>P", '"*P', { desc = "paste before from clipboard" })
+map("n",          "<leader>Y", '"*yy', { desc = "yank line to clipboard" })
 
 -- Visual paste variants: keep BOTH the unnamed register and the clipboard
 -- pristine. `"*P` over a selection, for the same reason as `p` above -- the
 -- register prefix composes with `v_P`, so this needs no delete step and gets
 -- end-of-line right.
-vim.keymap.set("v", "<leader>p", '"*P', { desc = "paste clipboard (keep registers)" })
-vim.keymap.set("v", "<leader>P", '"*P', { desc = "paste clipboard (keep registers)" })
+map("v", "<leader>p", '"*P', { desc = "paste clipboard (keep registers)" })
+map("v", "<leader>P", '"*P', { desc = "paste clipboard (keep registers)" })
 
 -- Visual quick shortcuts (post-selection)
-vim.keymap.set("v", "Y", '"*y', { desc = "yank to clipboard" })
-vim.keymap.set("v", "P", '"*P', { desc = "paste clipboard (keep registers)" })
+map("v", "Y", '"*y', { set = "remaps", desc = "yank to clipboard" })
+map("v", "P", '"*P', { set = "remaps", desc = "paste clipboard (keep registers)" })
 
 -- ──────────────────────────────────────────────────────────────
 --  Select mode
@@ -504,33 +510,33 @@ vim.keymap.set("v", "P", '"*P', { desc = "paste clipboard (keep registers)" })
 
 -- Alphanumeric keys in select mode replace the selection (natural text editing)
 for _, key in ipairs({ "c", "g", "j", "k", "T" }) do
-  vim.keymap.set("s", key, key)
+  map("s", key, key)
 end
 -- Escape once → visual; twice → normal
-vim.keymap.set("s", "<esc>", "<esc><esc>",  { desc = "escape to normal" })
+map("s", "<esc>", "<esc><esc>",  { set = "remaps", desc = "escape to normal" })
 -- Jump to end of previous selection
-vim.keymap.set("s", "<c-a>", "<esc>`>a",  { desc = "jump past selection" })
+map("s", "<c-a>", "<esc>`>a",  { desc = "jump past selection" })
 
 -- ──────────────────────────────────────────────────────────────
 --  Command-line mode
 -- ──────────────────────────────────────────────────────────────
 
-vim.keymap.set("c", "<C-l>",   '<C-r>=expand("%:p:h")<CR>', { desc = "insert cwd" })
-vim.keymap.set("c", "<c-y>", function()
+map("c", "<C-l>",   '<C-r>=expand("%:p:h")<CR>', { set = "remaps", desc = "insert cwd" })
+map("c", "<c-y>", function()
   local text = vim.fn.getcmdline()
   vim.fn.setreg("*", text)
   local preview = #text > 60 and (text:sub(1, 57) .. "...") or text
   vim.notify(preview, vim.log.levels.INFO, { title = "yanked to clipboard" })
-end, { desc = "yank cmdline to clipboard" })
-vim.keymap.set("c", "<m-bs>",  "<c-w>",                    { desc = "delete word" })
+end, { set = "remaps", desc = "yank cmdline to clipboard" })
+map("c", "<m-bs>",  "<c-w>",                    { desc = "delete word" })
 -- Redirect command output to a scratch buffer
-vim.keymap.set("c", "<c-o>",   "<c-b>Redir <c-e>",         { desc = "redirect output to buffer" })
+map("c", "<c-o>",   "<c-b>Redir <c-e>",         { desc = "redirect output to buffer" })
 
 -- ──────────────────────────────────────────────────────────────
 --  All modes -- <Esc> cleanup
 -- ──────────────────────────────────────────────────────────────
 
-vim.keymap.set({ "n", "v" }, "<Esc>", function()  -- clear highlights, dismiss notifications
+map({ "n", "v" }, "<Esc>", function()  -- clear highlights, dismiss notifications
   vim.cmd.stopinsert()
   if vim.fn.mode():match("^[vV\22]") then
     vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
@@ -569,29 +575,27 @@ vim.keymap.set({ "n", "v" }, "<Esc>", function()  -- clear highlights, dismiss n
   -- follows on its own and the stale `3/12` sits there until something
   -- unrelated forces one.
   vim.cmd.redrawstatus()
-end, { silent = true })
+end, { set = "remaps", silent = true })
 
 -- ──────────────────────────────────────────────────────────────
 --  Mouse
 -- ──────────────────────────────────────────────────────────────
 
-vim.keymap.set({ "n", "v" }, "<RightMouse>", function()
+map({ "n", "v" }, "<RightMouse>", function()
   vim.cmd.exec('"normal! \\<RightMouse>"')
   local ok, menu = pcall(require, "menu")
   if ok then
     local options = vim.bo.ft == "snacks_layout_box" and "nvimtree" or "default"
     menu.open(options, { mouse = true })
   end
-end, { desc = "context menu" })
+end, { set = "remaps", desc = "context menu" })
 
 -- ──────────────────────────────────────────────────────────────
 --  Inspection (SearchLeader+c prefix)
 -- ──────────────────────────────────────────────────────────────
 -- Registered here rather than alongside the pickers in inspect.lua, which
--- only runs at VeryLazy. That is too late on both counts: it would land
--- after lua/user/overrides/*.lua and so beat a user override, and it is
--- past the point where the keymap-source registry is still recording, so
--- the diff picker and guide would have no file+line to jump to.
+-- only runs at VeryLazy: a key made after your files could not be removed
+-- from them with vim.keymap.del.
 --
 -- The bodies require noethervim.inspect on first press, not at load time,
 -- so registering early costs nothing at startup.
@@ -606,22 +610,22 @@ local function inspect(name)
   return function() require("noethervim.inspect")[name]() end
 end
 
-vim.keymap.set("n", SearchLeader .. "cf", inspect("files"),         { desc = "NoetherVim [f]iles" })
-vim.keymap.set("n", SearchLeader .. "cg", inspect("grep"),          { desc = "NoetherVim [g]rep" })
-vim.keymap.set("n", SearchLeader .. "cb", inspect("bundles"),       { desc = "NoetherVim [b]undles" })
-vim.keymap.set("n", SearchLeader .. "cs", inspect("snippets"),      { desc = "NoetherVim [s]nippets" })
-vim.keymap.set("n", SearchLeader .. "ct", inspect("templates"),     { desc = "NoetherVim [t]emplates" })
-vim.keymap.set("n", SearchLeader .. "ck", inspect("diff_keymaps"),  { desc = "diff [k]eymaps" })
-vim.keymap.set("n", SearchLeader .. "co", inspect("diff_options"),  { desc = "diff [o]ptions" })
-vim.keymap.set("n", SearchLeader .. "ca", inspect("diff_autocmds"), { desc = "diff [a]utocmds" })
-vim.keymap.set("n", SearchLeader .. "cd", inspect("diff_file"),     { desc = "[d]iff file" })
+map("n", SearchLeader .. "cf", inspect("files"),         { desc = "NoetherVim [f]iles" })
+map("n", SearchLeader .. "cg", inspect("grep"),          { desc = "NoetherVim [g]rep" })
+map("n", SearchLeader .. "cb", inspect("bundles"),       { desc = "NoetherVim [b]undles" })
+map("n", SearchLeader .. "cs", inspect("snippets"),      { desc = "NoetherVim [s]nippets" })
+map("n", SearchLeader .. "ct", inspect("templates"),     { desc = "NoetherVim [t]emplates" })
+map("n", SearchLeader .. "ck", inspect("diff_keymaps"),  { desc = "diff [k]eymaps" })
+map("n", SearchLeader .. "co", inspect("diff_options"),  { desc = "diff [o]ptions" })
+map("n", SearchLeader .. "ca", inspect("diff_autocmds"), { desc = "diff [a]utocmds" })
+map("n", SearchLeader .. "cd", inspect("diff_file"),     { desc = "[d]iff file" })
 
-vim.keymap.set("n", SearchLeader .. "?", function()
+map("n", SearchLeader .. "?", function()
   require("noethervim.guide").open()
 end, { desc = "keymap guide" })
 
-vim.keymap.set("n", "<leader>i", "<cmd>edit $MYVIMRC<cr>", { desc = "open [i]nit.lua" })
+map("n", "<leader>i", "<cmd>edit $MYVIMRC<cr>", { desc = "open [i]nit.lua" })
 
 -- Creating and opening an override file is an action on the current buffer,
 -- not a search, so it sits under <Leader> rather than SearchLeader+c.
-vim.keymap.set("n", "<leader>e", inspect("override"), { desc = "[e]dit override" })
+map("n", "<leader>e", inspect("override"), { desc = "[e]dit override" })

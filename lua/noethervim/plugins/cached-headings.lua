@@ -16,9 +16,9 @@ return {
 			"Chiarandini/latex-nav-core.nvim",
 		},
 		cmd  = { "SnacksCachedHeadings", "CachedHeadings" },
-		keys = {
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("snacks-cached-headings.nvim", {
 			{ SearchLeader .. "t", "<cmd>SnacksCachedHeadings<cr>", desc = "headings" },
-		},
+		}) } },
 		opts = {
 			scan_includes   = true,
 			include_starred = true,

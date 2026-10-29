@@ -125,6 +125,17 @@ return {
       vim.g.tex_conceal = "abdgm"
       vim.g.tex_flavor  = "latex"
     end,
+    specs = {
+      { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("vimtex", {
+        -- yP: copy compiled PDF to clipboard
+        { "yP", function()
+            require("noethervim.util.copy_pdf").copy_pdf_to_clipboard()
+            vim.notify("yanked pdf")
+          end, ft = { "tex", "latex" }, desc = "yank PDF to clipboard" },
+        { "<localleader>vw", "<Cmd>VimtexCountWords<CR>", ft = { "tex", "latex" }, silent = true,
+          desc = "vimtex word count" },
+      }) },
+    },
     config = function()
       -- ':' is part of LaTeX label names (th:foo, pr:bar, …), so word motions
       -- should step over one whole label: `w`, `e`, `b`, `iw` and `*` all
@@ -209,20 +220,14 @@ return {
 
       -- ── VimTeX compile lifecycle hooks (deferred until a tex file opens) ──
       -- vimtex itself loads at startup (lazy = false) for inverse-search
-      -- support, but the lifecycle plumbing here (vimtex_status, the yP
-      -- keymap, the User VimtexEvent* listeners) only matters once you
-      -- actually open a .tex file. Deferring saves ~12ms off `nvim .`
-      -- startup because vimtex_status is a heavy module.
+      -- support, but the lifecycle plumbing here (vimtex_status, the User
+      -- VimtexEvent* listeners) only matters once you actually open a .tex
+      -- file. Deferring saves ~12ms off `nvim .` startup because
+      -- vimtex_status is a heavy module.
       vim.api.nvim_create_autocmd("FileType", {
         pattern = { "tex", "latex" },
         once    = true,
         callback = function()
-          -- yP: copy compiled PDF to clipboard
-          vim.keymap.set("n", "yP", function()
-            require("noethervim.util.copy_pdf").copy_pdf_to_clipboard()
-            vim.notify("yanked pdf")
-          end, { desc = "yank PDF to clipboard" })
-
           -- The heirline statusline listens for `b:vimtex.compiler.status`
           -- transitions, but vimtex doesn't emit BufEnter-style events on
           -- transition. Forwarding its User events into a redrawstatus +
@@ -319,13 +324,12 @@ return {
         end,
       })
 
-      -- Buffer-local keymaps for tex files (only active when latex bundle is enabled)
+      -- Buffer-local commands for tex files. The keys are `ft` rows in the
+      -- specs above.
       vim.api.nvim_create_autocmd("FileType", {
         group    = vim.api.nvim_create_augroup("noethervim_latex_ftkeys", { clear = true }),
         pattern  = { "tex", "latex" },
         callback = function(ev)
-          local o = function(desc) return { silent = true, buffer = ev.buf, desc = desc } end
-
           -- :PDF -- hand the compiled PDF to the system viewer.
           --
           -- There are two families here and this is the artifact one: `yP`
@@ -362,37 +366,6 @@ return {
               vim.fn.jobstart({ "xdg-open", pdf }, { detach = true })
             end
           end, { desc = "open compiled PDF in the system viewer" })
-
-          vim.keymap.set("n", "<localleader>vw", "<Cmd>VimtexCountWords<CR>", o("vimtex word count"))
-
-          -- Accent spell-check (noethervim-tex). Override the
-          -- built-in zg / zw / z= so they understand LaTeX accent
-          -- macros: when the cursor sits on  K\"ahler  these operate
-          -- on the decoded Unicode form  Kähler  and re-encode back
-          -- to LaTeX after picking a suggestion. When there's no
-          -- accent token under cursor the implementation falls
-          -- through to vim's built-in zg / zw / z= via  :normal! ,
-          -- so plain words still work as expected.
-          local plug_opts = function(desc)
-            return { silent = true, buffer = ev.buf, desc = desc, remap = true }
-          end
-          vim.keymap.set("n", "zg", "<Plug>(noethervim-tex-accent-add)",
-            plug_opts("spell: add (latex-aware)"))
-          vim.keymap.set("n", "zw", "<Plug>(noethervim-tex-accent-mark-wrong)",
-            plug_opts("spell: mark wrong (latex-aware)"))
-          -- z= : on a LaTeX accent token (K\"ahler) open the custom
-          -- latex-aware picker that re-encodes the chosen suggestion back to
-          -- its accent macro. On a plain word, fall through to which-key's
-          -- spelling popup -- the global z= behaviour this buffer-local map
-          -- would otherwise shadow.
-          vim.keymap.set("n", "z=", function()
-            local accent = require("noethervim-tex.accent_spell")
-            if accent.token_under_cursor() then
-              accent.suggest()
-            else
-              require("which-key").show({ keys = "z=" })
-            end
-          end, o("spell: suggest (which-key / latex-aware)"))
 
           -- Stopping: vimtex's stop() is a no-op unless a compile is
           -- mid-run, which with single-shot latexmk (continuous = 0) it
@@ -534,11 +507,11 @@ return {
   {
     "HakonHarnes/img-clip.nvim",
     ft   = { "tex", "markdown" },
-    keys = {
+    specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("img-clip.nvim", {
       { "<localleader>P", "<cmd>PasteImage<cr>",
         desc = "paste image from clipboard",
         ft   = { "tex", "markdown" } },
-    },
+    }) } },
     opts = {
       default = {
         dir_path               = "images",
@@ -591,11 +564,12 @@ return {
   {
     "Chiarandini/snacks-bibtex.nvim",
     dependencies = { "folke/snacks.nvim" },
+    cmd  = "SnacksBibtex",
     ft   = { "tex", "plaintex", "latex", "markdown", "quarto", "typst", "org", "rmd" },
-    keys = {
+    specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("snacks-bibtex.nvim", {
       { "<c-s-c>", "<cmd>SnacksBibtex<cr>",
         mode = "i", desc = "citation from bibtex" },
-    },
+    }) } },
     opts = {
       search_keys       = { "author", "year", "title" },
       citation_format   = "{{author}} ({{year}}), {{title}}.",
@@ -617,6 +591,36 @@ return {
     "Chiarandini/NoetherVim-tex",
     event = "VeryLazy",
     dependencies = { "L3MON4D3/LuaSnip" },
+    specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("NoetherVim-tex", {
+      -- Accent spell-check. zg / zw / z= understand LaTeX accent macros:
+      -- on  K\"ahler  they operate on the decoded form  Kähler  and
+      -- re-encode after a suggestion is picked. With no accent token under
+      -- the cursor they fall through to Vim's own zg / zw via  :normal! ,
+      -- so plain words work as before.
+      { "zg", "<Plug>(noethervim-tex-accent-add)", ft = { "tex", "latex" }, silent = true,
+        desc = "spell: add (latex-aware)", set = "remaps" },
+      { "zw", "<Plug>(noethervim-tex-accent-mark-wrong)", ft = { "tex", "latex" }, silent = true,
+        desc = "spell: mark wrong (latex-aware)", set = "remaps" },
+      -- z= : on an accent token, the latex-aware picker that re-encodes the
+      -- chosen suggestion; on a plain word, which-key's spelling popup, the
+      -- global z= this buffer key would otherwise shadow.
+      { "z=", function()
+          local accent = require("noethervim-tex.accent_spell")
+          if accent.token_under_cursor() then
+            accent.suggest()
+          else
+            require("which-key").show({ keys = "z=" })
+          end
+        end, ft = { "tex", "latex" }, silent = true,
+        desc = "spell: suggest (which-key / latex-aware)", set = "remaps" },
+      -- PDF-follows-cursor, off until asked for per buffer. `<localleader>lf`
+      -- sits in vimtex's own `<localleader>l` command namespace, next to `ll`
+      -- compile and `lv` view, because that is what it is: a third thing to
+      -- do with the viewer. The plugin owns the toggle and its message as
+      -- :VimtexFollowToggle; this only gives it a key.
+      { "<localleader>lf", "<cmd>VimtexFollowToggle<cr>", ft = { "tex", "plaintex", "latex" },
+        desc = "[l]atex PDF [f]ollow toggle" },
+    }) } },
     opts = {
       -- Snippet sets beyond the ones that work in any LaTeX document. Both
       -- default off: `conventions` is the theorem family in the two-argument
@@ -645,33 +649,6 @@ return {
         opts.preamble = vim.tbl_extend("force", opts.preamble or {}, { folders = { "preamble" } })
       end
       require("noethervim-tex").setup(opts)
-
-      -- PDF-follows-cursor, off until asked for per buffer. `<localleader>lf`
-      -- sits in vimtex's own `<localleader>l` command namespace, next to `ll`
-      -- compile and `lv` view, because that is what it is -- a third thing to
-      -- do with the viewer.
-      -- The plugin already owns the toggle and its message as
-      -- :VimtexFollowToggle; this only gives it a buffer-local key, so the
-      -- wording does not exist in two places to drift apart.
-      local function bind_follow(buf)
-        vim.keymap.set("n", "<localleader>lf", "<cmd>VimtexFollowToggle<cr>",
-          { buffer = buf, desc = "[l]atex PDF [f]ollow toggle" })
-      end
-
-      vim.api.nvim_create_autocmd("FileType", {
-        group = vim.api.nvim_create_augroup("noethervim_tex_follow_keys", { clear = true }),
-        pattern = { "tex", "plaintex", "latex" },
-        callback = function(ev) bind_follow(ev.buf) end,
-      })
-
-      -- This spec is `VeryLazy`, so FileType has already fired for the tex
-      -- file that was opened to trigger it. Bind those too, or the key is
-      -- missing in exactly the buffer that caused the plugin to load.
-      for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-        local ft = vim.bo[buf].filetype
-        if ft == "tex" or ft == "plaintex" or ft == "latex" then bind_follow(buf) end
-      end
-
     end,
   },
 
@@ -795,9 +772,32 @@ return {
     },
     ft   = { "tex", "latex" },
     cmd  = { "LatexLabels", "SnacksLatexLabels", "SnacksLatexLabelsExport" },
-		keys = {
-			{ SearchLeader .. "w", "<cmd>SnacksLatexLabels<cr>", desc = "labels" },
-		},
+    specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("snacks-latex-labels.nvim", {
+      { SearchLeader .. "w", "<cmd>SnacksLatexLabels<cr>", desc = "labels" },
+      { "<localleader>w",   "<cmd>SnacksLatexLabels<cr>",     ft = { "tex", "latex" }, desc = "latex labels" },
+      { "<localleader>vul", "<cmd>LatexLabels update<cr>",    ft = { "tex", "latex" }, desc = "update latex labels" },
+      { "<localleader>vuh", "<cmd>CachedHeadings update<cr>", ft = { "tex", "latex" }, desc = "update headings cache" },
+      -- gd: the label under the cursor via the label cache, else the
+      -- language server's definition. A buffer key from an `ft` row stays
+      -- when texlab attaches; the generic LSP gd does not replace it.
+      { "gd", function()
+          local labels = require("noethervim.util.latex_labels")
+          local label = labels.label_at_cursor()
+          if not label then vim.lsp.buf.definition(); return end
+          local entry = labels.find_entry(label)
+          if not entry then
+            -- Nowhere to jump -- label not yet written or indexed.
+            vim.notify("[gd] '" .. label .. "' not found in any cache -- run :LatexLabels update", vim.log.levels.WARN)
+            return
+          end
+          local cur = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ":p")
+          if cur ~= entry.filename then
+            vim.cmd("edit " .. vim.fn.fnameescape(entry.filename))
+          end
+          vim.api.nvim_win_set_cursor(0, { entry.line, 0 })
+          vim.cmd("normal! zz")
+        end, ft = { "tex", "latex" }, desc = "goto label definition (LaTeX)" },
+    }) } },
     opts = {
       cache_strategy    = "global",
       recursive         = true,
@@ -827,38 +827,14 @@ return {
     config = function(_, opts)
       require("snacks_latex_labels").setup(opts)
 
-      vim.keymap.set("n", "<localleader>w",   "<cmd>SnacksLatexLabels<cr>",     { buf = 0, desc = "latex labels" })
-      vim.keymap.set("n", "<localleader>vul", "<cmd>LatexLabels update<cr>",    { buf = 0, desc = "update latex labels" })
-      vim.keymap.set("n", "<localleader>vuh", "<cmd>CachedHeadings update<cr>", { buf = 0, desc = "update headings cache" })
-
-      -- ── gd / <C-]>: goto label definition ────────────────────────────────
+      -- ── <C-]>: goto label definition ─────────────────────────────────────
       -- Label extraction and cache lookup live in noethervim.util.latex_labels.
-      -- gd jumps directly (LSP fallback when not on a prefixed label);
-      -- 'tagfunc' routes <C-]>, <C-w>] and :tag through the same lookup while
-      -- pushing the tag stack, so <C-t> jumps back. Both search the current
-      -- project's cache first (subfile chains resolve to their top-level
-      -- root), then every other cached project.
-      local labels = require("noethervim.util.latex_labels")
-
+      -- 'tagfunc' routes <C-]>, <C-w>] and :tag through the same lookup as gd
+      -- while pushing the tag stack, so <C-t> jumps back. Both search the
+      -- current project's cache first (subfile chains resolve to their
+      -- top-level root), then every other cached project.
       local function setup_nav(bufnr)
         vim.bo[bufnr].tagfunc = "v:lua.require'noethervim.util.latex_labels'.tagfunc"
-
-        vim.keymap.set("n", "gd", function()
-          local label = labels.label_at_cursor()
-          if not label then vim.lsp.buf.definition(); return end
-          local entry = labels.find_entry(label)
-          if not entry then
-            -- Nowhere to jump -- label not yet written or indexed.
-            vim.notify("[gd] '" .. label .. "' not found in any cache -- run :LatexLabels update", vim.log.levels.WARN)
-            return
-          end
-          local cur = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ":p")
-          if cur ~= entry.filename then
-            vim.cmd("edit " .. vim.fn.fnameescape(entry.filename))
-          end
-          vim.api.nvim_win_set_cursor(0, { entry.line, 0 })
-          vim.cmd("normal! zz")
-        end, { buffer = bufnr, desc = "goto label definition (LaTeX)" })
       end
 
       -- Wire navigation for buffers opened after this plugin loads.
@@ -872,17 +848,6 @@ return {
       if ft == "tex" or ft == "latex" then
         setup_nav(vim.api.nvim_get_current_buf())
       end
-      -- Re-register after texlab attaches: the LspAttach handler in lsp.lua fires
-      -- after FileType and overwrites gd with vim.lsp.buf.definition.
-      -- Since this autocmd is registered later it runs second and wins.
-      vim.api.nvim_create_autocmd("LspAttach", {
-        callback = function(args)
-          local client = vim.lsp.get_client_by_id(args.data.client_id)
-          if client and client.name == "texlab" then
-            setup_nav(args.buf)
-          end
-        end,
-      })
     end,
   },
 

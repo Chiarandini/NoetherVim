@@ -1,5 +1,11 @@
--- NoetherVim's own spec, merged over the one in your init.lua: a start
--- plugin whatever lazy.nvim's defaults say, so setup() always runs.
+-- NoetherVim's own spec, merged over the one in your init.lua. It is a start
+-- plugin whatever lazy.nvim's defaults say, and loads first among them, so
+-- its defaults, plugin globals and key rows are in place before any other
+-- plugin's config runs.
+--
+-- `opts` holds what units contribute from their own specs (see
+-- noethervim.HostOpts): `rows` (distro mappings), `g` (plugin globals) and
+-- `startup` (registrations that must exist from the start).
 
 local config = require("noethervim.config")
 
@@ -15,5 +21,15 @@ if config.user_off() then config.prune_rtp() end
 return {
   "NoetherVim",
   lazy = false,
+  priority = 10000,
+  opts_extend = { "rows" },
+  -- A function, so it only fills in what is missing: a table here would
+  -- replace contributions merged before this fragment.
+  opts = function(_, opts)
+    opts.rows = opts.rows or {}
+    opts.g = opts.g or {}
+    opts.startup = opts.startup or {}
+    return opts
+  end,
   config = function(_, opts) require("noethervim").setup(opts) end,
 }

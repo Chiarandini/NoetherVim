@@ -586,7 +586,8 @@ return {
 			end,
 		},
 	},
-	keys = {
+	-- Distro keys as rows: mapped once at startup, after your files never.
+	specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("snacks.nvim", {
 
 		-- ── Window / UI panels ────────────────────────────────────────────
 		{ "<c-w><c-e>", function() Snacks.explorer() end, desc = "file explorer (snacks)" },
@@ -737,7 +738,7 @@ return {
 			Snacks.picker.files({ cwd = dir, title = "User Lua Files" })
 		end, desc = "[c]onfig lua" },
 		-- document / project navigation keymaps are personal -- add yours in lua/user/plugins/
-	},
+	}) } },
 	config = function(_, opts)
 		opts.picker.layouts = layouts_with_help_hint()
 		-- `keep`, so a source this file configures above wins over the

@@ -13,6 +13,119 @@
 --   { "mfussenegger/nvim-lint", opts = { linters_by_ft = { sh = { "shellcheck" } } } }
 local SearchLeader = require("noethervim.util").search_leader
 
+local function count_lsp_res_changes(lsp_res)
+	local count = { instances = 0, files = 0 }
+	if lsp_res.documentChanges then
+		for _, changed_file in pairs(lsp_res.documentChanges) do
+			count.files = count.files + 1
+			count.instances = count.instances + #changed_file.edits
+		end
+	elseif lsp_res.changes then
+		for _, changed_file in pairs(lsp_res.changes) do
+			count.instances = count.instances + #changed_file
+			count.files = count.files + 1
+		end
+	end
+	return count
+end
+
+local function LspRename()
+	local curr_name = vim.fn.expand('<cword>')
+	vim.ui.input({ prompt = 'LSP Rename', default = curr_name }, function(new_name)
+		if not new_name or #new_name == 0 or curr_name == new_name then return end
+		local clients = vim.lsp.get_clients({ bufnr = 0 })
+		if #clients == 0 then return end
+		local params = vim.lsp.util.make_position_params(0, clients[1].offset_encoding)
+		params.newName = new_name
+		vim.lsp.buf_request(0, 'textDocument/rename', params, function(_, res, ctx)
+			if not res then return end
+			local client = vim.lsp.get_client_by_id(ctx.client_id)
+			if not client then return end
+			vim.lsp.util.apply_workspace_edit(res, client.offset_encoding)
+			local changes = count_lsp_res_changes(res)
+			vim.notify(string.format(
+				'renamed %s instance%s in %s file%s. %s',
+				changes.instances, changes.instances == 1 and '' or 's',
+				changes.files,     changes.files     == 1 and '' or 's',
+				changes.files > 1 and "To save them run ':wa'" or ''
+			))
+		end)
+	end)
+end
+
+--- gy: yank the inferred type of the symbol under the cursor into the
+--- unnamed and system-clipboard registers.
+---
+--- Uses the standard nvim API: pick a hover-capable client, send
+--- textDocument/hover with that client's offset_encoding, then run the
+--- response through vim.lsp.util.convert_input_to_markdown_lines (the
+--- helper Neovim itself uses to render hover floats) so we handle
+--- MarkupContent | MarkedString | string | string[] uniformly. We then
+--- strip code fences and the leading "(variable) name:" / "(parameter)
+--- name:" preamble that pyright/lua_ls/etc. prepend, and yank whatever's
+--- after the first ":" on the signature line.
+local function yank_type()
+	local hover_clients = vim.lsp.get_clients({
+		bufnr = 0,
+		method = 'textDocument/hover',
+	})
+	if #hover_clients == 0 then
+		vim.notify("no LSP client supports hover here", vim.log.levels.WARN)
+		return
+	end
+	local hclient = hover_clients[1]
+	local params = vim.lsp.util.make_position_params(0, hclient.offset_encoding)
+	hclient:request('textDocument/hover', params, function(err, result)
+		if err then
+			vim.notify("hover request failed: " .. tostring(err.message or err), vim.log.levels.WARN)
+			return
+		end
+		if not result or not result.contents then
+			vim.notify("no hover information at cursor", vim.log.levels.WARN)
+			return
+		end
+		local lines = vim.lsp.util.convert_input_to_markdown_lines(result.contents)
+		lines = vim.lsp.util.trim_empty_lines(lines)
+		if not lines or #lines == 0 then
+			vim.notify("hover returned empty content", vim.log.levels.WARN)
+			return
+		end
+		-- Drop the language-tag fence lines if present
+		-- ("```python", "```lua", "```typescript", ...).
+		local body = {}
+		for _, line in ipairs(lines) do
+			if not line:match("^```") then
+				body[#body + 1] = line
+			end
+		end
+		if #body == 0 then
+			vim.notify("hover had only fences", vim.log.levels.WARN)
+			return
+		end
+		-- The signature is the first non-empty body line.
+		local signature
+		for _, line in ipairs(body) do
+			if line:match("%S") then signature = line; break end
+		end
+		signature = signature or body[1]
+		-- Strip "(variable)", "(parameter)", "(method)", etc.
+		local stripped = signature:gsub("^%s*%b()%s*", "")
+		-- "name: Type" → "Type". If no colon, yank the whole
+		-- signature so e.g. function signatures still copy.
+		local typ = stripped:match(":%s*(.+)$") or stripped
+		typ = typ:gsub("^%s+", ""):gsub("%s+$", "")
+		if typ == "" then
+			vim.notify("could not extract type from hover", vim.log.levels.WARN)
+			return
+		end
+		vim.fn.setreg('"', typ)
+		vim.fn.setreg('+', typ)
+		local preview = #typ > 80 and (typ:sub(1, 77) .. "...") or typ
+		vim.notify("yanked: " .. preview, vim.log.levels.INFO)
+	end, 0)
+end
+
+
 return {
 	{
 		"j-hui/fidget.nvim",
@@ -140,7 +253,7 @@ return {
 	{
 		"neovim/nvim-lspconfig",
 		event = "BufReadPre",
-		keys = {
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("nvim-lspconfig", {
 			{
 				"<c-w><c-l>",
 				function()
@@ -154,7 +267,36 @@ return {
 				end,
 				desc = require("noethervim.util.icons").nvim_lsp .. " LSP status",
 			},
-		},
+
+			-- Buffer-local keys, mapped on LspAttach when the server supports
+			-- the method. `keymaps = { lsp = false }` in lua/user/config.lua
+			-- switches them all off; a buffer key of yours wins.
+			{ "gd",    function() vim.lsp.buf.definition() end,      lsp = "textDocument/definition",     set = "lsp", silent = true, desc = "[g]o to [d]efinition" },
+			{ "gD",    function() vim.lsp.buf.declaration() end,     lsp = "textDocument/declaration",    set = "lsp", silent = true, desc = "[g]o to [D]eclaration" },
+			{ "gt",    function() vim.lsp.buf.type_definition() end, lsp = "textDocument/typeDefinition", set = "lsp", silent = true, desc = "[g]o to [t]ype definition" },
+			{ "gi",    function() vim.lsp.buf.implementation() end,  lsp = "textDocument/implementation", set = "lsp", silent = true, desc = "[g]o to [i]mplementation" },
+			-- gr/grr/grn/gra: Neovim 0.12 defaults (references, rename, code action)
+			{ "gR",    "<cmd>Glance references<cr>", lsp = "textDocument/references",    set = "lsp", silent = true, desc = "[G]lance [R]eferences (float)" },
+			{ "gw",    function() vim.lsp.buf.workspace_symbol("") end, lsp = "workspace/symbol", set = "lsp", silent = true, desc = "[g]et [w]orkspace symbols" },
+			{ "gs",    function() vim.lsp.buf.signature_help({ border = "rounded" }) end, lsp = "textDocument/signatureHelp", set = "lsp", silent = true, desc = "[g]et [s]ignature" },
+			{ "<C-h>", function() vim.lsp.buf.signature_help({ border = "rounded" }) end, mode = "i", lsp = "textDocument/signatureHelp", set = "lsp", silent = true, desc = "signature help" },
+			{ "gl",    function() vim.diagnostic.open_float() end, lsp = true, set = "lsp", silent = true, desc = "diagnostics float" },
+			{ "]d",    function() vim.diagnostic.jump({ count = 1, on_jump = function() vim.diagnostic.open_float({ border = "rounded" }) end }) end,
+				lsp = true, set = "lsp", silent = true, desc = "next [d]iagnostic" },
+			{ "[d",    function() vim.diagnostic.jump({ count = -1, on_jump = function() vim.diagnostic.open_float({ border = "rounded" }) end }) end,
+				lsp = true, set = "lsp", silent = true, desc = "prev [d]iagnostic" },
+			{ "<F1>",  function() vim.lsp.buf.code_action() end, lsp = "textDocument/codeAction", set = "lsp", silent = true, desc = "code action" },
+			{ "<F4>",  function() vim.lsp.buf.code_action() end, lsp = "textDocument/codeAction", set = "lsp", silent = true, desc = "code action" },
+			{ "<F1>",  function() vim.lsp.buf.code_action() end, mode = "x", lsp = "textDocument/codeAction", set = "lsp", silent = true, desc = "range code action" },
+			{ "<F2>",  LspRename, lsp = "textDocument/rename", set = "lsp", silent = true, desc = "rename (with count)" },
+			-- <Leader>ff: format via conform (falls back to LSP if no formatter configured)
+			{ "<Leader>ff", function() require("conform").format({ lsp_format = "fallback", bufnr = 0 }) end,
+				mode = { "n", "x" }, lsp = true, set = "lsp", silent = true, desc = "format buffer" },
+			{ "go",    "<cmd>Outline<cr>", lsp = "textDocument/documentSymbol", set = "lsp", silent = true, desc = "symbols [o]utline" },
+			{ SearchLeader .. "li", function() vim.lsp.buf.incoming_calls() end, lsp = "callHierarchy/incomingCalls", set = "lsp", silent = true, desc = "[l]sp [i]ncoming calls" },
+			{ SearchLeader .. "lO", function() vim.lsp.buf.outgoing_calls() end, lsp = "callHierarchy/outgoingCalls", set = "lsp", silent = true, desc = "[l]sp [O]utgoing calls" },
+			{ "gy",    yank_type, lsp = "textDocument/hover", set = "lsp", silent = true, desc = "[y]ank type at cursor" },
+		}) } },
 		dependencies = {
 			-- lazydev: Neovim-API completions for lua_ls. luvit-meta covers vim.uv types.
 			{
@@ -195,13 +337,11 @@ return {
 						},
 					},
 				},
-				keys = {
-					{
-						"<c-w><c-m>",
-						function() require("mason.ui").open() end,
-						desc = require("noethervim.util.icons").mason .. " Mason",
-					},
-				},
+				cmd = { "Mason", "MasonInstall", "MasonUninstall", "MasonUpdate", "MasonLog" },
+				specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("mason.nvim", {
+					{ "<c-w><c-m>", function() require("mason.ui").open() end,
+						desc = require("noethervim.util.icons").mason .. " Mason" },
+				}) } },
 			},
 			{ "artemave/workspace-diagnostics.nvim" },
 			{ "williamboman/mason-lspconfig.nvim" },
@@ -281,45 +421,6 @@ return {
 			})
 
 
-			local function count_lsp_res_changes(lsp_res)
-				local count = { instances = 0, files = 0 }
-				if lsp_res.documentChanges then
-					for _, changed_file in pairs(lsp_res.documentChanges) do
-						count.files = count.files + 1
-						count.instances = count.instances + #changed_file.edits
-					end
-				elseif lsp_res.changes then
-					for _, changed_file in pairs(lsp_res.changes) do
-						count.instances = count.instances + #changed_file
-						count.files = count.files + 1
-					end
-				end
-				return count
-			end
-
-			local function LspRename()
-				local curr_name = vim.fn.expand('<cword>')
-				vim.ui.input({ prompt = 'LSP Rename', default = curr_name }, function(new_name)
-					if not new_name or #new_name == 0 or curr_name == new_name then return end
-					local clients = vim.lsp.get_clients({ bufnr = 0 })
-					if #clients == 0 then return end
-					local params = vim.lsp.util.make_position_params(0, clients[1].offset_encoding)
-					params.newName = new_name
-					vim.lsp.buf_request(0, 'textDocument/rename', params, function(_, res, ctx)
-						if not res then return end
-						local client = vim.lsp.get_client_by_id(ctx.client_id)
-						if not client then return end
-						vim.lsp.util.apply_workspace_edit(res, client.offset_encoding)
-						local changes = count_lsp_res_changes(res)
-						vim.notify(string.format(
-							'renamed %s instance%s in %s file%s. %s',
-							changes.instances, changes.instances == 1 and '' or 's',
-							changes.files,     changes.files     == 1 and '' or 's',
-							changes.files > 1 and "To save them run ':wa'" or ''
-						))
-					end)
-				end)
-			end
 			require('noethervim.default').command('LspRename', LspRename, {})
 
 			vim.api.nvim_create_autocmd('LspAttach', {
@@ -335,111 +436,6 @@ return {
 						client.server_capabilities.definitionProvider = false
 					end
 
-					local km_opts = function(desc)
-						return { buf = bufnr, silent = true, desc = desc }
-					end
-
-					vim.keymap.set('n', 'gd',  vim.lsp.buf.definition,      km_opts('[g]o to [d]efinition'))
-					vim.keymap.set('n', 'gD',  vim.lsp.buf.declaration,     km_opts('[g]o to [D]eclaration'))
-					vim.keymap.set('n', 'gt',  vim.lsp.buf.type_definition, km_opts('[g]o to [t]ype definition'))
-					vim.keymap.set('n', 'gi',  vim.lsp.buf.implementation,  km_opts('[g]o to [i]mplementation'))
-					-- gr/grr/grn: Neovim 0.12 defaults (references, rename) -- don't override
-					vim.keymap.set('n', 'gR',  '<cmd>Glance references<cr>', km_opts('[G]lance [R]eferences (float)'))
-					vim.keymap.set('n', 'gw',  function() vim.lsp.buf.workspace_symbol('') end, km_opts('[g]et [w]orkspace symbols'))
-					vim.keymap.set('n', 'gs',  function() vim.lsp.buf.signature_help({ border = 'rounded' }) end, km_opts('[g]et [s]ignature'))
-					vim.keymap.set('i', '<C-h>', function() vim.lsp.buf.signature_help({ border = 'rounded' }) end, km_opts('signature help'))
-					vim.keymap.set('n', 'gl', vim.diagnostic.open_float, km_opts('diagnostics float'))
-					vim.keymap.set('n', ']d', function()
-						vim.diagnostic.jump({ count = 1, on_jump = function() vim.diagnostic.open_float({ border = 'rounded' }) end })
-					end, km_opts('next [d]iagnostic'))
-					vim.keymap.set('n', '[d', function()
-						vim.diagnostic.jump({ count = -1, on_jump = function() vim.diagnostic.open_float({ border = 'rounded' }) end })
-					end, km_opts('prev [d]iagnostic'))
-					-- gra/grn: Neovim 0.12 defaults (code action, rename) -- don't override
-					vim.keymap.set('n',      '<F1>', vim.lsp.buf.code_action,  km_opts('code action'))
-					vim.keymap.set('n',      '<F4>', vim.lsp.buf.code_action,  km_opts('code action'))
-					vim.keymap.set('x',      '<F1>', vim.lsp.buf.code_action,  km_opts('range code action'))
-					vim.keymap.set('n',      '<F2>', LspRename,                km_opts('rename (with count)'))
-					-- <Leader>ff: format via conform (falls back to LSP if no formatter configured)
-					vim.keymap.set({ 'n', 'x' }, '<Leader>ff', function()
-						require("conform").format({ lsp_format = "fallback", bufnr = bufnr })
-					end, km_opts('format buffer'))
-					vim.keymap.set('n', 'go', '<cmd>Outline<cr>', km_opts('symbols [o]utline'))
-					vim.keymap.set('n', SearchLeader .. 'li', vim.lsp.buf.incoming_calls, km_opts('[l]sp [i]ncoming calls'))
-					vim.keymap.set('n', SearchLeader .. 'lO', vim.lsp.buf.outgoing_calls, km_opts('[l]sp [O]utgoing calls'))
-
-					-- gy: yank the inferred type of the symbol under the cursor
-					-- into the unnamed and system-clipboard registers.
-					--
-					-- Uses the standard nvim API: pick a hover-capable client,
-					-- send textDocument/hover with that client's offset_encoding,
-					-- then run the response through vim.lsp.util.convert_input_to_markdown_lines
-					-- (the helper Neovim itself uses to render hover floats) so we
-					-- handle MarkupContent | MarkedString | string | string[]
-					-- uniformly. We then strip code fences and the leading
-					-- "(variable) name:" / "(parameter) name:" preamble that
-					-- pyright/lua_ls/etc. prepend, and yank whatever's after the
-					-- first ":" on the signature line.
-					vim.keymap.set('n', 'gy', function()
-						local hover_clients = vim.lsp.get_clients({
-							bufnr = 0,
-							method = 'textDocument/hover',
-						})
-						if #hover_clients == 0 then
-							vim.notify("no LSP client supports hover here", vim.log.levels.WARN)
-							return
-						end
-						local hclient = hover_clients[1]
-						local params = vim.lsp.util.make_position_params(0, hclient.offset_encoding)
-						hclient:request('textDocument/hover', params, function(err, result)
-							if err then
-								vim.notify("hover request failed: " .. tostring(err.message or err), vim.log.levels.WARN)
-								return
-							end
-							if not result or not result.contents then
-								vim.notify("no hover information at cursor", vim.log.levels.WARN)
-								return
-							end
-							local lines = vim.lsp.util.convert_input_to_markdown_lines(result.contents)
-							lines = vim.lsp.util.trim_empty_lines(lines)
-							if not lines or #lines == 0 then
-								vim.notify("hover returned empty content", vim.log.levels.WARN)
-								return
-							end
-							-- Drop the language-tag fence lines if present
-							-- ("```python", "```lua", "```typescript", ...).
-							local body = {}
-							for _, line in ipairs(lines) do
-								if not line:match("^```") then
-									body[#body + 1] = line
-								end
-							end
-							if #body == 0 then
-								vim.notify("hover had only fences", vim.log.levels.WARN)
-								return
-							end
-							-- The signature is the first non-empty body line.
-							local signature
-							for _, line in ipairs(body) do
-								if line:match("%S") then signature = line; break end
-							end
-							signature = signature or body[1]
-							-- Strip "(variable)", "(parameter)", "(method)", etc.
-							local stripped = signature:gsub("^%s*%b()%s*", "")
-							-- "name: Type" → "Type". If no colon, yank the whole
-							-- signature so e.g. function signatures still copy.
-							local typ = stripped:match(":%s*(.+)$") or stripped
-							typ = typ:gsub("^%s+", ""):gsub("%s+$", "")
-							if typ == "" then
-								vim.notify("could not extract type from hover", vim.log.levels.WARN)
-								return
-							end
-							vim.fn.setreg('"', typ)
-							vim.fn.setreg('+', typ)
-							local preview = #typ > 80 and (typ:sub(1, 77) .. "...") or typ
-							vim.notify("yanked: " .. preview, vim.log.levels.INFO)
-						end, bufnr)
-					end, km_opts('[y]ank type at cursor'))
 				end,
 			})
 

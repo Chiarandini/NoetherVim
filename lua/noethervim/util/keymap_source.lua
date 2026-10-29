@@ -6,9 +6,9 @@
 ---
 --- Attribution is driven by four data sources, in priority order:
 ---
----   1. `keymap_registry`: a setup-time wrapper around `vim.keymap.set`
----      records the file+line of every imperative registration. This is
----      authoritative -- the file is exactly the callsite.
+---   1. `M.lookup`: the record noethervim.default keeps for every row and
+---      every write it made, and the script id Neovim keeps for a mapping
+---      made while a NoetherVim or `lua/user/` file was being sourced.
 ---   2. `util.keymap_sources()`: maps lazy.nvim handler keys to the plugin
 ---      spec file that owns them. Used for `keys = { ... }` entries that
 ---      bypass the wrapper.
@@ -23,6 +23,31 @@
 --- search for the lhs to position the cursor.
 
 local M = {}
+
+local forms = require("noethervim.util.keymap_forms")
+
+--- Where a global mapping was made, when that is known exactly: a row or
+--- a write through noethervim.default records its source; a mapping made
+--- while a NoetherVim or `lua/user/` file was being sourced carries that
+--- file's script id.
+---@param mode string
+---@param resolved_lhs string
+---@return { file: string, line?: integer }?
+function M.lookup(mode, resolved_lhs)
+  local rec = require("noethervim.default").owned.map[mode .. " " .. vim.keycode(resolved_lhs)]
+  if rec and rec.source then
+    local file, line = rec.source:match("^(.+):(%d+)$")
+    if file then return { file = vim.fn.expand(file), line = tonumber(line) } end
+  end
+  local m = vim.fn.maparg(resolved_lhs, mode, false, true)
+  if vim.tbl_isempty(m) or m.buffer ~= 0 or (m.sid or 0) <= 0 then return nil end
+  local class = require("noethervim.default").class(m.sid)
+  local info = vim.fn.getscriptinfo({ sid = m.sid })[1]
+  local user = vim.fs.normalize(vim.fn.stdpath("config") .. "/lua/user/")
+  if info and (class == "distro" or vim.startswith(vim.fs.normalize(info.name), user)) then
+    return { file = info.name, line = (m.lnum or 0) > 0 and m.lnum or nil }
+  end
+end
 
 -- ── Classification ───────────────────────────────────────────────
 
@@ -190,7 +215,7 @@ end
 ---@return string? path
 function M.owner_file(mode, lhs, opts)
   opts = opts or {}
-  local entry = require("noethervim.util.keymap_registry").lookup(mode, lhs)
+  local entry = M.lookup(mode, lhs)
   if entry and entry.file and entry.file ~= "" then return entry.file end
   if opts.source then return opts.source end
   local file = M.callback_file(opts.callback)
@@ -450,7 +475,7 @@ end
 --- `i`-mode `<C-v>` definition in the same file.
 --- Side-effect-free. Returns the 1-based line number, or 0 on no match.
 function M.find_lhs_line(lines, lhs, mode)
-  local registry = require("noethervim.util.keymap_registry")
+  local registry = forms
   local primary_forms, tail_forms = registry.source_forms_split(lhs)
   local primary_canon, tail_canon = {}, {}
   for _, f in ipairs(primary_forms) do primary_canon[#primary_canon + 1] = registry.canon(f) end
@@ -654,7 +679,7 @@ end
 ---@param mode? string
 ---@return string?
 function M.scan_project_for(lhs, mode)
-  local registry = require("noethervim.util.keymap_registry")
+  local registry = forms
   local primary_forms, tail_forms = registry.source_forms_split(lhs)
   -- Bare needles for pass-2 (multi-char only, strong context).
   local forms, canon_forms = {}, {}
@@ -762,7 +787,7 @@ end
 ---@class noethervim.KeymapJumpOpts
 ---@field source? string  Lazy handler source hint (path to the spec file
 ---                       that registered the keymap), used as a fallback
----                       when keymap_registry can't resolve the call site.
+---                       when M.lookup can't resolve the call site.
 ---@field origin? string  Ownership label from the diff picker. `"plugin"`
 ---                       suppresses the project-wide scan, which would
 ---                       otherwise land on a coincidental text match in
@@ -806,7 +831,7 @@ function M.jump(mode, lhs, opts)
   -- the plugin but does not define the specific keymap.
   local candidates = {}
 
-  local entry = require("noethervim.util.keymap_registry").lookup(mode, lhs)
+  local entry = M.lookup(mode, lhs)
   if entry then
     candidates[#candidates + 1] = { file = entry.file, line = entry.line, hint = "registry" }
   end

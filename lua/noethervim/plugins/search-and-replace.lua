@@ -4,7 +4,9 @@ return {
 	{
 		"MagicDuck/grug-far.nvim",
 		cmd = {"GrugFar", "GrugFarWithin"},
-		keys = {{"<c-w><c-s>", function() require('grug-far').open({ transient = true }) end, desc='grep replace'}},
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("grug-far.nvim", {
+			{ "<c-w><c-s>", function() require("grug-far").open({ transient = true }) end, desc = "grep replace" },
+		}) } },
 		opts = {}
 	}
 }

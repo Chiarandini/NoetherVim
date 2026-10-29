@@ -23,7 +23,7 @@ return {
 	{
 		"nvzone/showkeys",
 		cmd  = "ShowkeysToggle",
-		keys = { { "<c-w>S", "<cmd>ShowkeysToggle<cr>", desc = "Screenkey" } },
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("showkeys", { { "<c-w>S", "<cmd>ShowkeysToggle<cr>", desc = "Screenkey" } }) } },
 		opts = {
 			timeout  = 2,
 			maxkeys  = 8,

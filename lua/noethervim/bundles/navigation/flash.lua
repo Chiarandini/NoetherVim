@@ -18,11 +18,11 @@ return {
 		"folke/flash.nvim",
 		event = "VeryLazy",
 		opts  = {},
-		keys  = {
-			{ "S",    function() require("flash").jump()              end, mode = { "n" },          desc = "Flash jump" },
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("flash.nvim", {
+			{ "S",    function() require("flash").jump()              end, mode = { "n" },          desc = "Flash jump", set = "remaps" },
 			{ "r",    function() require("flash").remote()            end, mode = "o",               desc = "Flash remote" },
-			{ "R",    function() require("flash").treesitter_search() end, mode = { "o", "x" },      desc = "Flash treesitter search" },
+			{ "R",    function() require("flash").treesitter_search() end, mode = { "o", "x" },      desc = "Flash treesitter search", set = "remaps" },
 			{ "<c-s>", function() require("flash").toggle()           end, mode = { "c" },           desc = "Toggle flash" },
-		},
+		}) } },
 	},
 }

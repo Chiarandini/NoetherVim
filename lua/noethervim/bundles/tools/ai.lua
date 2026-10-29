@@ -27,10 +27,10 @@
 return {
 	{
 		"olimorris/codecompanion.nvim",
-		keys = {
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("codecompanion.nvim", {
 			{ "<leader>ac", "<cmd>CodeCompanionChat<cr>", desc = "[a]i [c]hat" },
-		},
-		cmd = "CodeCompanion",
+		}) } },
+		cmd = { "CodeCompanion", "CodeCompanionChat", "CodeCompanionActions" },
 		opts = {
 			-- Default adapter; override via user/plugins/ to switch provider.
 			adapter = "anthropic",

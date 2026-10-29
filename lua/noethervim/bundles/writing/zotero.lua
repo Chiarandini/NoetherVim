@@ -24,6 +24,10 @@ return {
       "kkharji/sqlite.lua",
     },
     ft = { "tex", "plaintex", "latex", "markdown", "quarto", "typst", "org", "asciidoc" },
+    specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("snacks-zotero.nvim", {
+      { "<localleader>z", "<cmd>SnacksZotero<cr>", desc = "Zotero citation picker",
+        ft = { "tex", "plaintex", "latex", "markdown", "quarto", "typst", "org", "asciidoc" } },
+    }) } },
     opts = {
       -- Refuse to append entries that biber/biblatex would reject (raw
       -- non-ASCII like the ' ¿? ' year placeholder, malformed years, etc.).
@@ -31,9 +35,6 @@ return {
     },
     config = function(_, opts)
       require("snacks_zotero").setup(opts)
-      vim.keymap.set("n", "<localleader>z",
-        "<cmd>SnacksZotero<cr>",
-        { buffer = 0, desc = "Zotero citation picker" })
     end,
   },
 }

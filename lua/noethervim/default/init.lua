@@ -116,13 +116,26 @@ local function loading_plugin()
   return stack[#stack] and stack[#stack].name or nil
 end
 
+-- The single modes a map-command mode stands for, as the snapshot records them.
+local SPLIT = { v = { "x", "s" }, [""] = { "n", "x", "s", "o" }, ["!"] = { "i", "c" } }
+
+--- Record a mapping NoetherVim made, under each single mode it covers, so a
+--- lookup by the mode `maparg` reports finds it.
+---@param rec noethervim.DefaultRecord
+local function own(rec)
+  local raw = vim.keycode(rec.name)
+  for _, single in ipairs(SPLIT[rec.mode] or { rec.mode }) do
+    M.owned.map[single .. " " .. raw] = rec
+  end
+end
+
 local function apply(item)
   if item.kind == "o" then
     vim.o[item.name] = item.value
     M.owned.o[item.name] = item.record
   elseif item.kind == "map" then
     vim.keymap.set(item.mode, item.lhs, item.rhs, item.opts)
-    M.owned.map[item.mode .. " " .. vim.keycode(item.lhs)] = item.record
+    own(item.record)
   elseif item.kind == "command" then
     vim.api.nvim_create_user_command(item.name, item.fn, item.opts or {})
     M.owned.command[item.name] = item.record
@@ -169,11 +182,38 @@ function M.o(name, value)
   return true
 end
 
+-- The single mode whose maps answer for a map-command mode.
+local FIRST = { v = "x", [""] = "n", ["!"] = "i" }
+
+--- Global mappings by mode and raw lhs, while setup() maps its rows.
+---@type table<string, table<string, table>>?
+local held
+
+--- Answer `holder` from one read of the global mappings rather than a
+--- maparg() per key, while setup() maps the core and unit rows: nothing but
+--- NoetherVim's own files run in that window, and a mapping NoetherVim made
+--- in it is one a later row may replace anyway.
+---@param on boolean
+function M.hold(on)
+  held = nil
+  if not on then return end
+  held = {}
+  for _, mode in ipairs({ "n", "x", "s", "o", "i", "c", "t" }) do
+    local by = {}
+    for _, m in ipairs(vim.api.nvim_get_keymap(mode)) do
+      by[m.lhsraw] = m
+      if m.lhsrawalt then by[m.lhsrawalt] = m end
+    end
+    held[mode] = by
+  end
+end
+
 --- The global mapping currently on `lhs` in `mode`, if any.
 ---@param mode string
 ---@param lhs string
 ---@return table?
 local function holder(mode, lhs)
+  if held then return held[FIRST[mode] or mode][vim.keycode(lhs)] end
   local m = vim.fn.maparg(lhs, mode, false, true)
   if vim.tbl_isempty(m) then return nil end
   if m.buffer == 0 then return m end
@@ -184,15 +224,14 @@ local function holder(mode, lhs)
   end
 end
 
--- The single modes a map-command mode stands for, as the snapshot records them.
-local SPLIT = { v = { "x", "s" }, [""] = { "n", "x", "s", "o" }, ["!"] = { "i", "c" } }
-
 --- Whether a distro write may replace the mapping `m`: one NoetherVim made,
 --- or one of Neovim's own defaults.
 ---@param mode string
 ---@param m table
 local function replaceable(mode, m)
-  if M.owned.map[mode .. " " .. m.lhsraw] then return true end
+  for _, single in ipairs(SPLIT[mode] or { mode }) do
+    if M.owned.map[single .. " " .. m.lhsraw] then return true end
+  end
   if m.sid == -8 then
     for _, single in ipairs(SPLIT[mode] or { mode }) do
       if nvim_defaults[single .. " " .. m.lhsraw] then return true end
@@ -202,23 +241,46 @@ local function replaceable(mode, m)
   return class == "distro" or class == "runtime"
 end
 
+--- The global mapping that keeps NoetherVim off `lhs` in `mode`, if any:
+--- one that is neither NoetherVim's nor one of Neovim's defaults.
+---@param mode string
+---@param lhs string
+---@return table?
+function M.blocking(mode, lhs)
+  local m = holder(mode, lhs)
+  if m and not replaceable(mode, m) then return m end
+end
+
+--- Record a mapping NoetherVim made (`m` nil) or skipped because of `m`.
+---@param rec noethervim.DefaultRecord
+---@param m? table the mapping that was kept
+function M.note_map(rec, m)
+  if m then
+    rec.by = m.desc and m.desc ~= "" and (m.desc .. ", " .. M.describe(m.sid)) or M.describe(m.sid)
+    table.insert(M.yielded, rec)
+  else
+    own(rec)
+  end
+end
+
 --- Map `lhs` globally unless a mapping of yours (or another plugin's) is
 --- already there. Neovim's default mappings are replaced as usual.
 ---@param modes string|string[]
 ---@param lhs string
 ---@param rhs string|function
 ---@param opts? table vim.keymap.set options
-function M.map(modes, lhs, rhs, opts)
+---@param meta? { owner?: string, source?: string }
+function M.map(modes, lhs, rhs, opts, meta)
   opts = opts or {}
   assert(not (opts.buffer or opts.buf), "default.map is for global mappings")
-  local src = caller()
+  local src = meta and meta.source or caller()
   local list = (type(modes) == "table" and modes or { modes }) --[[@as string[] ]]
   for _, mode in ipairs(list) do
     local rec = record("map", lhs, { mode = mode, source = src, desc = opts.desc })
-    local m = holder(mode, lhs)
-    if m and not replaceable(mode, m) then
-      rec.by = m.desc and m.desc ~= "" and (m.desc .. ", " .. M.describe(m.sid)) or M.describe(m.sid)
-      table.insert(M.yielded, rec)
+    if meta and meta.owner then rec.plugin = meta.owner end
+    local m = M.blocking(mode, lhs)
+    if m then
+      M.note_map(rec, m)
     else
       enqueue({ kind = "map", mode = mode, lhs = lhs, rhs = rhs, opts = opts, record = rec })
     end

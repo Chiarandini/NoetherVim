@@ -6,11 +6,11 @@
 -- lua/user/keymaps.lua lives in your config, not in the distribution:
 -- `git pull` and `:Lazy update` never touch it.
 --
--- This file runs after noethervim/keymaps.lua and noethervim/toggles/,
--- so any keymap you set here replaces the distro default. The exception is
--- a key a plugin spec declares in `keys`: lazy.nvim maps it again when the
--- plugin loads. `:NoetherVim where <key>` says when that is the case and
--- prints the spec line that changes it.
+-- This file runs after every key NoetherVim maps, a lazily loaded plugin's
+-- included, and nothing maps them again later: a key you set here replaces
+-- the distro's, and one you delete stays deleted. `:NoetherVim where <key>`
+-- names who maps a key. To drop a whole set at once (every remap of a Vim
+-- key, or the LSP keys), see `keymaps` in lua/user/config.lua.
 --
 -- NoetherVim keymap philosophy:
 --   SearchLeader   fuzzy navigation / search (default: <Space>, set vim.g.mapsearchleader)

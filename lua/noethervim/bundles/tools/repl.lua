@@ -20,12 +20,12 @@
 return {
 	{
 		"Vigemus/iron.nvim",
-		keys = {
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("iron.nvim", {
 			{ "<leader>rs", "<cmd>IronRepl<cr>",    desc = "REPL [s]tart" },
 			{ "<leader>rr", "<cmd>IronRestart<cr>", desc = "REPL [r]estart" },
 			{ "<leader>rF", "<cmd>IronFocus<cr>",   desc = "REPL [F]ocus" },
 			{ "<leader>rh", "<cmd>IronHide<cr>",    desc = "REPL [h]ide" },
-		},
+		}) } },
 		cmd = { "IronRepl", "IronHide", "IronFocus", "IronRestart" },
 		opts = {
 			config = {

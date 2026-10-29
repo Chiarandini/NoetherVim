@@ -62,13 +62,9 @@ return {
 	{
 		'mcauley-penney/visual-whitespace.nvim',
 		config = true,
-		-- Lazy-load on the visual-mode entry keys. desc fields surface in
-		-- :NoetherVim diff keymaps so the rows are identifiable.
-		keys = {
-			{ 'v',     mode = 'n', desc = "visual char mode" },
-			{ 'V',     mode = 'n', desc = "visual line mode" },
-			{ '<C-v>', mode = 'n', desc = "visual block mode" },
-		},
+		-- Loaded on entering visual mode. A load trigger on v/V/<C-v>
+		-- themselves would put mappings on Vim's own keys.
+		event = "ModeChanged",
 	},
 
 	-- better "." feature

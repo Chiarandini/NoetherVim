@@ -16,13 +16,14 @@ return {
 	-- ── Comment Box ───────────────────────────────────────────────────────────
 	{
 		"LudoPinelli/comment-box.nvim",
-		event  = "VeryLazy",
+		cmd  = { "CBalbox7", "CBcline" },
 		opts = {},
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("comment-box.nvim", {
+			{ "<Leader>bb", "<cmd>CBalbox7<cr>", mode = { "n", "x" }, desc = "comment box" },
+			{ "<Leader>bl", "<cmd>CBcline<cr>", desc = "comment line" },
+		}) } },
 		config = function(_, opts)
 			require("comment-box").setup(opts)
-			local map = require("noethervim.default").map
-			map({ "n", "v" }, "<Leader>bb", "<cmd>CBalbox7<cr>", { desc = "comment box" })
-			map("n",          "<Leader>bl", "<cmd>CBcline<cr>",  { desc = "comment line" })
 		end,
 	},
 }

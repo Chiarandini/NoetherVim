@@ -1,10 +1,14 @@
--- Statusline toggle keymaps, bound when heirline loads (UIEnter), through
--- noethervim.default so a mapping of yours on the same key stays.
+-- Statusline toggle keymaps, as rows heirline's spec contributes. They only
+-- fire User events, which do nothing until heirline has loaded.
 
 local M = {}
 
-function M.setup()
-  local map = require("noethervim.default").map
+---@return noethervim.Row[]
+function M.rows()
+  local rows = {}
+  local function map(_, lhs, rhs, opts)
+    table.insert(rows, vim.tbl_extend("force", opts, { lhs, rhs }))
+  end
   map("n", "<c-w>sg", function()
     vim.api.nvim_exec_autocmds("User", { pattern = "HeirlineGitToggle" })
   end, { desc = "statusline git toggle" })
@@ -46,6 +50,7 @@ function M.setup()
       pattern = "HeirlinePresetStandard",
     })
   end, { desc = "statusline reset to standard" })
+  return rows
 end
 
 return M

@@ -104,10 +104,10 @@ return {
 	{
 		"HampusHauffman/block.nvim",
 		cmd = { "Block", "BlockOn", "BlockOff" },
-		keys = {
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("block.nvim", {
 			{ "[oB", "<cmd>BlockOn<cr>",  desc = "block on" },
 			{ "]oB", "<cmd>BlockOff<cr>", desc = "block off" },
-		},
+		}) } },
 		config = true,
 	},
 }

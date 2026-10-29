@@ -21,15 +21,15 @@ end
 return {
 	{
 		"kevinhwang91/nvim-ufo",
-		keys = {
-			{'zr', function() require('ufo').openFoldsExceptKinds() end},
-			{'zm', function() require('ufo').closeFoldsWith() end},
-			{'zR', function() require('ufo').openAllFolds() end},
-			{'zM', function() require('ufo').closeAllFolds() end},
-			{'L', peekOrDefault},
-		},
 		dependencies = "kevinhwang91/promise-async",
 		event = "BufReadPost",
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("nvim-ufo", {
+			{ "zr", function() require("ufo").openFoldsExceptKinds() end, desc = "open folds by kind" },
+			{ "zm", function() require("ufo").closeFoldsWith() end, desc = "close folds by kind" },
+			{ "zR", function() require("ufo").openAllFolds() end, desc = "open all folds" },
+			{ "zM", function() require("ufo").closeAllFolds() end, desc = "close all folds" },
+			{ "L", peekOrDefault, desc = "peek fold, else last visible line", set = "remaps" },
+		}) } },
 		opts = {
 			-- Disable the brief background flash that ufo paints across a fold
 			-- when it opens. The effect is purely cosmetic, and its extmark

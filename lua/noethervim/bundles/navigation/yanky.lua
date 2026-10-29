@@ -19,6 +19,8 @@
 -- Default keymaps:
 --   y / p / P          intercepted by yanky -- behaves identically to vanilla
 --                      yank/paste, plus the operation lands in the ring.
+--                      Visual p keeps core's paste over the selection that
+--                      keeps the register; visual P stays core's.
 --   <C-p> / <C-n>      *immediately after* p / P, cycle to the previous /
 --                      next entry in the yank history.
 --   ]p / [p / ]P / [P  vanilla "paste-with-indent" but ring-aware.
@@ -28,7 +30,9 @@
 -- Note on <C-p> / <C-n>: vanilla Vim binds these in normal mode to
 -- "previous/next line" (rarely used; j / k cover this). Yanky overrides
 -- them only in normal mode, and they only fire usefully right after a
--- paste -- elsewhere they behave like before.
+-- paste -- elsewhere they behave like before. Core binds normal <C-n> to
+-- start a multi-cursor session (vim-visual-multi); with this bundle on,
+-- <C-n> is yanky's, and visual <C-n> still starts one from a selection.
 --
 -- Storage: the ring is persisted in shada by default, so yank history
 -- survives restarts. To make it session-only, override `ring.storage =
@@ -39,18 +43,22 @@ local SearchLeader = require("noethervim.util").search_leader
 return {
   {
     "gbprod/yanky.nvim",
-    keys = {
-      { "y", "<Plug>(YankyYank)",       mode = { "n", "x" }, desc = "yank (recorded)" },
-      { "p", "<Plug>(YankyPutAfter)",   mode = { "n", "x" }, desc = "paste after"  },
-      { "P", "<Plug>(YankyPutBefore)",  mode = { "n", "x" }, desc = "paste before" },
-      { "<C-p>", "<Plug>(YankyPreviousEntry)", desc = "cycle to previous yank" },
-      { "<C-n>", "<Plug>(YankyNextEntry)",     desc = "cycle to next yank" },
-      { "]p", "<Plug>(YankyPutIndentAfterLinewise)",  desc = "paste below (indent)" },
-      { "[p", "<Plug>(YankyPutIndentBeforeLinewise)", desc = "paste above (indent)" },
-      { "]P", "<Plug>(YankyPutIndentAfterLinewise)",  desc = "paste below (indent)" },
-      { "[P", "<Plug>(YankyPutIndentBeforeLinewise)", desc = "paste above (indent)" },
+    lazy = true,
+    specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("yanky.nvim", {
+      { "y", "<Plug>(YankyYank)",       mode = { "n", "x" }, desc = "yank (recorded)", set = "remaps" },
+      { "p", "<Plug>(YankyPutAfter)",   desc = "paste after", set = "remaps" },
+      { "P", "<Plug>(YankyPutBefore)",  desc = "paste before", set = "remaps" },
+      -- Visual p keeps core's meaning, a paste over the selection that keeps
+      -- the register (`P`); visual P stays core's clipboard paste.
+      { "p", "<Plug>(YankyPutBefore)",  mode = "x", desc = "paste over (keep register)", set = "remaps" },
+      { "<C-p>", "<Plug>(YankyPreviousEntry)", desc = "cycle to previous yank", set = "remaps" },
+      { "<C-n>", "<Plug>(YankyNextEntry)",     desc = "cycle to next yank", set = "remaps" },
+      { "]p", "<Plug>(YankyPutIndentAfterLinewise)",  desc = "paste below (indent)", set = "remaps" },
+      { "[p", "<Plug>(YankyPutIndentBeforeLinewise)", desc = "paste above (indent)", set = "remaps" },
+      { "]P", "<Plug>(YankyPutIndentAfterLinewise)",  desc = "paste below (indent)", set = "remaps" },
+      { "[P", "<Plug>(YankyPutIndentBeforeLinewise)", desc = "paste above (indent)", set = "remaps" },
       { SearchLeader .. "y", "<cmd>YankyRingHistory<cr>", desc = "[y]ank history" },
-    },
+    }) } },
     opts = {
       ring = {
         history_length              = 100,

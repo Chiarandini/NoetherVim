@@ -7,9 +7,7 @@ return {
 	{ -- to dim inactive window
 		"levouh/tint.nvim",
 		event = "VeryLazy",
-		keys = {
-			-- tint toggle is [o<c-t> / ]o<c-t> -- defined in noethervim/toggles/options.lua
-		},
+		-- tint toggle is [o<c-t> / ]o<c-t> -- defined in noethervim/toggles/options.lua
 		opts = {
 			tint = -5,                                      -- Darken colors, use a positive value to brighten
 			saturation = 0.6,                               -- Saturation to preserve
@@ -32,12 +30,22 @@ return {
 		"folke/zen-mode.nvim",
 		cmd          = "ZenMode",
 		dependencies = { "folke/twilight.nvim" },
-		keys         = { { "<leader>z", "<cmd>ZenMode<cr>", desc = "ZenMode" } },
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("zen-mode.nvim", {
+			{ "<leader>z", "<cmd>ZenMode<cr>", desc = "ZenMode" },
+		}) } },
 	},
 
 	{                   -- to look pretty
 		"anuvyklack/windows.nvim",
 		event = "BufReadPost",
+		cmd = { "WindowsMaximize", "WindowsMaximizeVertically", "WindowsMaximizeHorizontally",
+			"WindowsEqualize", "WindowsEnableAutowidth", "WindowsDisableAutowidth", "WindowsToggleAutowidth" },
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("windows.nvim", {
+			{ "<C-w>z", "<Cmd>WindowsMaximize<CR>", desc = "maximize window" },
+			{ "<C-w>_", "<Cmd>WindowsMaximizeVertically<CR>", desc = "maximize window vertically" },
+			{ "<C-w>|", "<Cmd>WindowsMaximizeHorizontally<CR>", desc = "maximize window horizontally" },
+			{ "<C-w>=", "<Cmd>WindowsEqualize<CR>", desc = "equalize windows" },
+		}) } },
 		dependencies = {
 			"anuvyklack/middleclass",
 			"anuvyklack/animation.nvim",
@@ -65,13 +73,6 @@ return {
 			default.o("winminwidth", 10)
 			default.o("equalalways", false)
 			require("windows").setup(opts)
-			local function cmd(command)
-				return table.concat({ "<Cmd>", command, "<CR>" })
-			end
-			default.map("n", "<C-w>z",  cmd("WindowsMaximize"))
-			default.map("n", "<C-w>_",  cmd("WindowsMaximizeVertically"))
-			default.map("n", "<C-w>|",  cmd("WindowsMaximizeHorizontally"))
-			default.map("n", "<C-w>=",  cmd("WindowsEqualize"))
 		end,
 	},
 }

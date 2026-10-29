@@ -10,16 +10,18 @@
 return {
 	{
 		"monaqa/dial.nvim",
-		keys = {
-			{ "<C-a>",  function() require("dial.map").manipulate("increment", "normal")  end, desc = "increment" },
-			{ "<C-x>",  function() require("dial.map").manipulate("decrement", "normal")  end, desc = "decrement" },
-			{ "g<C-a>", function() require("dial.map").manipulate("increment", "gnormal") end, desc = "increment (sequential)" },
-			{ "g<C-x>", function() require("dial.map").manipulate("decrement", "gnormal") end, desc = "decrement (sequential)" },
-			{ "<C-a>",  function() require("dial.map").manipulate("increment", "visual")  end, mode = "v", desc = "increment" },
-			{ "<C-x>",  function() require("dial.map").manipulate("decrement", "visual")  end, mode = "v", desc = "decrement" },
-			{ "g<C-a>", function() require("dial.map").manipulate("increment", "gvisual") end, mode = "v", desc = "increment (sequential)" },
-			{ "g<C-x>", function() require("dial.map").manipulate("decrement", "gvisual") end, mode = "v", desc = "decrement (sequential)" },
-		},
+		-- Loaded by the first key below, through require("dial.map").
+		lazy = true,
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("dial.nvim", {
+			{ "<C-a>",  function() require("dial.map").manipulate("increment", "normal")  end, desc = "increment", set = "remaps" },
+			{ "<C-x>",  function() require("dial.map").manipulate("decrement", "normal")  end, desc = "decrement", set = "remaps" },
+			{ "g<C-a>", function() require("dial.map").manipulate("increment", "gnormal") end, desc = "increment (sequential)", set = "remaps" },
+			{ "g<C-x>", function() require("dial.map").manipulate("decrement", "gnormal") end, desc = "decrement (sequential)", set = "remaps" },
+			{ "<C-a>",  function() require("dial.map").manipulate("increment", "visual")  end, mode = "x", desc = "increment", set = "remaps" },
+			{ "<C-x>",  function() require("dial.map").manipulate("decrement", "visual")  end, mode = "x", desc = "decrement", set = "remaps" },
+			{ "g<C-a>", function() require("dial.map").manipulate("increment", "gvisual") end, mode = "x", desc = "increment (sequential)", set = "remaps" },
+			{ "g<C-x>", function() require("dial.map").manipulate("decrement", "gvisual") end, mode = "x", desc = "decrement (sequential)", set = "remaps" },
+		}) } },
 		opts = {},
 		config = function(_, opts)
 			local augend = require("dial.augend")

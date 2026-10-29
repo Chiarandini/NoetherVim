@@ -141,23 +141,30 @@ Stage 3 is mostly a lazy-loaded plugin's `config` running the first time
 the plugin loads. Where that `config` is NoetherVim's and sets an option,
 a global mapping or a command, it first checks whether you set it, and
 keeps yours if so: a `timeoutlen` from `user/options.lua` survives
-which-key loading, and a `<leader>j` of yours survives LuaSnip loading.
-`:NoetherVim where <key>` shows a mapping of NoetherVim's that stepped
-aside for yours.
+which-key loading.
 
-Three things in stage 3 still run after your files and win:
+Keys work the same way without waiting for stage 3. Every key NoetherVim
+maps, a lazily loaded plugin's included, is mapped in stage 2, before
+`user/keymaps.lua`, and nothing maps it again when the plugin loads. A
+`vim.keymap.set` or `vim.keymap.del` there lasts for the session. A key
+of yours made earlier, at the top of `init.lua`, keeps NoetherVim off it.
+`:NoetherVim where <key>` shows who maps a key, and a mapping of
+NoetherVim's that stepped aside for yours.
 
-  - A key in a plugin spec's `keys` list. lazy.nvim maps it again each
-    time the plugin loads, so a `vim.keymap.set` or `vim.keymap.del` in
-    `user/keymaps.lua` lasts only until then. Change the key on the spec
-    instead, from `user/plugins/`: >lua
-        return { "kevinhwang91/nvim-ufo", keys = { { "L", my_peek } } }
-<   `{ "L", false }` in place of `{ "L", my_peek }` removes it.
-    `:NoetherVim where L` prints both lines for any such key.
-  - A plugin's own default mappings, made when it loads (Comment.nvim's
-    `gb`, nvim-surround's `ys`).
-  - Buffer-local LSP keymaps applied on `LspAttach`. Make yours in an
-    `LspAttach` autocmd of your own.
+Buffer keys for a filetype, and the keys mapped when a language server
+attaches, are NoetherVim's too, mapped on `FileType` and `LspAttach`. One
+you map in `after/ftplugin/<ft>.lua` is kept. A `FileType` or `LspAttach`
+autocmd in `user/autocmds.lua` runs after NoetherVim's, so a key it maps
+replaces the distro's.
+
+A plugin's own default mappings, made when it loads (nvim-surround's
+`ys`), still replace yours.
+
+Two kinds of key stay with their plugin: blink.cmp's completion keys in
+the command line and the terminal, changed through blink's
+`cmdline.keymap` and `term.keymap` opts, and keys a plugin maps in its own
+buffers (Oil, the pickers, a merge conflict), changed through that
+plugin's opts.
 
 ------------------------------------------------------------------------------
 4.1 DIRECTORY STRUCTURE                                  *noethervim-user-dir*
@@ -237,7 +244,8 @@ See `noethervim/options.lua` for all defaults.
 ------------------------------------------------------------------------------
 4.3 KEYMAPS                                          *noethervim-user-keymaps*
 
-Create `lua/user/keymaps.lua`. It runs after core keymaps and toggles: >lua
+Create `lua/user/keymaps.lua`. It runs after every key NoetherVim maps,
+a lazily loaded plugin's included: >lua
     -- Override a core keymap
     vim.keymap.set("n", ";", ";")   -- revert ; to default
 
@@ -247,6 +255,21 @@ Create `lua/user/keymaps.lua`. It runs after core keymaps and toggles: >lua
     -- Add personal keymaps
     vim.keymap.set("n", "<space>ev", "<cmd>e $MYVIMRC<cr>", { desc = "edit vimrc" })
 <
+Nothing maps a core key again later, so these last for the session. Two
+other ways to take a key away:
+
+  - On the spec of the plugin the key belongs to, from `user/plugins/`,
+    in lazy.nvim's own form: >lua
+        return { "kevinhwang91/nvim-ufo", keys = { { "L", false } } }
+<   `:NoetherVim where L` names that plugin.
+  - A whole set at once, with `keymaps` in `lua/user/config.lua`
+    (|noethervim-user-config-data|): `{ remaps = false }` gives `j`, `s`,
+    `;`, `n` and every other key NoetherVim changes back their Vim meaning,
+    and keeps its added keys.
+
+At the top of `init.lua`, before any of NoetherVim's keys exist,
+`vim.keymap.del` has nothing to delete; map the key to `<Nop>` there
+instead, and NoetherVim leaves it alone.
 NoetherVim keymap philosophy: >
     SearchLeader    fuzzy navigation / search (default: <Space>)
     <Leader>        global actions
@@ -609,6 +632,15 @@ Current keys: ~
                                   you want CamelCase splitting. See
                                   |noethervim-filetype-profiles|.
                                   Default: `false`.
+    `keymaps`                       Key sets to switch off. `remaps =
+                                  false` leaves every key whose meaning
+                                  NoetherVim changes (`j`, `s`, `;`,
+                                  `n`, ...) as Vim has it and keeps the
+                                  keys it adds. `lsp = false` skips the
+                                  keys mapped when a language server
+                                  attaches (`gd`, `<F2>`, ...). Default:
+                                  every set on. See
+                                  |noethervim-user-keymaps|.
     `toggle_feedback`               Channel for the confirmation message
                                   emitted when a bracket-prefix toggle
                                   (`[ow`, `]os`, etc.) fires.

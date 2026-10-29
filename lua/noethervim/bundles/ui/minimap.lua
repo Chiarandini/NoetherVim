@@ -19,21 +19,24 @@ return {
 	{
 		---@module "neominimap.config.meta"
 		"Isrothy/neominimap.nvim",
-		keys = {
-			{ "<c-w>m",    "<cmd>Neominimap toggle<cr>",        desc = "Toggle minimap" },
-			{ "<leader>mo", "<cmd>Neominimap on<cr>",           desc = "Minimap on" },
-			{ "<leader>mc", "<cmd>Neominimap off<cr>",          desc = "Minimap off" },
-			{ "<leader>mf", "<cmd>Neominimap focus<cr>",        desc = "Focus minimap" },
-			{ "<leader>mu", "<cmd>Neominimap unfocus<cr>",      desc = "Unfocus minimap" },
-			{ "<leader>ms", "<cmd>Neominimap toggleFocus<cr>",  desc = "Toggle minimap focus" },
-			{ "<leader>mwt", "<cmd>Neominimap winToggle<cr>",   desc = "Toggle minimap (window)" },
-			{ "<leader>mwr", "<cmd>Neominimap winRefresh<cr>",  desc = "Refresh minimap (window)" },
-			{ "<leader>mwo", "<cmd>Neominimap winOn<cr>",       desc = "Minimap on (window)" },
-			{ "<leader>mwc", "<cmd>Neominimap winOff<cr>",      desc = "Minimap off (window)" },
-			{ "<leader>mbt", "<cmd>Neominimap bufToggle<cr>",   desc = "Toggle minimap (buffer)" },
-			{ "<leader>mbr", "<cmd>Neominimap bufRefresh<cr>",  desc = "Refresh minimap (buffer)" },
-			{ "<leader>mbo", "<cmd>Neominimap bufOn<cr>",       desc = "Minimap on (buffer)" },
-			{ "<leader>mbc", "<cmd>Neominimap bufOff<cr>",      desc = "Minimap off (buffer)" },
+		cmd = "Neominimap",
+		specs = {
+			{ "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("neominimap.nvim", {
+				{ "<c-w>m",    "<cmd>Neominimap toggle<cr>",        desc = "Toggle minimap" },
+				{ "<leader>mo", "<cmd>Neominimap on<cr>",           desc = "Minimap on" },
+				{ "<leader>mc", "<cmd>Neominimap off<cr>",          desc = "Minimap off" },
+				{ "<leader>mf", "<cmd>Neominimap focus<cr>",        desc = "Focus minimap" },
+				{ "<leader>mu", "<cmd>Neominimap unfocus<cr>",      desc = "Unfocus minimap" },
+				{ "<leader>ms", "<cmd>Neominimap toggleFocus<cr>",  desc = "Toggle minimap focus" },
+				{ "<leader>mwt", "<cmd>Neominimap winToggle<cr>",   desc = "Toggle minimap (window)" },
+				{ "<leader>mwr", "<cmd>Neominimap winRefresh<cr>",  desc = "Refresh minimap (window)" },
+				{ "<leader>mwo", "<cmd>Neominimap winOn<cr>",       desc = "Minimap on (window)" },
+				{ "<leader>mwc", "<cmd>Neominimap winOff<cr>",      desc = "Minimap off (window)" },
+				{ "<leader>mbt", "<cmd>Neominimap bufToggle<cr>",   desc = "Toggle minimap (buffer)" },
+				{ "<leader>mbr", "<cmd>Neominimap bufRefresh<cr>",  desc = "Refresh minimap (buffer)" },
+				{ "<leader>mbo", "<cmd>Neominimap bufOn<cr>",       desc = "Minimap on (buffer)" },
+				{ "<leader>mbc", "<cmd>Neominimap bufOff<cr>",      desc = "Minimap off (buffer)" },
+			}) },
 		},
 		-- neominimap is configured through vim.g.neominimap, read once at load; it
 		-- exposes no setup() function, so all config lives here in init (which runs

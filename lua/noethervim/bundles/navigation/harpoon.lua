@@ -27,7 +27,8 @@ return {
 		"ThePrimeagen/harpoon",
 		branch       = "harpoon2",
 		dependencies = { "nvim-lua/plenary.nvim" },
-		keys         = {
+		lazy = true,
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("harpoon", {
 			{
 				"<c-w><c-h>",
 				function() require("harpoon").ui:toggle_quick_menu(require("harpoon"):list()) end,
@@ -43,7 +44,7 @@ return {
 			},
 			{ "<c-s-n>", function() require("harpoon"):list():next() end, desc = "Harpoon next" },
 			{ "<c-s-p>", function() require("harpoon"):list():prev() end, desc = "Harpoon prev" },
-		},
+		}) } },
 		config = function(_, opts)
 			require("harpoon"):setup(opts)
 		end,

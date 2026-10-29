@@ -45,6 +45,7 @@ local SCHEMA = {
   spell_in_code                = "boolean",
   toggle_feedback              = "string",
   snippets_disabled            = "table",
+  keymaps                      = "table",
 }
 
 --- Permitted values for the small enum fields. Validated alongside the

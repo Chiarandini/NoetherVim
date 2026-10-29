@@ -3,6 +3,53 @@
 -- Tab/S-Tab jumping is handled by blink.cmp; <C-q> cycles choice nodes.
 local SearchLeader = require("noethervim.util").search_leader
 
+--- Tear every snippet out of the current buffer.
+---
+--- Unlinking alone is not enough. `unlink_current()` drops one snippet
+--- and hands the cursor to its neighbour, but it leaves LuaSnip's
+--- extmarks behind -- a buffer that has been unlinked down to no active
+--- node still carries marks that keep highlighting text and can confuse
+--- later expansions. Those are the leftovers that need clearing, and
+--- they survive even when there is no current node to unlink at all.
+local function stop_all_snippets()
+	local ls = require('luasnip')
+	local session = require('luasnip.session')
+	local buf = vim.api.nvim_get_current_buf()
+
+	-- Bounded: this is interactive, and a jumplist that somehow never
+	-- clears would otherwise hang the editor rather than misbehave.
+	local unlinked = 0
+	while session.current_nodes[buf] and unlinked < 100 do
+		ls.unlink_current()
+		unlinked = unlinked + 1
+	end
+	session.current_nodes[buf] = nil
+
+	local stale = #vim.api.nvim_buf_get_extmarks(buf, session.ns_id, 0, -1, {})
+	vim.api.nvim_buf_clear_namespace(buf, session.ns_id, 0, -1)
+	return unlinked, stale
+end
+
+local function stop_all_and_report()
+	local unlinked, stale = stop_all_snippets()
+	if unlinked == 0 and stale == 0 then
+		vim.notify("no snippets to stop", vim.log.levels.WARN)
+	else
+		vim.notify(
+			string.format("stopped %d snippet(s), cleared %d mark(s)", unlinked, stale),
+			vim.log.levels.INFO)
+	end
+end
+
+--- Whether this buffer has anything for a stop to act on: a live snippet,
+--- or the extmarks one leaves behind after being unlinked.
+local function has_snippet_state()
+	local buf = vim.api.nvim_get_current_buf()
+	local session = require('luasnip.session')
+	if session.current_nodes[buf] then return true end
+	return #vim.api.nvim_buf_get_extmarks(buf, session.ns_id, 0, -1, {}) > 0
+end
+
 return {
 {
 	"L3MON4D3/LuaSnip",
@@ -16,7 +63,51 @@ return {
 	version = "2.*",
 	build = "make install_jsregexp",
 	event = "InsertEnter",
-
+	cmd = { "LuaSnipEdit", "LuaSnipStop" },
+	specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("LuaSnip", {
+		{ SearchLeader .. "es", "<cmd>LuaSnipEdit<cr>", desc = "edit snippets" },
+		-- Tab/S-Tab snippet navigation is handled by blink.cmp (snippets.preset = "luasnip").
+		-- <c-q> for choice nodes stays a Vimscript expr-map (not in blink's domain).
+		{ "<c-q>", "luasnip#choice_active() ? '<Plug>luasnip-next-choice' : '<c-q>'",
+			mode = { "i", "s" }, expr = true, silent = true, remap = true, desc = "next choice" },
+		-- jk expand/jump: personal preference -- add to lua/user/ if desired.
+		{ "<leader>u", function() require("luasnip").unlink_current() end, desc = "unlink current snippet" },
+		-- Put the cursor back inside a snippet you have already walked out of,
+		-- so a tabstop you filled in wrongly can be filled in again without
+		-- retyping the snippet. LuaSnip finds the node by position, so the
+		-- cursor only has to be somewhere in the snippet's text. Raises when
+		-- there is nothing there, which is a routine miss, so it is reported
+		-- plainly.
+		{ "<leader>j", function()
+			if not pcall(require("luasnip").activate_node) then
+				vim.notify("no snippet under the cursor", vim.log.levels.WARN)
+			end
+		end, desc = "jump back into the snippet under the cursor" },
+		-- Insert-mode <C-u> is Vim's "delete what you have typed on this line",
+		-- which is worth more than an unconditional snippet escape hatch: a
+		-- snippet is active for a few seconds an hour, and that key is reached
+		-- for constantly. So stop snippets only when there are snippets to stop,
+		-- and otherwise pass the keystroke through untouched, the way <C-q>
+		-- above leaves <C-q> alone unless a choice node is active.
+		--
+		-- Select mode has no comparable native <C-u>, and reaching it at all
+		-- almost always means sitting on a tabstop, so there it always stops.
+		{ "<c-u>", function()
+			if has_snippet_state() then
+				stop_all_and_report()
+			else
+				-- 'i': ahead of anything already in the typeahead, so the
+				-- replayed key lands where it was pressed. 'n' so it is not fed
+				-- back through this mapping.
+				vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-u>", true, false, true), "ni", false)
+			end
+		end, mode = "i", desc = "stop all snippets, else delete entered text" },
+		{ "<c-u>", stop_all_and_report, mode = "s", desc = "stop all snippets" },
+		-- <Leader>, not <LocalLeader>: stopping snippets is a global action that
+		-- happens to act on this buffer. Capital for the stronger of the pair,
+		-- next to <Leader>u, which unlinks only the snippet you are in.
+		{ "<leader>U", stop_all_and_report, desc = "stop all snippets" },
+	}) } },
 
 config = function(_, opts)
 	local ls = require('luasnip')
@@ -303,108 +394,8 @@ config = function(_, opts)
 			error(edit_err)
 		end
 	end, { desc = "edit snippet files (plugin-owned ones read-only)" })
-	default.map('n', SearchLeader .. 'es', '<cmd>LuaSnipEdit<cr>', { desc = 'edit snippets' })
-
-	-- Tab/S-Tab snippet navigation is handled by blink.cmp (snippets.preset = "luasnip").
-	-- <c-q> for choice nodes stays as a raw Vimscript expr-map (not in blink's domain).
-	default.map({ 'i', 's' }, '<c-q>',
-		"luasnip#choice_active() ? '<Plug>luasnip-next-choice' : '<c-q>'",
-		{ expr = true, silent = true, remap = true, desc = 'next choice' })
-	-- jk expand/jump: personal preference -- add to lua/user/ if desired.
-
-	default.map('n', '<leader>u', require('luasnip').unlink_current, { desc = 'unlink current snippet' })
-
-	-- Put the cursor back inside a snippet you have already walked out of, so
-	-- a tabstop you filled in wrongly can be filled in again without retyping
-	-- the snippet. LuaSnip finds the node by position, so the cursor only has
-	-- to be somewhere in the snippet's text, and a snippet nested inside
-	-- another is reached the same way. Raises when there is nothing there,
-	-- which is a routine miss rather than a fault, so it is reported plainly.
-	default.map('n', '<leader>j', function()
-		if not pcall(ls.activate_node) then
-			vim.notify("no snippet under the cursor", vim.log.levels.WARN)
-		end
-	end, { desc = 'jump back into the snippet under the cursor' })
-
-	--- Tear every snippet out of the current buffer.
-	---
-	--- Unlinking alone is not enough. `unlink_current()` drops one snippet
-	--- and hands the cursor to its neighbour, but it leaves LuaSnip's
-	--- extmarks behind -- a buffer that has been unlinked down to no active
-	--- node still carries marks that keep highlighting text and can confuse
-	--- later expansions. Those are the leftovers that need clearing, and
-	--- they survive even when there is no current node to unlink at all.
-	local function stop_all_snippets()
-		local ls = require('luasnip')
-		local session = require('luasnip.session')
-		local buf = vim.api.nvim_get_current_buf()
-
-		-- Bounded: this is interactive, and a jumplist that somehow never
-		-- clears would otherwise hang the editor rather than misbehave.
-		local unlinked = 0
-		while session.current_nodes[buf] and unlinked < 100 do
-			ls.unlink_current()
-			unlinked = unlinked + 1
-		end
-		session.current_nodes[buf] = nil
-
-		local stale = #vim.api.nvim_buf_get_extmarks(buf, session.ns_id, 0, -1, {})
-		vim.api.nvim_buf_clear_namespace(buf, session.ns_id, 0, -1)
-		return unlinked, stale
-	end
-
-	local function stop_all_and_report()
-		local unlinked, stale = stop_all_snippets()
-		if unlinked == 0 and stale == 0 then
-			vim.notify("no snippets to stop", vim.log.levels.WARN)
-		else
-			vim.notify(
-				string.format("stopped %d snippet(s), cleared %d mark(s)", unlinked, stale),
-				vim.log.levels.INFO)
-		end
-	end
-
 	default.command('LuaSnipStop', stop_all_and_report,
 		{ desc = 'Stop every snippet in the buffer and clear leftover marks' })
-
-	--- Whether this buffer has anything for a stop to act on: a live snippet,
-	--- or the extmarks one leaves behind after being unlinked.
-	local function has_snippet_state()
-		local buf = vim.api.nvim_get_current_buf()
-		local session = require('luasnip.session')
-		if session.current_nodes[buf] then return true end
-		return #vim.api.nvim_buf_get_extmarks(buf, session.ns_id, 0, -1, {}) > 0
-	end
-
-	-- Insert-mode <C-u> is Vim's "delete what you have typed on this line",
-	-- which is worth more than an unconditional snippet escape hatch: a
-	-- snippet is active for a few seconds an hour, and that key is reached for
-	-- constantly. So stop snippets only when there are snippets to stop, and
-	-- otherwise pass the keystroke through untouched. Same shape as the <C-q>
-	-- guard below, which leaves <C-q> alone unless a choice node is active.
-	--
-	-- Select mode has no comparable native <C-u>, and reaching it at all
-	-- almost always means sitting on a tabstop, so there it always stops.
-	default.map('i', '<c-u>', function()
-		if has_snippet_state() then
-			stop_all_and_report()
-		else
-			-- 'i': ahead of anything already in the typeahead, so the
-			-- replayed key lands where it was pressed rather than after the
-			-- next keystrokes. 'n' so it is not fed back through this mapping.
-			vim.api.nvim_feedkeys(
-				vim.api.nvim_replace_termcodes('<C-u>', true, false, true), 'ni', false)
-		end
-	end, { desc = 'stop all snippets, else delete entered text' })
-
-	default.map('s', '<c-u>', stop_all_and_report, { desc = 'stop all snippets' })
-
-	-- <Leader>, not <LocalLeader>: stopping snippets is a global action that
-	-- happens to act on this buffer, not a filetype action, and LocalLeader
-	-- mappings have to be buffer-local. Capital for the stronger of the pair,
-	-- next to <Leader>u, which unlinks only the snippet you are in.
-	default.map('n', '<leader>U', stop_all_and_report,
-		{ desc = 'stop all snippets' })
 
 end
 }

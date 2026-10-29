@@ -2,10 +2,12 @@
 -- Treesitter-aware join/split: [j to join, ]j to split.
 return {
 	'Wansmer/treesj',
-	keys = {
-		{ '[j', function() require('treesj').join() end,  desc = "[j]oin lines (*not* split)" },
-		{ ']j', function() require('treesj').split() end, desc = "un[j]oin lines (split)" },
-	},
+	-- Loaded by the keys below, through require("treesj").
+	lazy = true,
+	specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("treesj", {
+		{ "[j", function() require("treesj").join() end,  desc = "[j]oin lines (*not* split)" },
+		{ "]j", function() require("treesj").split() end, desc = "un[j]oin lines (split)" },
+	}) } },
 	dependencies = { 'nvim-treesitter/nvim-treesitter' },
 	opts = {
 		use_default_keymaps = false,

@@ -35,9 +35,9 @@ return {
 	{
 		"pwntester/octo.nvim",
 		cmd  = "Octo",
-		keys = {
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("octo.nvim", {
 			{ "<c-w>O", "<cmd>Octo pr list<cr>", desc = "Octo PR list" },
-		},
+		}) } },
 		dependencies = {
 			"nvim-lua/plenary.nvim",
 			"folke/snacks.nvim",

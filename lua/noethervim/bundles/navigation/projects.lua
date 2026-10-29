@@ -31,12 +31,12 @@ return {
         },
       },
     },
-    keys = {
+    specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("snacks.nvim", {
       {
         SearchLeader .. "p",
         function() require("snacks").picker.projects({ title = "Projects" }) end,
         desc = "[p]rojects",
       },
-    },
+    }) } },
   },
 }

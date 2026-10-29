@@ -88,7 +88,7 @@ return {
 		-- Nothing under SearchLeader. That namespace is for pickers, and
 		-- neotest has none: its surfaces are a summary tree and an output
 		-- panel, neither of which is a searchable list.
-		keys = {
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("neotest", {
 			{ "<leader>tt", function() require("neotest").run.run() end,                        desc = "run nearest [t]est" },
 			{ "<leader>tf", function() require("neotest").run.run(vim.fn.expand("%")) end,      desc = "run test [f]ile" },
 			{ "<leader>ta", function() require("neotest").run.run(vim.uv.cwd()) end,            desc = "run [a]ll tests" },
@@ -98,7 +98,7 @@ return {
 			{ "<leader>to", function() require("neotest").output.open({ enter = true }) end,    desc = "show test [o]utput" },
 			{ "<leader>tO", function() require("neotest").output_panel.toggle() end,            desc = "toggle [O]utput panel" },
 			{ "<leader>tw", function() require("neotest").watch.toggle(vim.fn.expand("%")) end, desc = "toggle [w]atch on file" },
-		},
+		}) } },
 
 		-- `adapters` is built by other bundles, so it needs both halves of
 		-- lazy.nvim's list handling:
@@ -125,9 +125,9 @@ return {
 	{
 		"mfussenegger/nvim-dap",
 		optional = true,
-		keys = {
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("nvim-dap", {
 			{ "<leader>td", function() require("neotest").run.run({ strategy = "dap" }) end,
 			  desc = "[d]ebug nearest test" },
-		},
+		}) } },
 	},
 }

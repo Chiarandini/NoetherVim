@@ -125,11 +125,11 @@ return {
 	{
 		"stevearc/overseer.nvim",
 		cmd  = { "OverseerRun", "OverseerToggle" },
-		keys = {
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("overseer.nvim", {
 			{ "<leader>rf", function() start_task("file") end,    desc = "Run this [f]ile" },
 			{ "<leader>rp", function() start_task("project") end, desc = "Run this [p]roject" },
 			{ "<c-w><c-r>", "<cmd>OverseerToggle<cr>",            desc = "Task list" },
-		},
+		}) } },
 		opts = {
 			task_list = {
 				keymaps = {

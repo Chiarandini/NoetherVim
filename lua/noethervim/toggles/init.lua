@@ -1,8 +1,11 @@
 -- Toggle helpers, shared by the definitions in toggles/options.lua and by
 -- the toggle feedback the mappings report through.
 --
--- toggle(lhs, enable_rhs, disable_rhs, desc)  → maps [lhs and ]lhs
--- map(lhs, rhs, desc)                         → single directional map
+-- toggle(lhs, enable_rhs, disable_rhs, desc, row)  → maps [lhs and ]lhs
+-- map(lhs, rhs, desc, echo, row)                   → single directional map
+--
+-- Both map rows (keymaps/rows.lua); `row` adds row fields such as `owner`
+-- and `set`.
 
 local M = {}
 
@@ -35,35 +38,32 @@ end
 ---@param rhs string|function
 ---@param desc? string
 ---@param echo? boolean  false: no confirmation message
-function M.map(lhs, rhs, desc, echo)
+---@param row? table row fields (`owner`, `set`, `_source`)
+function M.map(lhs, rhs, desc, echo, row)
+  local rows = require("noethervim.keymaps.rows")
   local descr = desc or ""
-  if type(rhs) == "string" then
-    if echo ~= false then
-      vim.keymap.set("n", lhs,
-        rhs .. '<cmd>lua require("noethervim.toggles")._notify("' .. descr .. '")<cr>',
-        { desc = descr })
-    else
-      vim.keymap.set("n", lhs, rhs, { desc = descr })
-    end
-  elseif type(rhs) == "function" then
-    if echo ~= false then
-      vim.keymap.set("n", lhs, function()
-        rhs()
-        M._notify(descr)
-      end, { desc = descr })
-    else
-      vim.keymap.set("n", lhs, rhs, { desc = descr })
+  local opts = vim.tbl_extend("force", { desc = descr, _source = rows.here(1) }, row or {})
+  if echo ~= false and type(rhs) == "string" then
+    rhs = rhs .. '<cmd>lua require("noethervim.toggles")._notify("' .. descr .. '")<cr>'
+  elseif echo ~= false then
+    local fn = rhs
+    rhs = function()
+      fn()
+      M._notify(descr)
     end
   end
+  rows.map("n", lhs, rhs, opts)
 end
 
 ---@param lhs string
 ---@param enable string|function
 ---@param disable string|function
 ---@param desc string
-function M.toggle(lhs, enable, disable, desc)
-  M.map("[" .. lhs, enable,  "enabling: "  .. desc)
-  M.map("]" .. lhs, disable, "disabling: " .. desc)
+---@param row? table row fields (`owner`, `set`)
+function M.toggle(lhs, enable, disable, desc, row)
+  row = vim.tbl_extend("force", { _source = require("noethervim.keymaps.rows").here(1) }, row or {})
+  M.map("[" .. lhs, enable,  "enabling: "  .. desc, nil, row)
+  M.map("]" .. lhs, disable, "disabling: " .. desc, nil, row)
 end
 
 return M

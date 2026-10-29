@@ -21,6 +21,26 @@
 --- policy. Field renames before the first non-alpha release land directly,
 --- without `vim.deprecate` shims.
 
+---@class noethervim.Row
+---@field [1] string lhs
+---@field [2] string|fun():any|false rhs; false removes the row with the same identity
+---@field owner? string lazy.nvim name of the plugin the row belongs to; skipped when that plugin is absent or its keys hold { lhs, false }
+---@field mode? string|string[] default "n"
+---@field desc? string shown by which-key, :NoetherVim where and the keymap guide
+---@field set? string key set ("remaps", "lsp", ...) that `keymaps` in lua/user/config.lua can switch off
+---@field ft? string|string[] buffer-local in these filetypes, mapped on FileType; a buffer mapping of yours wins
+---@field lsp? string|true LSP method the attached server must support, or true; buffer-local on LspAttach
+---@field expr? boolean passed to vim.keymap.set
+---@field silent? boolean passed to vim.keymap.set
+---@field remap? boolean passed to vim.keymap.set
+---@field nowait? boolean passed to vim.keymap.set
+---@field _source? string `file:line` of the declaration, for rows mapped from core files
+
+---@class noethervim.HostOpts
+---@field rows? noethervim.Row[] distro mappings, appended by each spec through rows.contribute()
+---@field g? table<string, any> plugin globals set at startup when still nil
+---@field startup? table<string, fun()|false> registrations that must exist from startup, run in id order
+
 ---@class noethervim.StatuslineConfig
 ---
 --- Heirline-based statusline overrides.
@@ -66,5 +86,6 @@
 ---@field spell_in_code? boolean If true, the code profile enables spellcheck, scoped to comments and strings via treesitter `@spell` captures so identifiers are not flagged. Default: false.
 ---@field toggle_feedback? "notify"|"echo"|"off" Channel for the confirmation message emitted when a bracket-prefix toggle (`[ox` / `]ox`) fires. `"notify"` (default) routes through `vim.notify`, which snacks renders as a toast; `"echo"` uses `nvim_echo` for the classic cmdline message; `"off"` suppresses it.
 ---@field snippets_disabled? noethervim.DisabledSnippet[] Snippets to keep switched off wherever this config is used. The snippet picker (`:NoetherVim snippets`, or SearchLeader+cs) copies a correct entry to your clipboard with `<C-o>`, filling in the owner and file. `<C-x>` there switches one off on this machine only, and that choice wins over this list for the session.
+---@field keymaps? table<string, boolean> Key sets to switch off. `remaps = false` keeps every key whose Vim meaning NoetherVim changes (`;`, `s`, `n`, ... as Vim has it, while keeping NoetherVim's added keys; `lsp = false` skips the keys mapped when a language server attaches.
 
 return {}

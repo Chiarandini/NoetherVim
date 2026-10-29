@@ -4,7 +4,16 @@
 return {
 	"nvim-treesitter/nvim-treesitter-context",
 	event = "BufReadPost",
+	cmd = "TSContext",
 	dependencies = { "nvim-treesitter/nvim-treesitter" },
+	-- upstream replaced :TSContextEnable/:TSContextDisable with a single
+	-- :TSContext {enable|disable|toggle} command
+	specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("nvim-treesitter-context", {
+		{ "[oX", "<cmd>TSContext enable<cr>", desc = "TSContext enable" },
+		{ "]oX", "<cmd>TSContext disable<cr>", desc = "TSContext disable" },
+		{ "<c-w>[T", "<cmd>TSContext enable<cr>", desc = "TSContext enable" },
+		{ "<c-w>]T", "<cmd>TSContext disable<cr>", desc = "TSContext disable" },
+	}) } },
 	opts = {
 		enable = true,
 		max_lines = 4,
@@ -18,12 +27,5 @@ return {
 	},
 	config = function(_, opts)
 		require("treesitter-context").setup(opts)
-		-- upstream replaced :TSContextEnable/:TSContextDisable with a
-		-- single :TSContext {enable|disable|toggle} command
-		local map = require("noethervim.default").map
-		map("n", "[oX", "<cmd>TSContext enable<cr>" , {desc = "TSContext enable"})
-		map("n", "]oX", "<cmd>TSContext disable<cr>", {desc = "TSContext disable"})
-		map("n", "<c-w>[T", "<cmd>TSContext enable<cr>", {desc = "TSContext enable"})
-		map("n", "<c-w>]T", "<cmd>TSContext disable<cr>", {desc = "TSContext disable"})
 	end,
 }

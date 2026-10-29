@@ -17,13 +17,13 @@ return {
 	{
 		"ThePrimeagen/refactoring.nvim",
 		cmd    = "Refactor",
-		keys   = {
-			{ "<leader>Re", function() require("refactoring").refactor("Extract Function") end, mode = "v", desc = "Extract function" },
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("refactoring.nvim", {
+			{ "<leader>Re", function() require("refactoring").refactor("Extract Function") end, mode = "x", desc = "Extract function" },
 			{ "<leader>Rf", ":Refactor extract_to_file ",       mode = "x", desc = "Extract to file" },
 			{ "<leader>Rv", ":Refactor extract_var ",           mode = "x", desc = "Extract variable" },
 			{ "<leader>Ri", ":Refactor inline_var",             mode = { "n", "x" }, desc = "Inline variable" },
 			{ "<leader>Rb", ":Refactor extract_block",          mode = "n", desc = "Extract block" },
-		},
+		}) } },
 		config = true,
 	},
 }

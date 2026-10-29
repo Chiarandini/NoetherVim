@@ -9,6 +9,7 @@
 
 local T = require("noethervim.toggles")
 local map, toggle = T.map, T.toggle
+local row = require("noethervim.keymaps.rows").map
 
 -- ──────────────────────────────────────────────────────────────
 --  Option toggles  ([o<key> = on, ]o<key> = off)
@@ -39,7 +40,7 @@ toggle("o<c-i>",
 toggle("o<c-t>",
   function() require("tint").enable() end,
   function() require("tint").disable() end,
-  "tint")
+  "tint", { owner = "tint.nvim" })
 
 -- Tidy whitespace trimmer (tidy.nvim only exposes .toggle())
 toggle("oD",
@@ -51,7 +52,7 @@ toggle("oD",
     local tidy = require("tidy")
     if tidy.opts.enabled_on_save then tidy.toggle() end
   end,
-  "tidy whitespace (Dirty)")
+  "tidy whitespace (Dirty)", { owner = "tidy.nvim" })
 
 -- Deadcolumn fading guide -- [oG enable, ]oG disable.
 -- State persisted to stdpath("state")/noethervim/deadcolumn;
@@ -91,7 +92,7 @@ toggle("oG",
     end
     vim.fn.writefile({ "0" }, dc_state_file)
   end,
-  "deadcolumn (Guide)")
+  "deadcolumn (Guide)", { owner = "deadcolumn.nvim" })
 
 -- :LspStart / :LspStop were removed on Nvim 0.12+ (superseded by built-in :Lsp).
 -- Bare :lsp enable resolves to all configs matching current buffer's filetype;
@@ -147,8 +148,8 @@ local function image_math(on)
   T._notify("inline math " .. (on and "enabled" or "disabled"))
 end
 
-vim.keymap.set("n", "[om", function() image_math(true)  end, { desc = "enable inline math" })
-vim.keymap.set("n", "]om", function() image_math(false) end, { desc = "disable inline math" })
+row("n", "[om", function() image_math(true)  end, { desc = "enable inline math" })
+row("n", "]om", function() image_math(false) end, { desc = "disable inline math" })
 
 -- Blink.cmp completion on/off
 vim.g.blink_toggle = true
@@ -156,12 +157,13 @@ local function toggle_cmp(bool)
   vim.g.blink_toggle = bool
   T._notify("completion " .. (bool and "enabled" or "disabled"))
 end
-vim.keymap.set("n", "[oC", function() toggle_cmp(true)  end, { desc = "enable completion" })
-vim.keymap.set("n", "]oC", function() toggle_cmp(false) end, { desc = "disable completion" })
+row("n", "[oC", function() toggle_cmp(true)  end, { desc = "enable completion", owner = "blink.cmp" })
+row("n", "]oC", function() toggle_cmp(false) end, { desc = "disable completion", owner = "blink.cmp" })
 
 -- Quickfix / Trouble navigation (context-aware)
 -- When Trouble is open, ]q/[q/]Q/[Q navigate its items.
--- When Trouble is closed, they navigate the native quickfix list.
+-- When Trouble is closed, they navigate the native quickfix list, as
+-- Neovim's own ]q/[q/]Q/[Q do.
 local function trouble_or_qf(trouble_fn, qf_cmd)
   return function()
     local ok, trouble = pcall(require, "trouble")
@@ -176,21 +178,21 @@ local function trouble_or_qf(trouble_fn, qf_cmd)
   end
 end
 
-vim.keymap.set("n", "]q", trouble_or_qf(
+row("n", "]q", trouble_or_qf(
   function(t) t.next({ jump = true }) end, "cnext"
-), { desc = "next quickfix/Trouble item" })
+), { desc = "next quickfix/Trouble item", set = "remaps" })
 
-vim.keymap.set("n", "[q", trouble_or_qf(
+row("n", "[q", trouble_or_qf(
   function(t) t.prev({ jump = true }) end, "cprev"
-), { desc = "prev quickfix/Trouble item" })
+), { desc = "prev quickfix/Trouble item", set = "remaps" })
 
-vim.keymap.set("n", "]Q", trouble_or_qf(
+row("n", "]Q", trouble_or_qf(
   function(t) t.last({ jump = true }) end, "clast"
-), { desc = "last quickfix/Trouble item" })
+), { desc = "last quickfix/Trouble item", set = "remaps" })
 
-vim.keymap.set("n", "[Q", trouble_or_qf(
+row("n", "[Q", trouble_or_qf(
   function(t) t.first({ jump = true }) end, "cfirst"
-), { desc = "first quickfix/Trouble item" })
+), { desc = "first quickfix/Trouble item", set = "remaps" })
 
 -- Unimpaired-style option toggles
 map("[ob", "<cmd>set background=light<cr>",    "light background")
@@ -229,8 +231,8 @@ map("[ox", "<cmd>setlocal cursorline cursorcolumn<cr>",    "crosshair")
 map("]ox", "<cmd>setlocal nocursorline nocursorcolumn<cr>","no crosshair")
 
 -- Window auto-width animation
-map("[oW", '<cmd>WindowsEnableAutowidth<cr>',  "animated windows")
-map("]oW", '<cmd>WindowsDisableAutowidth<cr>', "static windows")
+map("[oW", '<cmd>WindowsEnableAutowidth<cr>',  "animated windows", nil, { owner = "windows.nvim" })
+map("]oW", '<cmd>WindowsDisableAutowidth<cr>', "static windows",   nil, { owner = "windows.nvim" })
 
 -- Treesitter
 map("[oT", function() vim.treesitter.start(0) end, "treesitter enable")
@@ -241,20 +243,20 @@ map("]oT", function() vim.treesitter.stop(0)  end, "treesitter disable")
 -- ──────────────────────────────────────────────────────────────
 
 -- Tabs
-map("[t", "gT", "prev tab", false)
-map("]t", "gt", "next tab", false)
-map(">t", "<cmd>+tabmove<cr>", "move tab right", false)
-map("<t", "<cmd>-tabmove<cr>", "move tab left",  false)
+map("[t", "gT", "prev tab", false, { set = "remaps" })
+map("]t", "gt", "next tab", false, { set = "remaps" })
+map(">t", "<cmd>+tabmove<cr>", "move tab right", false, { set = "remaps" })
+map("<t", "<cmd>-tabmove<cr>", "move tab left",  false, { set = "remaps" })
 
 -- Buffers
-map("[b", "<cmd>bp<cr>", "prev buffer", false)
-map("]b", "<cmd>bn<cr>", "next buffer", false)
+map("[b", "<cmd>bp<cr>", "prev buffer", false, { set = "remaps" })
+map("]b", "<cmd>bn<cr>", "next buffer", false, { set = "remaps" })
 
 -- DAP virtual text
 toggle("oV",
   "<cmd>DapVirtualTextEnable<cr>",
   "<cmd>DapVirtualTextDisable<cr>",
-  "debug virtual text")
+  "debug virtual text", { owner = "nvim-dap-virtual-text" })
 
 -- ──────────────────────────────────────────────────────────────
 --  Unimpaired-style line operations  ([e/]e, [<Space>/]<Space>)
@@ -298,11 +300,11 @@ endfunction
 
 nnoremap <silent> <Plug>(nv-blank-up)   :<C-U>exe <SID>BlankUp()<CR>
 nnoremap <silent> <Plug>(nv-blank-down) :<C-U>exe <SID>BlankDown()<CR>
-
-nmap [e <Plug>(nv-move-up)
-nmap ]e <Plug>(nv-move-down)
-xmap [e <Plug>(nv-move-sel-up)
-xmap ]e <Plug>(nv-move-sel-down)
-nmap [<Space> <Plug>(nv-blank-up)
-nmap ]<Space> <Plug>(nv-blank-down)
 ]])
+
+row("n", "[e", "<Plug>(nv-move-up)",       { desc = "move line up" })
+row("n", "]e", "<Plug>(nv-move-down)",     { desc = "move line down" })
+row("x", "[e", "<Plug>(nv-move-sel-up)",   { desc = "move selection up" })
+row("x", "]e", "<Plug>(nv-move-sel-down)", { desc = "move selection down" })
+row("n", "[<Space>", "<Plug>(nv-blank-up)",   { desc = "blank line above", set = "remaps" })
+row("n", "]<Space>", "<Plug>(nv-blank-down)", { desc = "blank line below", set = "remaps" })

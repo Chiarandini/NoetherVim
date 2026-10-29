@@ -97,17 +97,17 @@ return {
 			},
 		},
 		cmd  = { "Fugit2", "Fugit2Graph" },
-		keys = {
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("fugit2.nvim", {
 			{ "<c-w>F", "<cmd>Fugit2<cr>", desc = "Fugit2 git UI" },
-		},
+		}) } },
 	},
 	{
 		"sindrets/diffview.nvim",
 		dependencies = { "nvim-tree/nvim-web-devicons" },
-		keys = {
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("diffview.nvim", {
 			{ "<c-w>[d", "<cmd>DiffviewOpen<cr>",                        desc = "DiffView open" },
 			{ "<c-w>]d", function() require("diffview").close() end,     desc = "DiffView close" },
-		},
+		}) } },
 		cmd = {
 			"DiffviewFileHistory",
 			"DiffviewOpen",

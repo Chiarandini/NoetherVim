@@ -15,6 +15,13 @@ return {
 		"saghen/blink.cmp",
 		version = "1.*", -- pre-built binaries, no Rust toolchain needed
 		event = { "InsertEnter", "CmdlineEnter" },
+		-- Native <C-Space> fallback: blink overrides this with buffer-local
+		-- keymaps on InsertEnter; when blink is disabled (]oC toggle), blink
+		-- skips the buffer-local keymap and this global mapping fires instead.
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("blink.cmp", {
+			{ "<C-Space>", function() vim.api.nvim_feedkeys(vim.keycode("<C-n>"), "n", false) end,
+				mode = "i", desc = "native keyword completion" },
+		}) } },
 		dependencies = {
 			"L3MON4D3/LuaSnip",
 			-- blink v1: LuaSnip is wired via snippets.preset = "luasnip" below.
@@ -286,13 +293,6 @@ return {
 			local default = require("noethervim.default")
 			default.o("wildchar", 0)
 			default.o("wildcharm", vim.fn.char2nr(vim.api.nvim_replace_termcodes("<C-z>", true, false, true)))
-
-			-- Native <C-Space> fallback: blink overrides this with buffer-local
-			-- keymaps on InsertEnter; when blink is disabled (]oC toggle), blink
-			-- skips the buffer-local keymap and this global mapping fires instead.
-			default.map("i", "<C-Space>", function()
-				vim.api.nvim_feedkeys(vim.keycode("<C-n>"), "n", false)
-			end, { desc = "native keyword completion" })
 
 			require("blink.cmp").setup(opts)
 

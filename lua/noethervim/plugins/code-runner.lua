@@ -43,7 +43,8 @@ for ft in pairs(run.languages) do
 end
 
 return { 'CRAG666/code_runner.nvim',
-	keys = {
+	cmd = { "RunCode", "RunFile", "RunProject", "RunClose", "CRFiletype", "CRProjects" },
+	specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("code_runner.nvim", {
 		{ '<leader>rc', '<cmd>RunCode<cr>', desc = 'run [c]ode' },
 		{
 			'<leader>rT',
@@ -60,7 +61,7 @@ return { 'CRAG666/code_runner.nvim',
 			end,
 			desc = 'run in [T]erminal (betterTerm)',
 		},
-	},
+	}) } },
 	opts = {
 		mode = 'float',
 		float = { border = "double" },
