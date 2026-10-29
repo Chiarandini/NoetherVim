@@ -30,9 +30,7 @@ return {
     -- because lazy evaluates cond at spec resolution -- if the plugin
     -- is gone, none of its UIEnter wiring runs in the first place.
     cond = function()
-      local ok, user = pcall(require, "user.config")
-      if not ok or type(user) ~= "table" then return true end
-      return user.statusline_enabled ~= false
+      return require("noethervim.config").get().statusline_enabled ~= false
     end,
     config = function()
       local conditions = require("heirline.conditions")

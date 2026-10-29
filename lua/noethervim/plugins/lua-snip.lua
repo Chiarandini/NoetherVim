@@ -95,9 +95,11 @@ config = function(_, opts)
 	-- the next load.
 	require("noethervim.util.snippet_store").install()
 
+	-- Your snippets, unless the user layer is off.
+	local user_dir = require("noethervim.config").user_dir()
 	require("luasnip.loaders.from_lua").lazy_load({
 		paths = {},
-		lazy_paths = { vim.fn.stdpath("config") .. "/LuaSnip" },
+		lazy_paths = user_dir and { user_dir .. "/LuaSnip" } or {},
 		fs_event_providers = { autocmd = true, libuv = true },
 	})
 

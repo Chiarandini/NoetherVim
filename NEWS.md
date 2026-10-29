@@ -13,3 +13,6 @@ where they are listed.
   shows a NoetherVim mapping that stepped aside for yours.
 - **Options at the top of `init.lua` are kept:** NoetherVim's defaults no
   longer replace an option set before `lazy.setup()`.
+- **`NOETHERVIM_NO_USER=1` hides your whole config:** besides `lua/user/`,
+  Neovim no longer sources your `plugin/`, `after/` and `ftplugin/` files,
+  and your LuaSnip snippets, preamble library and spellfile are not read.

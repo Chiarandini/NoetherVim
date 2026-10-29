@@ -639,6 +639,11 @@ return {
       -- follow              = { event = "moved", debounce = 150 },  -- false to skip entirely
     },
     config = function(_, opts)
+      -- With the user layer off, only a project's own preamble folder:
+      -- the default also reads the library in your config directory.
+      if require("noethervim.config").user_off() then
+        opts.preamble = vim.tbl_extend("force", opts.preamble or {}, { folders = { "preamble" } })
+      end
       require("noethervim-tex").setup(opts)
 
       -- PDF-follows-cursor, off until asked for per buffer. `<localleader>lf`

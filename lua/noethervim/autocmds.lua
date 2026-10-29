@@ -255,8 +255,7 @@ local fts = require("noethervim.util.filetypes")
 local writing_filetypes = fts.writing
 local non_code_filetypes = fts.non_code
 
-local ok_cfg, user_cfg = pcall(require, "user.config")
-local spell_in_code = ok_cfg and type(user_cfg) == "table" and user_cfg.spell_in_code == true
+local spell_in_code = require("noethervim.config").get().spell_in_code == true
 
 -- ── Code vs. writing profiles ─────────────────────────────────────
 -- Two FileType groups apply window-local "profile" options (wrap,

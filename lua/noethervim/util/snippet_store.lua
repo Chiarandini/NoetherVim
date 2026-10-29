@@ -64,11 +64,7 @@ end
 --- The reader's durable list, straight from their config.
 --- @return table[]
 local function read_blocklist()
-  local ok, user_cfg = pcall(require, 'user.config')
-  if not ok or type(user_cfg) ~= 'table' then
-    return {}
-  end
-  local list = user_cfg.snippets_disabled
+  local list = require('noethervim.config').get().snippets_disabled
   return type(list) == 'table' and list or {}
 end
 

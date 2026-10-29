@@ -25,8 +25,7 @@ return {
 		"folke/drop.nvim",
 		event = "VeryLazy",
 		cond = function()
-			local ok, cfg = pcall(require, "user.config")
-			return not (ok and type(cfg) == "table" and cfg.drop == false)
+			return require("noethervim.config").get().drop ~= false
 		end,
 		opts = {
 			max       = 40,

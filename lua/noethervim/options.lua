@@ -161,12 +161,19 @@ vim.fn.mkdir(vim.o.dir, "p")
 -- default doesn't flag "colour"/"color" as wrong for either camp. Narrow
 -- in your personal config if you want strict regional checking, e.g.
 -- vim.opt.spelllang = { "en_us" } or { "en_gb" } or { "en_us", "de_de" }.
-vim.opt.spelllang = { "en" }
--- Spellfile lives in the user's config dir
-vim.o.spellfile = vim.fn.stdpath("config") .. "/spell/en.utf-8.add"
+opt.spelllang = "en"
+-- Spellfile lives in the user's config dir; with the user layer off,
+-- words added go to a scratch file instead.
+local user_dir = require("noethervim.config").user_dir()
+if user_dir then
+  opt.spellfile = user_dir .. "/spell/en.utf-8.add"
+else
+  vim.fn.mkdir(vim.fn.stdpath("state") .. "/noethervim/spell", "p")
+  opt.spellfile = vim.fn.stdpath("state") .. "/noethervim/spell/en.utf-8.add"
+end
 
 -- History
 opt.shada = "'1000,<50,s10,h"
 
 -- Wildignore
-vim.opt.wildignore:append({"*/.git/*", "*.swp"})
+append("wildignore", { "*/.git/*", "*.swp" })

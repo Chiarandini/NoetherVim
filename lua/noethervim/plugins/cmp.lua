@@ -30,8 +30,7 @@ return {
 			-- "snippet" (default), "supertab", or "navigate". See
 			-- :help noethervim-completion-style for behaviour and AI-completion notes.
 			keymap = (function()
-				local ok_user, user = pcall(require, "user.config")
-				local style = (ok_user and type(user) == "table" and user.completion_style)
+				local style = require("noethervim.config").get().completion_style
 					or vim.g.noethervim_completion_style
 					or "snippet"
 				local base = {
@@ -340,10 +339,9 @@ return {
 				if vim.api.nvim_win_get_config(win).relative ~= "" then return end
 				if vim.bo.buftype ~= "" then return end
 
-				local ok_user, user   = pcall(require, "user.config")
-				local has_cfg         = ok_user and type(user) == "table"
-				local conservative_ft = (has_cfg and user.blink_conservative_filetypes) or { "tex", "latex" }
-				local size_limit      = ((has_cfg and user.blink_conservative_size_kb) or 500) * 1024
+				local user            = require("noethervim.config").get()
+				local conservative_ft = user.blink_conservative_filetypes or { "tex", "latex" }
+				local size_limit      = (user.blink_conservative_size_kb or 500) * 1024
 
 				for _, ft in ipairs(conservative_ft) do
 					if vim.bo.filetype == ft then

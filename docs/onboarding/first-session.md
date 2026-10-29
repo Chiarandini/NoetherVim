@@ -229,7 +229,8 @@ For a full overview of Noethervim, see `:help noethervim`
 - Run `:checkhealth noethervim` first. Most first-launch problems are a
   missing external tool, and it names them.
 - To tell whether a problem is yours or the distribution's, start with
-  `NOETHERVIM_NO_USER=1 nvim`, which skips every file in `lua/user/`.
+  `NOETHERVIM_NO_USER=1 nvim`, which runs nothing from your config
+  directory except `init.lua` itself.
 - `:Lazy` shows plugin status and load times. A bundle enabled in step 6 that
   never installed will be visible there.
 - `:messages` holds anything that scrolled past during startup. Errors often

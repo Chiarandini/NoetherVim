@@ -47,8 +47,8 @@ M.q_close = {
   "neotest-attach",
 }
 
-local ok_cfg, user_cfg = pcall(require, "user.config")
-if ok_cfg and type(user_cfg) == "table" then
+do
+  local user_cfg = require("noethervim.config").get()
   for _, ft in ipairs(user_cfg.writing_filetypes or {}) do
     M.writing[ft] = true
   end

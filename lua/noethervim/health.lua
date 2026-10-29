@@ -609,10 +609,11 @@ function M.check()
     h.info("No user plugins dir (optional) -- add plugins to " .. user_plugins)
   end
 
-  local ok_cfg, user_cfg = pcall(require, "user.config")
-  if ok_cfg and type(user_cfg) ~= "table" then
-    h.warn("lua/user/config.lua must return a table (got " .. type(user_cfg) .. ") -- see templates/user/config.example.lua")
-  elseif ok_cfg and type(user_cfg) == "table" then
+  local config = require("noethervim.config")
+  if config.user_off() then
+    h.info("Clean room: the user layer is off (NOETHERVIM_NO_USER), so lua/user/config.lua is not read")
+  else
+    local user_cfg = config.get()
     local cfg_validator = require("noethervim.util.config")
     local errors, unknowns = cfg_validator.validate_user_config(user_cfg)
     for _, err in ipairs(errors) do h.warn(err) end
@@ -643,9 +644,7 @@ function M.check()
       .. "Set colorscheme_persistence = false to make the config file authoritative.")
   end
 
-  local obsidian_vault = (function()
-    return ok_cfg and type(user_cfg) == "table" and user_cfg.obsidian_vault or nil
-  end)()
+  local obsidian_vault = require("noethervim.config").get().obsidian_vault
   if obsidian_vault then
     if vim.uv.fs_stat(vim.fn.expand(obsidian_vault)) then
       h.ok("Obsidian vault found: " .. obsidian_vault)

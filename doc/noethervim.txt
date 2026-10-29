@@ -1303,10 +1303,11 @@ Environment variable (before starting Neovim): >bash
 Vim global (set in init.lua before lazy.setup): >lua
     vim.g.noethervim_no_user = true
 <
-When active, all `user/` module hooks, LSP overrides, and
-`user/overrides/` files are skipped. Plugin spec merging from
-`user/plugins/` is also skipped (via the conditional import in
-init.lua.example).
+When active, nothing in your config directory runs or is read except
+`init.lua` itself: no `lua/user/` file, no spec from `user/plugins/` (the
+conditional import in init.lua.example), none of your `plugin/`,
+`after/` or `ftplugin/` files, and none of your LuaSnip snippets,
+preamble library or spellfile. `:checkhealth noethervim` says so.
 
 This is NOT a runtime toggle; restart Neovim to apply.
 
