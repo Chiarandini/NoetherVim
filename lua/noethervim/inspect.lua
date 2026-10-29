@@ -1861,6 +1861,7 @@ local subcommand_descriptions = {
   diff              = "Compare overrides vs distro defaults (keymaps / options / autocmds / module)",
   override          = "Open the user override file matching the current buffer (! copies it wholesale)",
   ["debug-keymaps"] = "Trace where each keymap was registered",
+  where             = "Who maps a key, and the line that changes it: `where <key>`",
 }
 
 --- Each entry receives (arg, bang). Only `override` reads the bang so far;
@@ -1878,6 +1879,7 @@ local subcommands = {
   diff              = function(args) M.diff(args) end,
   override          = M.override,
   ["debug-keymaps"] = function() M.debug_keymaps() end,
+  where             = function(arg) require("noethervim.inspect.where").key(arg) end,
 }
 
 local subcommand_names = vim.tbl_keys(subcommands)
