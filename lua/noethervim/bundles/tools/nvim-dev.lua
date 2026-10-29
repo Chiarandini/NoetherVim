@@ -28,9 +28,7 @@ return {
 	{
 		"dstein64/vim-startuptime",
 		cmd  = "StartupTime",
-		init = function()
-			vim.g.startuptime_tries = 10
-		end,
+		specs = { { "NoetherVim", optional = true, opts = { g = { startuptime_tries = 10 } } } },
 	},
 	{ -- interactive Lua scratchpad
 		"rafcamlet/nvim-luapad",

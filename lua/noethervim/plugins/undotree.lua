@@ -13,14 +13,15 @@ return {
 	{
 		"mbbill/undotree",
 		cmd = { "UndotreeToggle", "UndotreeShow", "UndotreeHide", "UndotreeFocus" },
-		init = function()
-			-- Layout: tree on the left, diff pane below it, both 30 cols wide.
-			vim.g.undotree_WindowLayout       = 2
-			vim.g.undotree_SplitWidth         = 30
-			vim.g.undotree_DiffpanelHeight    = 12
-			vim.g.undotree_SetFocusWhenToggle = 1
-			vim.g.undotree_ShortIndicators    = 1
-			vim.g.undotree_HelpLine           = 0
-		end,
+		-- Layout: tree on the left, diff pane below it, both 30 cols wide.
+		-- Plugin globals as `g` data: set at startup unless you set them.
+		specs = { { "NoetherVim", optional = true, opts = { g = {
+			undotree_WindowLayout       = 2,
+			undotree_SplitWidth         = 30,
+			undotree_DiffpanelHeight    = 12,
+			undotree_SetFocusWhenToggle = 1,
+			undotree_ShortIndicators    = 1,
+			undotree_HelpLine           = 0,
+		} } } },
 	},
 }

@@ -10,10 +10,9 @@ return {
 	{ -- vim-matchup: smarter % matching
 		"andymass/vim-matchup",
 		event = "BufReadPost",
-		init = function()
-			-- may set any options here
-			vim.g.matchup_matchparen_offscreen = { method = "popup" }
-		end,
+		specs = { { "NoetherVim", optional = true, opts = { g = {
+			matchup_matchparen_offscreen = { method = "popup" },
+		} } } },
 	},
 
 

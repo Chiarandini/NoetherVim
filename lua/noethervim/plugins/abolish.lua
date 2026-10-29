@@ -60,19 +60,21 @@ return {
   "Chiarandini/vim-abolish",
   commit = "e79c5b2",
   event = "VeryLazy",
-  specs = {
-    { "NoetherVim", optional = true, opts = { g = { abolish_no_mappings = 1 } } },
-    { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("vim-abolish", {
-      { "cr", "<Plug>(abolish-coerce-word)", desc = "coerce the word's case (crs, crc, cru, ...)" },
-    }) },
-  },
-  init = function()
-    vim.g.abolish_default_expr = "NoetherAbolishSpell"
-    vim.cmd([[
-      function! NoetherAbolishSpell(typo, correction) abort
-        return luaeval('require("noethervim.abolish_ctx").in_spell_region()')
-              \ ? a:correction : a:typo
-      endfunction
-    ]])
-  end,
+  specs = { { "NoetherVim", optional = true, opts = {
+    g = { abolish_default_expr = "NoetherAbolishSpell", abolish_no_mappings = 1 },
+    -- The gate every :Abolish line is registered with; it has to exist
+    -- whatever replaces this spec's config.
+    startup = {
+      ["abolish.spell-gate"] = function()
+        vim.cmd([[
+          function! NoetherAbolishSpell(typo, correction) abort
+            return luaeval('require("noethervim.abolish_ctx").in_spell_region()')
+                  \ ? a:correction : a:typo
+          endfunction
+        ]])
+      end,
+    },
+  } }, { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("vim-abolish", {
+    { "cr", "<Plug>(abolish-coerce-word)", desc = "coerce the word's case (crs, crc, cru, ...)" },
+  }) } },
 }

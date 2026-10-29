@@ -120,12 +120,9 @@ return {
   {
     "lervag/vimtex",
     lazy = false,
-    -- LaTeX globals -- must be set before vimtex loads.
-    init = function()
-      vim.g.tex_conceal = "abdgm"
-      vim.g.tex_flavor  = "latex"
-    end,
+    -- LaTeX globals, set before vimtex loads.
     specs = {
+      { "NoetherVim", optional = true, opts = { g = { tex_conceal = "abdgm", tex_flavor = "latex" } } },
       { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("vimtex", {
         -- yP: copy compiled PDF to clipboard
         { "yP", function()

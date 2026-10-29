@@ -12,6 +12,9 @@
 --      would run them a second time, unsigned.
 -- R7   A `config` function that calls setup() passes it the spec's opts, so
 --      `opts` from a user's spec reach the plugin.
+-- R6   No `init` in a distro spec. It runs before NoetherVim's setup(), so
+--      nothing it writes can step aside for the user; plugin globals go in
+--      the NoetherVim fragment's `g`, code in its `startup`.
 -- KEYS No lazy.nvim `keys` list in a distro spec. lazy maps those again each
 --      time the plugin loads, over the user's own keys; distro keys are rows
 --      (lua/noethervim/keymaps/rows.lua).
@@ -40,6 +43,12 @@ local USER_TREE_OK = {
   ["util/init.lua"] = true,
   -- the SearchLeader+c pickers, which open the config directory on request
   ["plugins/snacks.lua"] = true,
+}
+
+-- R6 exceptions, each with the phase that removes it.
+local INIT_OK = {
+  -- the directory shim that lazy-loads oil; oil becomes eager in 1c
+  ["plugins/oil.lua"] = true,
 }
 
 local hits = {}
@@ -81,6 +90,12 @@ for _, rel in ipairs(files()) do
     end
 
     local spec_file = vim.startswith(rel, "plugins/") or vim.startswith(rel, "bundles/")
+
+    -- R6: a spec init. Heirline components take `self`; a spec's init
+    -- takes the plugin, which distro specs never use.
+    if spec_file and not INIT_OK[rel] and code:find("^%s*init%s*=%s*function%s*%(%s*%)") then
+      hit(rel, i, "R6", "spec init runs before setup(); use the NoetherVim fragment's `g` or `startup`")
+    end
 
     -- KEYS: `keys = {` opening a list of key specs, `{ "lhs", ... }`
     if spec_file and code:find("keys%s*=%s*{") then

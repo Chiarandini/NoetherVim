@@ -90,20 +90,22 @@ return {
     opts = {
       image = { enabled = true },
     },
-    init = function()
-      vim.api.nvim_create_autocmd("FileType", {
-        group = vim.api.nvim_create_augroup("noethervim_markdown_image_scope", { clear = true }),
-        callback = function(ev)
-          local lang = vim.treesitter.language.get_lang(vim.bo[ev.buf].filetype)
-          if lang ~= "markdown" then
-            vim.b[ev.buf].snacks_image_attached = true
-            -- Second marker so `[om` can tell "held back here" from "already
-            -- rendering", which the Snacks flag alone reads the same way.
-            vim.b[ev.buf].noethervim_image_scoped = true
-          end
-        end,
-      })
-    end,
+    specs = { { "NoetherVim", optional = true, opts = { startup = {
+      ["markdown.image-scope"] = function()
+        vim.api.nvim_create_autocmd("FileType", {
+          group = vim.api.nvim_create_augroup("noethervim_markdown_image_scope", { clear = true }),
+          callback = function(ev)
+            local lang = vim.treesitter.language.get_lang(vim.bo[ev.buf].filetype)
+            if lang ~= "markdown" then
+              vim.b[ev.buf].snacks_image_attached = true
+              -- Second marker so `[om` can tell "held back here" from "already
+              -- rendering", which the Snacks flag alone reads the same way.
+              vim.b[ev.buf].noethervim_image_scoped = true
+            end
+          end,
+        })
+      end,
+    } } } },
   },
 
   -- ── treesitter: latex parser ──────────────────────────────────────────────

@@ -39,9 +39,7 @@ return {
 				lazy = true,
 			},
 		},
-		init = function()
-			vim.g.db_ui_use_nerd_fonts = 1
-		end,
+		specs = { { "NoetherVim", optional = true, opts = { g = { db_ui_use_nerd_fonts = 1 } } } },
 	},
 
 	-- blink.cmp source for SQL completion

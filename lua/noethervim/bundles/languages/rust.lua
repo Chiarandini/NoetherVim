@@ -64,35 +64,31 @@ return {
 		"mrcjkb/rustaceanvim",
 		version = "^6",
 
-		init = function()
-			-- rustaceanvim reads this global once and has no setup() to merge
-			-- with, so a user config that sets it owns the whole table. Only
-			-- fill it in when nobody else has.
-			if vim.g.rustaceanvim ~= nil then return end
+		-- rustaceanvim reads this global once and has no setup() to merge
+		-- with, so a user config that sets it owns the whole table: `g` data
+		-- is only set while nobody else has.
+		specs = { { "NoetherVim", optional = true, opts = { g = { rustaceanvim = {
+			server = {
+				---@param project_root string|nil
+				---@param default_settings table|nil
+				settings = function(project_root, default_settings)
+					local settings = require("rustaceanvim.config.server")
+						.load_rust_analyzer_settings(project_root, { default_settings = default_settings })
 
-			vim.g.rustaceanvim = {
-				server = {
-					---@param project_root string|nil
-					---@param default_settings table|nil
-					settings = function(project_root, default_settings)
-						local settings = require("rustaceanvim.config.server")
-							.load_rust_analyzer_settings(project_root, { default_settings = default_settings })
-
-						-- A .rs file with no crate around it starts rust-analyzer
-						-- detached, and `cargo check` cannot work there: cargo
-						-- treats the lone file as a single-file package and drives
-						-- rustc with nightly-only flags, so on a stable toolchain
-						-- every save answers with a compiler backtrace. Opening a
-						-- scratch file should be quiet.
-						if not project_root then
-							settings["rust-analyzer"] = settings["rust-analyzer"] or {}
-							settings["rust-analyzer"].checkOnSave = false
-						end
-						return settings
-					end,
-				},
-			}
-		end,
+					-- A .rs file with no crate around it starts rust-analyzer
+					-- detached, and `cargo check` cannot work there: cargo
+					-- treats the lone file as a single-file package and drives
+					-- rustc with nightly-only flags, so on a stable toolchain
+					-- every save answers with a compiler backtrace. Opening a
+					-- scratch file should be quiet.
+					if not project_root then
+						settings["rust-analyzer"] = settings["rust-analyzer"] or {}
+						settings["rust-analyzer"].checkOnSave = false
+					end
+					return settings
+				end,
+			},
+		} } } } },
 
 		-- Upstream's own guidance ("this plugin is already lazy"): rustaceanvim
 		-- does all its work from ftplugin files, so loading it is little more
