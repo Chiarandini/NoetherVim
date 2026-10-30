@@ -31,6 +31,8 @@ return {
 		-- a directory buffer exists, `nvim .` included.
 		lazy = true,
 		config = function(_, opts)
+			-- Read before setup(), which renames a directory buffer to oil://.
+			local cur = vim.api.nvim_buf_get_name(0)
 			local oil = require("oil")
 			oil.setup(opts)
 
@@ -40,7 +42,6 @@ return {
 			-- which holds the main thread for a few hundred ms; the listing
 			-- would paint after it. Opening it here and waiting for the first
 			-- render shows it first and the wave streams in behind.
-			local cur = vim.api.nvim_buf_get_name(0)
 			if vim.v.vim_did_enter == 0 and cur ~= "" and vim.fn.isdirectory(cur) == 1 then
 				local painted = false
 				local au = vim.api.nvim_create_autocmd("User", {
