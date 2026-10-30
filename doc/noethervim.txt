@@ -962,7 +962,7 @@ Available bundles (grouped by category): ~
                      Switching themes (SearchLeader+C), persistence and
                      highlight tweaks are core features and work without
                      this bundle. See |noethervim-colorscheme-tweaks|.
-    `eye-candy`      Animations, scrollbar, code block visualizer.
+    `eye-candy`      Animations and a diagnostics scrollbar.
     `minimap`        Sidebar minimap with diagnostics and git signs.
     `helpview`       Rendered :help pages.
     `tableaux`       noethervim-tableaux: animated mathematical dashboard

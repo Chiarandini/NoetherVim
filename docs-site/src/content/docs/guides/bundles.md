@@ -439,7 +439,7 @@ Breadth only. The theming machinery lives in core and keeps working without this
 
 ### `eye-candy`
 
-Optional visual extras: a scrollbar carrying LSP diagnostic marks, seasonal falling animations, a code block visualizer, and CellularAutomaton for when a file deserves to be dissolved.
+Optional visual extras: a scrollbar carrying LSP diagnostic marks, seasonal falling animations, and CellularAutomaton for when a file deserves to be dissolved.
 
 ```lua
 { import = "noethervim.bundles.ui.eye-candy" }

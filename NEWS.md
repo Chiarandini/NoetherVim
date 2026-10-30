@@ -6,6 +6,9 @@ where they are listed.
 
 ## 2026-10-30
 
+- **block.nvim left the eye-candy bundle, and `[oB`/`]oB` with it:** on
+  Neovim 0.12 it fails in any buffer without a tree-sitter parser, and it
+  is no longer maintained. Nothing replaces it.
 - **`profiles.conservative` is a filetype map, like `q_close`:** write
   `conservative = { tex = false, markdown = true, size_kb = 500 }`; `true`
   adds a filetype and `false` removes one; tex is the default.

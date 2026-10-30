@@ -1,8 +1,8 @@
 ---@bundle eye-candy
----@desc animations, scrollbar and block visualizer
+---@desc animations and a diagnostics scrollbar
 ---@about Optional visual extras: a scrollbar carrying LSP diagnostic marks,
----       seasonal falling animations, a code block visualizer, and
----       CellularAutomaton for when a file deserves to be dissolved.
+---       seasonal falling animations, and CellularAutomaton for when a
+---       file deserves to be dissolved.
 ---@requires none
 -- NoetherVim bundle: Eye Candy
 -- Enable with: { import = "noethervim.bundles.ui.eye-candy" }
@@ -11,7 +11,6 @@
 --   cellular-automaton:     CellularAutomaton  (fun code animations)
 --   drop.nvim:              seasonal / time-of-day falling animations
 --   nvim-scrollbar:         side scrollbar with LSP diagnostics overlay
---   block.nvim:             :Block / :BlockOn / :BlockOff  (code block visualizer)
 --
 -- Turn drop.nvim off with { "folke/drop.nvim", enabled = false } in
 -- lua/user/plugins/.
@@ -99,15 +98,5 @@ return {
 				"snacks_dashboard",
 			},
 		},
-	},
-
-	{
-		"HampusHauffman/block.nvim",
-		cmd = { "Block", "BlockOn", "BlockOff" },
-		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("block.nvim", {
-			{ "[oB", "<cmd>BlockOn<cr>",  desc = "block on" },
-			{ "]oB", "<cmd>BlockOff<cr>", desc = "block off" },
-		}) } },
-		config = true,
 	},
 }
