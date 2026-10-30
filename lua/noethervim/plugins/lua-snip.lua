@@ -97,10 +97,11 @@ return {
 			if has_snippet_state() then
 				stop_all_and_report()
 			else
-				-- 'i': ahead of anything already in the typeahead, so the
-				-- replayed key lands where it was pressed. 'n' so it is not fed
-				-- back through this mapping.
-				vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-u>", true, false, true), "ni", false)
+				-- Neovim's own <C-u>, undo point included. 'i': ahead of
+				-- anything already in the typeahead, so the replayed key lands
+				-- where it was pressed. 'n' so it is not fed back through this
+				-- mapping.
+				vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-g>u<C-u>", true, false, true), "ni", false)
 			end
 		end, mode = "i", desc = "stop all snippets, else delete entered text" },
 		{ "<c-u>", stop_all_and_report, mode = "s", desc = "stop all snippets" },
