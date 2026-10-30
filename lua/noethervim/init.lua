@@ -178,11 +178,6 @@ function M.setup(opts)
     if vim.g[name] == nil then vim.g[name] = value end
   end
 
-  -- What clicking a unit's sign does, by sign-name pattern (util/gutter.lua).
-  for pattern, handler in pairs(M._host.gutter or {}) do
-    if handler then require("noethervim.util.gutter").register(pattern, handler) end
-  end
-
   -- The statusline's data: your `statusline` settings, and the segments
   -- and busy entries units declared. Whatever draws the bar reads them.
   local statusline = require("noethervim.statusline")
@@ -264,8 +259,9 @@ function M.setup(opts)
   source("highlights.lua")
 
   -- A bundle that recommends itself for a filetype is offered once, on the
-  -- first buffer of that filetype, in an install without it.
-  require("noethervim.util.recommend").setup()
+  -- first buffer of that filetype, in an install without it. Not in a
+  -- session without a UI, which could not show it.
+  if #vim.api.nvim_list_uis() > 0 then require("noethervim.util.recommend").setup() end
 
   -- Registrations units need from the start, in id order, once NoetherVim
   -- itself is set up.

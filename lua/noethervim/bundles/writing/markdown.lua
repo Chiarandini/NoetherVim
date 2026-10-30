@@ -130,7 +130,7 @@ return {
     specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("snacks.nvim", {
       { "[om", function() image_math(true) end, desc = "enable inline math" },
       { "]om", function() image_math(false) end, desc = "disable inline math" },
-    }) }, { "NoetherVim", optional = true, opts = { startup = {
+    }, { startup = {
       ["markdown.image-scope"] = function()
         vim.api.nvim_create_autocmd("FileType", {
           group = vim.api.nvim_create_augroup("noethervim_markdown_image_scope", { clear = true }),
@@ -145,7 +145,7 @@ return {
           end,
         })
       end,
-    } } } },
+    } }) } },
   },
 
   -- ── treesitter: latex parser ──────────────────────────────────────────────

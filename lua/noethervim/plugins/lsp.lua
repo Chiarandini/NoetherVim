@@ -258,7 +258,11 @@ return {
 		-- buffer can ask before any file is read. Enabling at startup also
 		-- puts `vim.lsp.enable(name, false)` in lua/user/options.lua last.
 		lazy = false,
-		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("nvim-lspconfig", {
+		-- :LspStart / :LspStop are gone in 0.12 (superseded by :lsp). For [oL, a
+		-- bare `:lsp enable` enables every config matching the buffer's
+		-- filetype; a bare `:lsp disable`, every config attached to the buffer.
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("nvim-lspconfig", vim.list_extend(
+			require("noethervim.toggles").rows("oL", "<cmd>lsp enable<cr>", "<cmd>lsp disable<cr>", "lsp"), {
 			{
 				"<c-w><c-l>",
 				function()
@@ -301,12 +305,7 @@ return {
 			{ SearchLeader .. "li", function() vim.lsp.buf.incoming_calls() end, lsp = "callHierarchy/incomingCalls", set = "lsp", silent = true, desc = "[l]sp [i]ncoming calls" },
 			{ SearchLeader .. "lO", function() vim.lsp.buf.outgoing_calls() end, lsp = "callHierarchy/outgoingCalls", set = "lsp", silent = true, desc = "[l]sp [O]utgoing calls" },
 			{ "gy",    yank_type, lsp = "textDocument/hover", set = "lsp", silent = true, desc = "[y]ank type at cursor" },
-		}) },
-			-- :LspStart / :LspStop are gone in 0.12 (superseded by :lsp). A bare
-			-- `:lsp enable` enables every config matching the buffer's filetype;
-			-- a bare `:lsp disable`, every config attached to the buffer.
-			{ "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("nvim-lspconfig",
-				require("noethervim.toggles").rows("oL", "<cmd>lsp enable<cr>", "<cmd>lsp disable<cr>", "lsp")) },
+		})) },
 			{ "which-key.nvim", optional = true, opts = require("noethervim.util").labels({
 				{ "<leader>f", icon = { icon = require("noethervim.util").icons.format, color = "red" }, group = "format" },
 			}) },

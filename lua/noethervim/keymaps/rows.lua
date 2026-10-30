@@ -317,22 +317,30 @@ function M.owned(owner, rows)
 end
 
 --- The `opts` for a unit's NoetherVim fragment: appends `rows`, stamped
---- with `owner`, to what other units contributed.
+--- with `owner`, to what other units contributed, and merges `sections`
+--- (`g`, `startup`, `segments`, `busy`, `gutter`, each keyed by name) over
+--- theirs.
 ---
 ---   specs = { { "NoetherVim", optional = true,
 ---     opts = require("noethervim.keymaps.rows").contribute("nvim-ufo", { ... }) } }
 ---
 --- A function rather than a table: lazy.nvim's `opts_extend` only reaches
 --- fragments merged after the one that declares it, and a unit's spec can
---- be read before NoetherVim's own.
+--- be read before NoetherVim's own. One fragment per unit rather than one
+--- per section: lazy.nvim chains a plugin's fragments as metatables, so each
+--- one makes every later lookup on NoetherVim's spec a step longer.
 ---@param owner string lazy.nvim name of the anchor plugin
 ---@param rows noethervim.Row[]
+---@param sections? noethervim.HostOpts
 ---@return fun(plugin: table, opts: noethervim.HostOpts): noethervim.HostOpts
-function M.contribute(owner, rows)
+function M.contribute(owner, rows, sections)
   M.owned(owner, rows)
   return function(_, opts)
     opts.rows = opts.rows or {}
     vim.list_extend(opts.rows, rows)
+    for name, section in pairs(sections or {}) do
+      opts[name] = vim.tbl_extend("force", opts[name] or {}, section)
+    end
     return opts
   end
 end

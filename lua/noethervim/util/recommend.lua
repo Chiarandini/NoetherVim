@@ -119,7 +119,6 @@ end
 
 --- Watch for the first buffer of a filetype a missing bundle asks for.
 function M.setup()
-  if #vim.api.nvim_list_uis() == 0 then return end
   local checked = {} ---@type table<string, true>
   vim.api.nvim_create_autocmd("FileType", {
     group    = vim.api.nvim_create_augroup("noethervim.recommend", { clear = true }),

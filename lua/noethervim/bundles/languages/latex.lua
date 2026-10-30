@@ -121,18 +121,9 @@ return {
   {
     "lervag/vimtex",
     lazy = false,
-    -- LaTeX globals, set before vimtex loads.
+    -- Its keys, the LaTeX globals (set before vimtex loads), and the compile
+    -- state and PDF size in the statusline.
     specs = {
-      { "NoetherVim", optional = true, opts = { g = { tex_conceal = "abdgm", tex_flavor = "latex" } } },
-      -- The compile state and PDF size in the statusline, and the key that
-      -- shows the size (the pdf preset, `<C-w>s<C-p>`, shows it too).
-      { "NoetherVim", optional = true, opts = { segments = require("noethervim.lib.latex.status").segments() } },
-      { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("vimtex", {
-        { "<c-w>sp", function()
-            require("noethervim.statusline").toggle("latex.pdfsize")
-            vim.cmd.redrawstatus()
-          end, desc = "statusline pdf-size toggle" },
-      }) },
       { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("vimtex", {
         -- yP: copy compiled PDF to clipboard
         { "yP", function()
@@ -141,6 +132,27 @@ return {
           end, ft = { "tex", "latex" }, desc = "yank PDF to clipboard" },
         { "<localleader>vw", "<Cmd>VimtexCountWords<CR>", ft = { "tex", "latex" }, silent = true,
           desc = "vimtex word count" },
+        -- The PDF size; the pdf preset (`<C-w>s<C-p>`) shows it too.
+        { "<c-w>sp", function()
+            require("noethervim.statusline").toggle("latex.pdfsize")
+            vim.cmd.redrawstatus()
+          end, desc = "statusline pdf-size toggle" },
+      }, {
+        g = { tex_conceal = "abdgm", tex_flavor = "latex" },
+        -- lib/latex/status.lua loads on the first draw, not while specs are read.
+        segments = {
+          ["latex.compile"] = {
+            place    = { side = "right", after = "latex.pdfsize" },
+            provider = function(ctx) return require("noethervim.lib.latex.status").compile(ctx) end,
+          },
+          -- Hidden until `<C-w>sp` or the pdf preset shows it.
+          ["latex.pdfsize"] = {
+            place    = { side = "right" },
+            hl       = "Comment",
+            cond     = function(ctx) return require("noethervim.lib.latex.status").pdf_filetype(ctx) end,
+            provider = function(ctx) return require("noethervim.lib.latex.status").pdfsize(ctx) end,
+          },
+        },
       }) },
     },
     config = function()

@@ -8,7 +8,7 @@
 --- what happens when the region is clicked.
 ---
 --- A unit hands its handler to NoetherVim's spec, keyed by a Lua pattern
---- matched against the sign name, and setup() registers it:
+--- matched against the sign name, and a click looks it up there:
 ---
 ---   specs = { { "NoetherVim", optional = true, opts = { gutter = {
 ---     ["^neotest_"] = function(ctx) ... end,
@@ -34,8 +34,8 @@ local M = {}
 ---@type table[]
 local handlers = {}
 
---- Register a handler for signs whose name matches `pattern`. setup() calls
---- it for each entry in the `gutter` section of NoetherVim's spec.
+--- Register a handler for signs whose name matches `pattern`, beside the
+--- `gutter` section of NoetherVim's spec.
 ---@param pattern string  Lua pattern matched against the sign name
 ---@param fn fun(ctx: noethervim.GutterClick)
 function M.register(pattern, fn)
@@ -76,7 +76,11 @@ function M.on_click(_, clicks, button, mods)
   local buf = vim.api.nvim_win_get_buf(pos.winid)
   local sign = drawn_sign(buf, pos.line)
   if not sign then return end
-  for _, handler in ipairs(handlers) do
+  local all = vim.deepcopy(handlers)
+  for pattern, fn in pairs(require("noethervim")._host.gutter or {}) do
+    if fn then table.insert(all, { pattern, fn }) end
+  end
+  for _, handler in ipairs(all) do
     if sign.name:match(handler[1]) then
       return handler[2]({
         buf    = buf,
