@@ -1,4 +1,4 @@
--- noethervim.util.latex_labels
+-- noethervim.lib.latex.labels
 --
 -- Label navigation and completion documentation for the latex bundle,
 -- built on the label cache maintained by snacks-latex-labels /

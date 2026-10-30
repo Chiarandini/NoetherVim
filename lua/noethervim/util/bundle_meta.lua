@@ -59,6 +59,9 @@ local MAX_HEADER_LINES = 60
 ---@field desc? string   one line for the bundles picker
 ---@field about? string  prose for the docs site; falls back to `desc`
 ---@field declared_name? string  the `@bundle` value, checked against the filename
+---@field recommended? string[]  filetypes whose first buffer, in an install
+---                              without the bundle, offers it once
+---                              (`---@recommended ft=tex,plaintex`)
 ---@field requires noethervim.BundleRequirement[]
 ---@field errors string[]  malformed annotation lines, reported by health
 
@@ -153,6 +156,10 @@ function M.parse(path, name, category)
       elseif tag == 'desc' or tag == 'about' or tag == 'requires' then
         flush()
         pending = { tag = tag, text = rest, lnum = lnum }
+      elseif tag == 'recommended' then
+        flush()
+        local ft = parse_fields(rest).ft
+        acc.recommended = ft and vim.split(ft, ',', { trimempty = true }) or nil
       elseif tag then
         flush()
       elseif pending then

@@ -263,6 +263,10 @@ function M.setup(opts)
   end
   source("highlights.lua")
 
+  -- A bundle that recommends itself for a filetype is offered once, on the
+  -- first buffer of that filetype, in an install without it.
+  require("noethervim.util.recommend").setup()
+
   -- Registrations units need from the start, in id order, once NoetherVim
   -- itself is set up.
   local startup = M._host.startup or {}

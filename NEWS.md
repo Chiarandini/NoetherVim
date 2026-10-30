@@ -6,6 +6,9 @@ where they are listed.
 
 ## 2026-10-30
 
+- **A TeX file offers the latex bundle once:** in an install without it, the
+  first TeX buffer opens a window saying what the bundle adds; `<CR>` shows
+  the `init.lua` change that enables it, `<Esc>` closes it for good.
 - **The statusline is built from segments, by id:** rename these keys in
   `statusline` in `lua/user/config.lua`.
   - `edge_style`, `colors`, `mode_background`, `tab_modified_indicator` and

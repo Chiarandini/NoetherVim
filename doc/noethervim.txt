@@ -804,7 +804,7 @@ Contributor: ~
     the sections of `{ "NoetherVim", optional = true }` fragments:
     `rows`, `g`, `startup`, `gutter`, `segments`, `busy`
     the bundle header tags (`---@bundle`, `---@desc`, `---@about`,
-    `---@requires`)
+    `---@requires`, `---@recommended`)
 
 ==============================================================================
 5. BUNDLES                                 *noethervim-bundles* *neothervim-bundles*
@@ -816,6 +816,11 @@ template, enable them by uncommenting the corresponding `import` line in your
     { import = "noethervim.bundles.languages.latex" },
     { import = "noethervim.bundles.tools.debug" },
 <
+The first time you open a TeX file in an install without the latex
+bundle, a window offers it, once: it says what the bundle adds, `<CR>`
+shows the change to `init.lua` that enables it (nothing is written
+without your go-ahead), and `<Esc>` closes it for good.
+
                                             *noethervim-bundle-toggle*
 You can also toggle bundles from the picker without editing `init.lua`
 by hand. Open `:NoetherVim bundles` (or SearchLeader+cb) and:

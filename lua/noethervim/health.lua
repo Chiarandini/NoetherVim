@@ -82,7 +82,6 @@ function M.check()
       end
     end
   end
-  local function bundle_active(name) return active_bundles[name] == true end
 
   -- ── Neovim version ──────────────────────────────────────────────────
   h.start("Neovim version")
@@ -219,63 +218,13 @@ function M.check()
   end
 
   -- ── LaTeX (only when bundle is enabled) ──────────────────────────────
-  -- Skip the whole section when the latex bundle isn't active, otherwise
-  -- users without LaTeX get noise about missing latexmk / parsers.
-  if bundle_active("languages.latex") or bundle_active("writing.zotero") then
-    -- latexmk and pdflatex are covered by the bundle's `@requires`
-    -- annotation above. What is left here is the checks that annotation
-    -- cannot express: cross-platform PDF viewer discovery, and whether the
-    -- treesitter parser can actually be built.
-    h.start("LaTeX (noethervim.bundles.languages.latex / core vimtex)")
-
-    -- PDF viewer detection. macOS apps live in /Applications and are not
-    -- on PATH, so executable() always fails for them -- must fs_stat the
-    -- .app bundle directly.
-    if vim.fn.has("mac") == 1 then
-      local mac_apps = { "Skim.app", "Preview.app" }
-      local found
-      for _, app in ipairs(mac_apps) do
-        if vim.uv.fs_stat("/Applications/" .. app) then found = app; break end
-      end
-      if found then
-        h.ok("PDF viewer (" .. found .. ")")
-      else
-        h.warn("no PDF viewer found in /Applications -- tried: " .. table.concat(mac_apps, ", "))
-      end
-    else
-      local viewers
-      if vim.fn.has("win32") == 1 then
-        viewers = { "SumatraPDF", "SumatraPDF.exe" }
-      else
-        viewers = { "zathura", "okular", "sioyek", "evince" }
-      end
-      local found
-      for _, viewer in ipairs(viewers) do
-        if vim.fn.executable(viewer) == 1 then found = viewer; break end
-      end
-      if found then
-        h.ok("PDF viewer (" .. found .. ")")
-      else
-        h.warn("no PDF viewer found -- tried: " .. table.concat(viewers, ", "))
-      end
-    end
-
-    -- Treesitter latex parser: nvim-treesitter marks this parser as requiring
-    -- tree-sitter generate, but NoetherVim overrides that so only a C compiler
-    -- is needed. Check that cc is available and the parser is installed.
-    if vim.fn.executable("cc") == 1 then
-      h.ok("cc (C compiler -- required for :TSInstall latex)")
-    else
-      h.error("cc not found -- needed to compile the latex treesitter parser (:TSInstall latex)")
-    end
-    -- nvim-treesitter's main branch installs parsers to stdpath("data")/site/parser/,
-    -- the master branch to lazy/nvim-treesitter/parser/. Use rtp lookup so the
-    -- check works regardless of branch / install layout.
-    if #vim.api.nvim_get_runtime_file("parser/latex.so", false) > 0 then
-      h.ok("latex treesitter parser installed")
-    else
-      h.warn("latex treesitter parser not installed -- run :TSInstall latex")
-    end
+  -- A unit's own checks live with it, in lua/noethervim/lib/<unit>/health.lua,
+  -- which returns a function taking vim.health; each reports only when its
+  -- unit is enabled.
+  for _, file in ipairs(vim.api.nvim_get_runtime_file("lua/noethervim/lib/*/health.lua", true)) do
+    local unit = file:match("lib/([^/]+)/health%.lua$")
+    local ok, check = pcall(require, "noethervim.lib." .. unit .. ".health")
+    if ok and type(check) == "function" then check(h) end
   end
 
   -- ── Snippets ──────────────────────────────────────────────────────────

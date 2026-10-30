@@ -14,6 +14,7 @@
 ---@requires exe=pngpaste label="pngpaste"
 ---          why="pasting images from the clipboard on macOS"
 ---          install="brew install pngpaste" optional=true
+---@recommended ft=tex
 -- NoetherVim bundle: LaTeX
 -- Enable with: { import = "noethervim.bundles.languages.latex" }
 --
@@ -125,7 +126,7 @@ return {
       { "NoetherVim", optional = true, opts = { g = { tex_conceal = "abdgm", tex_flavor = "latex" } } },
       -- The compile state and PDF size in the statusline, and the key that
       -- shows the size (the pdf preset, `<C-w>s<C-p>`, shows it too).
-      { "NoetherVim", optional = true, opts = { segments = require("noethervim.util.vimtex_status").segments() } },
+      { "NoetherVim", optional = true, opts = { segments = require("noethervim.lib.latex.status").segments() } },
       { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("vimtex", {
         { "<c-w>sp", function()
             require("noethervim.statusline").toggle("latex.pdfsize")
@@ -135,7 +136,7 @@ return {
       { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("vimtex", {
         -- yP: copy compiled PDF to clipboard
         { "yP", function()
-            require("noethervim.util.copy_pdf").copy_pdf_to_clipboard()
+            require("noethervim.lib.latex.copy_pdf").copy_pdf_to_clipboard()
             vim.notify("yanked pdf")
           end, ft = { "tex", "latex" }, desc = "yank PDF to clipboard" },
         { "<localleader>vw", "<Cmd>VimtexCountWords<CR>", ft = { "tex", "latex" }, silent = true,
@@ -262,7 +263,7 @@ return {
           -- transition. Forwarding its User events into a redrawstatus +
           -- baseline cache update keeps the statusline crisp and lets the
           -- next compile show a rough completion percentage.
-          local vstatus  = require("noethervim.util.vimtex_status")
+          local vstatus  = require("noethervim.lib.latex.status")
           local vt_group = vim.api.nvim_create_augroup("noethervim_vimtex_status", { clear = true })
 
           ---@type table<string, integer>  state.tex -> compile start (ms)
@@ -411,7 +412,7 @@ return {
           -- <localleader>lk maps to <plug>(vimtex-stop), which calls
           -- vimtex#compiler#stop() directly, bypassing :VimtexStop.
           local function statusline_refresh()
-            pcall(function() require("noethervim.util.vimtex_status").invalidate() end)
+            pcall(function() require("noethervim.lib.latex.status").invalidate() end)
             pcall(vim.cmd.redrawstatus, { bang = true })
           end
 
@@ -730,7 +731,7 @@ return {
                 return { ":" }
               end,
               resolve = function(_source, item, callback)
-                local labels = require("noethervim.util.latex_labels")
+                local labels = require("noethervim.lib.latex.labels")
                 local label  = item.textEdit and item.textEdit.newText or item.label
                 local entry  = label and labels.find_entry(label)
                 local doc    = entry and labels.documentation(entry)
@@ -831,7 +832,7 @@ return {
       -- language server's definition. A buffer key from an `ft` row stays
       -- when texlab attaches; the generic LSP gd does not replace it.
       { "gd", function()
-          local labels = require("noethervim.util.latex_labels")
+          local labels = require("noethervim.lib.latex.labels")
           local label = labels.label_at_cursor()
           if not label then vim.lsp.buf.definition(); return end
           local entry = labels.find_entry(label)
@@ -878,13 +879,13 @@ return {
       require("snacks_latex_labels").setup(opts)
 
       -- ── <C-]>: goto label definition ─────────────────────────────────────
-      -- Label extraction and cache lookup live in noethervim.util.latex_labels.
+      -- Label extraction and cache lookup live in noethervim.lib.latex.labels.
       -- 'tagfunc' routes <C-]>, <C-w>] and :tag through the same lookup as gd
       -- while pushing the tag stack, so <C-t> jumps back. Both search the
       -- current project's cache first (subfile chains resolve to their
       -- top-level root), then every other cached project.
       local function setup_nav(bufnr)
-        vim.bo[bufnr].tagfunc = "v:lua.require'noethervim.util.latex_labels'.tagfunc"
+        vim.bo[bufnr].tagfunc = "v:lua.require'noethervim.lib.latex.labels'.tagfunc"
       end
 
       -- Wire navigation for buffers opened after this plugin loads.

@@ -18,6 +18,10 @@
 -- KEYS No lazy.nvim `keys` list in a distro spec. lazy maps those again each
 --      time the plugin loads, over the user's own keys; distro keys are rows
 --      (lua/noethervim/keymaps/rows.lua).
+-- TEX  No code outside the latex bundle (bundles/languages/latex.lua and
+--      lib/latex/) names VimTeX: the flagship reaches core only through the
+--      contracts every bundle has (rows, segments, `g`, fragments), so it
+--      proves them. Comments may describe the interplay.
 --
 -- Prints file:line: rule: message for each hit and exits non-zero on any.
 
@@ -110,6 +114,23 @@ for _, rel in ipairs(files()) do
     end
 
     ::continue::
+  end
+end
+
+-- TEX, over the rest of the runtime files the repo ships too.
+local function latex_owned(rel)
+  return rel == "lua/noethervim/bundles/languages/latex.lua" or vim.startswith(rel, "lua/noethervim/lib/latex/")
+end
+for _, top in ipairs({ "lua/noethervim", "ftplugin", "after", "plugin" }) do
+  for name, kind in vim.fs.dir(root .. "/" .. top, { depth = 10 }) do
+    local rel = top .. "/" .. name
+    if kind == "file" and name:sub(-4) == ".lua" and not latex_owned(rel) then
+      for i, line in ipairs(vim.fn.readfile(root .. "/" .. rel)) do
+        if line:gsub("%-%-.*$", ""):lower():find("vimtex", 1, true) then
+          table.insert(hits, ("%s:%d: TEX: names VimTeX outside the latex bundle; reach it through a contract"):format(rel, i))
+        end
+      end
+    end
   end
 end
 
