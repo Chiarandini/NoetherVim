@@ -438,7 +438,9 @@ return {
 			},
 			{
 				"theHamsta/nvim-dap-virtual-text",
-				lazy = true,
+				-- Loaded by nvim-dap, or by [oV / ]oV through these commands.
+				cmd = { "DapVirtualTextEnable", "DapVirtualTextDisable", "DapVirtualTextToggle",
+					"DapVirtualTextForceRefresh" },
 				config = function(_, opts)
 					require("nvim-dap-virtual-text").setup(opts)
 				end,
