@@ -63,7 +63,14 @@ return {
   -- So `:Abolish` works before VeryLazy too: an ftplugin of yours can run
   -- `Abolish -buffer ...` for the session's first buffer.
   cmd = { "Abolish", "Subvert" },
-  specs = { { "NoetherVim", optional = true, opts = {
+  specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("vim-abolish", vim.list_extend({
+    { "cr", "<Plug>(abolish-coerce-word)", desc = "coerce the word's case (crs, crc, cru, ...)" },
+  -- Corrections fire in writing buffers and in comments and @spell regions
+  -- of code. [oA lets them fire anywhere in this buffer; ]oA gates them again.
+  }, require("noethervim.toggles").rows("oA",
+    function() vim.b.noethervim_abolish_force = true end,
+    function() vim.b.noethervim_abolish_force = nil end,
+    "abolish auto-correct in code")), {
     g = { abolish_default_expr = "NoetherAbolishSpell", abolish_no_mappings = 1 },
     -- The gate every :Abolish line is registered with; it has to exist
     -- whatever replaces this spec's config.
@@ -77,12 +84,5 @@ return {
         ]])
       end,
     },
-  } }, { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("vim-abolish", vim.list_extend({
-    { "cr", "<Plug>(abolish-coerce-word)", desc = "coerce the word's case (crs, crc, cru, ...)" },
-  -- Corrections fire in writing buffers and in comments and @spell regions
-  -- of code. [oA lets them fire anywhere in this buffer; ]oA gates them again.
-  }, require("noethervim.toggles").rows("oA",
-    function() vim.b.noethervim_abolish_force = true end,
-    function() vim.b.noethervim_abolish_force = nil end,
-    "abolish auto-correct in code"))) } },
+  }) } },
 }

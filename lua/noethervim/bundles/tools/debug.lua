@@ -466,21 +466,14 @@ return {
 					require("nvim-dap-virtual-text").setup(opts)
 				end,
 			},
-			{
-				"jbyuki/one-small-step-for-vimkind",
-				lazy = true,
-				specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("one-small-step-for-vimkind", { {
-					"<leader>dal",
-					function() require("osv").launch({ port = 8086 }) end,
-					desc = "DAP: attach Lua",
-				} }) } },
-			},
+			{ "jbyuki/one-small-step-for-vimkind", lazy = true },
+			"folke/snacks.nvim",
 		},
 		lazy = true,
 		specs = { { "which-key.nvim", optional = true, opts = require("noethervim.util").labels({
 			{ "<leader>d", icon = { icon = require("noethervim.util").icons.debug, color = "red" }, group = "Debug" },
 			{ require("noethervim.util").search_leader .. "D", icon = { icon = require("noethervim.util").icons.debug, color = "red" }, group = "Debug" },
-		}) }, { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("nvim-dap", vim.list_extend(stepping_keys(), {
+		}) }, { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("nvim-dap", vim.list_extend(vim.list_extend(stepping_keys(), {
 			{ "<leader>db", function() require("dap").toggle_breakpoint()                          end, desc = "DAP: Toggle Breakpoint" },
 			{ "<leader>dc", function()
 				require("dap").clear_breakpoints()
@@ -501,7 +494,28 @@ return {
 			{ "<leader>dq", function() require("dap").close()                                      end, desc = "DAP: Quit" },
 			{ "<leader>dw", function() require("dapui").elements.watches.add(vim.fn.expand("<cword>")) end, desc = "DAP: Watch Word" },
 			{ "<leader>dt", function() require("dap").disconnect()                                 end, desc = "DAP: Disconnect" },
-		})) } },
+			{ "<leader>dal", function() require("osv").launch({ port = 8086 }) end, desc = "DAP: attach Lua",
+				owner = "one-small-step-for-vimkind" },
+			-- Snacks pickers over DAP state (see dap_pickers above).
+			{ SearchLeader .. "Dc", function() dap_pickers.commands()         end, desc = "[d]ebug [c]ommands" },
+			{ SearchLeader .. "DC", function() dap_pickers.configurations()   end, desc = "[d]ebug [C]onfigurations" },
+			{ SearchLeader .. "Db", function() dap_pickers.list_breakpoints() end, desc = "[d]ebug [b]reakpoints" },
+			{ SearchLeader .. "Dv", function() dap_pickers.variables()        end, desc = "[d]ebug [v]ariables" },
+			{ SearchLeader .. "Df", function() dap_pickers.frames()           end, desc = "[d]ebug [f]rames" },
+		}), vim.tbl_map(function(row) row.owner = "nvim-dap-virtual-text" return row end,
+			require("noethervim.toggles").rows("oV", "<cmd>DapVirtualTextEnable<cr>", "<cmd>DapVirtualTextDisable<cr>",
+				"debug virtual text"))), {
+			-- The session's status in the statusline while one runs.
+			segments = { dap = {
+				place = { side = "right", after = "latex.compile" },
+				hl = "Debug",
+				provider = function()
+					local dap = package.loaded.dap
+					if not dap or not dap.session() then return nil end
+					return " " .. dap.status()
+				end,
+			} },
+		}) } },
 		config = function(_, opts)
 			local dap = require("dap")
 			local ic  = require("noethervim.util.icons")
@@ -602,31 +616,4 @@ return {
 			}
 		end,
 	},
-
-	-- ── Snacks pickers over DAP state (keymaps only; see dap_pickers above) ──
-	{
-		"mfussenegger/nvim-dap",
-		dependencies = { "folke/snacks.nvim" },
-		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("nvim-dap", vim.list_extend({
-			{ SearchLeader .. "Dc", function() dap_pickers.commands()         end, desc = "[d]ebug [c]ommands" },
-			{ SearchLeader .. "DC", function() dap_pickers.configurations()   end, desc = "[d]ebug [C]onfigurations" },
-			{ SearchLeader .. "Db", function() dap_pickers.list_breakpoints() end, desc = "[d]ebug [b]reakpoints" },
-			{ SearchLeader .. "Dv", function() dap_pickers.variables()        end, desc = "[d]ebug [v]ariables" },
-			{ SearchLeader .. "Df", function() dap_pickers.frames()           end, desc = "[d]ebug [f]rames" },
-		}, vim.tbl_map(function(row) row.owner = "nvim-dap-virtual-text" return row end,
-			require("noethervim.toggles").rows("oV", "<cmd>DapVirtualTextEnable<cr>", "<cmd>DapVirtualTextDisable<cr>",
-				"debug virtual text"))), {
-			-- The session's status in the statusline while one runs.
-			segments = { dap = {
-				place = { side = "right", after = "latex.compile" },
-				hl = "Debug",
-				provider = function()
-					local dap = package.loaded.dap
-					if not dap or not dap.session() then return nil end
-					return " " .. dap.status()
-				end,
-			} },
-		}) } },
-	},
-
 }

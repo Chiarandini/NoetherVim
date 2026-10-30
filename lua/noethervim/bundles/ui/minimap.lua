@@ -37,10 +37,10 @@ return {
 				{ "<leader>mbr", "<cmd>Neominimap bufRefresh<cr>",  desc = "Refresh minimap (buffer)" },
 				{ "<leader>mbo", "<cmd>Neominimap bufOn<cr>",       desc = "Minimap on (buffer)" },
 				{ "<leader>mbc", "<cmd>Neominimap bufOff<cr>",      desc = "Minimap off (buffer)" },
-			}) },
-			-- neominimap is configured through vim.g.neominimap, read once at
-			-- load; it exposes no setup() function, so its config is `g` data.
-			{ "NoetherVim", optional = true, opts = { g = { neominimap = {
+			}, {
+				-- neominimap is configured through vim.g.neominimap, read once at
+				-- load; it exposes no setup() function, so its config is `g` data.
+				g = { neominimap = {
 				auto_enable          = true,
 				log_level            = vim.log.levels.OFF,
 				notification_level   = vim.log.levels.INFO,
@@ -71,7 +71,7 @@ return {
 				window_border = "single",
 				winopt = {},
 				bufopt = {},
-			} } } },
+			} } }) },
 		},
 	},
 }

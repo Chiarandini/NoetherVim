@@ -55,7 +55,9 @@ return {
 			end
 		end,
 		specs = {
-			{ "NoetherVim", optional = true, opts = {
+			{ "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("oil.nvim", {
+				{ "<c-w><c-o>", function() require("oil").open_float() end, desc = "Oil Mode" },
+			}, {
 				g = { loaded_netrw = 1, loaded_netrwPlugin = 1 },
 				startup = { ["oil.directories"] = function()
 					local group = vim.api.nvim_create_augroup("noethervim.oil", { clear = true })
@@ -97,9 +99,6 @@ return {
 						require("oil")
 					end
 				end },
-			} },
-			{ "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("oil.nvim", {
-				{ "<c-w><c-o>", function() require("oil").open_float() end, desc = "Oil Mode" },
 			}) },
 		},
 		cmd  = { "Oil" },
