@@ -509,7 +509,7 @@ Which surface to reach for: ~
       profiles = {
         classes       = { vimwiki = "writing", csv = false },
         spell_in_code = true,
-        conservative  = { filetypes = { "tex", "latex" }, size_kb = 500 },
+        conservative  = { latex = false, markdown = true, size_kb = 500 },
       },
       q_close = { oil = true },
       keymaps = { remaps = false },
@@ -584,12 +584,13 @@ Current keys: ~
                                   Default: `false`.
     `profiles.conservative`         Where the completion menu waits to be
                                   asked instead of opening as you type:
-                                  `filetypes` (default `{ "tex",
-                                  "latex" }`), and files larger than
-                                  `size_kb` (default `500`) in any
-                                  filetype. `<C-Space>` and LSP trigger
-                                  characters (`\` in LaTeX) still open
-                                  it. Holds with `profiles = false` too.
+                                  `{ [ft] = true | false }` adds or
+                                  removes a filetype (tex and latex wait
+                                  by default), and `size_kb` (default
+                                  `500`) makes any larger file wait.
+                                  `<C-Space>` and LSP trigger characters
+                                  (`\` in LaTeX) still open it. Holds
+                                  with `profiles = false` too.
     `q_close`                       `{ [ft] = true | false }`: filetypes
                                   where a bare `q` closes the window.
                                   `true` adds one, `false` removes one

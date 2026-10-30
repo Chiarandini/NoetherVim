@@ -159,11 +159,17 @@ function M.setup(opts)
   M._user_loaded = load_user
   local user_cfg = config.get()
 
-  -- Type-check at the boundary. Bad values become a vim.notify warning
-  -- rather than a hard crash; setup continues with whatever salvageable
-  -- fields remain. Unknown-field (typo) detection runs in :checkhealth.
-  for _, err in ipairs(config.validate()) do
+  -- Check at the boundary. A bad value becomes a warning rather than a
+  -- crash, and setup goes on with what can be read. A key nothing reads (a
+  -- typo, or one renamed in an update) is named too: otherwise the setting
+  -- is ignored without a word.
+  local errors, unknowns = config.validate()
+  for _, err in ipairs(errors) do
     vim.notify("noethervim.setup: " .. err, vim.log.levels.WARN)
+  end
+  if #unknowns > 0 then
+    vim.notify("lua/user/config.lua: nothing reads " .. table.concat(unknowns, ", ")
+      .. " (a typo, or a key renamed in an update: NEWS.md lists those)", vim.log.levels.WARN)
   end
 
   -- Every mapping here with no script behind it is one of Neovim's own

@@ -41,9 +41,7 @@
 ---@field spell_in_code? boolean If true, the code profile enables spellcheck, scoped to comments and strings via treesitter `@spell` captures so identifiers are not flagged. Default: false.
 ---@field conservative? noethervim.ConservativeConfig Where completion waits to be asked instead of opening as you type.
 
----@class noethervim.ConservativeConfig
----@field filetypes? string[] Filetypes where completion waits for `<C-Space>` or an LSP trigger character. Default: `{ "tex", "latex" }`.
----@field size_kb? integer File size (in KB) above which completion waits in any filetype. Default: 500.
+---@alias noethervim.ConservativeConfig table<string, boolean|integer> `[ft] = true` makes completion wait to be asked in that filetype, `false` stops it (tex and latex wait by default); `size_kb` (default 500) makes it wait in any file larger than that.
 
 ---@class noethervim.CompletionConfig
 ---@field style? "snippet"|"supertab"|"navigate" Tab-key philosophy for the completion menu. `"snippet"` reserves Tab for LuaSnip, `"supertab"` accepts the menu item, `"navigate"` cycles the menu without accepting. Default: `"snippet"`.

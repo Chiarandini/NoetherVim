@@ -63,21 +63,26 @@ function M.classes()
   return out
 end
 
---- Whether completion should wait to be asked in `buf`: a filetype in
---- `profiles.conservative.filetypes` (default tex and latex), or a file
---- larger than `profiles.conservative.size_kb` (default 500). Holds with
---- `profiles = false` too, from the defaults.
+--- Filetypes where completion waits to be asked unless `conservative`
+--- says otherwise.
+local CONSERVATIVE = { tex = true, latex = true }
+
+--- Whether completion should wait to be asked in `buf`: its filetype is
+--- conservative (tex and latex by default; `profiles.conservative = { [ft]
+--- = true | false }` adds or removes one, as `q_close` does), or the file is
+--- larger than `profiles.conservative.size_kb` (default 500) in any
+--- filetype. Holds with `profiles = false` too, from the defaults.
 ---@param buf integer
 ---@return boolean
 function M.conservative(buf)
   local p = settings()
   local c = type(p) == "table" and type(p.conservative) == "table" and p.conservative or {}
   local ft = vim.bo[buf].filetype
-  for _, f in ipairs(c.filetypes or { "tex", "latex" }) do
-    if f == ft then return true end
-  end
+  local on = c[ft]
+  if on == nil then on = CONSERVATIVE[ft] end
+  if on == true then return true end
   local size = vim.fn.getfsize(vim.api.nvim_buf_get_name(buf))
-  return size > (c.size_kb or 500) * 1024
+  return size > (tonumber(c.size_kb) or 500) * 1024
 end
 
 return M

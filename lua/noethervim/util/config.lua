@@ -1,13 +1,11 @@
 --- Validators for `lua/user/config.lua`, the single user-facing surface.
 ---
---- `validate_types(cfg)` runs at `noethervim.setup()` entry and emits a
---- `vim.notify` warning for type mismatches. Bad types produce a warning,
---- not a crash -- the rest of setup continues with whatever was salvageable.
----
---- `validate_user_config(cfg)` is called from `:checkhealth noethervim`.
---- Per `:h lua-plugin-config`, validation of "unknown fields" (typo
---- detection) is overhead-sensitive enough that the upstream guide
---- explicitly recommends the health-check path for it.
+--- `validate_user_config(cfg)` returns the type errors and the keys nothing
+--- reads. setup() warns about both, and `:checkhealth noethervim` lists them.
+--- `:h lua-plugin-config` suggests leaving unknown-field detection to
+--- health for its cost; here it is one walk over a table of a dozen keys,
+--- and a setting ignored without a word costs more. `validate_types(cfg)`
+--- returns the type errors alone.
 
 local M = {}
 
@@ -39,10 +37,7 @@ local SCHEMA = {
   profiles = {
     classes       = "table",
     spell_in_code = "boolean",
-    conservative  = {
-      filetypes = "table",
-      size_kb   = "number",
-    },
+    conservative  = "table",
   },
   q_close           = "table",
   toggle_feedback   = "string",
@@ -116,6 +111,22 @@ local function check(cfg, want_unknowns)
     if type(value) == "string" and not vim.tbl_contains(valid, value) then
       errors[#errors + 1] = ("user.config.%s: expected one of %s, got %s"):format(
         path, table.concat(valid, ", "), value)
+    end
+  end
+
+  -- `profiles.conservative`: filetypes mapped to true or false, and size_kb.
+  local conservative = vim.tbl_get(cfg, "profiles", "conservative")
+  if type(conservative) == "table" then
+    for _, key in ipairs(sorted_keys(conservative)) do
+      local v = conservative[key]
+      if key == "size_kb" then
+        if type(v) ~= "number" then
+          errors[#errors + 1] = "user.config.profiles.conservative.size_kb: expected number, got " .. type(v)
+        end
+      elseif type(v) ~= "boolean" then
+        errors[#errors + 1] = ("user.config.profiles.conservative.%s: expected true or false (a filetype), got %s")
+          :format(tostring(key), type(v))
+      end
     end
   end
 

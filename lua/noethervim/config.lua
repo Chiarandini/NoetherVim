@@ -49,10 +49,11 @@ function M.get()
   return cache
 end
 
---- Type errors in `lua/user/config.lua`, one message per bad field.
----@return string[]
+--- What is wrong in `lua/user/config.lua`: type errors, one message per
+--- bad field, and the keys nothing reads (dotted when nested).
+---@return string[] errors, string[] unknowns
 function M.validate()
-  return require("noethervim.util.config").validate_types(M.get())
+  return require("noethervim.util.config").validate_user_config(M.get())
 end
 
 --- Take the config directory and its after/ off 'runtimepath', so Neovim

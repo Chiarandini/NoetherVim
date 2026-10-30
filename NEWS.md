@@ -6,6 +6,12 @@ where they are listed.
 
 ## 2026-10-30
 
+- **`profiles.conservative` is a filetype map, like `q_close`:** write
+  `conservative = { tex = false, markdown = true, size_kb = 500 }`; `true`
+  adds a filetype, `false` removes one of the defaults (tex and latex).
+- **A `lua/user/config.lua` key nothing reads warns at startup:** a typo or
+  a renamed key is named when Neovim starts, not only by
+  `:checkhealth noethervim`.
 - **A TeX file offers the latex bundle once:** in an install without it, the
   first TeX buffer opens a window saying what the bundle adds; `<CR>` shows
   the `init.lua` change that enables it, `<Esc>` closes it for good.
