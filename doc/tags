@@ -44,6 +44,7 @@ noethervim-load-order	noethervim.txt	/*noethervim-load-order*
 noethervim-localleader	noethervim.txt	/*noethervim-localleader*
 noethervim-mapsearchleader	noethervim.txt	/*noethervim-mapsearchleader*
 noethervim-nvim-appname	noethervim.txt	/*noethervim-nvim-appname*
+noethervim-obsidian	noethervim.txt	/*noethervim-obsidian*
 noethervim-oil-select	noethervim.txt	/*noethervim-oil-select*
 noethervim-option-layers	noethervim.txt	/*noethervim-option-layers*
 noethervim-option-toggles	noethervim.txt	/*noethervim-option-toggles*

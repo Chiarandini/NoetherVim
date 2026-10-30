@@ -355,7 +355,7 @@ Requires:
 
 ### `obsidian`
 
-obsidian.nvim over an existing Obsidian vault: follow and create links, search notes, and manage frontmatter. Set the vault path in lua/user/config.lua. Enable the markdown bundle alongside it for rendering, preview, tables, math and image paste.
+obsidian.nvim over an existing Obsidian vault: follow and create links, search notes, and manage frontmatter. Name the vault in obsidian.nvim's `workspaces`. Enable the markdown bundle alongside it for rendering, preview, tables, math and image paste.
 
 ```lua
 { import = "noethervim.bundles.writing.obsidian" }
@@ -364,7 +364,7 @@ obsidian.nvim over an existing Obsidian vault: follow and create links, search n
 Requires:
 
 - **a vault path**: obsidian.nvim has nothing to open without one
-  <br />set it in lua/user/config.lua; see :help noethervim-user-config-data
+  <br />set workspaces in obsidian.nvim's opts; see :help noethervim-obsidian
 
 ### `wrapsearch`
 

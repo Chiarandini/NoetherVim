@@ -25,11 +25,6 @@ vim.g.mapleader         = "\\"       -- <Leader>: global actions
 vim.g.maplocalleader    = ","        -- <LocalLeader>: filetype actions
 vim.g.mapsearchleader   = "<space>"  -- search/navigation prefix (default: <Space>)
 
--- Opt-out of the Snacks dashboard shown on empty-arg startup (i.e. plain
--- `nvim` rather than `nvim {file}`). Uncomment to open straight into an
--- empty buffer instead.
--- vim.g.noethervim_dashboard = false
-
 -- Enabling a bundle is how you ask for the tools it drives: the formatter,
 -- linter and debug adapter it names are fetched through Mason, the same way
 -- its language server already was. Uncomment to decline, and install those

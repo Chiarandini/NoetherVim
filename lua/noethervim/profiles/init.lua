@@ -7,8 +7,7 @@
 ---
 --- `profiles = false` in lua/user/config.lua turns both profiles off;
 --- `profiles = { classes = { [ft] = "writing" | "code" | false } }` moves or
---- removes one filetype. `writing_filetypes` and `non_code_filetypes` there
---- still add to the defaults.
+--- removes one filetype.
 
 local M = {}
 
@@ -60,18 +59,20 @@ function M.classes()
 end
 
 --- Whether completion should wait to be asked in `buf`: a filetype in
---- `blink_conservative_filetypes` (default tex and latex), or a file larger
---- than `blink_conservative_size_kb`.
+--- `profiles.conservative.filetypes` (default tex and latex), or a file
+--- larger than `profiles.conservative.size_kb` (default 500). Holds with
+--- `profiles = false` too, from the defaults.
 ---@param buf integer
 ---@return boolean
 function M.conservative(buf)
-  local cfg = require("noethervim.config").get()
+  local p = settings()
+  local c = type(p) == "table" and type(p.conservative) == "table" and p.conservative or {}
   local ft = vim.bo[buf].filetype
-  for _, f in ipairs(cfg.blink_conservative_filetypes or { "tex", "latex" }) do
+  for _, f in ipairs(c.filetypes or { "tex", "latex" }) do
     if f == ft then return true end
   end
   local size = vim.fn.getfsize(vim.api.nvim_buf_get_name(buf))
-  return size > (cfg.blink_conservative_size_kb or 500) * 1024
+  return size > (c.size_kb or 500) * 1024
 end
 
 return M

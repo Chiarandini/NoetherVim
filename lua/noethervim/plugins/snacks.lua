@@ -258,10 +258,10 @@ return {
 	---@type snacks.Config
 	opts = {
 		-- ── Dashboard ─────────────────────────────────────────────────
-		-- Disable by setting `vim.g.noethervim_dashboard = false` in init.lua
-		-- (before lazy.setup). See :help noethervim-dashboard.
+		-- `opts = { dashboard = { enabled = false } }` on snacks in
+		-- lua/user/plugins/ turns it off. See :help noethervim-dashboard.
 		dashboard = {
-			enabled = vim.g.noethervim_dashboard ~= false,
+			enabled = true,
 			preset = {
 				header = _header(),
 				keys = {

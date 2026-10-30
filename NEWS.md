@@ -6,6 +6,22 @@ where they are listed.
 
 ## 2026-10-29
 
+- **`lua/user/config.lua` groups its settings by concept:** rename these
+  keys; `:checkhealth noethervim` names any key it no longer knows.
+  - `completion_style = "x"` is now `completion = { style = "x" }`.
+  - `spell_in_code`, `blink_conservative_filetypes` and
+    `blink_conservative_size_kb` move under `profiles`:
+    `profiles = { spell_in_code = true, conservative = { filetypes = ..., size_kb = ... } }`.
+  - `writing_filetypes = { "x" }` is now `profiles = { classes = { x = "writing" } }`,
+    and `non_code_filetypes = { "x" }` is `classes = { x = false }`.
+  - `q_close_filetypes = { "x" }` is now `q_close = { x = true }`; `false`
+    removes one of the defaults.
+  - `obsidian_vault` is gone: name the vault in obsidian.nvim's `opts`,
+    `workspaces = { { name = "vault", path = "..." } }`.
+  - `drop = false` is gone: `{ "folke/drop.nvim", enabled = false }` in
+    `lua/user/plugins/`.
+  - `vim.g.noethervim_dashboard = false` is gone:
+    `{ "folke/snacks.nvim", opts = { dashboard = { enabled = false } } }`.
 - **`:NoetherVim files` names your counterpart:** a source file that a file
   of yours can change is followed by it (`→ lua/user/plugins/oil.lua`).
   `:NoetherVim diff` lists only those files.

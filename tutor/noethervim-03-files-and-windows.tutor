@@ -46,7 +46,7 @@ hidden files, and `gd` toggles permissions and sizes.
 
 IMPORTANT `q` does not close Oil, because it is a buffer you are expected to
 type into and `q` would shadow macro recording. Leave with `<C-c>` or `ZA`.
-If you want `q` anyway, add `oil` to `q_close_filetypes` in your config; see
+If you want `q` anyway, set `q_close = { oil = true }` in your config; see
 [q to close](noethervim-q-close).
 
 Oil replaces Neovim's own directory listing, including `:e .`.

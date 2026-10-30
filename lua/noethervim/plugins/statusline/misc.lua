@@ -294,10 +294,8 @@ M.SpecialName = {
   hl = function() return { fg = ctx.colors.text_gray, bold = true } end,
 }
 
---- `q closes` on the buffers where it does. Read from the same list the
---- autocmd uses, so the hint cannot claim a key that is not bound -- and
---- it disappears on a buffer the user added to `q_close_filetypes` without
---- adding the keymap, which is the honest outcome.
+--- `q closes` on the buffers where it does. Read from the buffer's own `q`
+--- mapping, so the hint cannot claim a key that is not bound.
 M.QCloseHint = {
   condition = function()
     return vim.fn.maparg("q", "n", false, true).buffer == 1

@@ -13,7 +13,8 @@
 --   nvim-scrollbar:         side scrollbar with LSP diagnostics overlay
 --   block.nvim:             :Block / :BlockOn / :BlockOff  (code block visualizer)
 --
--- Disable drop.nvim by setting  drop = false  in lua/user/config.lua.
+-- Turn drop.nvim off with { "folke/drop.nvim", enabled = false } in
+-- lua/user/plugins/.
 
 return {
 	{
@@ -24,9 +25,6 @@ return {
 	{
 		"folke/drop.nvim",
 		event = "VeryLazy",
-		cond = function()
-			return require("noethervim.config").get().drop ~= false
-		end,
 		-- The screensaver only stops on cursor activity, and an unfocused
 		-- pane (a detached tmux session above all) never produces any, so
 		-- the animation runs forever and pins a core. Gate it on terminal

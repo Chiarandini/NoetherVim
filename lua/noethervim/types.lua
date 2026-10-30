@@ -38,6 +38,15 @@
 
 ---@class noethervim.ProfilesConfig
 ---@field classes? table<string, "writing"|"code"|false> Per filetype: the profile it gets, or `false` for none.
+---@field spell_in_code? boolean If true, the code profile enables spellcheck, scoped to comments and strings via treesitter `@spell` captures so identifiers are not flagged. Default: false.
+---@field conservative? noethervim.ConservativeConfig Where completion waits to be asked instead of opening as you type.
+
+---@class noethervim.ConservativeConfig
+---@field filetypes? string[] Filetypes where completion waits for `<C-Space>` or an LSP trigger character. Default: `{ "tex", "latex" }`.
+---@field size_kb? integer File size (in KB) above which completion waits in any filetype. Default: 500.
+
+---@class noethervim.CompletionConfig
+---@field style? "snippet"|"supertab"|"navigate" Tab-key philosophy for the completion menu. `"snippet"` reserves Tab for LuaSnip, `"supertab"` accepts the menu item, `"navigate"` cycles the menu without accepting. Default: `"snippet"`.
 
 ---@class noethervim.HostOpts
 ---@field rows? noethervim.Row[] distro mappings, appended by each spec through rows.contribute()
@@ -78,16 +87,9 @@
 ---@field colorscheme_persistence? boolean If true, restore the last interactively picked colorscheme on startup, in preference to `colorscheme`. Set false to make `colorscheme` authoritative. Default: true.
 ---@field statusline_enabled? boolean If false, skip NoetherVim's heirline statusline, tabline and winbar entirely, so a user-supplied alternative (lualine, mini.statusline) can take over with no conflict. Drop the replacement into `lua/user/plugins/`. Default: true.
 ---@field statusline? noethervim.StatuslineConfig Heirline-based statusline overrides. Ignored when `statusline_enabled = false`.
----@field obsidian_vault? string Absolute or `~`-prefixed path to your Obsidian vault. Required by the `obsidian` bundle, which does nothing until it is set.
----@field completion_style? "snippet"|"supertab"|"navigate" Tab-key philosophy for the completion menu. `"snippet"` reserves Tab for LuaSnip, `"supertab"` accepts the menu item, `"navigate"` cycles the menu without accepting. Default: `"snippet"`.
----@field blink_conservative_filetypes? string[] Filetypes where blink.cmp's keyword-trigger is suppressed. `<C-Space>` and LSP trigger characters still work. Default: `{ "tex", "latex" }`.
----@field blink_conservative_size_kb? integer File size (in KB) above which conservative completion mode kicks in regardless of filetype. Default: 500.
----@field drop? boolean If false, disable the seasonal drop.nvim animations from the `eye-candy` bundle. Default: true.
----@field writing_filetypes? string[] Extra filetypes to treat as writing (wrap, linebreak, spell, conceal, `formatoptions+t`). Added to the defaults rather than replacing them.
----@field non_code_filetypes? string[] Extra filetypes that skip BOTH the writing and code profiles, leaving their own ftplugin settings in charge. Added to the defaults.
----@field q_close_filetypes? string[] Extra filetypes where a bare `q` closes the window. Added to the defaults; editable filetypes (`oil`, `markdown`, ...) are excluded because `q` would shadow macro recording. To drop one of the defaults instead, clear the `noethervim_q_close` augroup and recreate the autocmd.
----@field spell_in_code? boolean If true, the code profile enables spellcheck, scoped to comments and strings via treesitter `@spell` captures so identifiers are not flagged. Default: false.
----@field profiles? false|noethervim.ProfilesConfig `false` turns the writing and code profiles off. `classes` moves a filetype to "writing" or "code", or leaves it alone with `false`.
+---@field completion? noethervim.CompletionConfig How the completion menu takes Tab.
+---@field q_close? table<string, boolean> Filetypes where a bare `q` closes the window: `true` adds one, `false` removes one of the defaults. Editable filetypes (`oil`, `markdown`, ...) are left out by default because `q` there shadows macro recording.
+---@field profiles? false|noethervim.ProfilesConfig `false` turns the writing and code profiles off. `classes` moves a filetype to "writing" or "code", or leaves it alone with `false`; `spell_in_code` and `conservative` tune the profiles.
 ---@field lsp? table<string, false> `[name] = false` drops NoetherVim's settings for that server (after/lsp/<name>.lua); lspconfig's and yours remain.
 ---@field toggle_feedback? "notify"|"echo"|"off" Channel for the confirmation message emitted when a bracket-prefix toggle (`[ox` / `]ox`) fires. `"notify"` (default) routes through `vim.notify`, which snacks renders as a toast; `"echo"` uses `nvim_echo` for the classic cmdline message; `"off"` suppresses it.
 ---@field snippets_disabled? noethervim.DisabledSnippet[] Snippets to keep switched off wherever this config is used. The snippet picker (`:NoetherVim snippets`, or SearchLeader+cs) copies a correct entry to your clipboard with `<C-o>`, filling in the owner and file. `<C-x>` there switches one off on this machine only, and that choice wins over this list for the session.

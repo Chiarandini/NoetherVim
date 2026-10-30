@@ -47,8 +47,8 @@ philosophy as one setting in `lua/user/config.lua`.
     `"navigate"`   Tab cycles the menu without accepting; `<C-y>` or
                  `<CR>` commits. The classic nvim-cmp behavior.
 
-Set `completion_style` to one of those three. See
-[the completion styles](noethervim-completion-style).
+Set `completion = { style = ... }` in `lua/user/config.lua` to one of
+those three. See [the completion styles](noethervim-completion-style).
 
 Fill in the setting that changes what Tab does:
 

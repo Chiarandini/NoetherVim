@@ -299,10 +299,14 @@ source again. Images in `![caption](path)` render the same way, and
 
 **Obsidian vault + `obsidian` bundle.** If you already use Obsidian
 for notes, this bundle makes NoetherVim a first-class editor for your
-vault. Set your vault path in `lua/user/config.lua`:
+vault. Name the vault in obsidian.nvim's own `workspaces` option:
 
 ```lua
-return { obsidian_vault = "~/Documents/MyVault/" }
+-- lua/user/plugins/obsidian.lua
+return {
+  "obsidian-nvim/obsidian.nvim",
+  opts = { workspaces = { { name = "vault", path = "~/Documents/MyVault/" } } },
+}
 ```
 
 Then `<Leader>ol` follows the link under the cursor, `<C-s>` in

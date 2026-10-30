@@ -1,4 +1,4 @@
--- noethervim-template-version: 1
+-- noethervim-template-version: 2
 -- Personal configuration for NoetherVim.
 -- The fastest way to install this template is `:NoetherVim templates` (or
 -- SearchLeader+ct, default <Space>ct): pick `user/config.example.lua` and
@@ -13,8 +13,8 @@
 -- settings have their own home:
 --   lua/user/options.lua   anything with a vim.o / vim.opt equivalent
 --   lua/user/plugins/      anything a plugin exposes through `opts`
---   init.lua (vim.g.*)     leaders and the dashboard opt-out, which have to
---                          be set before plugins load
+--   init.lua (vim.g.*)     leaders and the auto-install opt-out, which have
+--                          to be set before plugins load
 --
 -- The `---@type` annotation below tells lua-language-server (via
 -- lazydev.nvim, which ships with the distro) what the returned table
@@ -91,21 +91,9 @@ return {
     -- },
 
 
-    -- ── Obsidian ──────────────────────────────────────────────────────────────
-    -- Path to your Obsidian vault. Used by the `obsidian` bundle.
-    -- obsidian_vault = "~/Documents/MyVault/",
-
-
-    -- ── Blink completion ──────────────────────────────────────────────────────
-    -- Filetypes where keyword-triggered completion is suppressed (conservative mode).
-    -- C-Space and LSP trigger chars (e.g. '\' in LaTeX) still work normally.
-    -- blink_conservative_filetypes = { "tex", "latex" },
-
-    -- Files larger than this (in KB) also get conservative mode, regardless of filetype.
-    -- blink_conservative_size_kb = 500,
-
+    -- ── Completion ────────────────────────────────────────────────────────────
     -- Tab key philosophy. Three built-in styles -- "snippet" is the default.
-    -- completion_style = "supertab",
+    -- completion = { style = "supertab" },
     --
     -- ┌───────────────────────────┬───────────────┬───────────────────┬───────────────┐
     -- │ Scenario                  │ snippet       │ supertab          │ navigate      │
@@ -161,43 +149,36 @@ return {
     -- spec into lua/user/plugins/ that overrides blink.cmp's `opts.keymap`.
     -- See :help noethervim-completion-custom for ready-to-copy snippets.
 
-    -- ── Animations ────────────────────────────────────────────────────────────
-    -- Set drop = false to disable seasonal drop.nvim animations (default: enabled).
-    -- drop = false,
-
     -- ── Filetype profiles ─────────────────────────────────────────────────────
     -- A value you set for a buffer always beats the profiles: after/ftplugin,
     -- a FileType autocmd, a modeline, :setlocal, ]os. So does a global
     -- spell, conceallevel or list in lua/user/options.lua; prose wraps
-    -- whatever your global wrap says. `false` turns both profiles off;
-    -- `classes` moves a filetype to "writing" or "code", or drops it.
-    -- profiles = { classes = { tex = false, vimwiki = "writing" } },
+    -- whatever your global wrap says. `profiles = false` turns both off.
+    -- profiles = {
+    --     -- Move a filetype to "writing" or "code", or leave it alone with
+    --     -- false. Writing (wrap, linebreak, spell, conceallevel=2,
+    --     -- formatoptions+t, a marker on wrapped lines) covers tex, markdown,
+    --     -- norg, text, gitcommit, gitsendemail, mail, rst and typst. Code is
+    --     -- every other filetype but structured text (json, yaml, toml) and
+    --     -- special buffers (help, qf, oil, terminal, dap-ui, ...).
+    --     classes = { vimwiki = "writing", quarto = "writing", csv = false },
+    --
+    --     -- Spellcheck in code buffers, scoped to comments and strings via
+    --     -- treesitter @spell captures (identifiers are NOT spellchecked).
+    --     -- `[os` / `]os` still toggle per buffer. For CamelCase splitting,
+    --     -- add vim.opt.spelloptions:append("camel") to lua/user/options.lua.
+    --     spell_in_code = true,
+    --
+    --     -- Where completion waits for C-Space (or an LSP trigger character
+    --     -- such as '\' in LaTeX) instead of opening as you type.
+    --     conservative = { filetypes = { "tex", "latex" }, size_kb = 500 },
+    -- },
 
-    -- Extra filetypes to treat as writing (wrap, linebreak, spell, conceallevel=2,
-    -- formatoptions+t, and a statuscolumn marking wrapped lines). Defaults: tex,
-    -- markdown, norg, text, gitcommit, gitsendemail, mail, rst, typst.
-    -- writing_filetypes = { "vimwiki", "quarto" },
-
-    -- Extra filetypes that skip BOTH the writing and code profiles -- their own
-    -- ftplugin / buffer settings take over (e.g. listchars stay off). Defaults
-    -- include json, yaml, toml, help, qf, oil, terminal, dashboard, dap-ui, etc.
-    -- non_code_filetypes = { "csv" },
-
-    -- Extra filetypes where a bare `q` closes the window. Defaults cover
-    -- read-only panels (help, man, lazy, mason, checkhealth, undotree, diff,
-    -- ...). Editable filetypes are left out on purpose: `q` there would
-    -- shadow macro recording. Add them anyway if you never record macros in
-    -- those buffers -- `oil` is the common case.
-    -- q_close_filetypes = { "oil" },
-
-    -- Enable spellcheck in code buffers. Scoped to comments and strings via
-    -- treesitter @spell captures (identifiers are NOT spellchecked). `[os` /
-    -- `]os` still toggle per-buffer; `zg` adds a word to your spellfile.
-    -- For CamelCase-heavy languages, you can additionally set
-    --   vim.opt.spelloptions:append("camel")
-    -- in lua/user/options.lua so getUserName is split as get/User/Name.
-    -- Default: false.
-    -- spell_in_code = true,
+    -- Filetypes where a bare `q` closes the window: true adds one, false
+    -- removes one of the defaults (help, man, lazy, mason, checkhealth,
+    -- undotree, diff, ...). Editable filetypes are left out by default: `q`
+    -- there would shadow macro recording. `oil` is the common addition.
+    -- q_close = { oil = true },
 
 
     -- ── Toggle feedback ───────────────────────────────────────────────────────

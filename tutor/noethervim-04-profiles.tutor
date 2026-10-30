@@ -112,24 +112,25 @@ a lowercase entry and which you would otherwise come back for. It leaves the
 lowercase form of a capitalized word alone, so a proper noun is still
 flagged in lowercase. See [adding a word](noethervim-spell-add).
 
-To spellcheck code comments too, set `spell_in_code` in your config; it
-scopes spelling to comments and strings rather than identifiers.
+To spellcheck code comments too, set `profiles = { spell_in_code = true }`
+in your config; it scopes spelling to comments and strings rather than
+identifiers.
 
 ## CHANGING THE LISTS *config*
 
 If a filetype is in the wrong group, move it rather than fighting the
-options. In `lua/user/config.lua`, `profiles = { classes = { tex = false } }`
-leaves one filetype alone, and `profiles = false` turns both off. The lists:
+options. In `lua/user/config.lua`, `profiles` holds all of it, and
+`profiles = false` turns both off:
 
 ~~~ cmd
     :NoetherVim templates
 ~~~
 
-    `writing_filetypes`    extra filetypes that count as prose
-    `non_code_filetypes`   extra filetypes that skip both profiles
-    `spell_in_code`        spellcheck comments and strings in code
+    `classes`         `{ vimwiki = "writing", tex = false }` moves a filetype,
+                    or leaves it alone
+    `spell_in_code`   spellcheck comments and strings in code
+    `conservative`    where completion waits for `<C-Space>`
 
-All three are additive; the defaults stay.
 [Lesson five](@tutor:noethervim-05-your-config) covers writing that file.
 
 There is also a statusline marker for this, off by default. `<C-w>sf` turns

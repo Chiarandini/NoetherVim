@@ -33,13 +33,13 @@ return {
 			end,
 
 			-- ── Keymaps ────────────────────────────────────────────────────────
-			-- Tab philosophy: set completion_style in lua/user/config.lua to
-			-- "snippet" (default), "supertab", or "navigate". See
-			-- :help noethervim-completion-style for behaviour and AI-completion notes.
+			-- Tab philosophy: set `completion = { style = ... }` in
+			-- lua/user/config.lua to "snippet" (default), "supertab", or
+			-- "navigate". See :help noethervim-completion-style for behaviour
+			-- and AI-completion notes.
 			keymap = (function()
-				local style = require("noethervim.config").get().completion_style
-					or vim.g.noethervim_completion_style
-					or "snippet"
+				local completion = require("noethervim.config").get().completion
+				local style = type(completion) == "table" and completion.style or "snippet"
 				local base = {
 					preset    = "none",
 					["<C-Space>"] = { "show", "show_documentation", "hide_documentation" },

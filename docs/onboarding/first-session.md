@@ -131,7 +131,7 @@ configured out of the box.
   directory you are looking at.
 
 `q` does NOT the float since it is a buffer where editing is expected, but if you want `q` to close
-an oil buffer add it to the `q_close_filetypes` table in `config.lua` (see `:help noethervim-q-close`)
+an oil buffer set `q_close = { oil = true }` in `config.lua` (see `:help noethervim-q-close`)
 
 Note Oil replaces Neovim's default navigation buffer (that includes overriding `:e .`). Disable the
 plugin your user files if you want the default (see the FAQ `Can I disable a plugin from core or a bundle?`).

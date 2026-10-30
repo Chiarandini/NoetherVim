@@ -61,7 +61,7 @@ key, so the distribution would be picking a vendor on your behalf.
 
 The one thing worth getting right is the `<Tab>` handover. Bind it in
 `lua/user/keymaps.lua` rather than in the spec, so it runs after blink
-has installed whichever `completion_style` you chose and shadows it.
+has installed whichever `completion.style` you chose and shadows it.
 
 ```lua
 -- ~/.config/nvim/lua/user/plugins/copilot.lua

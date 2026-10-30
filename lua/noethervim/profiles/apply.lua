@@ -2,7 +2,7 @@
 --
 -- Writing buffers (tex, markdown, gitcommit, ...) get wrap, linebreak,
 -- spell, conceallevel=2 and formatoptions+t, with list chars hidden. Code
--- buffers get list chars, and spell when spell_in_code is on in
+-- buffers get list chars, and spell when `profiles.spell_in_code` is on in
 -- lua/user/config.lua (scoped to comments and strings by treesitter's
 -- @spell captures). Filetypes the profiles leave alone, and how to change
 -- the classes: profiles/init.lua.
@@ -21,7 +21,8 @@
 local default  = require("noethervim.default")
 local profiles = require("noethervim.profiles")
 
-local spell_in_code = require("noethervim.config").get().spell_in_code == true
+local settings = require("noethervim.config").get().profiles
+local spell_in_code = type(settings) == "table" and settings.spell_in_code == true
 local LAYOUT = { layout = true }
 
 -- Wrapped-line marker. It lives in the number column rather than in

@@ -11,140 +11,137 @@
 
 local M = {}
 
---- Run a vim.validate call inside a pcall, prefixing any error with `path`
---- so messages name the offending key (e.g. `user.config.colorscheme:
---- expected string`).
----@param path string
----@param name string
----@param value any
----@param expected string|string[]
----@param optional? boolean
----@return string? err
-local function check(path, name, value, expected, optional)
-  local ok, err = pcall(vim.validate, name, value, expected, optional)
-  if ok then return nil end
-  return path .. "." .. (err or "validation failed")
-end
-
---- Known top-level keys for `lua/user/config.lua`. Values are the
---- `vim.validate` type strings. Add new keys here when adding a user-
---- facing option per `dev-docs/bundle-development.md` §5.
+--- The shape of `lua/user/config.lua`. A string is the `vim.validate`
+--- type of a value; a table is the schema of a nested table. Add a key here
+--- when adding a user-facing option per `dev-docs/bundle-development.md` §5.
 local SCHEMA = {
-  colorscheme                  = "string",
-  colorscheme_persistence      = "boolean",
-  statusline_enabled           = "boolean",
-  statusline                   = "table",
-  obsidian_vault               = "string",
-  completion_style             = "string",
-  blink_conservative_filetypes = "table",
-  blink_conservative_size_kb   = "number",
-  drop                         = "boolean",
-  writing_filetypes            = "table",
-  non_code_filetypes           = "table",
-  q_close_filetypes            = "table",
-  spell_in_code                = "boolean",
-  toggle_feedback              = "string",
-  snippets_disabled            = "table",
-  keymaps                      = "table",
-  profiles                     = { "boolean", "table" },
-  lsp                          = "table",
+  colorscheme             = "string",
+  colorscheme_persistence = "boolean",
+  statusline_enabled      = "boolean",
+  statusline = {
+    colors                 = "table",
+    extra_right            = "table",
+    edge_style             = "string",
+    tab_modified_indicator = "string",
+    filetype_profile       = "boolean",
+    mode_background        = "boolean",
+    git_click              = "function",
+  },
+  completion = {
+    style = "string",
+  },
+  profiles = {
+    classes       = "table",
+    spell_in_code = "boolean",
+    conservative  = {
+      filetypes = "table",
+      size_kb   = "number",
+    },
+  },
+  q_close           = "table",
+  toggle_feedback   = "string",
+  snippets_disabled = "table",
+  keymaps           = "table",
+  lsp               = "table",
 }
 
---- Permitted values for the small enum fields. Validated alongside the
---- type schema; unknown strings would otherwise silently fall back to
---- the default behavior, which masks typos.
+--- Nested tables that also accept `false`, meaning "off".
+local MAY_BE_FALSE = { profiles = true }
+
+--- Permitted values for the small enum fields, by dotted path. Unknown
+--- strings would otherwise silently fall back to the default behavior,
+--- which masks typos.
 ---
 --- Every string-valued key with a closed set of values belongs here.
 --- `statusline.edge_style` is the one exception: its values live in
 --- `noethervim.statusline` and are checked below through
 --- `list_edge_styles()` so the two cannot drift apart.
 local ENUMS = {
-  toggle_feedback  = { "notify", "echo", "off" },
-  completion_style = { "snippet", "supertab", "navigate" },
+  toggle_feedback    = { "notify", "echo", "off" },
+  ["completion.style"] = { "snippet", "supertab", "navigate" },
 }
 
---- Inner schema for `cfg.statusline`. Same shape as the outer schema.
-local STATUSLINE_SCHEMA = {
-  colors                 = "table",
-  extra_right            = "table",
-  edge_style             = "string",
-  tab_modified_indicator = "string",
-  filetype_profile       = "boolean",
-  mode_background        = "boolean",
-  git_click              = "function",
-}
+local function sorted_keys(t)
+  local keys = vim.tbl_keys(t)
+  table.sort(keys, function(a, b) return tostring(a) < tostring(b) end)
+  return keys
+end
+
+--- Check `cfg` against `schema`, adding to `errors` and, when given,
+--- naming keys the schema does not know in `unknowns`.
+---@param prefix string dotted path of `cfg`, "" at the top
+local function walk(prefix, cfg, schema, errors, unknowns)
+  for _, key in ipairs(sorted_keys(cfg)) do
+    local value, expected = cfg[key], schema[key]
+    local name = prefix .. tostring(key)
+    if expected == nil then
+      if unknowns then unknowns[#unknowns + 1] = name end
+    elseif type(expected) == "table" then
+      if not (value == false and MAY_BE_FALSE[name]) then
+        if type(value) ~= "table" then
+          errors[#errors + 1] = ("user.config.%s: expected table, got %s"):format(name, type(value))
+        else
+          walk(name .. ".", value, expected, errors, unknowns)
+        end
+      end
+    else
+      local ok, err = pcall(vim.validate, name, value, expected)
+      if not ok then errors[#errors + 1] = "user.config." .. (err or (name .. ": invalid")) end
+    end
+  end
+end
+
+---@param cfg any
+---@param want_unknowns boolean
+---@return string[] errors, string[] unknowns
+local function check(cfg, want_unknowns)
+  local errors, unknowns = {}, {}
+  if cfg == nil then return errors, unknowns end
+  if type(cfg) ~= "table" then
+    return { "user.config: expected table, got " .. type(cfg) }, unknowns
+  end
+  walk("", cfg, SCHEMA, errors, want_unknowns and unknowns or nil)
+
+  for path, valid in pairs(ENUMS) do
+    local value = cfg
+    for part in path:gmatch("[^.]+") do
+      value = type(value) == "table" and value[part] or nil
+    end
+    if type(value) == "string" and not vim.tbl_contains(valid, value) then
+      errors[#errors + 1] = ("user.config.%s: expected one of %s, got %s"):format(
+        path, table.concat(valid, ", "), value)
+    end
+  end
+
+  local sl = cfg.statusline
+  if type(sl) == "table" and type(sl.edge_style) == "string" then
+    local valid = require("noethervim.statusline").list_edge_styles()
+    if not vim.tbl_contains(valid, sl.edge_style) then
+      errors[#errors + 1] = "user.config.statusline.edge_style: expected one of "
+        .. table.concat(valid, ", ") .. ", got " .. sl.edge_style
+    end
+  end
+
+  return errors, unknowns
+end
 
 --- Type-check `cfg`. Returns a list of error strings; empty when valid.
 --- Called at `noethervim.setup()` entry. Cheap enough to run every launch.
 ---@param cfg any
 ---@return string[] errors
 function M.validate_types(cfg)
-  local errors = {}
-  local function add(err) if err then errors[#errors + 1] = err end end
-
-  if cfg == nil then return errors end
-  if type(cfg) ~= "table" then
-    return { "user.config: expected table, got " .. type(cfg) }
-  end
-
-  for key, expected in pairs(SCHEMA) do
-    if cfg[key] ~= nil then
-      add(check("user.config", key, cfg[key], expected, true))
-    end
-  end
-
-  for key, valid in pairs(ENUMS) do
-    if type(cfg[key]) == "string" and not vim.tbl_contains(valid, cfg[key]) then
-      add("user.config." .. key .. ": expected one of "
-        .. table.concat(valid, ", ") .. ", got " .. cfg[key])
-    end
-  end
-
-  if type(cfg.statusline) == "table" then
-    for key, expected in pairs(STATUSLINE_SCHEMA) do
-      if cfg.statusline[key] ~= nil then
-        add(check("user.config.statusline", key, cfg.statusline[key], expected, true))
-      end
-    end
-    if type(cfg.statusline.edge_style) == "string" then
-      local valid = require("noethervim.statusline").list_edge_styles()
-      if not vim.tbl_contains(valid, cfg.statusline.edge_style) then
-        add("user.config.statusline.edge_style: expected one of "
-          .. table.concat(valid, ", ") .. ", got " .. cfg.statusline.edge_style)
-      end
-    end
-  end
-
-  return errors
+  return (check(cfg, false))
 end
 
 --- Full validation including unknown-field detection (typo catching).
 --- Called from `:checkhealth noethervim`. Returns `errors` (type
---- mismatches) and `unknowns` (unrecognized keys). Both lists are empty
---- when valid.
+--- mismatches) and `unknowns` (unrecognized keys, dotted when nested). Both
+--- lists are empty when valid.
 ---@param cfg any
 ---@return string[] errors
 ---@return string[] unknowns
 function M.validate_user_config(cfg)
-  local errors = M.validate_types(cfg)
-  local unknowns = {}
-  if type(cfg) ~= "table" then return errors, unknowns end
-
-  for key, _ in pairs(cfg) do
-    if SCHEMA[key] == nil then
-      unknowns[#unknowns + 1] = key
-    end
-  end
-
-  if type(cfg.statusline) == "table" then
-    for key, _ in pairs(cfg.statusline) do
-      if STATUSLINE_SCHEMA[key] == nil then
-        unknowns[#unknowns + 1] = "statusline." .. key
-      end
-    end
-  end
-
-  return errors, unknowns
+  return check(cfg, true)
 end
 
 return M

@@ -41,9 +41,9 @@ where you were, so `r` puts back the windows and buffers you left.
 
 You can come back to it at any time. `:Reset` closes every buffer and
 returns you here, refusing if anything is unsaved; `:Reset!` discards
-instead. If you would rather start in an empty buffer, set
-`vim.g.noethervim_dashboard = false` in your init.lua; see
-[the dashboard flag](noethervim-dashboard).
+instead. If you would rather start in an empty buffer, turn the
+dashboard off in snacks.nvim's options; see
+[the dashboard](noethervim-dashboard).
 
 ## WHAT HAPPENS WHEN YOU OPEN A FILE *attach*
 

@@ -159,7 +159,7 @@ return {
 
   ["noethervim-11-snippets"] = {
     { "The config key for the Tab philosophy is ___",
-      "The config key for the Tab philosophy is completion_style" },
+      "The config key for the Tab philosophy is completion.style" },
     { "Stop all snippets, from insert mode: ___",
       "Stop all snippets, from insert mode: <C-u>" },
     { "Jump to the next placeholder: ___",

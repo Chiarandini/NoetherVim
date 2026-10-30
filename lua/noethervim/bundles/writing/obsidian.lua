@@ -1,12 +1,12 @@
 ---@bundle obsidian
 ---@desc work in an Obsidian vault from the editor
 ---@about obsidian.nvim over an existing Obsidian vault: follow and create
----       links, search notes, and manage frontmatter. Set the vault path in
----       lua/user/config.lua. Enable the markdown bundle alongside it for
----       rendering, preview, tables, math and image paste.
+---       links, search notes, and manage frontmatter. Name the vault in
+---       obsidian.nvim's `workspaces`. Enable the markdown bundle alongside
+---       it for rendering, preview, tables, math and image paste.
 ---@requires note="a vault path"
 ---          why="obsidian.nvim has nothing to open without one"
----          install="set it in lua/user/config.lua; see :help noethervim-user-config-data"
+---          install="set workspaces in obsidian.nvim's opts; see :help noethervim-obsidian"
 -- NoetherVim bundle: Obsidian
 -- Enable with: { import = "noethervim.bundles.writing.obsidian" }
 --
@@ -14,9 +14,10 @@
 -- Recommended: also enable the markdown bundle for rendering, preview,
 --              tables, math, and image paste.
 --
--- Vault path: configure via user.config module:
---   -- ~/.config/<appname>/lua/user/config.lua
---   return { obsidian_vault = "~/Documents/MyVault/" }
+-- Vault path: obsidian.nvim's own `workspaces` option:
+--   -- lua/user/plugins/obsidian.lua
+--   return { "obsidian-nvim/obsidian.nvim",
+--            opts = { workspaces = { { name = "vault", path = "~/Documents/MyVault/" } } } }
 local SearchLeader = require("noethervim.util").search_leader
 
 return {
@@ -28,14 +29,10 @@ return {
     ft = "markdown",
     dependencies = { "nvim-lua/plenary.nvim" },
     config = function(_, opts)
-      local vault = require("noethervim.config").get().obsidian_vault
-      if vault and not opts.workspaces then
-        opts.workspaces = { { name = "main", path = vault } }
-      end
       if not opts.workspaces then
         vim.notify(
-          "Obsidian bundle: set obsidian_vault in lua/user/config.lua "
-            .. "(see :help noethervim-user-config-data)",
+          "Obsidian bundle: name your vault in obsidian.nvim's `workspaces` "
+            .. "(see :help noethervim-obsidian)",
           vim.log.levels.WARN
         )
         return

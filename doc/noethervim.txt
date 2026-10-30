@@ -297,8 +297,8 @@ g:mapsearchleader ~
 Create `lua/user/autocmds.lua`. New autocommands are additive.
 To override a core autocmd, clear its augroup first: >lua
     -- Clear a core augroup and replace it
-    vim.api.nvim_create_augroup("noethervim_q_close", { clear = true })
-    -- Then re-create with your preferred list
+    vim.api.nvim_create_augroup("noethervim_lastplace", { clear = true })
+    -- Then create your own
 <
                                                         *noethervim-q-close*
 q-to-close: ~
@@ -314,11 +314,10 @@ bundle, and the summary, output and attach windows from the test
 bundle. The REPL and the watches panel do take typed expressions, but
 only in insert mode, so `q` costs nothing there beyond macro recording.
 
-To ADD a filetype, set `q_close_filetypes` in `lua/user/config.lua`; see
-|noethervim-user-config-data|. To REMOVE one of the defaults, clear the
-`noethervim_q_close` augroup and re-create the autocmd from
-`require("noethervim.util.filetypes").q_close` minus the entries you do
-not want. `templates/user/autocmds.example.lua` has the full snippet.
+`q_close` in `lua/user/config.lua` adds a filetype (`true`) or removes
+one of the defaults (`false`): >lua
+    return { q_close = { oil = true, diff = false } }
+<
 
 Core augroups (clear any of these to disable or replace the feature): ~
     `noethervim_q_close`      q-to-close in non-editing windows
@@ -343,8 +342,8 @@ NoetherVim layers settings on prose and on code buffers:
               jsonc, yaml, toml) and special buffers (help, man, qf, oil,
               terminal, snacks_*, lazy, mason, checkhealth, Trouble, the
               debugger panels). Sets `list`, so trailing whitespace and
-              tabs are visible. When `spell_in_code = true` is set in
-              |noethervim-user-config-data|, also turns on `spell`,
+              tabs are visible. With `profiles = { spell_in_code = true }`
+              in |noethervim-user-config-data|, also turns on `spell`,
               scoped to comments and strings by treesitter's @spell
               captures. For CamelCase splitting, append `camel` to
               `spelloptions` yourself; the distro leaves it untouched.
@@ -369,8 +368,6 @@ To turn both profiles off, or to move or drop one filetype, use
     return { profiles = false }
     return { profiles = { classes = { tex = false, vimwiki = "writing" } } }
 <
-`writing_filetypes` and `non_code_filetypes` there still add filetypes to
-the defaults.
 
                                                     *noethervim-hard-wrap*
 The writing profile hard wraps: `formatoptions+t` breaks a line at
@@ -473,12 +470,15 @@ Common highlight groups to tweak: ~
 4.6 CONFIG DATA TABLE                          *noethervim-user-config-data*
 
 Create `lua/user/config.lua`. It returns a single table of values that
-`noethervim.setup()` and individual bundles read at runtime. This is
-NoetherVim's single user-facing configuration surface: colorscheme,
-statusline overrides, vault paths, feature flags, filetype lists.
+NoetherVim's own code reads: the colorscheme, the statusline look, the
+filetype profiles, what Tab does in the completion menu, which key sets
+to keep. Each concept has one key, and its settings sit together under
+it.
 
 Keys you do not set fall back to the distro default; the file is
-optional and missing keys are not an error.
+optional and missing keys are not an error. `:checkhealth noethervim`
+names any key it does not know, which is how a typo, or a key renamed
+in an update, shows up.
 
 Note: this file is for personal preferences. Arbitrary plugin overrides go in
 `lua/user/plugins/` instead (see |noethervim-user-plugins|).
@@ -488,31 +488,29 @@ Which surface to reach for: ~
     `config.lua`        Values NoetherVim's own code branches on, with no
                       `vim.o` or plugin-`opts` home of their own.
     `user/options.lua`  Anything with a `vim.o` / `vim.opt` equivalent.
-    `user/plugins/`     Anything a plugin exposes through `opts`. Plugin
-                      options are not repeated in `config.lua`; go
-                      straight to the spec.
-    `vim.g.*`           Leaders and the dashboard opt-out, set in
-                      `init.lua`. These have to be in place before
-                      plugins load, which is earlier than `config.lua`
-                      is read.
+    `user/plugins/`     Anything a plugin exposes through `opts`, and
+                      turning a plugin off. Plugin options are not
+                      repeated in `config.lua`; go straight to the spec.
+    `vim.g.*`           Leaders and the auto-install opt-out, set in
+                      `init.lua`. These hold even when `config.lua` is
+                      not read (|noethervim-toggle|).
 >lua
     -- lua/user/config.lua
     return {
-      colorscheme                  = "gruvbox",
-      colorscheme_persistence      = false,
+      colorscheme             = "gruvbox",
+      colorscheme_persistence = false,
       statusline = {
         edge_style = "round",
         colors     = {},
       },
-      obsidian_vault               = "~/Documents/MyVault/",
-      completion_style             = "supertab",
-      blink_conservative_filetypes = { "tex", "latex" },
-      blink_conservative_size_kb   = 500,
-      drop                         = false,
-      writing_filetypes            = { "vimwiki", "quarto" },
-      non_code_filetypes           = { "csv" },
-      q_close_filetypes            = { "oil" },
-      spell_in_code                = true,
+      completion = { style = "supertab" },
+      profiles = {
+        classes       = { vimwiki = "writing", csv = false },
+        spell_in_code = true,
+        conservative  = { filetypes = { "tex", "latex" }, size_kb = 500 },
+      },
+      q_close = { oil = true },
+      keymaps = { remaps = false },
     }
 <
 Current keys: ~
@@ -581,60 +579,43 @@ Current keys: ~
                                   PATH and falls back to snacks'
                                   git-status picker otherwise; lazygit
                                   is optional, not a prerequisite.
-    `obsidian_vault`                Path to your Obsidian vault. Read by
-                                  the `obsidian` bundle. Default:
-                                  `~/obsidian/`.
-    `completion_style`              Tab-key philosophy for the
+    `completion.style`              Tab-key philosophy for the
                                   completion menu: `"snippet"` (default,
                                   Tab is reserved for LuaSnip jumps),
                                   `"supertab"` (Tab accepts visible
                                   menu item, falls back to snippet
                                   jump), or `"navigate"` (Tab cycles
-                                  the menu without accepting).
-    `blink_conservative_filetypes`  Filetypes where keyword-triggered
-                                  completion is suppressed. `<C-Space>`
-                                  and LSP trigger characters (e.g. `\`
-                                  in LaTeX) still work. Default:
-                                  `{ "tex", "latex" }`.
-    `blink_conservative_size_kb`    Files larger than this (in KB) also
-                                  get conservative mode, regardless of
-                                  filetype. Default: `500`.
-    `drop`                          Set to `false` to disable the
-                                  seasonal `drop.nvim` animations from
-                                  the `eye-candy` bundle. Default:
-                                  enabled.
-    `writing_filetypes`             Extra filetypes added to the writing
-                                  profile (wrap, linebreak, spell,
-                                  conceallevel=2, formatoptions+t).
-                                  Additive: defaults stay in place.
-                                  See |noethervim-filetype-profiles|.
-                                  Default: `{}`.
-    `non_code_filetypes`            Extra filetypes that skip both the
-                                  writing and code profiles; their own
-                                  ftplugin / buffer settings take over.
-                                  Additive: defaults stay in place.
-                                  Default: `{}`.
-    `q_close_filetypes`             Extra filetypes where a bare `q`
-                                  closes the window. Additive: defaults
-                                  stay in place. `{ "oil" }` is the
-                                  common addition. See
-                                  |noethervim-q-close|. Default: `{}`.
+                                  the menu without accepting). See
+                                  |noethervim-completion-style|.
     `profiles`                      `false` turns the writing and code
-                                  profiles off. `{ classes = { [ft] =
-                                  "writing" | "code" | false } }` moves
-                                  a filetype to a profile or leaves it
-                                  alone. See
+                                  profiles off. See
                                   |noethervim-filetype-profiles|.
                                   Default: both on.
-    `spell_in_code`                 If `true`, the code profile turns on
+    `profiles.classes`              `{ [ft] = "writing" | "code" | false }`
+                                  moves a filetype to a profile, or
+                                  leaves it alone with `false`.
+    `profiles.spell_in_code`        If `true`, the code profile turns on
                                   `spell`. Spellcheck is scoped to
                                   comments and strings via treesitter
                                   `@spell` captures; identifiers are not
                                   flagged. `spelloptions` is left
                                   untouched; add `camel` yourself if
-                                  you want CamelCase splitting. See
-                                  |noethervim-filetype-profiles|.
+                                  you want CamelCase splitting.
                                   Default: `false`.
+    `profiles.conservative`         Where the completion menu waits to be
+                                  asked instead of opening as you type:
+                                  `filetypes` (default `{ "tex",
+                                  "latex" }`), and files larger than
+                                  `size_kb` (default `500`) in any
+                                  filetype. `<C-Space>` and LSP trigger
+                                  characters (`\` in LaTeX) still open
+                                  it. Holds with `profiles = false` too.
+    `q_close`                       `{ [ft] = true | false }`: filetypes
+                                  where a bare `q` closes the window.
+                                  `true` adds one, `false` removes one
+                                  of the defaults; `oil = true` is the
+                                  common addition. See
+                                  |noethervim-q-close|.
     `keymaps`                       Key sets to switch off. `remaps =
                                   false` leaves every key whose meaning
                                   NoetherVim changes (`j`, `s`, `;`,
@@ -654,6 +635,12 @@ Current keys: ~
                                   cmdline message (still recorded in
                                   `:messages`). `"off"` suppresses the
                                   message entirely.
+    `lsp`                           `{ [name] = false }` drops
+                                  NoetherVim's settings for a language
+                                  server. See |noethervim-user-lsp|.
+    `snippets_disabled`             Snippets kept switched off wherever
+                                  this config is used. See
+                                  |noethervim-snippets|.
 
 See `templates/user/config.example.lua` for the annotated template.
 
@@ -895,9 +882,14 @@ Available bundles (grouped by category): ~
     writing/ ~
     `markdown`       render-markdown, markdown-preview, tables, math,
                      img-clip (image paste from clipboard).
+                                                         *noethervim-obsidian*
     `obsidian`       Obsidian vault integration (obsidian.nvim).
                      Recommended: also enable the markdown bundle.
-                     Configure vault path in lua/user/config.lua.
+                     Name the vault in obsidian.nvim's `workspaces`: >lua
+        -- lua/user/plugins/obsidian.lua
+        return { "obsidian-nvim/obsidian.nvim", opts = { workspaces = {
+          { name = "vault", path = "~/Documents/MyVault/" } } } }
+<
     `neorg`          .norg wiki / note-taking.
     `zotero`         Citation picker over a local Zotero library, for tex,
                      markdown, quarto, typst, org and asciidoc.
@@ -1361,13 +1353,12 @@ Check current status: `:NoetherVim status`
                                                         *noethervim-dashboard*
 Disabling the startup dashboard: ~
 
-The Snacks dashboard shown on empty-arg startup (`nvim` with no file)
-can be turned off with a single flag in your init.lua, set before
-`lazy.setup`: >lua
-    vim.g.noethervim_dashboard = false
+The Snacks dashboard shown on empty-arg startup (`nvim` with no file) is
+a snacks.nvim feature, turned off in its options: >lua
+    -- lua/user/plugins/snacks.lua
+    return { "folke/snacks.nvim", opts = { dashboard = { enabled = false } } }
 <
-With the flag set, `nvim` opens straight into an empty buffer. Set it
-to `true` or leave unset to keep the dashboard (default).
+`nvim` then opens straight into an empty buffer.
 
                                                     *noethervim-auto-install*
 Declining toolchain auto-install: ~
@@ -1388,8 +1379,8 @@ outside the editor, by Nix, by system packages, or by a project-local
 environment, where a second copy under Mason is at best redundant and at
 worst a version you did not choose.
 
-Language servers are unaffected: they arrive through `ensure_installed`
-and are not gated by this flag.
+Language servers in lspconfig's `ensure_installed` are covered too: with
+the flag set, install them with `:Mason`.
 
 ==============================================================================
 9. KEYMAP NAMESPACES                     *noethervim-keymaps* *neothervim-keymaps*
@@ -2417,8 +2408,8 @@ Default keybindings: ~
 
 Tab key philosophy preset: ~
                                             *noethervim-completion-style*
-Set `completion_style` in `lua/user/config.lua` to switch the entire Tab
-behavior without writing any keymap overrides:
+Set `completion = { style = ... }` in `lua/user/config.lua` to switch the
+entire Tab behavior without writing any keymap overrides:
 
     `"snippet"`   (default) Tab is reserved for LuaSnip jumps. Pick from
                 the menu with C-n/C-p and accept with C-y. Snippet
@@ -2434,7 +2425,7 @@ behavior without writing any keymap overrides:
 
 Example: >lua
     -- lua/user/config.lua
-    return { completion_style = "supertab" }
+    return { completion = { style = "supertab" } }
 <
 The two philosophies people mostly go for are "supertab" and "snippet". The
 "navigate" is here mostly for users coming from older nvim-cmp configs. You

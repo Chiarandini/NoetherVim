@@ -5,10 +5,8 @@
 --  Philosophy: any window you can't usefully edit should close
 --  with a single `q` keypress (no macro-recording concern there).
 -- ──────────────────────────────────────────────────────────────
--- The list lives in noethervim.util.filetypes and already includes
--- whatever `q_close_filetypes` in lua/user/config.lua adds to it. To drop
--- one of the distro's entries instead, clear this augroup and recreate the
--- autocmd -- see templates/user/autocmds.example.lua.
+-- The list lives in noethervim.util.filetypes, with `q_close` from
+-- lua/user/config.lua already applied to it.
 
 vim.api.nvim_create_autocmd("FileType", {
   group = vim.api.nvim_create_augroup("noethervim_q_close", { clear = true }),

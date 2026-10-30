@@ -42,7 +42,7 @@
 --     opts = { completion = { list = { max_items = 10 } } } }
 --
 -- Customize completion keybindings (see :help noethervim-completion-custom).
--- Pick the overall Tab philosophy with `completion_style` in
+-- Pick the overall Tab philosophy with `completion = { style = ... }` in
 -- lua/user/config.lua; use the specs below to change individual keys on top
 -- of it. Keys you do not name keep whatever that style gave them.
 --

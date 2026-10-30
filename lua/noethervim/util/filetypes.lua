@@ -1,6 +1,7 @@
---- Filetype lists the distro keys behaviour off, with the `lua/user/config.lua`
---- extensions already folded in. Requiring this module is the only supported
---- way to read them; the tables are built once at load time.
+--- Filetype lists the distro keys behaviour off. `profiles.classes` in
+--- `lua/user/config.lua` reclassifies a filetype (read by profiles/init.lua);
+--- `q_close` there adds to or removes from the `q` list, folded in below
+--- once at load time.
 
 local M = {}
 
@@ -48,17 +49,16 @@ M.q_close = {
 }
 
 do
-  local user_cfg = require("noethervim.config").get()
-  for _, ft in ipairs(user_cfg.writing_filetypes or {}) do
-    M.writing[ft] = true
-  end
-  for _, ft in ipairs(user_cfg.non_code_filetypes or {}) do
-    M.non_code[ft] = true
-  end
-  for _, ft in ipairs(user_cfg.q_close_filetypes or {}) do
-    if not vim.tbl_contains(M.q_close, ft) then
-      M.q_close[#M.q_close + 1] = ft
+  local q_close = require("noethervim.config").get().q_close
+  if type(q_close) == "table" then
+    local kept = {}
+    for _, ft in ipairs(M.q_close) do
+      if q_close[ft] ~= false then kept[#kept + 1] = ft end
     end
+    for ft, on in pairs(q_close) do
+      if on == true and not vim.tbl_contains(kept, ft) then kept[#kept + 1] = ft end
+    end
+    M.q_close = kept
   end
 end
 

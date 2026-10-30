@@ -624,8 +624,8 @@ function M.check()
     local errors, unknowns = cfg_validator.validate_user_config(user_cfg)
     for _, err in ipairs(errors) do h.warn(err) end
     if #unknowns > 0 then
-      h.info("Unknown user.config keys (typo? or stale after distro update): "
-        .. table.concat(unknowns, ", "))
+      h.warn("Unknown user.config keys: " .. table.concat(unknowns, ", "),
+        { "Check the spelling; a key NoetherVim renamed or removed is listed in NEWS.md" })
     end
     if #errors == 0 and #unknowns == 0 then
       h.ok("user.config: schema valid")
@@ -648,17 +648,6 @@ function M.check()
   if cs.source == "persisted" then
     h.info("The saved pick wins over `colorscheme` in lua/user/config.lua. "
       .. "Set colorscheme_persistence = false to make the config file authoritative.")
-  end
-
-  local obsidian_vault = require("noethervim.config").get().obsidian_vault
-  if obsidian_vault then
-    if vim.uv.fs_stat(vim.fn.expand(obsidian_vault)) then
-      h.ok("Obsidian vault found: " .. obsidian_vault)
-    else
-      h.warn("Obsidian vault configured but not found: " .. obsidian_vault)
-    end
-  else
-    h.info("Obsidian vault not configured (set obsidian_vault in user/config.lua)")
   end
 
   -- ── Search leader ────────────────────────────────────────────────────
@@ -976,10 +965,12 @@ function M.check()
   else
     h.warn("nvim__redraw missing -- busy-spinner falls back to redrawstatus")
   end
-  if vim.g.noethervim_dashboard == false then
-    h.info("Dashboard: disabled (vim.g.noethervim_dashboard = false)")
+  local snacks = require("lazy.core.config").plugins["snacks.nvim"]
+  local snacks_opts = snacks and require("lazy.core.plugin").values(snacks, "opts", false) or {}
+  if (snacks_opts.dashboard or {}).enabled == false then
+    h.info("Dashboard: off (dashboard.enabled = false in snacks.nvim's opts)")
   else
-    h.ok("Dashboard: enabled")
+    h.ok("Dashboard: on")
   end
   if vim.g.noethervim_dev then
     h.info("Dev mode: ON (vim.g.noethervim_dev set)")
