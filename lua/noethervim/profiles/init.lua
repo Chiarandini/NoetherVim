@@ -11,6 +11,11 @@
 
 local M = {}
 
+--- The options the profiles write. A value of yours in one of them is kept
+--- (profiles/apply.lua records claims on these), and `:NoetherVim where`
+--- names the profile behind them.
+M.MANAGED = { "wrap", "linebreak", "conceallevel", "spell", "list", "statuscolumn", "formatoptions" }
+
 local function settings()
   return require("noethervim.config").get().profiles
 end

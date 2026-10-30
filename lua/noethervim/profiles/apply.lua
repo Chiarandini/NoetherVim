@@ -161,7 +161,7 @@ vim.api.nvim_create_autocmd({ "FileType", "BufWinEnter" }, {
 -- yours to press), modelines, timers. Floats are skipped: a picker's
 -- preview window writing into the previewed buffer is not a choice of
 -- yours.
-local MANAGED = { "wrap", "linebreak", "conceallevel", "spell", "list", "statuscolumn", "formatoptions" }
+local MANAGED = profiles.MANAGED
 
 vim.api.nvim_create_autocmd("OptionSet", {
   group    = group,

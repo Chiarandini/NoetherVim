@@ -151,7 +151,8 @@ over yours: most have them switched off, and the keys NoetherVim wants
 from them are among its own. A key of yours made earlier, at the top of
 `init.lua`, keeps NoetherVim off it.
 `:NoetherVim where <key>` shows who maps a key, and a mapping of
-NoetherVim's that stepped aside for yours.
+NoetherVim's that stepped aside for yours; it answers for options,
+commands and plugins too (|noethervim-where|).
 
 Buffer keys for a filetype, and the keys mapped when a language server
 attaches, are NoetherVim's too, mapped on `FileType` and `LspAttach`. One
@@ -2260,6 +2261,27 @@ straightforward. See the example in
                               See |noethervim-inspect| and |noethervim-diff|.
                               Run with no subcommand to print the full
                               subcommand list with descriptions.
+
+                                                            *noethervim-where*
+`:NoetherVim where` {name}    Who set {name}, and the line that changes it.
+                              {name} is any of:
+                                a key       who maps it in each mode, and a
+                                            NoetherVim key that stepped
+                                            aside for yours
+                                an option   its global value and the one
+                                            here, who set each, the
+                                            profile behind it, and the
+                                            line for `user/options.lua` or
+                                            `after/ftplugin/<ft>.lua`
+                                a command   who defines it, or the plugin
+                                            it loads on first use
+                                a plugin    whether it loaded and why, the
+                                            specs that declare it, the
+                                            keys NoetherVim maps for it,
+                                            and the line that turns it off
+                              A name that is more than one (`ai` is a key
+                              and 'autoindent') gets each report. `<Tab>`
+                              completes commands, plugins and options.
 
 `:NoetherVim override`        Open the file of yours that changes the
                               current buffer's NoetherVim source file, in a

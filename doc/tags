@@ -93,6 +93,7 @@ noethervim-user-overrides	noethervim.txt	/*noethervim-user-overrides*
 noethervim-user-plugins	noethervim.txt	/*noethervim-user-plugins*
 noethervim-user-plugins-arrays	noethervim.txt	/*noethervim-user-plugins-arrays*
 noethervim-web-search	noethervim.txt	/*noethervim-web-search*
+noethervim-where	noethervim.txt	/*noethervim-where*
 noethervim-wrap-marker	noethervim.txt	/*noethervim-wrap-marker*
 noethervim.txt	noethervim.txt	/*noethervim.txt*
 opposite	noethervim.txt	/*opposite*

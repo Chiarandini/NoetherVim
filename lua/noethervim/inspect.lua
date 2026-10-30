@@ -1950,7 +1950,7 @@ local subcommand_descriptions = {
   diff              = "Compare overrides vs distro defaults (keymaps / options / autocmds / module)",
   override          = "Open the file of yours that changes the current distro file",
   ["debug-keymaps"] = "Trace where each keymap was registered",
-  where             = "Who maps a key, and the line that changes it: `where <key>`",
+  where             = "Who set a key, option, command or plugin, and the line that changes it",
 }
 
 --- Each entry receives (arg, bang), so the dispatcher needs no special case
@@ -1969,7 +1969,7 @@ local subcommands = {
   diff              = function(args) M.diff(args) end,
   override          = M.override,
   ["debug-keymaps"] = function() M.debug_keymaps() end,
-  where             = function(arg) require("noethervim.inspect.where").key(arg) end,
+  where             = function(arg) require("noethervim.inspect.where").run(arg) end,
 }
 
 local subcommand_names = vim.tbl_keys(subcommands)
@@ -2027,6 +2027,16 @@ function M.complete(_, cmdline)
     return vim.tbl_filter(function(s)
       return s:find(args[3], 1, true) == 1
     end, diff_targets())
+  end
+  -- `where` takes keys too, which do not complete; offer the rest.
+  if args[2] == "where" and #args == 3 then
+    local names = vim.tbl_keys(vim.api.nvim_get_commands({}))
+    vim.list_extend(names, vim.tbl_keys(require("lazy.core.config").plugins))
+    vim.list_extend(names, vim.fn.getcompletion(args[3], "option"))
+    table.sort(names)
+    return vim.tbl_filter(function(s)
+      return s:find(args[3], 1, true) == 1
+    end, names)
   end
   return {}
 end
