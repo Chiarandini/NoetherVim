@@ -126,8 +126,9 @@ where they are listed.
   smart-enter.nvim make no mappings of their own; NoetherVim maps the same
   keys. If you set `vim.g.VM_maps` yourself, it now replaces NoetherVim's.
 - **Comment.nvim removed:** commenting is Neovim's built-in `gc`/`gcc`;
-  `<C-/>` and `<C-S-r>` work as before. Block comments on `gb` are gone; add
-  Comment.nvim from `lua/user/plugins/` if you used them.
+  `<C-/>` and `<C-S-r>` work as before. Block comments on `gb` are gone, as
+  are `gco`, `gcO` and `gcA` (a comment below, above, or at the end of the
+  line); add Comment.nvim from `lua/user/plugins/` if you used them.
 - **`yP` (copy the compiled PDF) is a TeX-buffer key** in the latex
   bundle, no longer mapped everywhere once a TeX file has been opened.
 - **With the yanky bundle,** visual `p` keeps the register as it does
