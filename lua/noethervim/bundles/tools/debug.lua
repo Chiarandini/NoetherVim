@@ -435,6 +435,27 @@ return {
 					controls = { enabled = true, element = "repl" },
 					floating = { border = "rounded" },
 				},
+				-- The panels' wiring lives here, not in nvim-dap's config: a
+				-- `require("dapui")` that comes first (a key of yours, a row)
+				-- loads this plugin, whose module requires nvim-dap, and an
+				-- nvim-dap config requiring dapui back would find it half loaded.
+				config = function(_, opts)
+					local dap, dapui = require("dap"), require("dapui")
+					dapui.setup(opts)
+
+					-- The console panel is the debuggee's terminal, so a cursor in
+					-- it is in terminal mode and every global mapping is off. Give
+					-- it the stepping tier back, buffer-locally.
+					vim.api.nvim_create_autocmd("FileType", {
+						group    = vim.api.nvim_create_augroup("noethervim_dap_console_keys", { clear = true }),
+						pattern  = "dapui_console",
+						callback = function(args) bind_stepping("t", args.buf) end,
+					})
+
+					dap.listeners.after.event_initialized["dapui_config"] = function() dapui.open({}) end
+					dap.listeners.before.event_terminated["dapui_config"] = function() dapui.close({}) end
+					dap.listeners.before.event_exited["dapui_config"]     = function() dapui.close({}) end
+				end,
 			},
 			{
 				"theHamsta/nvim-dap-virtual-text",
@@ -482,9 +503,8 @@ return {
 			{ "<leader>dt", function() require("dap").disconnect()                                 end, desc = "DAP: Disconnect" },
 		})) } },
 		config = function(_, opts)
-			local dap   = require("dap")
-			local dapui = require("dapui")
-			local ic    = require("noethervim.util.icons")
+			local dap = require("dap")
+			local ic  = require("noethervim.util.icons")
 
 			require("noethervim.util.mason_install").ensure(opts.mason_install)
 
@@ -539,19 +559,6 @@ return {
 					numhl  = sign[3],
 				})
 			end
-
-			-- The console panel is the debuggee's terminal, so a cursor in it
-			-- is in terminal mode and every global mapping is off. Give it
-			-- the stepping tier back, buffer-locally.
-			vim.api.nvim_create_autocmd("FileType", {
-				group    = vim.api.nvim_create_augroup("noethervim_dap_console_keys", { clear = true }),
-				pattern  = "dapui_console",
-				callback = function(args) bind_stepping("t", args.buf) end,
-			})
-
-			dap.listeners.after.event_initialized["dapui_config"] = function() dapui.open({}) end
-			dap.listeners.before.event_terminated["dapui_config"] = function() dapui.close({}) end
-			dap.listeners.before.event_exited["dapui_config"]     = function() dapui.close({}) end
 
 			-- Callstack ghost highlights: fetch the stack on stop, redraw on
 			-- frame switches (after.scopes fires whenever current_frame moves),

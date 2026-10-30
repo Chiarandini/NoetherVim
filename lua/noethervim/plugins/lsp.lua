@@ -285,7 +285,7 @@ return {
 			{ "gt",    function() vim.lsp.buf.type_definition() end, lsp = "textDocument/typeDefinition", set = "lsp", silent = true, desc = "[g]o to [t]ype definition" },
 			{ "gi",    function() vim.lsp.buf.implementation() end,  lsp = "textDocument/implementation", set = "lsp", silent = true, desc = "[g]o to [i]mplementation" },
 			-- gr/grr/grn/gra: Neovim 0.12 defaults (references, rename, code action)
-			{ "gR",    "<cmd>Glance references<cr>", lsp = "textDocument/references",    set = "lsp", silent = true, desc = "[G]lance [R]eferences (float)" },
+			{ "gR",    "<cmd>Glance references<cr>", lsp = "textDocument/references",    set = "lsp", silent = true, desc = "[G]lance [R]eferences (float)", owner = "glance.nvim" },
 			{ "gw",    function() vim.lsp.buf.workspace_symbol("") end, lsp = "workspace/symbol", set = "lsp", silent = true, desc = "[g]et [w]orkspace symbols" },
 			{ "gs",    function() vim.lsp.buf.signature_help({ border = "rounded" }) end, lsp = "textDocument/signatureHelp", set = "lsp", silent = true, desc = "[g]et [s]ignature" },
 			{ "<C-h>", function() vim.lsp.buf.signature_help({ border = "rounded" }) end, mode = "i", lsp = "textDocument/signatureHelp", set = "lsp", silent = true, desc = "signature help" },
@@ -301,7 +301,7 @@ return {
 			-- <Leader>ff: format via conform (falls back to LSP if no formatter configured)
 			{ "<Leader>ff", function() require("conform").format({ lsp_format = "fallback", bufnr = 0 }) end,
 				mode = { "n", "x" }, lsp = true, set = "lsp", silent = true, desc = "format buffer" },
-			{ "go",    "<cmd>Outline<cr>", lsp = "textDocument/documentSymbol", set = "lsp", silent = true, desc = "symbols [o]utline" },
+			{ "go",    "<cmd>Outline<cr>", lsp = "textDocument/documentSymbol", set = "lsp", silent = true, desc = "symbols [o]utline", owner = "outline.nvim" },
 			{ SearchLeader .. "li", function() vim.lsp.buf.incoming_calls() end, lsp = "callHierarchy/incomingCalls", set = "lsp", silent = true, desc = "[l]sp [i]ncoming calls" },
 			{ SearchLeader .. "lO", function() vim.lsp.buf.outgoing_calls() end, lsp = "callHierarchy/outgoingCalls", set = "lsp", silent = true, desc = "[l]sp [O]utgoing calls" },
 			{ "gy",    yank_type, lsp = "textDocument/hover", set = "lsp", silent = true, desc = "[y]ank type at cursor" },
@@ -504,7 +504,7 @@ return {
 
 	{
 		"dnlhc/glance.nvim",
-		event = "VeryLazy",
+		cmd = "Glance",
 		opts = {},
 	},
 }

@@ -679,7 +679,7 @@ return {
 		-- find [u]ndo history
 		{ SearchLeader .. "fu", function() Snacks.picker.undo({ title = "Undo History" }) end, desc = "[f]ind [u]ndo" },
 		-- find [t]odo's
-		{ SearchLeader .. "ft", function() Snacks.picker.todo_comments({ title = "Todo Comments" }) end, desc = "[f]ind [t]odo's" },
+		{ SearchLeader .. "ft", function() Snacks.picker.todo_comments({ title = "Todo Comments" }) end, desc = "[f]ind [t]odo's", owner = "todo-comments.nvim" },
 		-- [C]olorscheme
 		{ SearchLeader .. "C",  function() Snacks.picker.colorschemes({ title = require("noethervim.theme").picker_title() }) end, desc = "[C]olorscheme" },
 		-- [R]esume last picker

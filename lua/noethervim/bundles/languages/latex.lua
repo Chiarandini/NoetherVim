@@ -839,7 +839,8 @@ return {
       { SearchLeader .. "w", "<cmd>SnacksLatexLabels<cr>", desc = "labels" },
       { "<localleader>w",   "<cmd>SnacksLatexLabels<cr>",     ft = { "tex", "latex" }, desc = "latex labels" },
       { "<localleader>vul", "<cmd>LatexLabels update<cr>",    ft = { "tex", "latex" }, desc = "update latex labels" },
-      { "<localleader>vuh", "<cmd>CachedHeadings update<cr>", ft = { "tex", "latex" }, desc = "update headings cache" },
+      { "<localleader>vuh", "<cmd>CachedHeadings update<cr>", ft = { "tex", "latex" }, desc = "update headings cache",
+        owner = "snacks-cached-headings.nvim" },
       -- gd: the label under the cursor via the label cache, else the
       -- language server's definition. A buffer key from an `ft` row stays
       -- when texlab attaches; the generic LSP gd does not replace it.

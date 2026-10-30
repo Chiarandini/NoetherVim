@@ -43,7 +43,7 @@ local SearchLeader = require("noethervim.util").search_leader
 return {
   {
     "gbprod/yanky.nvim",
-    lazy = true,
+    cmd = { "YankyRingHistory", "YankyClearHistory" },
     specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("yanky.nvim", {
       { "y", "<Plug>(YankyYank)",       mode = { "n", "x" }, desc = "yank (recorded)", set = "remaps" },
       { "p", "<Plug>(YankyPutAfter)",   desc = "paste after", set = "remaps" },
