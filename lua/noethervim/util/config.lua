@@ -44,6 +44,10 @@ local SCHEMA = {
   snippets_disabled = "table",
   keymaps           = "table",
   lsp               = "table",
+  pick = {
+    route   = "table",
+    engines = "table",
+  },
 }
 
 --- Nested tables that also accept `false`, meaning "off".
@@ -126,6 +130,43 @@ local function check(cfg, want_unknowns)
       elseif type(v) ~= "boolean" then
         errors[#errors + 1] = ("user.config.profiles.conservative.%s: expected true or false (a filetype), got %s")
           :format(tostring(key), type(v))
+      end
+    end
+  end
+
+  -- `pick`: routes and engines name verbs, and a typo would route nothing.
+  local verbs = {}
+  for _, v in ipairs(require("noethervim.pick").VERBS) do verbs[v] = true end
+  local function verb_key(path, key)
+    if not verbs[key] then
+      errors[#errors + 1] = ("user.config.%s.%s: not a picker verb (%s)"):format(path, tostring(key),
+        table.concat(require("noethervim.pick").VERBS, ", "))
+      return false
+    end
+    return true
+  end
+  local route = vim.tbl_get(cfg, "pick", "route")
+  if type(route) == "table" then
+    for _, key in ipairs(sorted_keys(route)) do
+      if verb_key("pick.route", key) and type(route[key]) ~= "string" then
+        errors[#errors + 1] = ("user.config.pick.route.%s: expected an engine name, got %s"):format(key, type(route[key]))
+      end
+    end
+  end
+  local engines = vim.tbl_get(cfg, "pick", "engines")
+  if type(engines) == "table" then
+    for _, name in ipairs(sorted_keys(engines)) do
+      local engine = engines[name]
+      if type(engine) ~= "table" then
+        errors[#errors + 1] = ("user.config.pick.engines.%s: expected a table of functions by verb, got %s")
+          :format(tostring(name), type(engine))
+      else
+        for _, key in ipairs(sorted_keys(engine)) do
+          if verb_key("pick.engines." .. tostring(name), key) and type(engine[key]) ~= "function" then
+            errors[#errors + 1] = ("user.config.pick.engines.%s.%s: expected function, got %s")
+              :format(tostring(name), key, type(engine[key]))
+          end
+        end
       end
     end
   end

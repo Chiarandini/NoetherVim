@@ -51,6 +51,7 @@ noethervim-option-layers	noethervim.txt	/*noethervim-option-layers*
 noethervim-option-toggles	noethervim.txt	/*noethervim-option-toggles*
 noethervim-override-drift	noethervim.txt	/*noethervim-override-drift*
 noethervim-override-timing	noethervim.txt	/*noethervim-override-timing*
+noethervim-pick	noethervim.txt	/*noethervim-pick*
 noethervim-picker-help	noethervim.txt	/*noethervim-picker-help*
 noethervim-picker-notifications	noethervim.txt	/*noethervim-picker-notifications*
 noethervim-q-close	noethervim.txt	/*noethervim-q-close*

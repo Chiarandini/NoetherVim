@@ -17,7 +17,10 @@ return {
 		},
 		cmd  = { "SnacksCachedHeadings", "CachedHeadings" },
 		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("snacks-cached-headings.nvim", {
-			{ SearchLeader .. "t", "<cmd>SnacksCachedHeadings<cr>", desc = "headings" },
+			require("noethervim.pick").row(SearchLeader .. "t", "headings", { desc = "headings" }),
+		}, {
+			engines = { ["cached-headings"] = { headings = function() vim.cmd("SnacksCachedHeadings") end } },
+			route = { headings = "cached-headings" },
 		}) } },
 		opts = {
 			scan_includes   = true,

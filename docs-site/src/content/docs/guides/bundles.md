@@ -285,6 +285,18 @@ comment-box.nvim draws decorative ASCII boxes and dividers around comments.
 { import = "noethervim.bundles.navigation.editing-extras" }
 ```
 
+### `fff`
+
+fff, a fuzzy finder with frecency and a persistent index, searches the project's files and contents: SearchLeader ff, fp, gg, gp and gw open it. snacks keeps every other picker and any directory outside the project. [oF and ]oF switch between the two for the session.
+
+```lua
+{ import = "noethervim.bundles.navigation.fff" }
+```
+
+Requires:
+
+- **the fff binary (downloaded on install, else built with cargo)**
+
 ### `flash`
 
 Puts a label on every match, so a jump is one keystroke rather than a count. Augments / and ? as well as f, t, F and T, works operator- pending and visual, and adds a treesitter-scoped variant.

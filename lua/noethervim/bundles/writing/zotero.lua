@@ -24,9 +24,14 @@ return {
       "kkharji/sqlite.lua",
     },
     ft = { "tex", "plaintex", "markdown", "quarto", "typst", "org", "asciidoc" },
+    cmd = "SnacksZotero",
+    -- An engine for the citations verb, not routed to: <C-S-c> keeps the
+    -- latex bundle's BibTeX picker unless `pick.route` says zotero.
     specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("snacks-zotero.nvim", {
       { "<localleader>z", "<cmd>SnacksZotero<cr>", desc = "Zotero citation picker",
         ft = { "tex", "plaintex", "markdown", "quarto", "typst", "org", "asciidoc" } },
+    }, {
+      engines = { zotero = { citations = function() vim.cmd("SnacksZotero") end } },
     }) } },
     opts = {
       -- Refuse to append entries that biber/biblatex would reject (raw

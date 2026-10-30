@@ -40,6 +40,7 @@ local runtime = vim.env.VIMRUNTIME and real(vim.env.VIMRUNTIME)
 ---@field desc? string
 ---@field by? string who set the value that was kept, or why a row is off
 ---@field off? boolean the row was switched off rather than yielding to a mapping
+---@field verb? string the picker verb a row opens
 
 --- Writes made, keyed by kind then name ("mode lhs" for maps).
 ---@type table<string, table<string, noethervim.DefaultRecord>>

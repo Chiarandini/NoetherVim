@@ -613,8 +613,10 @@ return {
     cmd  = "SnacksBibtex",
     ft   = { "tex", "plaintex", "markdown", "quarto", "typst", "org", "rmd" },
     specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("snacks-bibtex.nvim", {
-      { "<c-s-c>", "<cmd>SnacksBibtex<cr>",
-        mode = "i", desc = "citation from bibtex" },
+      require("noethervim.pick").row("<c-s-c>", "citations", { mode = "i", desc = "insert a citation" }),
+    }, {
+      engines = { bibtex = { citations = function() vim.cmd("SnacksBibtex") end } },
+      route = { citations = "bibtex" },
     }) } },
     opts = {
       search_keys       = { "author", "year", "title" },
@@ -835,8 +837,8 @@ return {
     ft   = "tex",
     cmd  = { "LatexLabels", "SnacksLatexLabels", "SnacksLatexLabelsExport" },
     specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("snacks-latex-labels.nvim", {
-      { SearchLeader .. "w", "<cmd>SnacksLatexLabels<cr>", desc = "labels" },
-      { "<localleader>w",   "<cmd>SnacksLatexLabels<cr>",     ft = "tex", desc = "latex labels" },
+      require("noethervim.pick").row(SearchLeader .. "w", "labels", { desc = "labels" }),
+      require("noethervim.pick").row("<localleader>w", "labels", { ft = "tex", desc = "latex labels" }),
       { "<localleader>vul", "<cmd>LatexLabels update<cr>",    ft = "tex", desc = "update latex labels" },
       { "<localleader>vuh", "<cmd>CachedHeadings update<cr>", ft = "tex", desc = "update headings cache",
         owner = "snacks-cached-headings.nvim" },
@@ -860,6 +862,9 @@ return {
           vim.api.nvim_win_set_cursor(0, { entry.line, 0 })
           vim.cmd("normal! zz")
         end, ft = "tex", desc = "goto label definition (LaTeX)" },
+    }, {
+      engines = { ["latex-labels"] = { labels = function() vim.cmd("SnacksLatexLabels") end } },
+      route = { labels = "latex-labels" },
     }) } },
     opts = {
       cache_strategy    = "global",

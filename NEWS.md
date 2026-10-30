@@ -6,6 +6,16 @@ where they are listed.
 
 ## 2026-10-30
 
+- **Picker keys open a verb, which any engine can serve:** SearchLeader
+  ff, fp, fo, fb, gg, gp, r, t and w, the dashboard's `f` and `o`, Oil's
+  `gf`/`gG` and insert `<C-S-c>` open `files`, `grep`, `recent`,
+  `buffers`, `resume`, `headings`, `labels` or `citations`. snacks serves
+  them as before; `pick.route` in `lua/user/config.lua` hands one to
+  another engine, `pick.engines` adds your own (`:help noethervim-pick`).
+- **SearchLeader+gw greps the word under the cursor**, or the selection.
+- **The navigation/fff bundle** opens fff for a project's files and grep,
+  with `[oF`/`]oF` to switch back to snacks. If you route fff over
+  NoetherVim's keys yourself, import the bundle instead.
 - **block.nvim left the eye-candy bundle, and `[oB`/`]oB` with it:** on
   Neovim 0.12 it fails in any buffer without a tree-sitter parser, and it
   is no longer maintained. Nothing replaces it.

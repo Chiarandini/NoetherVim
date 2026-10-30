@@ -113,6 +113,7 @@ require("lazy").setup({
 		-- navigation/
 		-- { import = "noethervim.bundles.navigation.harpoon" },        -- fast per-project file marks
 		-- { import = "noethervim.bundles.navigation.flash" },          -- enhanced f/t and / motions
+		-- { import = "noethervim.bundles.navigation.fff" },            -- fff for a project's files and grep
 		--   lighter alternative: drop yorickpeterse/nvim-jump into user/plugins/
 		-- { import = "noethervim.bundles.navigation.projects" },       -- project switcher (snacks.picker)
 		-- { import = "noethervim.bundles.navigation.editing-extras" }, -- comment boxes

@@ -245,5 +245,9 @@ return {
 			}
 		end,
 	},
-	{ "Chiarandini/oil-extras.nvim", lazy = true, opts = {} },
+	-- Its file and grep pickers (gf, gG) open through the picker seam, so a
+	-- routed engine serves them too.
+	{ "Chiarandini/oil-extras.nvim", lazy = true, opts = {
+		picker = function(source, opts) require("noethervim.pick").open(source, opts) end,
+	} },
 }

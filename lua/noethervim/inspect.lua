@@ -1950,7 +1950,7 @@ local subcommand_descriptions = {
   diff              = "Compare overrides vs distro defaults (keymaps / options / autocmds / module)",
   override          = "Open the file of yours that changes the current distro file",
   ["debug-keymaps"] = "Trace where each keymap was registered",
-  where             = "Who set a key, option, command or plugin, and the line that changes it",
+  where             = "Who set a key, option, command, plugin, segment or picker verb, and the line that changes it",
 }
 
 --- Each entry receives (arg, bang), so the dispatcher needs no special case
@@ -2033,6 +2033,7 @@ function M.complete(_, cmdline)
     local names = vim.tbl_keys(vim.api.nvim_get_commands({}))
     vim.list_extend(names, vim.tbl_keys(require("lazy.core.config").plugins))
     vim.list_extend(names, vim.fn.getcompletion(args[3], "option"))
+    vim.list_extend(names, require("noethervim.pick").VERBS)
     table.sort(names)
     return vim.tbl_filter(function(s)
       return s:find(args[3], 1, true) == 1

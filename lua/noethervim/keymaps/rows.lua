@@ -27,7 +27,7 @@
 
 local M = {}
 
-local NOT_OPTS = { owner = true, set = true, mode = true, ft = true, lsp = true, _source = true }
+local NOT_OPTS = { owner = true, set = true, mode = true, ft = true, lsp = true, verb = true, _source = true }
 
 local home = vim.env.HOME and vim.fs.normalize(vim.env.HOME)
 
@@ -177,7 +177,8 @@ end
 ---@param mode string
 ---@return noethervim.DefaultRecord
 local function record(row, mode)
-  return { kind = "map", name = row[1], mode = mode, source = source_of(row), plugin = row.owner, desc = row.desc }
+  return { kind = "map", name = row[1], mode = mode, source = source_of(row), plugin = row.owner, desc = row.desc,
+    verb = row.verb }
 end
 
 --- Whether a global row may be mapped now: not off, and no mapping of

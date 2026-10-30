@@ -112,6 +112,11 @@ function M.key(lhs)
           m.buffer == 1 and " (this buffer only)" or "")
       end
       table.insert(lines, ("  %s  active   %s"):format(mode, active))
+      if ours and owned.verb then
+        local engine, from = require("noethervim.pick").serving(owned.verb)
+        table.insert(lines, ("     verb     %s, served by %s (route: %s; see :NoetherVim where %s)")
+          :format(owned.verb, engine, from, owned.verb))
+      end
       if owned and not ours then
         table.insert(lines, ("     replaced NoetherVim, %s%s%s, by a mapping made later"):format(
           owned.plugin and (owned.plugin .. ", ") or "", owned.source, owned.desc and (' "' .. owned.desc .. '"') or ""))
@@ -409,16 +414,54 @@ function M.segment(name)
   return lines
 end
 
+--- What serves picker verb `name`, and the keys that open it, or nil when
+--- `name` is not a verb.
+---@param name string
+---@return string[]?
+function M.verb(name)
+  local pick = require("noethervim.pick")
+  if not vim.tbl_contains(pick.VERBS, name) then return nil end
+  local engines = pick.engines()
+  local serves = {}
+  for engine, verbs in pairs(engines) do
+    if verbs[name] then table.insert(serves, engine) end
+  end
+  table.sort(serves)
+  local lines = { ("%s  (picker verb)"):format(name) }
+  if name == "resume" then
+    table.insert(lines, "  served   by the engine that served last")
+  else
+    local engine, from = pick.serving(name)
+    local note = ""
+    if not (engines[engine] and engines[engine][name]) then
+      note = (engines.snacks or {})[name] and (", which does not serve it, so snacks does")
+        or ", which does not serve it, and nothing else does"
+    end
+    table.insert(lines, ("  served   %s (route: %s)%s"):format(engine, from, note))
+  end
+  table.insert(lines, "  engines  " .. (#serves > 0 and table.concat(serves, ", ") or "none"))
+  local keys = {}
+  for _, row in ipairs(require("noethervim")._host.rows or {}) do
+    if row.verb == name then
+      local ft = row.ft and (type(row.ft) == "table" and table.concat(row.ft, ",") or row.ft)
+      table.insert(keys, row[1] .. (ft and (" (" .. ft .. ")") or ""))
+    end
+  end
+  if #keys > 0 then table.insert(lines, "  keys     " .. table.concat(keys, "  ")) end
+  table.insert(lines, ('  change   lua/user/config.lua   pick = { route = { %s = "<engine>" } }'):format(name))
+  return lines
+end
+
 --- Print every report `name` has: as a key, an option, a command, a plugin,
---- a statusline segment.
+--- a statusline segment, a picker verb.
 ---@param name? string
 function M.run(name)
   if not name or name == "" then
-    vim.notify("usage: :NoetherVim where <key|option|command|plugin|segment>", vim.log.levels.WARN)
+    vim.notify("usage: :NoetherVim where <key|option|command|plugin|segment|verb>", vim.log.levels.WARN)
     return
   end
   local out = {}
-  for _, of in ipairs({ M.key, M.option, M.command, M.plugin, M.segment }) do
+  for _, of in ipairs({ M.key, M.option, M.command, M.plugin, M.segment, M.verb }) do
     local section = of(name)
     if section then
       if #out > 0 then table.insert(out, "") end
@@ -426,7 +469,7 @@ function M.run(name)
     end
   end
   if #out == 0 then
-    out = { name, "  not a key, option, command, plugin or statusline segment anything set up" }
+    out = { name, "  not a key, option, command, plugin, statusline segment or picker verb anything set up" }
   end
   report(out)
 end

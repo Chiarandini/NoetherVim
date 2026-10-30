@@ -38,16 +38,16 @@ local function _header()
 	return vim.o.columns >= 87 and _wordmark or _wordmark_narrow
 end
 
---- Returns file search in git scope
----@param opts table
-local find_files_project_dir = function(opts)
-	local gitPath = vim.fn.systemlist("git rev-parse --show-toplevel")[1]
-	if not gitPath or gitPath:match("^fatal") then
-		gitPath = vim.fn.getcwd()
+--- A key opening a picker verb (noethervim.pick), whichever engine serves it.
+local pick = require("noethervim.pick").row
+
+--- The verb's opts for a project-scoped key: the git root, named in the title.
+---@param label string
+local function project(label)
+	return function()
+		local root = require("noethervim.pick").root()
+		return { cwd = root, title = label .. " (" .. vim.fn.fnamemodify(root, ":t") .. ")" }
 	end
-	opts = opts or {}
-	opts.cwd = gitPath
-	require("snacks").picker.files(opts)
 end
 
 --- File yanked for paste in the browse picker (persists across opens).
@@ -267,8 +267,8 @@ return {
 				keys = {
 					{ icon = " ", key = "i", desc = "New File (insert)",  action = ":ene | startinsert" },
 					{ icon = " ", key = "e", desc = "New File (normal)",  action = ":ene" },
-					{ icon = " ", key = "f", desc = "Find File",          action = ":lua Snacks.picker.files()" },
-					{ icon = " ", key = "o", desc = "Old Files",          action = ":lua Snacks.picker.recent()" },
+					{ icon = " ", key = "f", desc = "Find File",          action = function() require("noethervim.pick").open("files") end },
+					{ icon = " ", key = "o", desc = "Old Files",          action = function() require("noethervim.pick").open("recent") end },
 					{ icon = " ", key = "r", desc = "Restore Session",    action = ":lua require('persistence').load({ last = true })" },
 					{ icon = " ", key = "s", desc = "Sessions",           action = ":lua require('mini.sessions').select()" },
 					{ icon = " ", key = "c", desc = "Config",             action = ":e $MYVIMRC" },
@@ -636,38 +636,21 @@ return {
 			Snacks.picker.browse({ title = vim.fn.fnamemodify(vim.uv.cwd(), ":~") })
 		end, desc = "file browser" },
 		-- Recent files
-		{ SearchLeader .. "fo", function() Snacks.picker.recent({ title = "Recent Files" })        end, desc = "[f]ind [o]ld files (recent files)" },
+		pick(SearchLeader .. "fo", "recent", { args = { title = "Recent Files" }, desc = "[f]ind [o]ld files (recent files)" }),
 		-- register (recent deleted)
 		{ SearchLeader .. "fr", function() Snacks.picker.registers({ title = "Recently Deleted" })        end, desc = "[f]ind [r]egisters" },
 		-- Notifications
 		{ SearchLeader .. "fn", function() Snacks.picker.notifications({ title = "Notifications" }) end, desc = "[f]ind [n]otifications" },
 		-- Project files (git root)
-		{
-			SearchLeader .. "fp",
-			function()
-				local root = vim.fn.systemlist("git rev-parse --show-toplevel")[1]
-				if not root or root:match("^fatal") then
-					root = vim.fn.getcwd()
-				end
-				local name = vim.fn.fnamemodify(root, ":t")
-				find_files_project_dir({
-					title = "Project Files (" .. name .. ")",
-				})
-			end,
-			desc = "[f]ind [p]roject files",
-		},
+		pick(SearchLeader .. "fp", "files", { args = project("Project Files"), desc = "[f]ind [p]roject files" }),
 		-- Find files
-		{
-			SearchLeader .. "ff",
-			function() Snacks.picker.files() end,
-			desc = "[f]ind [f]iles",
-		},
+		pick(SearchLeader .. "ff", "files", { desc = "[f]ind [f]iles" }),
 		-- Current buffer fuzzy find
 		{ SearchLeader .. "/",  function() Snacks.picker.lines({ title = "Buffer Lines" })    end, desc = "fuzzy search current buffer" },
 		-- Command history (in cmdline)
 		{ "<c-s-f>",   function() Snacks.picker.command_history() end, mode = { "c" }, desc = "command history" },
 		-- find [b]uffer
-		{ SearchLeader .. "fb", function() Snacks.picker.buffers({ title = "Buffers" })  end, desc = "[f]ind [b]uffer" },
+		pick(SearchLeader .. "fb", "buffers", { args = { title = "Buffers" }, desc = "[f]ind [b]uffer" }),
 		-- find [m]ark
 		{ SearchLeader .. "fm", function() Snacks.picker.marks({ title = "Marks" })    end, desc = "[f]ind [m]ark" },
 		-- find [h]elp
@@ -683,26 +666,17 @@ return {
 		-- [C]olorscheme
 		{ SearchLeader .. "C",  function() Snacks.picker.colorschemes({ title = require("noethervim.theme").picker_title() }) end, desc = "[C]olorscheme" },
 		-- [R]esume last picker
-		{ SearchLeader .. "r",  function() Snacks.picker.resume()   end, desc = "[R]esume" },
+		pick(SearchLeader .. "r", "resume", { desc = "[R]esume" }),
 
 		-- ── Grep ──────────────────────────────────────────────────────────
 		-- SearchLeader+go (grep obsidian) lives in lua/user/plugins/
 		{ SearchLeader .. "gC", function() Snacks.picker.grep({ cwd = vim.fn.stdpath("config"),               title = "Grep Configuration" }) end, desc = "[g]rep [C]onfiguration" },
 		{ SearchLeader .. "gc", function() Snacks.picker.grep({ cwd = vim.fn.stdpath("config") .. "/lua/",    title = "Grep Config Lua" }) end, desc = "[g]rep [c]onfig lua" },
 		{ SearchLeader .. "gs", function() Snacks.picker.grep({ cwd = vim.fn.stdpath("config") .. "/LuaSnip/", title = "Grep Snippets" }) end, desc = "[g]rep [s]nippets" },
-		{ SearchLeader .. "gg", function() Snacks.picker.grep({ title = "Grep" }) end, desc = "grep current directory" },
-		{
-			SearchLeader .. "gp",
-			function()
-				local root = vim.fn.systemlist("git rev-parse --show-toplevel")[1]
-				if not root or root:match("^fatal") then
-					root = vim.fn.getcwd()
-				end
-				local name = vim.fn.fnamemodify(root, ":t")
-				Snacks.picker.grep({ cwd = root, title = "Grep Project (" .. name .. ")" })
-			end,
-			desc = "[g]rep [p]roject",
-		},
+		pick(SearchLeader .. "gg", "grep", { args = { title = "Grep" }, desc = "grep current directory" }),
+		pick(SearchLeader .. "gp", "grep", { args = project("Grep Project"), desc = "[g]rep [p]roject" }),
+		pick(SearchLeader .. "gw", "grep_word", { args = { title = "Grep Word" }, mode = { "n", "x" },
+			desc = "[g]rep the [w]ord under the cursor, or the selection" }),
 
 		-- ── LSP ──────────────────────────────────────────────────────────
 		{ SearchLeader .. "lr", function() Snacks.picker.lsp_references({ title = "LSP References" })         end, desc = "[l]sp [r]eferences" },

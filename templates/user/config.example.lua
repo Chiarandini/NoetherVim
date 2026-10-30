@@ -215,6 +215,15 @@ return {
     -- lsp = { lua_ls = false },
 
 
+    -- ── Pickers ───────────────────────────────────────────────────────────────
+    -- The keys that find files, grep and the like open a picker verb (files,
+    -- grep, grep_word, recent, buffers, resume, headings, labels, citations).
+    -- `route` names the engine serving one; `engines` adds your own, each a
+    -- table of functions by verb that get `opts.cwd` and return false to let
+    -- snacks serve the call. See :help noethervim-pick.
+    -- pick = { route = { files = "fff", grep = "fff" } },
+
+
     -- ── Snippets you never want ───────────────────────────────────────────────
     -- Snippets listed here stay switched off, on every machine this config
     -- reaches. Open the snippet picker (SearchLeader+cs), put the cursor on

@@ -30,6 +30,7 @@
 ---@field set? string key set ("remaps", "lsp", ...) that `keymaps` in lua/user/config.lua can switch off
 ---@field ft? string|string[] buffer-local in these filetypes, mapped on FileType; a buffer mapping of yours wins
 ---@field lsp? string|true LSP method the attached server must support, or true; buffer-local on LspAttach
+---@field verb? string the picker verb the row opens, for `:NoetherVim where` (noethervim.pick.row sets it)
 ---@field expr? boolean passed to vim.keymap.set
 ---@field silent? boolean passed to vim.keymap.set
 ---@field remap? boolean passed to vim.keymap.set
@@ -53,6 +54,8 @@
 ---@field gutter? table<string, fun(ctx: noethervim.GutterClick)|false> what clicking a sign does, keyed by a Lua pattern matched against the sign name
 ---@field segments? table<string, noethervim.Segment|false> statusline segments by id (noethervim.statusline)
 ---@field busy? table<string, noethervim.Busy|false> what fills the statusline's busy slot, by id
+---@field engines? table<string, table<string, fun(opts: table): boolean?>> picker engines by name, each a table of functions by verb (noethervim.pick)
+---@field route? table<string, string> picker verb to the engine that serves it by default
 
 ---@class noethervim.StatuslineConfig
 ---
@@ -95,6 +98,10 @@
 ---@field file string Path to the defining file inside that owner, never absolute, so the entry survives being copied to a machine that puts plugins elsewhere.
 ---@field line? integer Line the snippet starts on. Consulted only when two snippets share a trigger in one file, and re-checked rather than trusted, so it does not need keeping current.
 
+---@class noethervim.PickConfig
+---@field route? table<string, string> Verb to the engine that serves it: `{ files = "fff" }`. A verb with no route here keeps its bundle's, else snacks.
+---@field engines? table<string, table<string, fun(opts: table): boolean?>> Engines of yours by name, each a table of functions by verb. A function gets the verb's opts (`cwd` always set) and returns `false` to hand the call to snacks.
+
 ---@class noethervim.UserConfig
 ---
 --- The data table returned from `lua/user/config.lua`: everything
@@ -111,6 +118,7 @@
 ---@field lsp? table<string, false> `[name] = false` drops NoetherVim's settings for that server (after/lsp/<name>.lua); lspconfig's and yours remain.
 ---@field toggle_feedback? "notify"|"echo"|"off" Channel for the confirmation message emitted when a bracket-prefix toggle (`[ox` / `]ox`) fires. `"notify"` (default) routes through `vim.notify`, which snacks renders as a toast; `"echo"` uses `nvim_echo` for the classic cmdline message; `"off"` suppresses it.
 ---@field snippets_disabled? noethervim.DisabledSnippet[] Snippets to keep switched off wherever this config is used. The snippet picker (`:NoetherVim snippets`, or SearchLeader+cs) copies a correct entry to your clipboard with `<C-o>`, filling in the owner and file. `<C-x>` there switches one off on this machine only, and that choice wins over this list for the session.
+---@field pick? noethervim.PickConfig Which engine opens each picker verb (files, grep, ...), and engines of your own. See |noethervim-pick|.
 ---@field keymaps? table<string, boolean> Key sets to switch off. `remaps = false` keeps every key whose Vim meaning NoetherVim changes (`;`, `s`, `n`, ... as Vim has it, while keeping NoetherVim's added keys; `lsp = false` skips the keys mapped when a language server attaches.
 
 return {}
