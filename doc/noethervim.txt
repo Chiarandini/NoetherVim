@@ -2246,15 +2246,18 @@ returns text, or chunks of text with a highlight group (or a `{ fg = ...
           clock = {
             provider = function() return os.date("%H:%M") end,
             hl       = "Comment",
-            place    = { side = "right", after = "git" },
+            place    = { side = "right", after = "profile" },
+            refresh  = 1000,
           },
         },
       },
     }
 <
-`cond`, `click` (called with the button: "l", "m" or "r") and `place`
-are optional; without `place` a segment goes at the start of the right
-side. A segment with the id of a bundle's replaces it. One that raises an
+`cond`, `click` (called with the button: "l", "m" or "r"), `place` and
+`refresh` are optional. Without `place` a segment goes at the start of the
+right side, before the core blocks there; `after = "profile"` puts it at
+the end. The bar is redrawn only when something happens, so text that
+changes on its own, a clock, needs `refresh` (milliseconds) to keep up. A segment with the id of a bundle's replaces it. One that raises an
 error is switched off until restart and named by `:checkhealth
 noethervim`. `:NoetherVim where` {id} shows where a segment comes from and
 how to move or hide it.

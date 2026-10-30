@@ -88,7 +88,7 @@ return {
     --
     --     -- Segments of your own, by id. See :help noethervim-statusline-segments.
     --     segments = {
-    --         clock = { provider = function() return os.date("%H:%M") end, hl = "Comment" },
+    --         clock = { provider = function() return os.date("%H:%M") end, hl = "Comment", refresh = 1000 },
     --     },
     --
     --     -- Leave one bar to Neovim: statusline, tabline or winbar.

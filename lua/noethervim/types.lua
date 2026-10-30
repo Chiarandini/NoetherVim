@@ -76,6 +76,7 @@
 ---@field click? fun(ctx: noethervim.SegmentCtx, button: string) Called on a click, with "l", "m" or "r".
 ---@field hl? string|table Highlight for a provider that returns plain text.
 ---@field place? { side?: "left"|"right", after?: string } Where heirline puts it: after a block or segment id, else at the start of its side (default "right").
+---@field refresh? integer Redraw the statusline every this many milliseconds while the segment shows, for text that changes on its own (a clock). At least 100.
 
 ---@class noethervim.SegmentCtx
 ---@field win integer

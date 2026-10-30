@@ -194,6 +194,16 @@ local function guard(id, fn, ...)
   end)
 end
 
+--- One repeating redraw per `refresh` interval in use: the statusline is
+--- drawn only when something happens, so a clock would otherwise stand
+--- still. Started the first time such a segment shows.
+local timers = {} ---@type table<integer, uv.uv_timer_t>
+local function keep_fresh(ms)
+  if timers[ms] then return end
+  timers[ms] = vim.uv.new_timer()
+  timers[ms]:start(ms, ms, vim.schedule_wrap(function() pcall(vim.cmd.redrawstatus) end))
+end
+
 ---@param win? integer
 ---@return noethervim.SegmentCtx
 local function context(win)
@@ -216,6 +226,7 @@ function M.chunks(id, win)
   local text = ""
   for _, c in ipairs(out) do text = text .. (c[1] or "") end
   if text == "" then return nil end
+  if type(seg.refresh) == "number" and seg.refresh > 0 then keep_fresh(math.max(100, seg.refresh)) end
   return out
 end
 
