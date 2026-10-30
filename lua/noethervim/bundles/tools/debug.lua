@@ -439,6 +439,9 @@ return {
 			{
 				"theHamsta/nvim-dap-virtual-text",
 				lazy = true,
+				specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("nvim-dap-virtual-text",
+					require("noethervim.toggles").rows("oV", "<cmd>DapVirtualTextEnable<cr>", "<cmd>DapVirtualTextDisable<cr>",
+						"debug virtual text")) } },
 				config = function(_, opts)
 					require("nvim-dap-virtual-text").setup(opts)
 				end,
@@ -454,7 +457,10 @@ return {
 			},
 		},
 		lazy = true,
-		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("nvim-dap", vim.list_extend(stepping_keys(), {
+		specs = { { "which-key.nvim", optional = true, opts = require("noethervim.util").labels({
+			{ "<leader>d", icon = { icon = require("noethervim.util").icons.debug, color = "red" }, group = "Debug" },
+			{ require("noethervim.util").search_leader .. "D", icon = { icon = require("noethervim.util").icons.debug, color = "red" }, group = "Debug" },
+		}) }, { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("nvim-dap", vim.list_extend(stepping_keys(), {
 			{ "<leader>db", function() require("dap").toggle_breakpoint()                          end, desc = "DAP: Toggle Breakpoint" },
 			{ "<leader>dc", function()
 				require("dap").clear_breakpoints()

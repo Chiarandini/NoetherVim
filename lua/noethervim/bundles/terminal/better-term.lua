@@ -39,6 +39,16 @@ return {
 				mode = { "n", "t" },
 				desc = "Select terminal",
 			},
+			-- The file's run command from the code runner, sent to terminal 1.
+			{
+				"<leader>rT",
+				function()
+					local cmd = require("code_runner.commands").get_filetype_command()
+					if not cmd or cmd == "" then return end
+					require("betterTerm").send(cmd, 1, { clean = false, interrupt = true })
+				end,
+				desc = "run in [T]erminal (betterTerm)",
+			},
 		}) } },
 		config = function(_, opts)
 			require("betterTerm").setup(opts)

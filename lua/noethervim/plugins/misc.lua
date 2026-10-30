@@ -3,11 +3,17 @@
 --  ║                      miscellaneous                       ║
 --  ╚══════════════════════════════════════════════════════════╝
 
+local rows = require("noethervim.keymaps.rows")
+local toggles = require("noethervim.toggles")
+
 return {
 	{ -- to dim inactive window
 		"levouh/tint.nvim",
 		event = "VeryLazy",
-		-- tint toggle is [o<c-t> / ]o<c-t> -- defined in noethervim/toggles/options.lua
+		specs = { { "NoetherVim", optional = true, opts = rows.contribute("tint.nvim", toggles.rows("o<c-t>",
+			function() require("tint").enable() end,
+			function() require("tint").disable() end,
+			"tint")) } },
 		opts = {
 			tint = -5,                                      -- Darken colors, use a positive value to brighten
 			saturation = 0.6,                               -- Saturation to preserve
@@ -30,9 +36,14 @@ return {
 		"folke/zen-mode.nvim",
 		cmd          = "ZenMode",
 		dependencies = { "folke/twilight.nvim" },
-		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("zen-mode.nvim", {
-			{ "<leader>z", "<cmd>ZenMode<cr>", desc = "ZenMode" },
-		}) } },
+		specs = {
+			{ "NoetherVim", optional = true, opts = rows.contribute("zen-mode.nvim", {
+				{ "<leader>z", "<cmd>ZenMode<cr>", desc = "ZenMode" },
+			}) },
+			{ "which-key.nvim", optional = true, opts = require("noethervim.util").labels({
+				{ "<leader>z", icon = { icon = require("noethervim.util").icons.zenMode, color = "yellow" }, group = "ZenMode" },
+			}) },
+		},
 	},
 
 	{                   -- to look pretty
@@ -40,12 +51,12 @@ return {
 		event = "BufReadPost",
 		cmd = { "WindowsMaximize", "WindowsMaximizeVertically", "WindowsMaximizeHorizontally",
 			"WindowsEqualize", "WindowsEnableAutowidth", "WindowsDisableAutowidth", "WindowsToggleAutowidth" },
-		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("windows.nvim", {
+		specs = { { "NoetherVim", optional = true, opts = rows.contribute("windows.nvim", vim.list_extend({
 			{ "<C-w>z", "<Cmd>WindowsMaximize<CR>", desc = "maximize window" },
 			{ "<C-w>_", "<Cmd>WindowsMaximizeVertically<CR>", desc = "maximize window vertically" },
 			{ "<C-w>|", "<Cmd>WindowsMaximizeHorizontally<CR>", desc = "maximize window horizontally" },
 			{ "<C-w>=", "<Cmd>WindowsEqualize<CR>", desc = "equalize windows" },
-		}) } },
+		}, toggles.rows("oW", "<Cmd>WindowsEnableAutowidth<CR>", "<Cmd>WindowsDisableAutowidth<CR>", "animated windows"))) } },
 		dependencies = {
 			"anuvyklack/middleclass",
 			"anuvyklack/animation.nvim",

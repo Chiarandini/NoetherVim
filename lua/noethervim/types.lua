@@ -52,6 +52,7 @@
 ---@field rows? noethervim.Row[] distro mappings, appended by each spec through rows.contribute()
 ---@field g? table<string, any> plugin globals set at startup when still nil
 ---@field startup? table<string, fun()|false> registrations that must exist from startup, run in id order
+---@field gutter? table<string, fun(ctx: noethervim.GutterClick)|false> what clicking a sign does, keyed by a Lua pattern matched against the sign name
 
 ---@class noethervim.StatuslineConfig
 ---

@@ -7,6 +7,25 @@ local M = {}
 M.icons         = require("noethervim.util.icons")
 M.search_leader = vim.g.mapsearchleader or "<space>"
 
+--- The `opts` for a unit's which-key fragment: appends `spec` (which-key's
+--- own spec entries: group labels, icons) to what other units added, so a
+--- label goes when its unit does.
+---
+---   specs = { { "which-key.nvim", optional = true,
+---     opts = require("noethervim.util").labels({ { "<leader>d", group = "Debug" } }) } }
+---
+--- A function for the reason rows.contribute is one: lazy.nvim's
+--- `opts_extend` reaches only the fragments merged after the one declaring it.
+---@param spec table[]
+---@return fun(plugin: table, opts: table): table
+function M.labels(spec)
+  return function(_, opts)
+    opts.spec = opts.spec or {}
+    table.insert(opts.spec, { mode = { "n", "v" }, spec })
+    return opts
+  end
+end
+
 --- Plain (non-magic) string replacement.
 ---@param s string
 ---@param substring string

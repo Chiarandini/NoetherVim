@@ -77,7 +77,12 @@ return {
         ]])
       end,
     },
-  } }, { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("vim-abolish", {
+  } }, { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("vim-abolish", vim.list_extend({
     { "cr", "<Plug>(abolish-coerce-word)", desc = "coerce the word's case (crs, crc, cru, ...)" },
-  }) } },
+  -- Corrections fire in writing buffers and in comments and @spell regions
+  -- of code. [oA lets them fire anywhere in this buffer; ]oA gates them again.
+  }, require("noethervim.toggles").rows("oA",
+    function() vim.b.noethervim_abolish_force = true end,
+    function() vim.b.noethervim_abolish_force = nil end,
+    "abolish auto-correct in code"))) } },
 }

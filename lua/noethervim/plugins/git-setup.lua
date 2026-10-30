@@ -11,6 +11,13 @@ return {
 	{ -- git gutter signs, hunk navigation and staging
 		"lewis6991/gitsigns.nvim",
 		event = "VeryLazy",
+		specs = { { "which-key.nvim", optional = true, opts = require("noethervim.util").labels({ 
+			{ "<leader>h", icon = { icon = require("noethervim.util").icons.git, color = "yellow" }, group = "hunk (gitsigns)" },
+			{ "[oH", icon = { icon = require("noethervim.util").icons.options_on, color = "yellow" },  desc = "show deleted hunks (gitsigns)" },
+			{ "]oH", icon = { icon = require("noethervim.util").icons.options_off, color = "yellow" }, desc = "hide deleted hunks (gitsigns)" },
+			{ "[og", icon = { icon = require("noethervim.util").icons.options_on, color = "yellow" },  desc = "git blame ON (gitsigns)" },
+			{ "]og", icon = { icon = require("noethervim.util").icons.options_off, color = "yellow" }, desc = "git blame OFF (gitsigns)" },
+		 }) } },
 		opts = {},
 		config = function(_, opts)
 			local user_on_attach = opts.on_attach

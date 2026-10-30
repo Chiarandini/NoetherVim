@@ -44,23 +44,8 @@ end
 
 return { 'CRAG666/code_runner.nvim',
 	cmd = { "RunCode", "RunFile", "RunProject", "RunClose", "CRFiletype", "CRProjects" },
-	specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("code_runner.nvim", {
+	specs = { { "which-key.nvim", optional = true, opts = require("noethervim.util").labels({ { "<leader>r", icon = { icon = require("noethervim.util").icons.run, color = "yellow" }, group = "Run/REPL" } }) }, { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("code_runner.nvim", {
 		{ '<leader>rc', '<cmd>RunCode<cr>', desc = 'run [c]ode' },
-		{
-			'<leader>rT',
-			function()
-				local ok, bt = pcall(require, "betterTerm")
-				if not ok then
-					vim.notify("betterTerm not available (enable noethervim.bundles.terminal.better-term)",
-						vim.log.levels.WARN)
-					return
-				end
-				local cmd = require("code_runner.commands").get_filetype_command()
-				if not cmd or cmd == "" then return end
-				bt.send(cmd, 1, { clean = false, interrupt = true })
-			end,
-			desc = 'run in [T]erminal (betterTerm)',
-		},
 	}) } },
 	opts = {
 		mode = 'float',

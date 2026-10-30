@@ -4,8 +4,9 @@
 -- plugin's config runs.
 --
 -- `opts` holds what units contribute from their own specs (see
--- noethervim.HostOpts): `rows` (distro mappings), `g` (plugin globals) and
--- `startup` (registrations that must exist from the start).
+-- noethervim.HostOpts): `rows` (distro mappings), `g` (plugin globals),
+-- `startup` (registrations that must exist from the start) and `gutter`
+-- (what clicking a unit's sign does).
 
 local config = require("noethervim.config")
 

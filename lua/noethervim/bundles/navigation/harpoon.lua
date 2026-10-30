@@ -28,7 +28,7 @@ return {
 		branch       = "harpoon2",
 		dependencies = { "nvim-lua/plenary.nvim" },
 		lazy = true,
-		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("harpoon", {
+		specs = { { "which-key.nvim", optional = true, opts = require("noethervim.util").labels({ { "<leader>H", icon = { icon = require("noethervim.util").icons.fish, color = "blue" } } }) }, { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("harpoon", {
 			{
 				"<c-w><c-h>",
 				function() require("harpoon").ui:toggle_quick_menu(require("harpoon"):list()) end,

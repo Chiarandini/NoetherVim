@@ -7,11 +7,12 @@
 --- `%@...@` click region. `autocmds.lua` owns that string; this module owns
 --- what happens when the region is clicked.
 ---
---- Providers register a Lua pattern matched against the sign name:
+--- A unit hands its handler to NoetherVim's spec, keyed by a Lua pattern
+--- matched against the sign name, and setup() registers it:
 ---
----   require("noethervim.util.gutter").register("^neotest_", function(ctx)
----     ...
----   end)
+---   specs = { { "NoetherVim", optional = true, opts = { gutter = {
+---     ["^neotest_"] = function(ctx) ... end,
+---   } } } }
 ---
 --- Dispatch is on the sign actually drawn, which with 'signcolumn' at `auto`
 --- is the highest-priority sign on that line. The action therefore always
@@ -33,11 +34,8 @@ local M = {}
 ---@type table[]
 local handlers = {}
 
---- Register a handler for signs whose name matches `pattern`.
----
---- Call it from the provider's `config`: a handler can only fire once its
---- provider has placed a sign, which means the provider has already loaded.
---- Not from `init`, where the require would load NoetherVim before its setup.
+--- Register a handler for signs whose name matches `pattern`. setup() calls
+--- it for each entry in the `gutter` section of NoetherVim's spec.
 ---@param pattern string  Lua pattern matched against the sign name
 ---@param fn fun(ctx: noethervim.GutterClick)
 function M.register(pattern, fn)

@@ -26,6 +26,10 @@ return {
   {
     "obsidian-nvim/obsidian.nvim",
     version = "*",
+    specs = { { "which-key.nvim", optional = true, opts = require("noethervim.util").labels({ 
+      { SearchLeader .. "o", icon = { icon = require("noethervim.util").icons.landplot, color = "blue" }, group = "Obsidian" },
+      { "<leader>o", icon = { icon = require("noethervim.util").icons.landplot, color = "blue" }, group = "Obsidian" },
+     }) } },
     ft = "markdown",
     dependencies = { "nvim-lua/plenary.nvim" },
     config = function(_, opts)

@@ -140,7 +140,8 @@ function M._snapshots_now()
   })
 end
 
---- What units contributed through NoetherVim's spec: rows, g, startup.
+--- What units contributed through NoetherVim's spec: rows, g, startup,
+--- gutter.
 ---@private
 ---@type noethervim.HostOpts
 M._host = {}
@@ -175,6 +176,11 @@ function M.setup(opts)
   -- set before NoetherVim loads stays.
   for name, value in pairs(M._host.g or {}) do
     if vim.g[name] == nil then vim.g[name] = value end
+  end
+
+  -- What clicking a unit's sign does, by sign-name pattern (util/gutter.lua).
+  for pattern, handler in pairs(M._host.gutter or {}) do
+    if handler then require("noethervim.util.gutter").register(pattern, handler) end
   end
 
   -- Forward statusline overrides to the registry that the heirline

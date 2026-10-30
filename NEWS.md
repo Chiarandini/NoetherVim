@@ -4,6 +4,15 @@ Breaking and behavior changes, newest first, each with what to do about it.
 During the alpha, changes land without deprecation periods; this file is
 where they are listed.
 
+## 2026-10-30
+
+- **A plugin's toggles and labels go with it:** `[oC`, `[oA`, `[oL`, `[oV`,
+  `[oW`, `[oG`, `[oD` and `[o<C-t>` are declared in their plugin's spec, as
+  are the which-key labels for `<leader>d`, `<leader>t`, `<leader>o` and the
+  rest, so `{ "<plugin>", enabled = false }` removes them too. `[om` comes
+  with the markdown bundle, `<leader>rT` with better-term. Without the latex
+  bundle, tex buffers no longer complete image file names.
+
 ## 2026-10-29
 
 - **`:help noethervim-api` lists the names a config may call:** public,

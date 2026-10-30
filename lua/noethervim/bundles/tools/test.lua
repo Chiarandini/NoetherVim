@@ -43,34 +43,8 @@ return {
 		},
 		cmd    = { "Neotest" },
 
-		-- ── Clicking a glyph ──────────────────────────────────────────────
-		-- The status consumer marks every test's line in the sign column,
-		-- and a sign has no click callback of its own; util/gutter.lua owns
-		-- the 'statuscolumn' click region that lends it one. Registering
-		-- in `config` loses nothing: a neotest sign can only be under the
-		-- pointer once neotest has loaded. Not `init`, where requiring a
-		-- noethervim module would load NoetherVim before its own setup.
-		--
-		-- The action follows the glyph. A result glyph has something to
-		-- show, so it shows it; a glyph for a test that has not run yet has
-		-- nothing to show, so it runs it. Left button only, so the right
-		-- click keeps the context menu from lua/noethervim/keymaps.lua and
-		-- the middle click keeps whatever the terminal does with it.
 		config = function(_, opts)
 			require("neotest").setup(opts)
-			require("noethervim.util.gutter").register("^neotest_", function(ctx)
-				if ctx.button ~= "l" then return end
-				vim.api.nvim_set_current_win(ctx.win)
-				vim.api.nvim_win_set_cursor(ctx.win, { ctx.line, 0 })
-				local neotest = require("neotest")
-				if ctx.sign == "neotest_running" then
-					neotest.run.stop()
-				elseif ctx.sign == "neotest_test" or ctx.sign == "neotest_namespace" then
-					neotest.run.run()
-				else
-					neotest.output.open({ enter = true })
-				end
-			end)
 		end,
 
 		-- ── Why <Leader>t ─────────────────────────────────────────────────
@@ -88,7 +62,31 @@ return {
 		-- Nothing under SearchLeader. That namespace is for pickers, and
 		-- neotest has none: its surfaces are a summary tree and an output
 		-- panel, neither of which is a searchable list.
-		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("neotest", {
+		specs = { { "which-key.nvim", optional = true, opts = require("noethervim.util").labels({ { "<leader>t", icon = { icon = require("noethervim.util").icons.checkmark, color = "green" }, group = "Test" } }) },
+			-- ── Clicking a glyph ──────────────────────────────────────────
+			-- The status consumer marks every test's line in the sign column,
+			-- and a sign has no click callback of its own; util/gutter.lua owns
+			-- the 'statuscolumn' click region that lends it one.
+			--
+			-- The action follows the glyph. A result glyph has something to
+			-- show, so it shows it; a glyph for a test that has not run yet has
+			-- nothing to show, so it runs it. Left button only, so the right
+			-- click keeps the context menu from lua/noethervim/keymaps.lua and
+			-- the middle click keeps whatever the terminal does with it.
+			{ "NoetherVim", optional = true, opts = { gutter = { ["^neotest_"] = function(ctx)
+				if ctx.button ~= "l" then return end
+				vim.api.nvim_set_current_win(ctx.win)
+				vim.api.nvim_win_set_cursor(ctx.win, { ctx.line, 0 })
+				local neotest = require("neotest")
+				if ctx.sign == "neotest_running" then
+					neotest.run.stop()
+				elseif ctx.sign == "neotest_test" or ctx.sign == "neotest_namespace" then
+					neotest.run.run()
+				else
+					neotest.output.open({ enter = true })
+				end
+			end } } },
+			{ "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("neotest", {
 			{ "<leader>tt", function() require("neotest").run.run() end,                        desc = "run nearest [t]est" },
 			{ "<leader>tf", function() require("neotest").run.run(vim.fn.expand("%")) end,      desc = "run test [f]ile" },
 			{ "<leader>ta", function() require("neotest").run.run(vim.uv.cwd()) end,            desc = "run [a]ll tests" },

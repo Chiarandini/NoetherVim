@@ -3,9 +3,11 @@
 --
 -- toggle(lhs, enable_rhs, disable_rhs, desc, row)  → maps [lhs and ]lhs
 -- map(lhs, rhs, desc, echo, row)                   → single directional map
+-- rows(lhs, enable_rhs, disable_rhs, desc)         → the same pair, as rows
+--                                                    a unit contributes
 --
--- Both map rows (keymaps/rows.lua); `row` adds row fields such as `owner`
--- and `set`.
+-- The first two map rows (keymaps/rows.lua) from a sourced core file; `row`
+-- adds row fields such as `owner` and `set`.
 
 local M = {}
 
@@ -34,6 +36,20 @@ function M.notify(text)
   vim.notify(text, vim.log.levels.INFO)
 end
 
+--- `rhs`, reporting `descr` through notify() once it ran.
+---@param rhs string|function
+---@param descr string
+---@return string|function
+local function notifying(rhs, descr)
+  if type(rhs) == "string" then
+    return rhs .. '<cmd>lua require("noethervim.toggles").notify("' .. descr .. '")<cr>'
+  end
+  return function()
+    rhs()
+    M.notify(descr)
+  end
+end
+
 ---@param lhs string
 ---@param rhs string|function
 ---@param desc? string
@@ -43,16 +59,26 @@ function M.map(lhs, rhs, desc, echo, row)
   local rows = require("noethervim.keymaps.rows")
   local descr = desc or ""
   local opts = vim.tbl_extend("force", { desc = descr, _source = rows.here(1) }, row or {})
-  if echo ~= false and type(rhs) == "string" then
-    rhs = rhs .. '<cmd>lua require("noethervim.toggles").notify("' .. descr .. '")<cr>'
-  elseif echo ~= false then
-    local fn = rhs
-    rhs = function()
-      fn()
-      M.notify(descr)
-    end
-  end
+  if echo ~= false then rhs = notifying(rhs, descr) end
   rows.map("n", lhs, rhs, opts)
+end
+
+--- The `[lhs` / `]lhs` pair as rows, for a unit to contribute from its
+--- anchor's spec, so the toggle goes when the unit does:
+---
+---   opts = rows.contribute("tint.nvim", toggles.rows("o<c-t>", on, off, "tint"))
+---@param lhs string the keys after `[` and `]`
+---@param enable string|function
+---@param disable string|function
+---@param desc string
+---@return noethervim.Row[]
+function M.rows(lhs, enable, disable, desc)
+  local source = require("noethervim.keymaps.rows").here(1)
+  local function row(bracket, rhs, verb)
+    local d = verb .. ": " .. desc
+    return { bracket .. lhs, notifying(rhs, d), desc = d, _source = source }
+  end
+  return { row("[", enable, "enabling"), row("]", disable, "disabling") }
 end
 
 ---@param lhs string

@@ -23,8 +23,13 @@ return {
   {
     'rebelot/heirline.nvim',
     event = 'UIEnter',
-    specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute(
-      "heirline.nvim", require("noethervim.plugins.statusline.keymaps").rows()) } },
+    specs = {
+      { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute(
+        "heirline.nvim", require("noethervim.plugins.statusline.keymaps").rows()) },
+      { "which-key.nvim", optional = true, opts = require("noethervim.util").labels({
+        { "<c-w>s", icon = { icon = require("noethervim.util").icons.plus, color = "red" }, group = "Statusline" },
+      }) },
+    },
     -- Hard opt-out: user.config.statusline_enabled = false skips heirline
     -- entirely so a replacement plugin (lualine, mini.statusline, etc.)
     -- can take over without conflict. Bundle-level toggles still go

@@ -153,94 +153,76 @@ return {
 		dependencies = {
 			'echasnovski/mini.icons'
 		},
-		opts = {
-			preset = "modern",
-			delay = function(ctx)
-				return ctx.plugin and 0 or 1500
-			end,
-			keys = {
-				picker = "<C-f>",
-			},
-			picker = wk_picker,
-			plugins = {
-				marks = true,
-				registers = true,
-				spelling = {
-					enabled = true,
-					suggestions = 20,
-				},
-			},
-			icons = {
-				group = "",
-			},
-			win = {
-				title = true,
-				title_pos = "center",
-				padding = {1, 2},
-				zindex = 1000,
-			},
-		},
-		config = function(_, opts)
+		-- A function, so labels units appended (noethervim.util.labels) stay:
+		-- this file sorts last among the core specs.
+		opts = function(_, opts)
 			local nv = require("noethervim.util")
 			local icons = nv.icons
 			local SearchLeader = nv.search_leader
+			opts = vim.tbl_deep_extend("keep", opts, {
+				preset = "modern",
+				delay = function(ctx)
+					return ctx.plugin and 0 or 1500
+				end,
+				keys = {
+					picker = "<C-f>",
+				},
+				picker = wk_picker,
+				plugins = {
+					marks = true,
+					registers = true,
+					spelling = {
+						enabled = true,
+						suggestions = 20,
+					},
+				},
+				icons = {
+					group = "",
+				},
+				win = {
+					title = true,
+					title_pos = "center",
+					padding = {1, 2},
+					zindex = 1000,
+				},
+			})
+			-- Prefixes that belong to no one unit. A unit's own prefix
+			-- (`<leader>d` for debug, ...) is labelled in its spec.
+			opts.spec = opts.spec or {}
+			table.insert(opts.spec, 1, {
+				mode = { "n", "v" },
+				{"[" , icon = {icon = icons.toggle_on, color = "yellow"}, group = "toggleOn" },
+				{"]" , icon = {icon = icons.toggle_off, color = "yellow"}, group= "toggleOff" },
+				{"[o" , icon = {icon = icons.options_on, color = "yellow"}, group= "Options (on)" },
+				{"]o" , icon = {icon = icons.options_off, color = "yellow"}, group= "Options (off)" },
+				{SearchLeader , icon = {icon = icons.search, color = "yellow"}, group= "Search" },
+				{SearchLeader .. "g" , icon = {icon = icons.grep, color = "orange"}, group= "Grep" },
+				{SearchLeader .. "G" , icon = {icon = icons.git, color = "orange"}, group= "Git" },
+				{SearchLeader .. "f" , icon = {icon = icons.find, color = "azure"}, group= "Find" },
+				{SearchLeader .. "c" , icon = {icon = icons.config, color = "yellow"}, group= "Config" },
+				{SearchLeader .. "d" , icon = {icon = icons.diagnostics, color = "red"}, group= "Diagnostics" },
+				{SearchLeader .. "e" , icon = {icon = icons.vim, color = "green"}, group= "Editor Files" },
+				{SearchLeader .. "l" , icon = {icon = icons.nvim_lsp, color = "azure"}, group= "LSP" },
+				-- t and r are leaf mappings, not groups: decorate them, do not
+				-- declare a submenu, or the group label shadows their own desc.
+				{SearchLeader .. "t" , icon = {icon = icons.toc, color = "blue"} },
+				{SearchLeader .. "r" , icon = {icon = icons.pencil, color = "blue"} },
+				{"g",  icon = icons.plus, group = "lsp/gcc/other" },
+				{"<c-w>",  icon = icons.window, group = "window" },
+				{"<c-w>[",  icon = icons.window, group = "open window.." },
+				{"<c-w>]",  icon = icons.window, group = "close window.." },
+				{"<c-w>l",  icon = icons.lazy, group = "Lazy" },
+				{"<leader>",  icon = {icon = icons.action, color = "blue"}, group = "Global actions" },
+				{"<leader>R",  icon = {icon = icons.refactor, color = "yellow"}, group = "refactor" },
+			})
+			return opts
+		end,
+		config = function(_, opts)
 			-- Through noethervim.default: a timeoutlen of yours stays.
 			local default = require("noethervim.default")
 			default.o("timeout", true)
 			default.o("timeoutlen", 1500)
-			local wk = require("which-key")
-			wk.setup(opts)
-			wk.add({
-				{
-					mode = { "n", "v" },
-					{"[" , icon = {icon = icons.toggle_on, color = "yellow"}, group = "toggleOn" },
-					{"]" , icon = {icon = icons.toggle_off, color = "yellow"}, group= "toggleOff" },
-					{"[o" , icon = {icon = icons.options_on, color = "yellow"}, group= "Options (on)" },
-					{"]o" , icon = {icon = icons.options_off, color = "yellow"}, group= "Options (off)" },
-					{SearchLeader , icon = {icon = icons.search, color = "yellow"}, group= "Search" },
-					{SearchLeader .. "g" , icon = {icon = icons.grep, color = "orange"}, group= "Grep" },
-					{SearchLeader .. "G" , icon = {icon = icons.git, color = "orange"}, group= "Git" },
-					{SearchLeader .. "f" , icon = {icon = icons.find, color = "azure"}, group= "Find" },
-					{SearchLeader .. "c" , icon = {icon = icons.config, color = "yellow"}, group= "Config" },
-					{SearchLeader .. "d" , icon = {icon = icons.diagnostics, color = "red"}, group= "Diagnostics" },
-					{SearchLeader .. "e" , icon = {icon = icons.vim, color = "green"}, group= "Editor Files" },
-					{SearchLeader .. "l" , icon = {icon = icons.nvim_lsp, color = "azure"}, group= "LSP" },
-					-- t and r are leaf mappings, not groups: decorate them, do not
-					-- declare a submenu, or the group label shadows their own desc.
-					{SearchLeader .. "t" , icon = {icon = icons.toc, color = "blue"} },
-					{SearchLeader .. "r" , icon = {icon = icons.pencil, color = "blue"} },
-					{SearchLeader .. "D" , icon = {icon = icons.debug, color = "red"}, group= "Debug" },
-					{"g",  icon = icons.plus, group = "lsp/gcc/other" },
-					{"<c-w>",  icon = icons.window, group = "window" },
-					{"<c-w>[",  icon = icons.window, group = "open window.." },
-					{"<c-w>]",  icon = icons.window, group = "close window.." },
-					{"<c-w>l",  icon = icons.lazy, group = "Lazy" },
-					{"<c-w>s",  icon = {icon = icons.plus, color = "red"}, group = "Statusline" },
-					{"<leader>",  icon = {icon = icons.action, color = "blue"}, group = "Global actions" },
-					{SearchLeader .. "o",  icon = {icon = icons.landplot, color = "blue"}, group = "Obsidian" },
-					{"<leader>o",  icon = {icon = icons.landplot, color = "blue"}, group = "Obsidian" },
-					{"<leader>w",  icon = {icon = icons.wiki, color = "blue"}, group = "Wiki" },
-					{"<leader>m",  icon = {icon = icons.map, color = "blue"}, group = "minimap" },
-					{"<leader>b",  icon = {icon = icons.box, color = "blue"}, group = "box" },
-					{"<leader>f",  icon = {icon = icons.format, color = "red"}, group = "format" },
-					{"<leader>B",  icon = {icon = icons.tab, color = "azure"}, group = "Buffer" },
-					{"<leader>r",  icon = {icon = icons.run, color = "yellow"}, group = "Run/REPL" },
-					{"<leader>t",  icon = {icon = icons.checkmark, color = "green"}, group = "Test" },
-					{"<leader>R",  icon = {icon = icons.refactor, color = "yellow"}, group = "refactor" },
-					{"<leader>H",  icon = {icon = icons.fish, color = "blue"} },
-					{"[oH",        icon = {icon = icons.options_on, color = "yellow"},  desc = "show deleted hunks (gitsigns)" },
-					{"]oH",        icon = {icon = icons.options_off, color = "yellow"}, desc = "hide deleted hunks (gitsigns)" },
-					{"[og",        icon = {icon = icons.options_on, color = "yellow"},  desc = "git blame ON (gitsigns)" },
-					{"]og",        icon = {icon = icons.options_off, color = "yellow"}, desc = "git blame OFF (gitsigns)" },
-					{"[oG",        icon = {icon = icons.options_on,  color = "yellow"}, desc = "deadcolumn ON (Guide)" },
-					{"]oG",        icon = {icon = icons.options_off, color = "yellow"}, desc = "deadcolumn OFF (Guide)" },
-					{"[oD",        icon = {icon = icons.options_on,  color = "yellow"}, desc = "tidy ON (remove dirty whitespace)" },
-					{"]oD",        icon = {icon = icons.options_off, color = "yellow"}, desc = "tidy OFF" },
-					{"<leader>z",  icon = {icon = icons.zenMode, color = "yellow"}, group = "ZenMode" },
-					{"<leader>h",  icon = {icon = icons.git, color = "yellow"}, group = "hunk (gitsigns)" },
-					{"<leader>d",  icon = {icon = icons.debug, color = "red"}, group = "Debug" },
-				},
-			})
+			require("which-key").setup(opts)
 		end,
 	},
 }

@@ -18,7 +18,7 @@ return {
 		"LudoPinelli/comment-box.nvim",
 		cmd  = { "CBalbox7", "CBcline" },
 		opts = {},
-		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("comment-box.nvim", {
+		specs = { { "which-key.nvim", optional = true, opts = require("noethervim.util").labels({ { "<leader>b", icon = { icon = require("noethervim.util").icons.box, color = "blue" }, group = "box" } }) }, { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("comment-box.nvim", {
 			{ "<Leader>bb", "<cmd>CBalbox7<cr>", mode = { "n", "x" }, desc = "comment box" },
 			{ "<Leader>bl", "<cmd>CBcline<cr>", desc = "comment line" },
 		}) } },

@@ -21,6 +21,7 @@ return {
 		"Isrothy/neominimap.nvim",
 		cmd = "Neominimap",
 		specs = {
+			{ "which-key.nvim", optional = true, opts = require("noethervim.util").labels({ { "<leader>m", icon = { icon = require("noethervim.util").icons.map, color = "blue" }, group = "minimap" } }) },
 			{ "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("neominimap.nvim", {
 				{ "<c-w>m",    "<cmd>Neominimap toggle<cr>",        desc = "Toggle minimap" },
 				{ "<leader>mo", "<cmd>Neominimap on<cr>",           desc = "Minimap on" },

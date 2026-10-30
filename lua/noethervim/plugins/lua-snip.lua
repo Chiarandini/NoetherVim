@@ -107,7 +107,63 @@ return {
 		-- happens to act on this buffer. Capital for the stronger of the pair,
 		-- next to <Leader>u, which unlinks only the snippet you are in.
 		{ "<leader>U", stop_all_and_report, desc = "stop all snippets" },
-	}) } },
+	}) },
+		-- LuaSnip is blink.cmp's snippet engine. Without LuaSnip, blink falls
+		-- back to its own engine and none of this applies.
+		{ "saghen/blink.cmp", optional = true,
+			dependencies = { "L3MON4D3/LuaSnip" },
+			opts = {
+				snippets = {
+					preset = "luasnip",
+					-- Override active/jump so that Tab expands snippets even when
+					-- the completion menu is visible (e.g. vimtex's ':' trigger
+					-- shows the menu while LuaSnip has an expandable snippet).
+					-- The default luasnip preset gates expansion on the menu being
+					-- hidden (is_hidden_snippet), which blocks expansion in tex.
+					active = function(filter)
+						local ls = require("luasnip")
+						if filter and filter.direction then
+							if filter.direction == 1 then return ls.expand_or_locally_jumpable() end
+							return ls.locally_jumpable(filter.direction)
+						end
+						return ls.expand_or_locally_jumpable()
+					end,
+					jump = function(direction)
+						local ls = require("luasnip")
+						if direction == 1 then return ls.expand_or_jump() end
+						return ls.locally_jumpable(direction) and ls.jump(direction)
+					end,
+				},
+				sources = { providers = {
+					snippets = {
+						max_items = 8, -- large LuaSnip set; cap what reaches the renderer
+						-- Hide snippets whose trigger is a pattern rather than
+						-- literal text. blink's adapter sets `insertText =
+						-- snip.trigger` on every item, so accepting one of these
+						-- pastes the pattern itself: `:defn` would yield
+						-- `:defn%s?([:%w-...])` in the buffer. They stay
+						-- expandable: typing the trigger and pressing Tab routes
+						-- through snippet_forward -> luasnip's expand_or_jump.
+						-- What counts as a pattern takes two tests, and the reasoning
+						-- lives with the predicate, which the snippet picker shares for
+						-- labelling: a pattern names nothing a reader recognises.
+						transform_items = function(_, items)
+							local ok, ls = pcall(require, "luasnip")
+							if not ok then return items end
+							local snippets = require("noethervim.util.snippets")
+							return vim.tbl_filter(function(item)
+								local id = item.data and item.data.snip_id
+								if not id then return true end
+								local snip = ls.get_id_snippet(id)
+								if not snip then return true end
+								return not snippets.is_pattern_trigger(snip)
+							end, items)
+						end,
+					},
+				} },
+			},
+		},
+	},
 
 config = function(_, opts)
 	local ls = require('luasnip')

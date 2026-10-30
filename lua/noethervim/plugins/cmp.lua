@@ -3,9 +3,10 @@
 --  ║                   Blink.cmp Completion                   ║
 --  ╚══════════════════════════════════════════════════════════╝
 --
--- Part 1: core built-in sources (LSP, LuaSnip, lazydev, path, buffer).
--- Part 2: vimtex via blink's built-in complete_func source (calls vim.bo.omnifunc directly).
--- Part 3: custom sources (todos, images, preambles) as native blink modules.
+-- Part 1: core built-in sources (LSP, snippets, lazydev, path, buffer).
+-- Part 2: custom sources (todos, user_config) as native blink modules.
+-- LuaSnip's spec wires it in as the snippet engine, and the latex bundle
+-- adds VimTeX's completion for tex.
 --
 -- Replaces nvim-cmp and all hrsh7th satellite plugins.
 --
@@ -18,16 +19,16 @@ return {
 		-- Native <C-Space> fallback: blink overrides this with buffer-local
 		-- keymaps on InsertEnter; when blink is disabled (]oC toggle), blink
 		-- skips the buffer-local keymap and this global mapping fires instead.
-		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("blink.cmp", {
+		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("blink.cmp", vim.list_extend({
 			{ "<C-Space>", function() vim.api.nvim_feedkeys(vim.keycode("<C-n>"), "n", false) end,
 				mode = "i", desc = "native keyword completion" },
-		}) } },
-		dependencies = {
-			"L3MON4D3/LuaSnip",
-			-- blink v1: LuaSnip is wired via snippets.preset = "luasnip" below.
-		},
+		-- `enabled` below reads vim.g.blink_toggle.
+		}, require("noethervim.toggles").rows("oC",
+			function() vim.g.blink_toggle = true end,
+			function() vim.g.blink_toggle = false end,
+			"completion"))) } },
 		opts = {
-			-- [oC / ]oC keymaps in toggles/options.lua flip vim.g.blink_toggle.
+			-- [oC / ]oC (above) flip vim.g.blink_toggle.
 			enabled = function()
 				return vim.g.blink_toggle ~= false
 			end,
@@ -94,36 +95,12 @@ return {
 			end)(),
 
 
-			-- ── Snippets ────────────────────────────────────────────────────────
-			snippets = {
-				preset = "luasnip",
-				-- Override active/jump so that Tab expands snippets even when
-				-- the completion menu is visible (e.g. vimtex's ':' trigger
-				-- shows the menu while LuaSnip has an expandable snippet).
-				-- The default luasnip preset gates expansion on the menu being
-				-- hidden (is_hidden_snippet), which blocks expansion in tex.
-				active = function(filter)
-					local ls = require("luasnip")
-					if filter and filter.direction then
-						if filter.direction == 1 then return ls.expand_or_locally_jumpable() end
-						return ls.locally_jumpable(filter.direction)
-					end
-					return ls.expand_or_locally_jumpable()
-				end,
-				jump = function(direction)
-					local ls = require("luasnip")
-					if direction == 1 then return ls.expand_or_jump() end
-					return ls.locally_jumpable(direction) and ls.jump(direction)
-				end,
-			},
-
 			-- ── Sources ─────────────────────────────────────────────────────────
 			sources = {
 				default = { "lsp", "snippets", "path", "buffer", "todos" },
 
 				per_filetype = {
 					lua = { "lsp", "snippets", "lazydev", "path", "buffer", "todos", "user_config" },
-					tex = { "lsp", "snippets", "vimtex", "images" },
 				},
 
 				min_keyword_length = 2,
@@ -133,28 +110,6 @@ return {
 						name         = "LazyDev",
 						module       = "lazydev.integrations.blink",
 						score_offset = 100,
-					},
-
-					-- ── Step 2: vimtex via blink's built-in complete_func source ──────
-					-- Calls vim.bo.omnifunc (= "vimtex#complete#omnifunc") directly.
-					-- No blink.compat shim needed.
-					-- override.get_trigger_characters: advertise ':' so that typing 'th:'
-					-- in \cref{th:...} creates a fresh context instead of hiding the menu.
-					-- (blink's keyword checker ignores iskeyword; ':' is not a keyword char
-					-- by its hardcoded definition, so without this it calls trigger.hide().)
-					vimtex = {
-						name         = "vimtex",
-						module       = "blink.cmp.sources.complete_func",
-						score_offset = 5,
-						max_items    = 20,
-						opts = {
-							complete_func = function() return vim.bo.omnifunc end,
-						},
-						override = {
-							get_trigger_characters = function(_self)
-								return { ":" }
-							end,
-						},
 					},
 
 					buffer = {
@@ -168,40 +123,10 @@ return {
 						},
 					},
 
-					snippets = {
-						max_items = 8, -- large LuaSnip set; cap what reaches the renderer
-						-- Hide snippets whose trigger is a pattern rather than
-						-- literal text. blink's adapter sets `insertText =
-						-- snip.trigger` on every item, so accepting one of these
-						-- pastes the pattern itself: `:defn` would yield
-						-- `:defn%s?([:%w-...])` in the buffer. They stay
-						-- expandable: typing the trigger and pressing Tab routes
-						-- through snippet_forward -> luasnip's expand_or_jump.
-						-- What counts as a pattern takes two tests, and the reasoning
-						-- lives with the predicate, which the snippet picker shares for
-						-- labelling: a pattern names nothing a reader recognises.
-						transform_items = function(_, items)
-							local ok, ls = pcall(require, "luasnip")
-							if not ok then return items end
-							local snippets = require("noethervim.util.snippets")
-							return vim.tbl_filter(function(item)
-								local id = item.data and item.data.snip_id
-								if not id then return true end
-								local snip = ls.get_id_snippet(id)
-								if not snip then return true end
-								return not snippets.is_pattern_trigger(snip)
-							end, items)
-						end,
-					},
-
 					-- ── Step 3: custom native blink sources ───────────────────────────
 					todos = {
 						name   = "todos",
 						module = "noethervim.sources.todos",
-					},
-					images = {
-						name   = "images",
-						module = "noethervim.sources.images",
 					},
 					-- Values for the fixed-vocabulary fields in
 					-- lua/user/config.lua. Gates itself on the filename, so it

@@ -75,6 +75,24 @@ return {
 	{
 		"mcauley-penney/tidy.nvim",
 		event = 'VeryLazy',
+		-- tidy.nvim exposes only .toggle(), so each side checks the state first.
+		specs = {
+			{ "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("tidy.nvim",
+				require("noethervim.toggles").rows("oD",
+					function()
+						local tidy = require("tidy")
+						if not tidy.opts.enabled_on_save then tidy.toggle() end
+					end,
+					function()
+						local tidy = require("tidy")
+						if tidy.opts.enabled_on_save then tidy.toggle() end
+					end,
+					"tidy whitespace (Dirty)")) },
+			{ "which-key.nvim", optional = true, opts = require("noethervim.util").labels({
+				{ "[oD", icon = { icon = require("noethervim.util").icons.options_on, color = "yellow" }, desc = "tidy ON (remove dirty whitespace)" },
+				{ "]oD", icon = { icon = require("noethervim.util").icons.options_off, color = "yellow" }, desc = "tidy OFF" },
+			}) },
+		},
 		opts = {
 			filetype_exclude = { "snippets", "diff" },
 		},

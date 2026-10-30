@@ -141,8 +141,8 @@ return {
       -- This is not what keeps the completion menu open after ':'. blink
       -- swaps 'iskeyword' for a hardcoded charset while it decides what
       -- counts as a keyword, so a buffer's setting cannot reach it; the
-      -- vimtex provider advertises ':' as a trigger character instead, in
-      -- plugins/cmp.lua.
+      -- vimtex provider advertises ':' as a trigger character instead (the
+      -- blink.cmp spec below).
       vim.api.nvim_create_autocmd("FileType", {
         pattern  = { "tex", "latex" },
         callback = function() vim.opt_local.iskeyword:append(":") end,
@@ -702,8 +702,24 @@ return {
             name   = "figures",
             module = "noethervim-tex.sources.figures",
           },
+          -- VimTeX's own completion, through blink's built-in complete_func
+          -- source: it calls vim.bo.omnifunc (vimtex#complete#omnifunc)
+          -- directly, no blink.compat shim. `:` is advertised as a trigger
+          -- character so typing `th:` in \cref{th:...} starts a fresh context
+          -- instead of hiding the menu: blink's keyword test ignores
+          -- 'iskeyword', and `:` is not a keyword character to it.
           vimtex = {
+            name         = "vimtex",
+            module       = "blink.cmp.sources.complete_func",
+            score_offset = 5,
+            max_items    = 20,
+            opts = {
+              complete_func = function() return vim.bo.omnifunc end,
+            },
             override = {
+              get_trigger_characters = function(_self)
+                return { ":" }
+              end,
               resolve = function(_source, item, callback)
                 local labels = require("noethervim.util.latex_labels")
                 local label  = item.textEdit and item.textEdit.newText or item.label

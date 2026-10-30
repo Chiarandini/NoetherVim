@@ -28,7 +28,7 @@ return {
 	{
 		"nvim-neorg/neorg",
 		dependencies = { "3rd/image.nvim" },
-		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("neorg", {
+		specs = { { "which-key.nvim", optional = true, opts = require("noethervim.util").labels({ { "<leader>w", icon = { icon = require("noethervim.util").icons.wiki, color = "blue" }, group = "Wiki" } }) }, { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("neorg", {
 			{ "<leader>ww", "<cmd>Neorg index<cr>",              desc = "Neorg wiki" },
 			{ "<leader>wt", "<cmd>tabe<cr><cmd>Neorg index<cr>", desc = "Neorg wiki (new tab)" },
 			{ "<leader>wv", "<cmd>vs<cr><cmd>Neorg index<cr>",   desc = "Neorg wiki (vsplit)" },

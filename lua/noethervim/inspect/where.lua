@@ -319,7 +319,10 @@ end
 function M.plugin(name)
   local plugin, disabled = find_plugin(name)
   if not plugin then return nil end
-  local url = plugin[1] or plugin.dir or plugin.name
+  -- From the url: a bare-name fragment merged last becomes the plugin's [1].
+  local url = plugin.url and plugin.url:match("github%.com/([^/]+/[^/]-)%.git$")
+    or plugin.url and plugin.url:match("github%.com/([^/]+/[^/]+)$")
+    or plugin[1] or plugin.dir or plugin.name
   local lines = { ("%s  (plugin %s)"):format(plugin.name, url) }
   if plugin.name == "NoetherVim" then
     table.insert(lines, "  host     the distribution itself: each plugin spec hands it its keys,")

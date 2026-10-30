@@ -818,7 +818,10 @@ Contributor: ~
     require("noethervim.keymaps.rows").contribute(owner, rows)
     require("noethervim.default")
     require("noethervim.util.mason_install").ensure(tools)
-    require("noethervim.util.gutter").register(pattern, fn)
+    require("noethervim.util").labels(spec)
+    require("noethervim.toggles").rows(lhs, enable, disable, desc)
+    the sections of `{ "NoetherVim", optional = true }` fragments:
+    `rows`, `g`, `startup`, `gutter`
     the bundle header tags (`---@bundle`, `---@desc`, `---@about`,
     `---@requires`)
 
