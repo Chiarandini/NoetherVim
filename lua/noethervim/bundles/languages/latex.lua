@@ -148,6 +148,29 @@ return {
         callback = function() vim.opt_local.iskeyword:append(":") end,
       })
 
+      -- Neovim answers "what is tex's 'commentstring'?" (asked by gc in a
+      -- tex buffer, through vim.filetype.get_option) by setting the
+      -- filetype on a hidden scratch buffer. VimTeX then initializes there
+      -- and, with no file to go on, searches the directories above for a
+      -- main file, running kpsewhich for every \input it meets: several
+      -- seconds of a frozen editor on the first comment toggle. Point that
+      -- buffer at a one-line main file so the search never starts.
+      vim.api.nvim_create_autocmd("User", {
+        pattern  = "VimtexEventInitPre",
+        callback = function()
+          if vim.fn.win_gettype() ~= "autocmd" or vim.api.nvim_buf_get_name(0) ~= ""
+              or vim.bo.buftype ~= "nofile" then
+            return
+          end
+          local main = vim.fn.stdpath("cache") .. "/noethervim/vimtex-probe.tex"
+          if vim.fn.filereadable(main) == 0 then
+            vim.fn.mkdir(vim.fs.dirname(main), "p")
+            vim.fn.writefile({ "\\documentclass{article}" }, main)
+          end
+          vim.b.vimtex_main = main
+        end,
+      })
+
       -- VimTeX settings. Lua rather than a vimscript blob, and only the
       -- values that differ from VimTeX's own defaults -- the block this
       -- replaces restated several of them, which reads as a decision and is
