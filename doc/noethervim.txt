@@ -19,6 +19,7 @@ CONTENTS                                                  *noethervim-contents*
        4.7 Plugins ......................... |noethervim-user-plugins|
        4.8 LSP servers ..................... |noethervim-user-lsp|
        4.9 Running code last ............... |noethervim-user-overrides|
+       4.10 What your config may call ...... |noethervim-api|
     5. Bundles ............................. |noethervim-bundles|
     6. Inspection .......................... |noethervim-inspect|
     7. Comparison .......................... |noethervim-diff|
@@ -770,6 +771,56 @@ Neovim runs it once every plugin has started: >lua
 <
 What can still run later, a plugin that loads on demand, and how to
 change it, is in |noethervim-override-timing|.
+
+------------------------------------------------------------------------------
+4.10 WHAT YOUR CONFIG MAY CALL                                *noethervim-api*
+
+The names your files may use, in three tiers:
+
+    public        changes only with a line in NEWS.md, and from the beta
+                  on, after a release that warns first
+    provisional   may change in any release, with a line in NEWS.md
+    contributor   for bundle authors; see CONTRIBUTING.md
+
+Everything else under `lua/noethervim/` is NoetherVim's own and moves
+without notice: `noethervim.util` beyond the three names below, augroup
+names, `vim.g.heirline_*`, `vim.g.blink_toggle`, and any name starting
+with `_`. In a checkout of NoetherVim, `nvim -l tools/check-surface.lua`
+lists what your config calls outside this table.
+
+Public: ~
+    require("noethervim").setup()
+    require("noethervim.theme").apply(name)
+    require("noethervim.theme").tweak(groups)
+    require("noethervim.theme").palette()
+    require("noethervim.toggles").notify(text)
+    require("noethervim.profiles").of(buf)
+    require("noethervim.profiles").class(ft)
+    require("noethervim.profiles").classes()
+    require("noethervim.util").search_leader
+    require("noethervim.util").icons
+    require("noethervim.util").buffer_notify()
+    `lua/user/config.lua` (|noethervim-user-config-data|), the four hook
+    files, `lua/user/plugins/`, and Neovim's own `plugin/`,
+    `after/plugin/`, `after/ftplugin/` and `after/lsp/`
+    `vim.g.mapleader`, `vim.g.maplocalleader`, `vim.g.mapsearchleader`,
+    `vim.g.noethervim_auto_install`, `vim.g.noethervim_dev`,
+    `vim.g.noethervim_no_user` and `NOETHERVIM_NO_USER`
+    `:NoetherVim` and its subcommands, `:checkhealth noethervim`
+
+Provisional: ~
+    require("noethervim.run")
+    require("noethervim.profiles.spell")
+    require("noethervim.statusline").register_busy_override(fn)
+    `vim.b.noethervim_conservative`
+
+Contributor: ~
+    require("noethervim.keymaps.rows").contribute(owner, rows)
+    require("noethervim.default")
+    require("noethervim.util.mason_install").ensure(tools)
+    require("noethervim.util.gutter").register(pattern, fn)
+    the bundle header tags (`---@bundle`, `---@desc`, `---@about`,
+    `---@requires`)
 
 ==============================================================================
 5. BUNDLES                                 *noethervim-bundles* *neothervim-bundles*
@@ -2760,10 +2811,9 @@ A: Sessions auto-save per working directory via persistence.nvim.
 
 Q: I typed `:NeotherVim` and it worked?~
 A: Yes. Years of typing `neo-` will do that. The alias is there so you
-   don't have to think about it. `:help neothervim` and
-   `:checkhealth neothervim` work too. I did consider
-   naming the distribution `NeotherVim`, but this felt it would
-   inadvertently induce the Mandela-effect forevermore on the
+   don't have to think about it. `:help neothervim` works too. I did
+   consider naming the distribution `NeotherVim`, but this felt it
+   would inadvertently induce the Mandela-effect forevermore on the
    reading of the name `Noether`.
 
 Q: What is vim-abolish and how do I use it?~

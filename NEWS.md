@@ -6,6 +6,13 @@ where they are listed.
 
 ## 2026-10-29
 
+- **`:help noethervim-api` lists the names a config may call:** public,
+  provisional and contributor. Anything else under `lua/noethervim/` can
+  change without a line here; in a checkout,
+  `nvim -l tools/check-surface.lua` lists your config's uses outside it.
+- **`:checkhealth neothervim` is gone:** a bare `:checkhealth` ran
+  NoetherVim's checks twice through it. Use `:checkhealth noethervim`;
+  `:NeotherVim` and `:help neothervim` stay.
 - **Public names for the modules configs reach into:** rename these
   requires.
   - `noethervim.util.colorscheme` is `noethervim.theme`: `tweak()` and
