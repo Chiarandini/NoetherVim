@@ -6,6 +6,8 @@ where they are listed.
 
 ## 2026-10-29
 
+- **The arglist keys say what they did:** `<Leader>aa`, `ax`, `aX`, `aA` and
+  `ac` report the change and the arglist size, through `toggle_feedback`.
 - **Your hook files run last:** `lua/user/{options,keymaps,autocmds,highlights}.lua`
   now run once every plugin NoetherVim starts is set up, so a value in them
   wins over those plugins too. A `vim.g` value a plugin reads the moment it
