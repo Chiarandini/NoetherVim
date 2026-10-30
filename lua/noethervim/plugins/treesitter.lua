@@ -43,12 +43,12 @@ return {
 			highlight = {
 				enable = true,
 				additional_vim_regex_highlighting = false,
-				disable = { "latex", "tex", "bib" },
+				disable = { "latex", "bib" },
 			},
 			textobjects = {
 				select = {
 					enable = true,
-					disable = {'tex', 'latex'},
+					disable = { "latex" },
 					lookahead = true,
 					keymaps = {
 						["af"] = "@function.outer",

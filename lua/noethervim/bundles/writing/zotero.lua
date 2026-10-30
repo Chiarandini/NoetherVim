@@ -23,10 +23,10 @@ return {
       "folke/snacks.nvim",
       "kkharji/sqlite.lua",
     },
-    ft = { "tex", "plaintex", "latex", "markdown", "quarto", "typst", "org", "asciidoc" },
+    ft = { "tex", "plaintex", "markdown", "quarto", "typst", "org", "asciidoc" },
     specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("snacks-zotero.nvim", {
       { "<localleader>z", "<cmd>SnacksZotero<cr>", desc = "Zotero citation picker",
-        ft = { "tex", "plaintex", "latex", "markdown", "quarto", "typst", "org", "asciidoc" } },
+        ft = { "tex", "plaintex", "markdown", "quarto", "typst", "org", "asciidoc" } },
     }) } },
     opts = {
       -- Refuse to append entries that biber/biblatex would reject (raw

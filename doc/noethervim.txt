@@ -585,8 +585,8 @@ Current keys: ~
     `profiles.conservative`         Where the completion menu waits to be
                                   asked instead of opening as you type:
                                   `{ [ft] = true | false }` adds or
-                                  removes a filetype (tex and latex wait
-                                  by default), and `size_kb` (default
+                                  removes a filetype (tex waits by
+                                  default), and `size_kb` (default
                                   `500`) makes any larger file wait.
                                   `<C-Space>` and LSP trigger characters
                                   (`\` in LaTeX) still open it. Holds

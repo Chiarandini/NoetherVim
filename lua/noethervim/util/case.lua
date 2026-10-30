@@ -151,7 +151,7 @@ local REGTYPE = { char = "v", line = "V", block = CTRL_V }
 
 --- Filetypes where a leading `\command` should be stepped over rather than
 --- treated as the first word.
-local MACRO_FILETYPES = { tex = true, latex = true, plaintex = true, context = true }
+local MACRO_FILETYPES = { tex = true, plaintex = true, context = true }
 
 --- Rewrite the region between marks `m1` and `m2` through `transform`.
 ---

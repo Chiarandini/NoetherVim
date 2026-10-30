@@ -316,7 +316,7 @@ end
 -- into a python buffer just because the segment was switched on in a tex
 -- one.
 local pdf_filetypes = {
-  tex = true, latex = true, plaintex = true, bib = true,
+  tex = true, plaintex = true, bib = true,
   context = true, markdown = true, typst = true,
 }
 

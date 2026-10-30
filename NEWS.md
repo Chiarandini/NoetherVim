@@ -8,7 +8,7 @@ where they are listed.
 
 - **`profiles.conservative` is a filetype map, like `q_close`:** write
   `conservative = { tex = false, markdown = true, size_kb = 500 }`; `true`
-  adds a filetype, `false` removes one of the defaults (tex and latex).
+  adds a filetype and `false` removes one; tex is the default.
 - **A `lua/user/config.lua` key nothing reads warns at startup:** a typo or
   a renamed key is named when Neovim starts, not only by
   `:checkhealth noethervim`.

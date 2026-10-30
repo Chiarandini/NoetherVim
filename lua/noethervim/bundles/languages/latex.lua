@@ -56,14 +56,13 @@ return {
 
   -- ── smart-enter.nvim: LaTeX environment continuation ──────────────────────
   -- The plugin and its global <S-CR> come from core (plugins/editing.lua).
-  -- This only adds the tex/latex rules, merged into core's opts by lazy:
+  -- This only adds the LaTeX rules, merged into core's opts by lazy:
   -- "\\" in math rows, "\\" then "&= " in align, "\item " in lists.
   {
     "Chiarandini/smart-enter.nvim",
     opts = {
       filetypes = {
-        tex   = { preset = "latex" },
-        latex = { preset = "latex" },
+        tex = { preset = "latex" },
       },
     },
   },
@@ -129,8 +128,8 @@ return {
         { "yP", function()
             require("noethervim.lib.latex.copy_pdf").copy_pdf_to_clipboard()
             vim.notify("yanked pdf")
-          end, ft = { "tex", "latex" }, desc = "yank PDF to clipboard" },
-        { "<localleader>vw", "<Cmd>VimtexCountWords<CR>", ft = { "tex", "latex" }, silent = true,
+          end, ft = "tex", desc = "yank PDF to clipboard" },
+        { "<localleader>vw", "<Cmd>VimtexCountWords<CR>", ft = "tex", silent = true,
           desc = "vimtex word count" },
         -- The PDF size; the pdf preset (`<C-w>s<C-p>`) shows it too.
         { "<c-w>sp", function()
@@ -166,7 +165,7 @@ return {
       -- vimtex provider advertises ':' as a trigger character instead (the
       -- blink.cmp spec below).
       vim.api.nvim_create_autocmd("FileType", {
-        pattern  = { "tex", "latex" },
+        pattern  = "tex",
         callback = function() vim.opt_local.iskeyword:append(":") end,
       })
 
@@ -267,7 +266,7 @@ return {
       -- file. Deferring saves ~12ms off `nvim .` startup because
       -- vimtex_status is a heavy module.
       vim.api.nvim_create_autocmd("FileType", {
-        pattern = { "tex", "latex" },
+        pattern = "tex",
         once    = true,
         callback = function()
           -- The heirline statusline listens for `b:vimtex.compiler.status`
@@ -370,7 +369,7 @@ return {
       -- specs above.
       vim.api.nvim_create_autocmd("FileType", {
         group    = vim.api.nvim_create_augroup("noethervim_latex_ftkeys", { clear = true }),
-        pattern  = { "tex", "latex" },
+        pattern  = "tex",
         callback = function(ev)
           -- :PDF -- hand the compiled PDF to the system viewer.
           --
@@ -612,7 +611,7 @@ return {
     "Chiarandini/snacks-bibtex.nvim",
     dependencies = { "folke/snacks.nvim" },
     cmd  = "SnacksBibtex",
-    ft   = { "tex", "plaintex", "latex", "markdown", "quarto", "typst", "org", "rmd" },
+    ft   = { "tex", "plaintex", "markdown", "quarto", "typst", "org", "rmd" },
     specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("snacks-bibtex.nvim", {
       { "<c-s-c>", "<cmd>SnacksBibtex<cr>",
         mode = "i", desc = "citation from bibtex" },
@@ -644,9 +643,9 @@ return {
       -- re-encode after a suggestion is picked. With no accent token under
       -- the cursor they fall through to Vim's own zg / zw via  :normal! ,
       -- so plain words work as before.
-      { "zg", "<Plug>(noethervim-tex-accent-add)", ft = { "tex", "latex" }, silent = true,
+      { "zg", "<Plug>(noethervim-tex-accent-add)", ft = "tex", silent = true,
         desc = "spell: add (latex-aware)", set = "remaps" },
-      { "zw", "<Plug>(noethervim-tex-accent-mark-wrong)", ft = { "tex", "latex" }, silent = true,
+      { "zw", "<Plug>(noethervim-tex-accent-mark-wrong)", ft = "tex", silent = true,
         desc = "spell: mark wrong (latex-aware)", set = "remaps" },
       -- z= : on an accent token, the latex-aware picker that re-encodes the
       -- chosen suggestion; on a plain word, which-key's spelling popup, the
@@ -658,14 +657,14 @@ return {
           else
             require("which-key").show({ keys = "z=" })
           end
-        end, ft = { "tex", "latex" }, silent = true,
+        end, ft = "tex", silent = true,
         desc = "spell: suggest (which-key / latex-aware)", set = "remaps" },
       -- PDF-follows-cursor, off until asked for per buffer. `<localleader>lf`
       -- sits in vimtex's own `<localleader>l` command namespace, next to `ll`
       -- compile and `lv` view, because that is what it is: a third thing to
       -- do with the viewer. The plugin owns the toggle and its message as
       -- :VimtexFollowToggle; this only gives it a key.
-      { "<localleader>lf", "<cmd>VimtexFollowToggle<cr>", ft = { "tex", "plaintex", "latex" },
+      { "<localleader>lf", "<cmd>VimtexFollowToggle<cr>", ft = { "tex", "plaintex" },
         desc = "[l]atex PDF [f]ollow toggle" },
     }) } },
     opts = {
@@ -833,13 +832,13 @@ return {
       "folke/snacks.nvim",
       "Chiarandini/latex-nav-core.nvim",
     },
-    ft   = { "tex", "latex" },
+    ft   = "tex",
     cmd  = { "LatexLabels", "SnacksLatexLabels", "SnacksLatexLabelsExport" },
     specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("snacks-latex-labels.nvim", {
       { SearchLeader .. "w", "<cmd>SnacksLatexLabels<cr>", desc = "labels" },
-      { "<localleader>w",   "<cmd>SnacksLatexLabels<cr>",     ft = { "tex", "latex" }, desc = "latex labels" },
-      { "<localleader>vul", "<cmd>LatexLabels update<cr>",    ft = { "tex", "latex" }, desc = "update latex labels" },
-      { "<localleader>vuh", "<cmd>CachedHeadings update<cr>", ft = { "tex", "latex" }, desc = "update headings cache",
+      { "<localleader>w",   "<cmd>SnacksLatexLabels<cr>",     ft = "tex", desc = "latex labels" },
+      { "<localleader>vul", "<cmd>LatexLabels update<cr>",    ft = "tex", desc = "update latex labels" },
+      { "<localleader>vuh", "<cmd>CachedHeadings update<cr>", ft = "tex", desc = "update headings cache",
         owner = "snacks-cached-headings.nvim" },
       -- gd: the label under the cursor via the label cache, else the
       -- language server's definition. A buffer key from an `ft` row stays
@@ -860,7 +859,7 @@ return {
           end
           vim.api.nvim_win_set_cursor(0, { entry.line, 0 })
           vim.cmd("normal! zz")
-        end, ft = { "tex", "latex" }, desc = "goto label definition (LaTeX)" },
+        end, ft = "tex", desc = "goto label definition (LaTeX)" },
     }) } },
     opts = {
       cache_strategy    = "global",
@@ -903,13 +902,13 @@ return {
 
       -- Wire navigation for buffers opened after this plugin loads.
       vim.api.nvim_create_autocmd("FileType", {
-        pattern  = { "tex", "latex" },
+        pattern  = "tex",
         callback = function(args) setup_nav(args.buf) end,
       })
       -- The FileType event already fired for the buffer that triggered this
       -- plugin load, so wire it up for the current buffer immediately too.
       local ft = vim.bo.filetype
-      if ft == "tex" or ft == "latex" then
+      if ft == "tex" then
         setup_nav(vim.api.nvim_get_current_buf())
       end
     end,

@@ -38,7 +38,7 @@ return {
 			-- noethervim.util.filetypes), since those are the buffers the
 			-- distro hard-wraps.
 			filetypes = {
-				"tex", "latex", "plaintex", "markdown", "norg", "text",
+				"tex", "plaintex", "markdown", "norg", "text",
 				"rst", "typst", "mail", "gitcommit", "gitsendemail",
 			},
 			keys = false,

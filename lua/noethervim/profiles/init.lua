@@ -65,10 +65,10 @@ end
 
 --- Filetypes where completion waits to be asked unless `conservative`
 --- says otherwise.
-local CONSERVATIVE = { tex = true, latex = true }
+local CONSERVATIVE = { tex = true }
 
 --- Whether completion should wait to be asked in `buf`: its filetype is
---- conservative (tex and latex by default; `profiles.conservative = { [ft]
+--- conservative (tex by default; `profiles.conservative = { [ft]
 --- = true | false }` adds or removes one, as `q_close` does), or the file is
 --- larger than `profiles.conservative.size_kb` (default 500) in any
 --- filetype. Holds with `profiles = false` too, from the defaults.

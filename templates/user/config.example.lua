@@ -176,9 +176,9 @@ return {
     --
     --     -- Where completion waits for C-Space (or an LSP trigger character
     --     -- such as '\' in LaTeX) instead of opening as you type.
-    --     -- true adds a filetype, false removes one (tex and latex wait by default);
+    --     -- true adds a filetype, false removes one (tex waits by default);
     --     -- size_kb makes any larger file wait.
-    --     conservative = { latex = false, markdown = true, size_kb = 500 },
+    --     conservative = { tex = false, markdown = true, size_kb = 500 },
     -- },
 
     -- Filetypes where a bare `q` closes the window: true adds one, false
