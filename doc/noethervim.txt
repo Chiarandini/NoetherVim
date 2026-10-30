@@ -2597,12 +2597,7 @@ Cmdline-only overrides (insert mode keymaps stay unchanged): >lua
 
 Custom completion sources: ~
 
-NoetherVim ships three custom blink.cmp completion sources.
-
-images ~
-    Triggered when the entire line is "." in a .tex file. Lists image
-    files from ./images/ and inserts a complete \begin{figure}...\end{figure}
-    block.
+NoetherVim ships two custom blink.cmp completion sources.
 
 todos ~
     Triggered by typing "@" at the start of a line. Inserts a
