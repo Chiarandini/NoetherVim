@@ -2270,7 +2270,9 @@ straightforward. See the example in
                               vertical split so you can read the source
                               alongside it. Creates the file (and parent
                               directories) when needed, or adds a commented
-                              starting point to the end of one you have:
+                              starting point to the end of one you have,
+                              showing the change as a diff for your
+                              go-ahead first:
                                 a spec      `user/plugins/<name>.lua`
                                 `after/lsp/`  your `after/lsp/<server>.lua`
                                 options     `user/options.lua`

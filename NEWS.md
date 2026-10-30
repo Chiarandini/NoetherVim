@@ -21,7 +21,8 @@ where they are listed.
   the servers in lspconfig's `ensure_installed` are no longer fetched with it
   set; install them with `:Mason`.
 - **`:NoetherVim override!` is gone:** `:NoetherVim override` opens the file
-  of yours that changes the current one, adding a commented starting point.
+  of yours that changes the current one, adding a commented starting point
+  once you accept it as a diff.
   `:NoetherVim diff` lists only what your own files changed.
 - **Your buffer settings beat the filetype profiles:** a `spell`,
   `conceallevel`, `list`, `wrap` or `linebreak` you set for a buffer

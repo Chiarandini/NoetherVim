@@ -1887,22 +1887,42 @@ function M.override()
 
   ---@cast category string
   local function finish(path, ft)
-    local parent = vim.fn.fnamemodify(path, ":h")
-    if vim.fn.isdirectory(parent) == 0 then vim.fn.mkdir(parent, "p") end
     local is_new = not vim.uv.fs_stat(path)
     local existing = is_new and {} or vim.fn.readfile(path)
     local add = seed_lines(rel, category, bufpath, existing, ft)
-    if #add > 0 then
-      if #existing > 0 and existing[#existing] ~= "" then table.insert(add, 1, "") end
-      vim.fn.writefile(add, path, is_new and "" or "a")
+    local shown = vim.fn.fnamemodify(path, ":~")
+
+    local function open()
+      -- Record what this override is being written against. Re-running the
+      -- command re-baselines it, which is how you clear a drift warning once
+      -- you have read the upstream change.
+      require("noethervim.util.override_base").record(path, rel, bufpath)
+      vim.cmd("vsplit " .. vim.fn.fnameescape(path))
     end
-    -- Record what this override is being written against. Re-running the
-    -- command re-baselines it, which is how you clear a drift warning once
-    -- you have read the upstream change.
-    require("noethervim.util.override_base").record(path, rel, bufpath)
-    vim.cmd("vsplit " .. vim.fn.fnameescape(path))
-    vim.notify(("NoetherVim: %s %s"):format(is_new and "created" or (#add > 0 and "extended" or "opened"),
-      vim.fn.fnamemodify(path, ":~")), vim.log.levels.INFO)
+    if #add == 0 then return open() end
+
+    -- Nothing is written into your config without your go-ahead: the
+    -- addition is shown as a diff first.
+    local new = vim.deepcopy(existing)
+    if #existing > 0 and existing[#existing] ~= "" then table.insert(new, "") end
+    vim.list_extend(new, add)
+    local before = #existing > 0 and (table.concat(existing, "\n") .. "\n") or ""
+    local body = vim.diff(before, table.concat(new, "\n") .. "\n", { result_type = "unified", ctxlen = 3 })
+    require("noethervim.util.diff_modal").confirm({
+      title   = (is_new and "Create " or "Add to ") .. shown,
+      diff    = ("--- %s\n+++ %s\n%s"):format(shown, shown, body or ""),
+      on_done = function(accepted)
+        if not accepted then
+          vim.notify("NoetherVim: " .. shown .. " left as it was", vim.log.levels.INFO)
+          if not is_new then vim.schedule(open) end
+          return
+        end
+        vim.fn.mkdir(vim.fn.fnamemodify(path, ":h"), "p")
+        vim.fn.writefile(new, path)
+        vim.notify(("NoetherVim: %s %s"):format(is_new and "created" or "added to", shown), vim.log.levels.INFO)
+        vim.schedule(open)
+      end,
+    })
   end
 
   if category == "profile" then
