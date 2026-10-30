@@ -1,6 +1,7 @@
 -- Git statusline components.
 
 local ctx = require("noethervim.plugins.statusline.context")
+local sl = require("noethervim.statusline")
 local conditions = require("heirline.conditions")
 
 local M = {}
@@ -44,7 +45,7 @@ local function make_git_changes(show_prefix)
           or count_of(self.status_dict, "removed") > 0
     end,
     condition = function()
-      return conditions.is_git_repo() and vim.g.heirline_git_show
+      return conditions.is_git_repo() and sl.shown("git")
     end,
     {
       condition = function(self) return self.has_changes end,
@@ -70,7 +71,7 @@ local GitBranchName = {
     self.status_dict = vim.b.gitsigns_status_dict
   end,
   condition = function()
-    return conditions.is_git_repo() and vim.g.heirline_git_show
+    return conditions.is_git_repo() and sl.shown("git")
   end,
   provider = function(self)
     return "  " .. self.status_dict.head
@@ -83,7 +84,7 @@ M.GitBlock = {
     self.status_dict = vim.b.gitsigns_status_dict
   end,
   condition = function()
-    return conditions.is_git_repo() and vim.g.heirline_git_show
+    return conditions.is_git_repo() and sl.shown("git")
   end,
 
   on_click = {

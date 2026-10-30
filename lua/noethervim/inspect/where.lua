@@ -1,6 +1,6 @@
---- `:NoetherVim where <name>`: who set a key, an option, a command or a
---- plugin, what NoetherVim did about a value of yours there, and the line
---- that changes it. A name that is several of these (`ai` is a key and
+--- `:NoetherVim where <name>`: who set a key, an option, a command, a
+--- plugin or a statusline segment, what NoetherVim did about a value of
+--- yours there, and the line that changes it. A name that is several of these (`ai` is a key and
 --- 'autoindent') gets a report for each.
 
 local M = {}
@@ -380,15 +380,45 @@ function M.plugin(name)
   return lines
 end
 
---- Print every report `name` has: as a key, an option, a command, a plugin.
+--- What is known about statusline segment or core block `name`, or nil
+--- when it is neither.
+---@param name string
+---@return string[]?
+function M.segment(name)
+  local sl = require("noethervim.statusline")
+  local seg = sl.segment(name)
+  local core = vim.tbl_contains(sl.CORE.left, name) or vim.tbl_contains(sl.CORE.right, name)
+  if not seg and not core and not sl.errors[name] then return nil end
+  local lines = { ("%s  (statusline %s)"):format(name, core and "block" or "segment") }
+  if seg then
+    local who, where = defined(seg.provider)
+    table.insert(lines, ("  from     %s%s"):format(who or "?", where and (": " .. where) or ""))
+    local place = seg.place or {}
+    table.insert(lines, ("  place    %s side%s"):format(place.side or "right",
+      place.after and (", after " .. place.after) or ", at its start"))
+  end
+  if sl.errors[name] then
+    table.insert(lines, "  off      raised an error, so it is off until restart: " .. sl.errors[name])
+  else
+    local text = seg and sl.text(name) or ""
+    table.insert(lines, ("  now      %s%s"):format(sl.shown(name) and "shown" or "hidden",
+      seg and (text ~= "" and (': "' .. text .. '"') or ", nothing to show here") or ""))
+  end
+  table.insert(lines, ("  change   lua/user/config.lua   statusline = { layout = { [%q] = false } }"):format(name))
+  table.insert(lines, '           false hides it, true shows it from the start, { after = "git" } moves it')
+  return lines
+end
+
+--- Print every report `name` has: as a key, an option, a command, a plugin,
+--- a statusline segment.
 ---@param name? string
 function M.run(name)
   if not name or name == "" then
-    vim.notify("usage: :NoetherVim where <key|option|command|plugin>", vim.log.levels.WARN)
+    vim.notify("usage: :NoetherVim where <key|option|command|plugin|segment>", vim.log.levels.WARN)
     return
   end
   local out = {}
-  for _, of in ipairs({ M.key, M.option, M.command, M.plugin }) do
+  for _, of in ipairs({ M.key, M.option, M.command, M.plugin, M.segment }) do
     local section = of(name)
     if section then
       if #out > 0 then table.insert(out, "") end
@@ -396,7 +426,7 @@ function M.run(name)
     end
   end
   if #out == 0 then
-    out = { name, "  not a key, option, command or plugin anything set up" }
+    out = { name, "  not a key, option, command, plugin or statusline segment anything set up" }
   end
   report(out)
 end

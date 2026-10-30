@@ -207,12 +207,24 @@ function M.tweak(tweaks)
   apply_tweaks()
 end
 
+local palette ---@type table<string, string>?
+
+-- Registered when this module loads, at the head of setup(), so it runs
+-- before any ColorScheme handler that asks for the new palette.
+vim.api.nvim_create_autocmd("ColorScheme", {
+  group    = vim.api.nvim_create_augroup("noethervim.theme.palette", { clear = true }),
+  callback = function() palette = nil end,
+})
+
 --- The color table NoetherVim's statusline draws with, resolved for the
 --- active colorscheme: hand-tuned for gruvbox, derived from highlight
---- groups for any other. Keys: theme/palette.lua.
+--- groups for any other. Keys: theme/palette.lua. Resolved once per
+--- colorscheme, so a statusline segment can ask on every redraw; treat the
+--- table as read-only.
 ---@return table<string, string>
 function M.palette()
-  return require("noethervim.theme.palette").resolve()
+  palette = palette or require("noethervim.theme.palette").resolve()
+  return palette
 end
 
 function M.setup_tweaks()

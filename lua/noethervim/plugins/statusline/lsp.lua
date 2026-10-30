@@ -1,6 +1,7 @@
 -- LSP active indicator statusline component.
 
 local ctx = require("noethervim.plugins.statusline.context")
+local sl = require("noethervim.statusline")
 local icons = require("noethervim.util.icons")
 local conditions = require("heirline.conditions")
 
@@ -8,7 +9,7 @@ local M = {}
 
 M.LSPActive = {
   condition = function()
-    return conditions.lsp_attached() and vim.g.heirline_lsp_show
+    return conditions.lsp_attached() and sl.shown("lsp")
   end,
   on_click = {
     callback = function()

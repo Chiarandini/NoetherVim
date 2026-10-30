@@ -123,6 +123,15 @@ return {
     -- LaTeX globals, set before vimtex loads.
     specs = {
       { "NoetherVim", optional = true, opts = { g = { tex_conceal = "abdgm", tex_flavor = "latex" } } },
+      -- The compile state and PDF size in the statusline, and the key that
+      -- shows the size (the pdf preset, `<C-w>s<C-p>`, shows it too).
+      { "NoetherVim", optional = true, opts = { segments = require("noethervim.util.vimtex_status").segments() } },
+      { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("vimtex", {
+        { "<c-w>sp", function()
+            require("noethervim.statusline").toggle("latex.pdfsize")
+            vim.cmd.redrawstatus()
+          end, desc = "statusline pdf-size toggle" },
+      }) },
       { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("vimtex", {
         -- yP: copy compiled PDF to clipboard
         { "yP", function()

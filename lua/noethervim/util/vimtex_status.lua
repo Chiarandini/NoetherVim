@@ -1,7 +1,6 @@
--- VimTeX statusline helpers.
---
--- Shared between the heirline `VimtexCompilerStatus` and `PdfFileSize`
--- components. Resolves the most relevant vimtex state for a buffer
+-- VimTeX statusline helpers, and the latex bundle's two statusline
+-- segments built on them: `latex.compile` and `latex.pdfsize`.
+-- Resolves the most relevant vimtex state for a buffer
 -- (handling input files and subfile parent/child split), exposes the
 -- correct PDF path for that state, and persists a single per-project
 -- baseline (last successful PDF size + compile duration) so the
@@ -264,9 +263,8 @@ end
 ---label for a state currently compiling. Returns "compiling…",
 ---"compiling 42%", or "compiling 102% — almost done". Percentage is
 ---clamped to 95 until success fires, so a stalled bar doesn't sit at 99.
----Returns a raw string with literal `%`; statusline consumers must
----escape it via `escape_percent` because vim's statusline syntax
----treats `%` as a directive prefix.
+---Returns a raw string with literal `%`; the segment adapter escapes it
+---for the statusline.
 ---@param state table
 ---@return string
 function M.progress_label(state)
@@ -284,11 +282,112 @@ function M.progress_label(state)
   end
 end
 
----Double `%` so a string is safe to embed in a statusline expression.
----@param s string
----@return string
-function M.escape_percent(s)
-  return (s:gsub("%%", "%%%%"))
+-- ── Segments ──────────────────────────────────────────────────────────────
+
+-- Passive VimTeX error count, cached per quickfix list generation.
+--
+-- Never call vimtex#qf#inquire from statusline code: it is not a query --
+-- it re-parses the compile log and REBUILDS the quickfix list (~36
+-- `setlocal errorformat` calls + `caddfile`) on every render. That
+-- storms OptionSet/FileType, which redraws plugins (treesitter-context
+-- blink), which re-renders the statusline: a self-sustaining loop that
+-- persists after the compiler stops, because status stays 3. The
+-- rebuild also aborts in statusline context (textlock), so the count
+-- never rendered anyway. VimTeX's own compile callback already ran
+-- inquire and filled the list; just read it.
+local qf_cache = { id = -1, tick = -1, count = 0 }
+local function qf_error_count()
+  local info = vim.fn.getqflist({ id = 0, changedtick = 1, title = 1 })
+  if info.id == qf_cache.id and info.changedtick == qf_cache.tick then
+    return qf_cache.count
+  end
+  local count = 0
+  -- VimTeX titles its list "VimTeX errors (...)"; ignore foreign lists.
+  if (info.title or ""):find("VimTeX", 1, true) then
+    for _, item in ipairs(vim.fn.getqflist()) do
+      if item.valid == 1 then count = count + 1 end
+    end
+  end
+  qf_cache = { id = info.id, tick = info.changedtick, count = count }
+  return count
+end
+
+-- Filetypes where a PDF readout is meaningful, so "no pdf" does not leak
+-- into a python buffer just because the segment was switched on in a tex
+-- one.
+local pdf_filetypes = {
+  tex = true, latex = true, plaintex = true, bib = true,
+  context = true, markdown = true, typst = true,
+}
+
+--- The latex bundle's statusline segments (noethervim.statusline).
+---@return table<string, noethervim.Segment>
+function M.segments()
+  local icons = require("noethervim.util").icons
+  local function color(key) return { fg = require("noethervim.theme").palette()[key] } end
+  return {
+    -- The compile state of the most relevant VimTeX state for the buffer
+    -- (input files and subfile parent/child splits resolved by pick()):
+    --   * a label when both parent and subfile states are visible
+    --   * a rough percent from the cached last successful PDF size
+    --   * the quickfix error count after a failure
+    --   * a small ↻ marker when continuous mode (`-pvc`) is active
+    -- The "compiled in N.Ns" notification goes through fidget; the bar
+    -- keeps "compiled ✓" until the next compile starts.
+    ["latex.compile"] = {
+      place = { side = "right", after = "latex.pdfsize" },
+      provider = function(ctx)
+        local pick = M.pick(ctx.buf)
+        if not pick then return nil end
+        local state, compiler = pick.state, pick.state.compiler
+        local status = tonumber(compiler and compiler.status) or 0
+        local tag = ""
+        if pick.parent_compiling and pick.sub_compiling then tag = "[parent+sub] "
+        elseif pick.role == "parent" then tag = "[parent] "
+        elseif pick.role == "sub" then tag = "[subfile] " end
+        local continuous = compiler and tonumber(compiler.continuous) == 1 and " ↻" or ""
+        if status == 1 then
+          return { { tag .. M.progress_label(state) .. " " .. icons.text .. continuous, color("orange") } }
+        elseif status == 2 then
+          return { { tag .. "compiled " .. icons.checkmark .. continuous, color("light_green") } }
+        elseif status == 3 then
+          local count = qf_error_count()
+          local text = count > 0
+            and ("%scompile error (%d) %s%s"):format(tag, count, icons.error, continuous)
+            or (tag .. "compile error " .. icons.error .. continuous)
+          return { { text, color("light_red") } }
+        end
+      end,
+    },
+    -- The PDF's size, through the picked VimTeX state (so input files,
+    -- `out_dir` and a custom `-jobname` resolve), with "(stale)" when the
+    -- source is newer than the PDF and no compile is running. Hidden until
+    -- `<C-w>sp` or the pdf preset (`<C-w>s<C-p>`) shows it.
+    ["latex.pdfsize"] = {
+      place = { side = "right" },
+      hl = "Comment",
+      cond = function(ctx) return pdf_filetypes[vim.bo[ctx.buf].filetype] == true end,
+      provider = function(ctx)
+        local pick = M.pick(ctx.buf)
+        local pdf = pick and M.pdf_path(pick.state)
+        if not pdf or pdf == "" then
+          pdf = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(ctx.buf), ":p:r") .. ".pdf"
+        end
+        local stat = vim.uv.fs_stat(pdf)
+        if not stat or stat.size <= 0 then return "no pdf" end
+        local kb = stat.size / 1024
+        local size = kb >= 1024 and ("%.1f MB"):format(kb / 1024) or ("%.0f KB"):format(kb)
+        local stale = ""
+        local status = pick and tonumber(pick.state.compiler and pick.state.compiler.status) or 0
+        if status ~= 1 then
+          local tex = pick and pick.state.tex
+          local tex_stat = tex and vim.uv.fs_stat(tex)
+          if tex_stat and tex_stat.mtime.sec > stat.mtime.sec then stale = " (stale)" end
+        end
+        return "pdf: " .. size .. stale
+      end,
+    },
+  }
 end
 
 return M

@@ -45,49 +45,54 @@ return {
 
 
     -- ── Statusline ────────────────────────────────────────────────────────────
-    -- Hard opt-out for NoetherVim's built-in statusline / tabline / winbar.
-    -- Set to false if you want to install lualine, mini.statusline, etc.
-    -- via lua/user/plugins/. Default: true (heirline ships out of the box).
-    -- statusline_enabled = false,
-    --
-    -- Heirline-based statusline overrides. Ignored when
-    -- statusline_enabled = false.
+    -- To replace the statusline, tabline and winbar (lualine, mini.statusline,
+    -- ...), switch heirline off in lua/user/plugins/:
+    --     { "rebelot/heirline.nvim", enabled = false }
+    -- Segments from bundles (VimTeX's compile state, ...) still answer
+    -- require("noethervim.statusline").text(id) for whatever replaces it.
     -- statusline = {
-    --     -- Shape of the colored mode block at the left of the statusline
-    --     -- (and, for "slant"/"pointy"/"bubbly", an opening endcap on the
-    --     -- right ruler block). Default "round" preserves the historical
-    --     -- look; "bubbly" rounds both edges; "straight" disables endcaps.
-    --     edge_style = "round",  -- completes; slant has four directions
+    --     -- How heirline draws the bars.
+    --     style = {
+    --         -- Shape of the colored mode block at the left of the statusline
+    --         -- (and, for "slant"/"pointy"/"bubbly", an opening endcap on the
+    --         -- right ruler block). Default "round"; "bubbly" rounds both
+    --         -- edges; "straight" disables endcaps.
+    --         edge_style = "round",  -- completes; slant has four directions
     --
-    --     -- Override entries in the statusline colour table. A `mode_`
-    --     -- key moves one mode indicator; a role name (green, orange,
-    --     -- text_gray, profile_code, ...) moves everything with that role.
-    --     colors = { mode_n = "#458588" },
+    --         -- Override entries in the statusline colour table. A `mode_`
+    --         -- key moves one mode indicator; a role name (green, orange,
+    --         -- text_gray, profile_code, ...) moves everything with that role.
+    --         colors = { mode_n = "#458588" },
     --
-    --     -- The bar shifts to a blue background in insert mode. Set false
-    --     -- to keep one background in every mode; the mode block at the
-    --     -- left still changes colour.
-    --     mode_background = true,
+    --         -- The bar shifts to a blue background in insert mode. Set false
+    --         -- to keep one background in every mode; the mode block at the
+    --         -- left still changes colour.
+    --         mode_background = true,
     --
-    --     -- Extra heirline component specs appended to the right side of
-    --     -- the main statusline, after the git block.
-    --     extra_right = {},
+    --         -- Glyph shown on a tabpage that contains an unsaved buffer.
+    --         -- Default " ●". Common alternatives: " [+]" (vim default),
+    --         -- " *", " ◉".
+    --         tab_modified_indicator = " ●",
     --
-    --     -- Glyph shown on a tabpage that contains an unsaved buffer.
-    --     -- Default " ●". Common alternatives: " [+]" (vim default),
-    --     -- " *", " ", " ◉".
-    --     tab_modified_indicator = " ●",
+    --         -- What clicking the git branch/status block does. The default
+    --         -- opens lazygit when it is on PATH, and snacks' git-status
+    --         -- picker otherwise -- lazygit is optional, not a prerequisite.
+    --         git_click = function() vim.cmd("Git") end,
+    --     },
     --
-    --     -- Show a marker for the filetype profile (writing or code) that
-    --     -- claimed the current buffer. Click it to see the profile, the
-    --     -- detected filetype, and what the profile actually turned on.
-    --     -- Default: false.
-    --     filetype_profile = true,
+    --     -- Show, hide or move a block or segment by id: diagnostics, busy,
+    --     -- filename, lsp, git, profile, and the bundles' (latex.compile,
+    --     -- latex.pdfsize, dap). `profile = true` starts the filetype-profile
+    --     -- marker (writing or code); click it to see what the profile set.
+    --     layout = { profile = true, dap = { after = "git" } },
     --
-    --     -- What clicking the git branch/status block does. The default
-    --     -- opens lazygit when it is on PATH, and snacks' git-status
-    --     -- picker otherwise -- lazygit is optional, not a prerequisite.
-    --     git_click = function() vim.cmd("Git") end,
+    --     -- Segments of your own, by id. See :help noethervim-statusline-segments.
+    --     segments = {
+    --         clock = { provider = function() return os.date("%H:%M") end, hl = "Comment" },
+    --     },
+    --
+    --     -- Leave one bar to Neovim: statusline, tabline or winbar.
+    --     bars = { tabline = false },
     -- },
 
 

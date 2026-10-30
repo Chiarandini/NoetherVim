@@ -99,7 +99,7 @@ function M.make_mode_colors(colors)
     ["!"] = colors.yellow,
   }
 
-  -- `statusline.colors` in user config can name a mode directly, as
+  -- `statusline.style.colors` in user config can name a mode directly, as
   -- `mode_n`, `mode_i`, `mode_R` and so on. Without this the only way to
   -- move the normal-mode indicator was to move `green`, which also moves
   -- everything else green on the bar.
@@ -191,7 +191,7 @@ end
 -- they pick up theme changes and mode switches automatically.
 
 --- Whether the bar shifts background in insert mode at all. Read through a
---- function rather than captured, so `statusline.mode_background = false`
+--- function rather than captured, so `statusline.style.mode_background = false`
 --- takes effect without rebuilding the components.
 local function mode_shift()
   local ok, sl = pcall(require, "noethervim.statusline")

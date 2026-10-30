@@ -141,7 +141,7 @@ function M._snapshots_now()
 end
 
 --- What units contributed through NoetherVim's spec: rows, g, startup,
---- gutter.
+--- gutter, segments, busy.
 ---@private
 ---@type noethervim.HostOpts
 M._host = {}
@@ -183,9 +183,11 @@ function M.setup(opts)
     if handler then require("noethervim.util.gutter").register(pattern, handler) end
   end
 
-  -- Forward statusline overrides to the registry that the heirline
-  -- config callback reads at UIEnter.
-  require("noethervim.statusline").configure(user_cfg.statusline)
+  -- The statusline's data: your `statusline` settings, and the segments
+  -- and busy entries units declared. Whatever draws the bar reads them.
+  local statusline = require("noethervim.statusline")
+  statusline.configure(user_cfg.statusline)
+  statusline.register(M._host.segments, M._host.busy)
 
   -- Disable unused external providers
   vim.g.loaded_ruby_provider = 0

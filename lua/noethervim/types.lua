@@ -53,18 +53,37 @@
 ---@field g? table<string, any> plugin globals set at startup when still nil
 ---@field startup? table<string, fun()|false> registrations that must exist from startup, run in id order
 ---@field gutter? table<string, fun(ctx: noethervim.GutterClick)|false> what clicking a sign does, keyed by a Lua pattern matched against the sign name
+---@field segments? table<string, noethervim.Segment|false> statusline segments by id (noethervim.statusline)
+---@field busy? table<string, noethervim.Busy|false> what fills the statusline's busy slot, by id
 
 ---@class noethervim.StatuslineConfig
 ---
---- Heirline-based statusline overrides.
+--- The `statusline` table in lua/user/config.lua.
 ---
----@field colors? table<string, string> Heirline color-table overrides. Keys match heirline's color names (e.g. `mode_n`, `mode_i`, `git_added`); values are hex strings.
----@field extra_right? table[] Extra heirline component specs appended to the right side of the main statusline, after the git block.
----@field edge_style? "round"|"slant"|"slant_left"|"slant_in"|"slant_out"|"pointy"|"straight"|"bubbly" Shape of the colored mode block at the left of the statusline, and (for "bubbly", "slant", "pointy") an opening endcap on the right ruler block. Default "round" preserves the historical look; "bubbly" rounds both edges; "straight" disables endcaps entirely.
----@field tab_modified_indicator? string Glyph shown on a tab containing unsaved changes. Default `" ●"`. Common alternatives: `" [+]"` (vim default), `" *"`, `" "`, `" ◉"`. A leading space is recommended -- it separates the indicator from the tab's filename.
+---@field style? noethervim.StatuslineStyle How heirline draws the bars. Inert with heirline switched off.
+---@field segments? table<string, noethervim.Segment|false> Segments of yours by id, or in place of a unit's with the same id.
+---@field layout? table<string, boolean|{ side?: "left"|"right", after?: string }> Per block or segment id: `true` shows it from the start, `false` hides it, a table moves it.
+---@field bars? { statusline?: boolean, tabline?: boolean, winbar?: boolean } `false` leaves that bar to Neovim (or to another plugin).
+
+---@class noethervim.StatuslineStyle
+---@field colors? table<string, string> Heirline color-table overrides. Keys match the palette's names (e.g. `mode_n`, `green`, `profile_code`); values are hex strings.
+---@field edge_style? "round"|"slant"|"slant_left"|"slant_in"|"slant_out"|"pointy"|"straight"|"bubbly" Shape of the colored mode block at the left of the statusline, and (for "bubbly", "slant", "pointy") an opening endcap on the right ruler block. Default "round"; "bubbly" rounds both edges; "straight" disables endcaps entirely.
+---@field tab_modified_indicator? string Glyph shown on a tab containing unsaved changes. Default `" ●"`. Common alternatives: `" [+]"` (vim default), `" *"`, `" ◉"`. A leading space separates it from the tab's filename.
 ---@field mode_background? boolean If false, the statusline keeps one background in every mode instead of shifting to blue in insert. The mode chip still changes colour. Default: true.
----@field filetype_profile? boolean If true, render a marker showing which filetype profile (writing or code) claimed the current buffer. Clicking it reports the profile, the detected filetype, and the live values of the options the profile sets. Default: false.
----@field git_click? fun() Called when the git branch/status block is clicked. The default opens lazygit when it is on PATH and falls back to snacks' git-status picker otherwise; lazygit is optional, not a prerequisite.
+---@field git_click? fun() Called when the git block is clicked. The default opens lazygit when it is on PATH and falls back to snacks' git-status picker otherwise.
+
+---@class noethervim.Segment
+---@field provider fun(ctx: noethervim.SegmentCtx): string|{ [1]: string, [2]: (string|table)? }[]|nil Text, or chunks of text each with a highlight group name or a `{ fg = ... }` table; nil or "" shows nothing.
+---@field cond? fun(ctx: noethervim.SegmentCtx): boolean Shown only where this returns true.
+---@field click? fun(ctx: noethervim.SegmentCtx, button: string) Called on a click, with "l", "m" or "r".
+---@field hl? string|table Highlight for a provider that returns plain text.
+---@field place? { side?: "left"|"right", after?: string } Where heirline puts it: after a block or segment id, else at the start of its side (default "right").
+
+---@class noethervim.SegmentCtx
+---@field win integer
+---@field buf integer
+
+---@alias noethervim.Busy fun(): true|{ icon?: string, label?: string, hl?: table, click?: fun() }|nil
 
 ---@class noethervim.DisabledSnippet
 ---
@@ -86,8 +105,7 @@
 ---
 ---@field colorscheme? string Colorscheme applied at startup, unless a scheme picked interactively with SearchLeader+C has been restored over it. Defaults to `"gruvbox"`, the shipped theme; the dashboard and statusline fallback colours are chosen to match it. A name that is not installed warns and falls back to gruvbox.
 ---@field colorscheme_persistence? boolean If true, restore the last interactively picked colorscheme on startup, in preference to `colorscheme`. Set false to make `colorscheme` authoritative. Default: true.
----@field statusline_enabled? boolean If false, skip NoetherVim's heirline statusline, tabline and winbar entirely, so a user-supplied alternative (lualine, mini.statusline) can take over with no conflict. Drop the replacement into `lua/user/plugins/`. Default: true.
----@field statusline? noethervim.StatuslineConfig Heirline-based statusline overrides. Ignored when `statusline_enabled = false`.
+---@field statusline? noethervim.StatuslineConfig The statusline: segments and their layout by id, the bars drawn, and heirline's look.
 ---@field completion? noethervim.CompletionConfig How the completion menu takes Tab.
 ---@field q_close? table<string, boolean> Filetypes where a bare `q` closes the window: `true` adds one, `false` removes one of the defaults. Editable filetypes (`oil`, `markdown`, ...) are left out by default because `q` there shadows macro recording.
 ---@field profiles? false|noethervim.ProfilesConfig `false` turns the writing and code profiles off. `classes` moves a filetype to "writing" or "code", or leaves it alone with `false`; `spell_in_code` and `conservative` tune the profiles.

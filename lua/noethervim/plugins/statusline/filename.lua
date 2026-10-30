@@ -1,6 +1,7 @@
 -- Filename-related statusline components.
 
 local ctx = require("noethervim.plugins.statusline.context")
+local sl = require("noethervim.statusline")
 local icons = require("noethervim.util.icons")
 local nv = require("noethervim.util")
 local utils = require("heirline.utils")
@@ -151,7 +152,7 @@ local WorkDir = {
     self.dir = vim.fs.normalize(ProjRelativeFilename())
   end,
   condition = function()
-    return vim.g.heirline_directory_show
+    return sl.shown("directory")
   end,
   hl = function() return { fg = ctx.colors.orange, bold = true } end,
 
@@ -237,11 +238,11 @@ M.FileName = {
     -- WorkDir is showing the project-relative directory, so render the bare
     -- filename here. Otherwise the directory appears twice under
     -- 'noautochdir', where `:.` already carries it.
-    if vim.g.heirline_directory_show then
+    if sl.shown("directory") then
       return vim.fn.fnamemodify(name, ":t")
     end
     -- either get filename or get it relative to project:
-    if vim.g.heirline_proj_relative_dir_show then
+    if sl.shown("proj_relative_dir") then
       return ProjRelativeFilename()
     end
     -- trim the path relative to the working directory.

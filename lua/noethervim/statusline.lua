@@ -1,21 +1,22 @@
--- NoetherVim: statusline override registry.
+-- noethervim.statusline: the statusline's data, whatever draws it.
 --
--- This does NOT build the statusline. It records what `lua/user/config.lua`
--- asks for -- colours, edge style, extra right-hand components, Busy
--- overrides -- and the heirline components read it back while rendering.
--- It also owns the named presets the `<C-w>s` keys switch between, because
--- `standard` is defined partly by what the user configured here.
+-- Public (:help noethervim-api): text(id) and visible(id), so any statusline
+-- can show a segment a unit declared. Provisional: the segment and busy
+-- shapes (noethervim.Segment in types.lua).
 --
--- The bar itself is built in lua/noethervim/plugins/statusline/: `init.lua`
--- is the plugin spec, `statuslines.lua` decides which bar each window gets,
--- and one file per component alongside them.
--- NoetherVim statusline override registry.
--- Called from noethervim.setup() before plugins load, so the heirline
--- config function can read user preferences at runtime.
+-- Units declare segments in their anchor's spec,
+--   { "NoetherVim", optional = true, opts = { segments = { [id] = seg } } }
+-- and `busy` entries the same way; setup() hands both here. Your
+-- `statusline` table in lua/user/config.lua adds or replaces segments
+-- (`segments`), shows, hides or moves any segment or core block by id
+-- (`layout`), drops a whole bar (`bars`), and sets heirline's look (`style`).
+-- Visibility is kept here, by id, so the `<C-w>s` keys and the presets work
+-- the same for core blocks and unit segments.
+--
+-- The heirline renderer in plugins/statusline/ reads all of it; its adapter
+-- for segments is plugins/statusline/segments.lua.
 
 local M = {}
-local _opts = {}
-local _busy_overrides = {}
 
 -- Powerline-family glyphs from the Nerd Font private use area. Constructed
 -- with string.char() so the raw UTF-8 bytes can't be corrupted by editor
@@ -71,52 +72,52 @@ local edge_styles = {
   bubbly     = { start_left = round_left,   start_right = round_right,   mid_left = round_left,    end_left = round_left },
 }
 
---- Configure statusline overrides. Called once during `noethervim.setup()`
---- with the `statusline` subtable of `lua/user/config.lua`; the recorded
---- values are read at statusline-render time by the heirline component
---- functions.
----
+
+---@type noethervim.StatuslineConfig
+local _opts = {}
+local _units = {} ---@type table<string, noethervim.Segment|false>
+local _busy = {} ---@type table<string, noethervim.Busy|false>
+
+--- Segments that raised an error, by id, with the message. Each is off for
+--- the rest of the session; health lists them.
+---@type table<string, string>
+M.errors = {}
+
+--- The blocks of heirline's main bar, by side, in order: the ids a segment's
+--- `place.after` and your `layout` can name besides unit segments.
+M.CORE = {
+  left  = { "diagnostics", "busy", "filename" },
+  right = { "lsp", "git", "profile" },
+}
+
+--- Where each block starts out hidden. Every other id starts out shown.
+local HIDDEN = { directory = true, proj_relative_dir = true, profile = true, ["latex.pdfsize"] = true }
+
 ---@param opts noethervim.StatuslineConfig?
 function M.configure(opts)
   _opts = opts or {}
+  M.apply_preset("standard")
 end
 
---- Returns user color overrides.
+--- The segments and busy entries units declared in NoetherVim's spec.
+---@param segments table<string, noethervim.Segment|false>?
+---@param busy table<string, noethervim.Busy|false>?
+function M.register(segments, busy)
+  _units = segments or {}
+  _busy = busy or {}
+end
+
+local function style() return _opts.style or {} end
+
+--- Heirline color-table overrides from `style.colors`.
 function M.get_colors()
-  return _opts.colors or {}
+  return style().colors or {}
 end
 
---- Returns extra right-side components.
-function M.get_extra_right()
-  return _opts.extra_right or {}
-end
-
---- Register a function that can greedily take over the Busy statusline
---- component. Evaluated on every statusline render; the most recently
---- registered override that returns a non-nil spec wins (last-write-wins,
---- so user config naturally trumps bundles that load earlier).
----
---- fn() -> nil | { icon?, label?, hl?, on_click? }
----   icon     -- string shown before the label; defaults to the animated
----              braille spinner frame
----   label    -- short string shown after the icon (e.g. "ai")
----   hl       -- heirline highlight spec (e.g. { fg = "#c678dd", bold = true })
----   on_click -- function invoked on mouse click
----
---- The animated spinner ticks while something is driving vim.bo.busy > 0;
---- overrides wanting animation should increment busy on the relevant buf.
-function M.register_busy_override(fn)
-  table.insert(_busy_overrides, fn)
-end
-
-function M.get_busy_overrides()
-  return _busy_overrides
-end
-
---- Returns the resolved edge-style preset (start_left, start_right,
+--- The resolved edge-style preset (start_left, start_right, mid_left,
 --- end_left). Falls back to "round" for unknown / nil names.
 function M.get_edges()
-  return edge_styles[_opts.edge_style or "round"] or edge_styles.round
+  return edge_styles[style().edge_style or "round"] or edge_styles.round
 end
 
 --- Lists the known edge-style names. Keep validators in sync via this
@@ -128,78 +129,183 @@ function M.list_edge_styles()
   return names
 end
 
---- Returns the tab modified-indicator glyph. Defaults to `" ●"`; users
---- can override via `statusline.tab_modified_indicator` in user/config.lua
---- (e.g. `" [+]"` for the vim-default look).
+--- The tab modified-indicator glyph, `style.tab_modified_indicator`.
 function M.get_tab_modified_indicator()
-  return _opts.tab_modified_indicator or " ●"
+  return style().tab_modified_indicator or " ●"
 end
 
---- True when the filetype-profile marker should be rendered. Off unless
---- True unless `statusline.mode_background = false` in `lua/user/config.lua`.
+--- True unless `style.mode_background = false`.
 ---
 --- The bar shifts to a blue background in insert mode, so the editor's most
 --- consequential hidden state is legible from the shape of the bar rather
 --- than only from reading the mode chip. It is on by default for that
 --- reason, and off in one line for anyone who finds the movement noisy.
 function M.mode_background()
-  return _opts.mode_background ~= false
+  return style().mode_background ~= false
 end
 
---- `statusline.filetype_profile = true` in `lua/user/config.lua`.
-function M.show_filetype_profile()
-  return _opts.filetype_profile == true
+--- Which bars heirline draws: `bars = { tabline = false }` drops one.
+---@param bar "statusline"|"tabline"|"winbar"
+---@return boolean
+function M.bar(bar)
+  return (_opts.bars or {})[bar] ~= false
 end
 
--- ── Presets ──────────────────────────────────────────────────────────
---
--- A preset is a complete state for every flag that gates a component in
--- the main bar, so switching to one lands on a known bar rather than on
--- whatever the individual `<C-w>s` toggles last left behind. That is what
--- lets coming back need no memory of the way in.
---
--- `standard` is the bar a fresh start gives you, so it reads the flags the
--- user configured rather than restating them. Every other preset is an
--- override on top of it and inherits the rest, so a preset cannot silently
--- drop a configured preference.
---
--- The keys are the full global names, so grepping `vim.g.heirline_git_show`
--- still finds every writer.
+-- ── Segments ─────────────────────────────────────────────────────────
 
----@return table<string, boolean>
-local function standard_flags()
-  return {
-    heirline_git_show               = true,
-    heirline_lsp_show               = true,
-    heirline_pdfsize_show           = false,
-    heirline_directory_show         = false,
-    heirline_proj_relative_dir_show = false,
-    -- Seeded from `statusline.filetype_profile`, then owned by `<C-w>sf`.
-    -- A build-time gate would leave the key with nothing to toggle for
-    -- anyone who had not already opted in.
-    heirline_filetype_profile_show  = M.show_filetype_profile(),
-  }
+--- The segment `id` as configured: yours from `segments` in place of a
+--- unit's, with a `layout` table merged over its `place`. Nil for an id
+--- nothing declares, or one that raised an error.
+---@param id string
+---@return noethervim.Segment?
+function M.segment(id)
+  if M.errors[id] then return nil end
+  local seg = (_opts.segments or {})[id]
+  if seg == nil then seg = _units[id] end
+  if not seg then return nil end
+  local layout = (_opts.layout or {})[id]
+  if type(layout) == "table" then
+    seg = vim.tbl_extend("force", seg, { place = vim.tbl_extend("force", seg.place or {}, layout) })
+  end
+  return seg
 end
+
+--- Every segment id, units' and yours, sorted.
+---@return string[]
+function M.ids()
+  local ids = {}
+  for id in pairs(_units) do if _units[id] then ids[#ids + 1] = id end end
+  for id, seg in pairs(_opts.segments or {}) do
+    if seg and not _units[id] then ids[#ids + 1] = id end
+  end
+  table.sort(ids)
+  return ids
+end
+
+--- Run `fn` for segment `id`; an error turns the segment off for the
+--- session and is reported once.
+local function guard(id, fn, ...)
+  local ok, res = pcall(fn, ...)
+  if ok then return res end
+  M.errors[id] = tostring(res)
+  vim.schedule(function()
+    vim.notify(("statusline segment %q failed and is off until restart: %s"):format(id, res),
+      vim.log.levels.WARN)
+  end)
+end
+
+---@param win? integer
+---@return noethervim.SegmentCtx
+local function context(win)
+  win = win or vim.api.nvim_get_current_win()
+  return { win = win, buf = vim.api.nvim_win_get_buf(win) }
+end
+
+--- Segment `id`'s chunks for `win`, or nil when it shows nothing there.
+---@param id string
+---@param win? integer
+---@return { [1]: string, [2]: (string|table)? }[]?
+function M.chunks(id, win)
+  local seg = M.segment(id)
+  if not seg or not M.shown(id) then return nil end
+  local ctx = context(win)
+  if seg.cond and not guard(id, seg.cond, ctx) then return nil end
+  local out = guard(id, seg.provider, ctx)
+  if type(out) == "string" then out = { { out, seg.hl } } end
+  if type(out) ~= "table" then return nil end
+  local text = ""
+  for _, c in ipairs(out) do text = text .. (c[1] or "") end
+  if text == "" then return nil end
+  return out
+end
+
+--- Segment `id` as plain text for `win` (the current window by default),
+--- or "" when it shows nothing. Public: any statusline can show it.
+---@param id string
+---@param win? integer
+---@return string
+function M.text(id, win)
+  local text = ""
+  for _, c in ipairs(M.chunks(id, win) or {}) do text = text .. c[1] end
+  return text
+end
+
+--- True when segment `id` has something to show in `win`. Public.
+---@param id string
+---@param win? integer
+---@return boolean
+function M.visible(id, win)
+  return M.chunks(id, win) ~= nil
+end
+
+--- Run segment `id`'s click handler.
+---@param id string
+---@param button string "l", "m" or "r"
+function M.click(id, button)
+  local seg = M.segment(id)
+  if seg and seg.click then guard(id, seg.click, context(), button) end
+end
+
+--- What fills the busy slot now: the first busy entry (by id) that answers,
+--- `true` for the plain spinner or a table that labels it. Nil when none.
+---@return true|{ icon?: string, label?: string, hl?: table, click?: fun() }|nil
+function M.busy()
+  local ids = vim.tbl_keys(_busy)
+  table.sort(ids)
+  for _, id in ipairs(ids) do
+    if _busy[id] and not M.errors["busy." .. id] then
+      local res = guard("busy." .. id, _busy[id])
+      if res then return res end
+    end
+  end
+end
+
+-- ── Visibility and presets ───────────────────────────────────────────
+--
+-- A preset is a complete visibility state, so switching to one lands on a
+-- known bar rather than on whatever the `<C-w>s` keys last left behind.
+-- `standard` is the bar a fresh start gives you; every other preset is an
+-- override on top of it. A block you set in `layout` keeps your setting
+-- through every preset.
+
+local _shown = {} ---@type table<string, boolean>
+local _preset = "standard"
 
 local preset_overrides = {
   -- Quiet the blocks that have nothing to say about a document being
-  -- compiled, and add the PDF size. `PdfFileSize` gates itself to
-  -- TeX-family filetypes, so that readout stays silent elsewhere.
-  pdf = {
-    heirline_git_show       = false,
-    heirline_lsp_show       = false,
-    heirline_directory_show = false,
-    heirline_pdfsize_show   = true,
-  },
+  -- compiled, and add the PDF size (the latex bundle's segment, which
+  -- gates itself to TeX-family filetypes).
+  pdf = { git = false, lsp = false, directory = false, ["latex.pdfsize"] = true },
 }
 
---- Stamp every gated flag with `name`'s values and record it as current.
+--- Whether block or segment `id` is shown.
+---@param id string
+---@return boolean
+function M.shown(id)
+  if _shown[id] == nil then return not HIDDEN[id] end
+  return _shown[id]
+end
+
+---@param id string
+---@param on boolean
+function M.set_shown(id, on)
+  _shown[id] = on
+end
+
+---@param id string
+function M.toggle(id)
+  _shown[id] = not M.shown(id)
+end
+
+--- Stamp every block with `name`'s visibility and record it as current.
 ---@param name "standard"|"pdf"
 function M.apply_preset(name)
-  local flags = standard_flags()
-  for k, v in pairs(preset_overrides[name] or {}) do flags[k] = v end
-  for k, v in pairs(flags) do vim.g[k] = v end
-  vim.g.heirline_preset = name
+  _shown = {}
+  for id, on in pairs(preset_overrides[name] or {}) do _shown[id] = on end
+  for id, layout in pairs(_opts.layout or {}) do
+    if layout ~= nil then _shown[id] = layout ~= false end
+  end
+  _preset = name
 end
 
 --- The preset applied last. The individual toggles deliberately leave this
@@ -207,7 +313,7 @@ end
 --- `standard` even if git has since been switched on by hand.
 ---@return string
 function M.current_preset()
-  return vim.g.heirline_preset or "standard"
+  return _preset
 end
 
 --- Apply `name`, or return to `standard` when it is already current.
@@ -221,11 +327,11 @@ end
 --- lazygit is a nice default but an optional external program, so the
 --- default handler only reaches for it when it is actually on PATH and
 --- otherwise opens snacks' git-status picker, which always ships. Set
---- `statusline.git_click` in `lua/user/config.lua` to a function of your
---- own to replace both.
+--- `style.git_click` in `lua/user/config.lua` to a function of your own to
+--- replace both.
 ---@return fun()
 function M.get_git_click()
-  if type(_opts.git_click) == "function" then return _opts.git_click end
+  if type(style().git_click) == "function" then return style().git_click end
   return function()
     if vim.fn.executable("lazygit") == 1 then
       -- Deferred so the click's own redraw finishes before the terminal

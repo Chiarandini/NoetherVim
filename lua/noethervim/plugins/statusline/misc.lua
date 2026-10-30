@@ -167,43 +167,31 @@ vim.api.nvim_create_autocmd("VimLeavePre", {
   callback = stop_busy,
 })
 
--- Resolve a busy-component override from the statusline registry. Walks
--- the list back-to-front so the most recently registered override wins
--- (last-write-wins). Returns nil if no override is claiming the slot.
-local function resolve_busy_override()
-  local ok, sl = pcall(require, "noethervim.statusline")
-  if not ok or not sl.get_busy_overrides then return nil end
-  local overrides = sl.get_busy_overrides()
-  for i = #overrides, 1, -1 do
-    local ok2, spec = pcall(overrides[i])
-    if ok2 and spec then return spec end
-  end
-  return nil
-end
-
+-- The busy slot: a `busy` entry a unit (or you) declared, through
+-- noethervim.statusline, or else the buffer's own 'busy'. An entry answers
+-- `true` for the plain spinner or a table that labels it.
 M.Busy = {
-  condition = function()
-    return resolve_busy_override() ~= nil or (vim.bo.busy or 0) > 0
-  end,
-  init = function(self)
-    self.override = resolve_busy_override()
+  condition = function(self)
+    local spec = require("noethervim.statusline").busy()
+    self.spec = type(spec) == "table" and spec or nil
+    return spec ~= nil or (vim.bo.busy or 0) > 0
   end,
   provider = function(self)
-    local icon = (self.override and self.override.icon) or busy_frames[busy_frame]
-    local label = self.override and self.override.label
+    local icon = (self.spec and self.spec.icon) or busy_frames[busy_frame]
+    local label = self.spec and self.spec.label
     if label and label ~= "" then
       return icon .. " " .. label .. " "
     end
     return icon .. " "
   end,
   hl = function(self)
-    if self.override and self.override.hl then return self.override.hl end
+    if self.spec and self.spec.hl then return self.spec.hl end
     return { fg = ctx.colors.orange, bold = true }
   end,
   on_click = {
     callback = function()
-      local spec = resolve_busy_override()
-      if spec and spec.on_click then pcall(spec.on_click) end
+      local spec = require("noethervim.statusline").busy()
+      if type(spec) == "table" and spec.click then pcall(spec.click) end
     end,
     name = "noethervim_busy_click",
   },
@@ -220,7 +208,7 @@ M.FileType = {
 -- ── Filetype profile marker ──────────────────────────────────────────
 -- Which of the two FileType profiles (see noethervim-filetype-profiles)
 -- claimed this buffer. Off by default: start it with
---   statusline = { filetype_profile = true }
+--   statusline = { layout = { profile = true } }
 -- in lua/user/config.lua, and flip it any time with `<C-w>sf`. Clicking
 -- reports what the profile actually turned on, read from the live window
 -- so per-buffer toggles ([ow, ]os, ...) show up too.
@@ -244,7 +232,7 @@ local profile_hl = { writing = "profile_writing", code = "profile_code" }
 
 M.FiletypeProfile = {
   condition = function()
-    return vim.g.heirline_filetype_profile_show and current_profile() ~= "none"
+    return require("noethervim.statusline").shown("profile") and current_profile() ~= "none"
   end,
   provider = function()
     return " " .. profile_glyph[current_profile()] .. " "

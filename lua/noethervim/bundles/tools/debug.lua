@@ -607,7 +607,18 @@ return {
 			{ SearchLeader .. "Db", function() dap_pickers.list_breakpoints() end, desc = "[d]ebug [b]reakpoints" },
 			{ SearchLeader .. "Dv", function() dap_pickers.variables()        end, desc = "[d]ebug [v]ariables" },
 			{ SearchLeader .. "Df", function() dap_pickers.frames()           end, desc = "[d]ebug [f]rames" },
-		}) } },
+		}) },
+			-- The session's status in the statusline while one runs.
+			{ "NoetherVim", optional = true, opts = { segments = { dap = {
+				place = { side = "right", after = "latex.compile" },
+				hl = "Debug",
+				provider = function()
+					local dap = package.loaded.dap
+					if not dap or not dap.session() then return nil end
+					return " " .. dap.status()
+				end,
+			} } } },
+		},
 	},
 
 }

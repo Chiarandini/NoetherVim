@@ -17,15 +17,21 @@ local M = {}
 local SCHEMA = {
   colorscheme             = "string",
   colorscheme_persistence = "boolean",
-  statusline_enabled      = "boolean",
   statusline = {
-    colors                 = "table",
-    extra_right            = "table",
-    edge_style             = "string",
-    tab_modified_indicator = "string",
-    filetype_profile       = "boolean",
-    mode_background        = "boolean",
-    git_click              = "function",
+    style = {
+      colors                 = "table",
+      edge_style             = "string",
+      tab_modified_indicator = "string",
+      mode_background        = "boolean",
+      git_click              = "function",
+    },
+    segments = "table",
+    layout   = "table",
+    bars = {
+      statusline = "boolean",
+      tabline    = "boolean",
+      winbar     = "boolean",
+    },
   },
   completion = {
     style = "string",
@@ -53,7 +59,7 @@ local MAY_BE_FALSE = { profiles = true }
 --- which masks typos.
 ---
 --- Every string-valued key with a closed set of values belongs here.
---- `statusline.edge_style` is the one exception: its values live in
+--- `statusline.style.edge_style` is the one exception: its values live in
 --- `noethervim.statusline` and are checked below through
 --- `list_edge_styles()` so the two cannot drift apart.
 local ENUMS = {
@@ -113,12 +119,12 @@ local function check(cfg, want_unknowns)
     end
   end
 
-  local sl = cfg.statusline
-  if type(sl) == "table" and type(sl.edge_style) == "string" then
+  local edge = vim.tbl_get(cfg, "statusline", "style", "edge_style")
+  if type(edge) == "string" then
     local valid = require("noethervim.statusline").list_edge_styles()
-    if not vim.tbl_contains(valid, sl.edge_style) then
-      errors[#errors + 1] = "user.config.statusline.edge_style: expected one of "
-        .. table.concat(valid, ", ") .. ", got " .. sl.edge_style
+    if not vim.tbl_contains(valid, edge) then
+      errors[#errors + 1] = "user.config.statusline.style.edge_style: expected one of "
+        .. table.concat(valid, ", ") .. ", got " .. edge
     end
   end
 

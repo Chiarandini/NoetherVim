@@ -6,6 +6,23 @@ where they are listed.
 
 ## 2026-10-30
 
+- **The statusline is built from segments, by id:** rename these keys in
+  `statusline` in `lua/user/config.lua`.
+  - `edge_style`, `colors`, `mode_background`, `tab_modified_indicator` and
+    `git_click` move under `style`.
+  - `filetype_profile = true` is now `layout = { profile = true }`; `layout`
+    also hides or moves any block or segment by id.
+  - `extra_right` is gone: declare a segment in `segments` instead
+    (`:help noethervim-statusline-segments`).
+  - `statusline_enabled = false` is gone: put
+    `{ "rebelot/heirline.nvim", enabled = false }` in `lua/user/plugins/`;
+    `bars = { tabline = false }` drops a single bar.
+  - `require("noethervim.statusline").register_busy_override(fn)` is gone: a
+    `busy` entry on NoetherVim's spec claims the slot
+    (`:help noethervim-statusline-busy`).
+
+  The VimTeX, PDF size and DAP readouts come with their bundles, and any
+  statusline shows them with `require("noethervim.statusline").text(id)`.
 - **A plugin's toggles and labels go with it:** `[oC`, `[oA`, `[oL`, `[oV`,
   `[oW`, `[oG`, `[oD` and `[o<C-t>` are declared in their plugin's spec, as
   are the which-key labels for `<leader>d`, `<leader>t`, `<leader>o` and the

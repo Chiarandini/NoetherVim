@@ -15,10 +15,13 @@
 --                                      git counters, the ruler, the filename
 --                                      block. context.lua holds the colours
 --                                      and helpers they share.
---   noethervim/statusline.lua          NOT part of the build. The user-facing
---                                      override registry that `config.lua`
---                                      writes into and these components read
---                                      at render time.
+--   plugins/statusline/segments.lua   Heirline's side of the segments units
+--                                      and you declare: one component each,
+--                                      laid out by id among the core blocks.
+--   noethervim/statusline.lua          NOT part of the build. The data any
+--                                      statusline reads: segments, busy
+--                                      entries, visibility by id, presets,
+--                                      and your `statusline` settings.
 return {
   {
     'rebelot/heirline.nvim',
@@ -30,15 +33,6 @@ return {
         { "<c-w>s", icon = { icon = require("noethervim.util").icons.plus, color = "red" }, group = "Statusline" },
       }) },
     },
-    -- Hard opt-out: user.config.statusline_enabled = false skips heirline
-    -- entirely so a replacement plugin (lualine, mini.statusline, etc.)
-    -- can take over without conflict. Bundle-level toggles still go
-    -- through `enabled = function() ... end`; this one uses `cond`
-    -- because lazy evaluates cond at spec resolution -- if the plugin
-    -- is gone, none of its UIEnter wiring runs in the first place.
-    cond = function()
-      return require("noethervim.config").get().statusline_enabled ~= false
-    end,
     config = function()
       local conditions = require("heirline.conditions")
       local utils = require("heirline.utils")
@@ -66,11 +60,6 @@ return {
       ctx.semiCircles[2] = edges.start_right
       ctx.edges = edges
 
-      -- Global toggle state. The `standard` preset is the definition of
-      -- these seed values, so it lives in noethervim/statusline.lua next to
-      -- the user config it reads and there is only one copy of the list.
-      nv_sl.apply_preset("standard")
-
       -- ── Component modules ────────────────────────────────────
 
       local vimode    = require("noethervim.plugins.statusline.vimode")
@@ -80,7 +69,7 @@ return {
       local lsp       = require("noethervim.plugins.statusline.lsp")
       local ruler     = require("noethervim.plugins.statusline.ruler")
       local misc      = require("noethervim.plugins.statusline.misc")
-      local bundle    = require("noethervim.plugins.statusline.bundle_extras")
+      local segments  = require("noethervim.plugins.statusline.segments")
       local tabline   = require("noethervim.plugins.statusline.tabline")
       local winbar    = require("noethervim.plugins.statusline.winbar")
 
@@ -110,27 +99,20 @@ return {
         },
       })
 
-      local MainComponent = {
-        hl = insert_aware_bg,
-
-        misc.Space,
-        diag.Diagnostics,
-        misc.Space,
-        misc.Busy,
-        filename.FileNameBlock,
-        misc.Align,
-        bundle.PdfFileSize,
-        misc.Space,
-        bundle.VimtexCompilerStatus,
-        bundle.DAPMessages,
-        lsp.LSPActive,
-        misc.Space,
-        git.GitBlock,
-      }
-      table.insert(MainComponent, misc.FiletypeProfile)
-      for _, c in ipairs(nv_sl.get_extra_right()) do
-        table.insert(MainComponent, c)
-      end
+      -- The core blocks by id (noethervim.statusline's CORE), with the
+      -- segments units and you declared placed among them.
+      local MainComponent = { hl = insert_aware_bg }
+      vim.list_extend(MainComponent, segments.side("left", {
+        { "diagnostics", { misc.Space, diag.Diagnostics, misc.Space } },
+        { "busy",        { misc.Busy } },
+        { "filename",    { filename.FileNameBlock } },
+      }))
+      table.insert(MainComponent, misc.Align)
+      vim.list_extend(MainComponent, segments.side("right", {
+        { "lsp",     { lsp.LSPActive, misc.Space } },
+        { "git",     { git.GitBlock } },
+        { "profile", { misc.FiletypeProfile } },
+      }))
 
       -- Which window gets which bar: see statuslines.lua next door. Passed
       -- the already-required components, because their require order is
@@ -143,10 +125,11 @@ return {
       -- ── Setup ────────────────────────────────────────────────
 
       -- A statusline, tabline or winbar you set yourself is not handed to
-      -- heirline (noethervim.default reads who set each option).
+      -- heirline (noethervim.default reads who set each option), nor one
+      -- `bars` in lua/user/config.lua switches off.
       local claimed = require("noethervim.default").claimed
       local function bar(name, component)
-        if claimed(name) then return nil end
+        if claimed(name) or not nv_sl.bar(name) then return nil end
         return component
       end
 
@@ -243,6 +226,14 @@ return {
           return marker
         end
       end
+
+      -- The directory blocks read the window's working directory, so they go
+      -- stale on any change to it. DirChanged covers all four sources: `:cd`,
+      -- `:tcd`, `:lcd`, and 'autochdir' (which reports scope "window").
+      vim.api.nvim_create_autocmd("DirChanged", {
+        group    = vim.api.nvim_create_augroup("noethervim_heirline_cwd", { clear = true }),
+        callback = function() vim.cmd.redrawstatus() end,
+      })
 
       -- Re-derive palette when the colorscheme changes at runtime.
       -- Runs synchronously so colors are updated before the next render.
