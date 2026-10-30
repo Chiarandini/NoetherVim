@@ -6,6 +6,9 @@ where they are listed.
 
 ## 2026-10-29
 
+- **`:NoetherVim files` names your counterpart:** a source file that a file
+  of yours can change is followed by it (`→ lua/user/plugins/oil.lua`).
+  `:NoetherVim diff` lists only those files.
 - **The arglist keys say what they did:** `<Leader>aa`, `ax`, `aX`, `aA` and
   `ac` report the change and the arglist size, through `toggle_feedback`.
 - **Your hook files run last:** `lua/user/{options,keymaps,autocmds,highlights}.lua`

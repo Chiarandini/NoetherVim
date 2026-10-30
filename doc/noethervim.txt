@@ -1191,6 +1191,10 @@ accidental edits to the distribution.
     SearchLeader+?    `:NoetherVim keymap-guide`  Keymap namespace reference
     `<Leader>i`     (inspect)                Open init.lua for editing
 
+In `:NoetherVim files`, a file with a counterpart of yours is followed by
+it (`→ lua/user/plugins/oil.lua`), highlighted once that file exists;
+`:NoetherVim override` from the source file opens it.
+
 Run `:NoetherVim status` to see which user override files are active.
 
                                                        *noethervim-templates*
@@ -1324,7 +1328,8 @@ Compare your user overrides against NoetherVim defaults.
                     that registered the handler.
 
     SearchLeader+cd `:NoetherVim diff`
-                    Smart picker listing all NoetherVim modules across
+                    Picker over the NoetherVim files a file of yours can
+                    change (the ones `:NoetherVim override` opens), across
                     Core, Plugin, Bundle, and LSP categories. Each entry
                     shows whether a user override exists. Selecting a
                     module opens the upstream file (readonly) and user

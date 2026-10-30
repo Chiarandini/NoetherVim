@@ -38,6 +38,60 @@ local function user_dir()
   return vim.fn.stdpath("config") .. "/lua/user/"
 end
 
+--- Hook files that sit on top of a distro file of the same name.
+local CORE_OVERRIDE_MODULES = {
+  options = true, keymaps = true, autocmds = true, highlights = true,
+}
+
+--- The file of yours that changes the NoetherVim file at `rel`, and its
+--- category. Both paths are relative: `rel` to the distribution root, the
+--- result to your config directory. Nil for a file nothing of yours can
+--- stand in for.
+---@param rel string
+---@return string?, string?
+local function counterpart(rel)
+  -- lua/noethervim/plugins/<dir>/<file> → user/plugins/<dir>.lua
+  local plugin_subdir = rel:match("^lua/noethervim/plugins/([^/]+)/")
+  if plugin_subdir then return "lua/user/plugins/" .. plugin_subdir .. ".lua", "plugin" end
+  -- lua/noethervim/plugins/<name>.lua → user/plugins/<name>.lua
+  local plugin = rel:match("^lua/noethervim/plugins/(.+%.lua)$")
+  if plugin then return "lua/user/plugins/" .. plugin, "plugin" end
+  -- lua/noethervim/bundles/<category>/<name>.lua → user/plugins/<name>.lua
+  -- User overrides target the bundle by its bare name -- the category
+  -- subdirectory is purely organizational in the distro.
+  local bundle = rel:match("^lua/noethervim/bundles/[^/]+/([^/]+%.lua)$")
+  if bundle then return "lua/user/plugins/" .. bundle, "bundle" end
+  -- after/lsp/<name>.lua → your after/lsp/<name>.lua, which loads after it
+  local lsp = rel:match("^after/lsp/(.+%.lua)$")
+  if lsp then return "after/lsp/" .. lsp, "lsp" end
+  -- lua/noethervim/{options,keymaps,autocmds,highlights}.lua → the hook file
+  local core = rel:match("^lua/noethervim/([^/]+)%.lua$")
+  if core and CORE_OVERRIDE_MODULES[core] then
+    return "lua/user/" .. core .. ".lua", core == "keymaps" and "keys" or "core"
+  end
+  if rel == "lua/noethervim/toggles/options.lua" then return "lua/user/keymaps.lua", "keys" end
+  -- the profiles → after/ftplugin/<ft>.lua, the native per-filetype place
+  if rel == "lua/noethervim/profiles/apply.lua" then return "after/ftplugin/", "profile" end
+  -- ftplugin/<path> → after/ftplugin/<path>, which runs after it
+  local ft = rel:match("^ftplugin/(.+)$")
+  if ft then return "after/ftplugin/" .. ft, "ftplugin" end
+end
+
+--- Map a NoetherVim source file to the file of yours that changes it.
+--- Returns (user_path, category) or (nil, nil) for a file nothing of yours
+--- can stand in for.
+local function map_to_user_path(bufpath)
+  local root = effective_root()
+  if not root then return nil, nil end
+  -- Resolve real paths so symlinks don't break the prefix check.
+  bufpath = vim.uv.fs_realpath(bufpath) or vim.fs.normalize(bufpath)
+  root = vim.uv.fs_realpath(root) or vim.fs.normalize(root)
+  if not vim.startswith(bufpath, root .. "/") then return nil, nil end
+  local target, category = counterpart(bufpath:sub(#root + 2))
+  if not target then return nil, nil end
+  return vim.fn.stdpath("config") .. "/" .. target, category
+end
+
 --- Get snapshot data from the init module.
 local function snapshots()
   return require("noethervim")._snapshots_now()
@@ -131,7 +185,31 @@ local cat_label = {
 function M.files()
   local root = effective_root()
   if not root then return vim.notify("NoetherVim: cannot locate source directory", vim.log.levels.ERROR) end
-  Snacks.picker.files({ cwd = root, title = "NoetherVim Source", confirm = confirm_readonly })
+  local config = vim.fn.stdpath("config") .. "/"
+  Snacks.picker.files({
+    cwd     = root,
+    title   = "NoetherVim Source",
+    confirm = confirm_readonly,
+    -- A file `:NoetherVim override` can stand in for names the file of
+    -- yours that does, highlighted once it exists.
+    transform = function(item)
+      item.user_file = counterpart(item.file)
+      item.has_override = item.user_file ~= nil and vim.uv.fs_stat(config .. item.user_file) ~= nil
+    end,
+    format = function(item, picker)
+      local ret = Snacks.picker.format.file(item, picker)
+      if item.user_file then
+        ret[#ret + 1] = { "  → " .. item.user_file, item.has_override and "DiagnosticWarn" or "Comment" }
+      end
+      return ret
+    end,
+    win = {
+      input = {
+        footer     = hint_footer({ { "<cr>", "open" }, { "→", "your file that changes it" } }),
+        footer_pos = "center",
+      },
+    },
+  })
 end
 
 function M.grep()
@@ -1292,19 +1370,8 @@ local function open_diff_split(module_name)
     return vim.notify("NoetherVim: no upstream file found for '" .. module_name .. "'", vim.log.levels.WARN)
   end
 
-  local udir = user_dir()
-  local user_file = nil
-  local user_candidates = {
-    udir .. module_name .. ".lua",
-    udir .. "plugins/" .. module_name .. ".lua",
-    vim.fn.stdpath("config") .. "/after/lsp/" .. module_name .. ".lua",
-  }
-  for _, path in ipairs(user_candidates) do
-    if vim.uv.fs_stat(path) then
-      user_file = path
-      break
-    end
-  end
+  local target = map_to_user_path(upstream)
+  local user_file = target and vim.uv.fs_stat(target) and target or nil
 
   open_pair(upstream, user_file)
   if not user_file then
@@ -1327,16 +1394,15 @@ function M.diff_file(module_name)
   -- Picker mode -- browse all diffable modules
   local root = effective_root()
   if not root then return vim.notify("NoetherVim: cannot locate source directory", vim.log.levels.ERROR) end
-  local udir = user_dir()
   local icons = require("noethervim.util.icons")
 
   local diff_cat_order = { Core = 1, Plugin = 2, Bundle = 3, LSP = 4 }
   -- Flat-scan groups (bundles are handled separately -- they live under
   -- category subdirectories, not directly in bundles/).
   local groups = {
-    { cat = "Core",   dir = root .. "/lua/noethervim",         user_dirs = { udir } },
-    { cat = "Plugin", dir = root .. "/lua/noethervim/plugins", user_dirs = { udir .. "plugins/" } },
-    { cat = "LSP",    dir = root .. "/after/lsp",              user_dirs = { vim.fn.stdpath("config") .. "/after/lsp/" } },
+    { cat = "Core",   dir = root .. "/lua/noethervim" },
+    { cat = "Plugin", dir = root .. "/lua/noethervim/plugins" },
+    { cat = "LSP",    dir = root .. "/after/lsp" },
   }
 
   -- Detect which bundles are enabled (same logic as M.bundles()).
@@ -1354,14 +1420,11 @@ function M.diff_file(module_name)
 
   local items = {}
 
-  local function add_item(cat, name, upstream_path, user_candidates, is_enabled)
-    local user_path = nil
-    for _, candidate in ipairs(user_candidates) do
-      if vim.uv.fs_stat(candidate) then
-        user_path = candidate
-        break
-      end
-    end
+  -- Only files a file of yours can change are listed.
+  local function add_item(cat, name, upstream_path, is_enabled)
+    local target = map_to_user_path(upstream_path)
+    if not target then return end
+    local user_path = vim.uv.fs_stat(target) and target or nil
     table.insert(items, {
       text      = cat .. " " .. name
                   .. (is_enabled and " enabled" or "")
@@ -1379,21 +1442,13 @@ function M.diff_file(module_name)
 
   for _, group in ipairs(groups) do
     for _, mod in ipairs(scan_lua_modules(group.dir)) do
-      if not (group.cat == "Core" and mod == "init") then
-        local upstream_path = vim.fs.joinpath(group.dir, mod .. ".lua")
-        local user_candidates = {}
-        for _, ud in ipairs(group.user_dirs) do
-          user_candidates[#user_candidates + 1] = ud .. mod .. ".lua"
-        end
-        add_item(group.cat, mod, upstream_path, user_candidates, true)
-      end
+      add_item(group.cat, mod, vim.fs.joinpath(group.dir, mod .. ".lua"), true)
     end
   end
 
   -- Bundles (category subdirectories)
   for _, entry in ipairs(require("noethervim.util").scan_bundles(root .. "/lua/noethervim/bundles")) do
-    add_item("Bundle", entry.name, entry.path, { udir .. "plugins/" .. entry.name .. ".lua" },
-      enabled_bundles[entry.name] or false)
+    add_item("Bundle", entry.name, entry.path, enabled_bundles[entry.name] or false)
   end
 
   table.sort(items, function(a, b)
@@ -1673,61 +1728,6 @@ function M.diff_autocmds()
 end
 
 -- ── Override: open user file for current source ─────────────
-
---- Hook files that sit on top of a distro file of the same name.
-local CORE_OVERRIDE_MODULES = {
-  options = true, keymaps = true, autocmds = true, highlights = true,
-}
-
---- Map a NoetherVim source file to the file of yours that changes it.
---- Returns (user_path, category) or (nil, nil) for a file nothing of yours
---- can stand in for.
-local function map_to_user_path(bufpath)
-  local root = effective_root()
-  if not root then return nil, nil end
-  local config = vim.fn.stdpath("config")
-  local udir = user_dir()
-
-  -- Resolve real paths so symlinks don't break the prefix check.
-  bufpath = vim.uv.fs_realpath(bufpath) or vim.fs.normalize(bufpath)
-  root = vim.uv.fs_realpath(root) or vim.fs.normalize(root)
-  if not vim.startswith(bufpath, root .. "/") then return nil, nil end
-  local rel = bufpath:sub(#root + 2)
-
-  -- lua/noethervim/plugins/<dir>/<file> → user/plugins/<dir>.lua
-  local plugin_subdir = rel:match("^lua/noethervim/plugins/([^/]+)/")
-  if plugin_subdir then
-    return udir .. "plugins/" .. plugin_subdir .. ".lua", "plugin"
-  end
-  -- lua/noethervim/plugins/<name>.lua → user/plugins/<name>.lua
-  local plugin = rel:match("^lua/noethervim/plugins/(.+%.lua)$")
-  if plugin then return udir .. "plugins/" .. plugin, "plugin" end
-  -- lua/noethervim/bundles/<category>/<name>.lua → user/plugins/<name>.lua
-  -- User overrides target the bundle by its bare name -- the category
-  -- subdirectory is purely organizational in the distro.
-  local bundle = rel:match("^lua/noethervim/bundles/[^/]+/([^/]+%.lua)$")
-  if bundle then return udir .. "plugins/" .. bundle, "bundle" end
-  -- after/lsp/<name>.lua → your after/lsp/<name>.lua, which loads after it
-  local lsp = rel:match("^after/lsp/(.+%.lua)$")
-  if lsp then return config .. "/after/lsp/" .. lsp, "lsp" end
-  -- lua/noethervim/{options,keymaps,autocmds,highlights}.lua → the hook file
-  local core = rel:match("^lua/noethervim/([^/]+)%.lua$")
-  if core and CORE_OVERRIDE_MODULES[core] then
-    return udir .. core .. ".lua", core == "keymaps" and "keys" or "core"
-  end
-  if rel == "lua/noethervim/toggles/options.lua" then
-    return udir .. "keymaps.lua", "keys"
-  end
-  -- the profiles → after/ftplugin/<ft>.lua, the native per-filetype place
-  if rel == "lua/noethervim/profiles/apply.lua" then
-    return config .. "/after/ftplugin/", "profile"
-  end
-  -- ftplugin/<path> → after/ftplugin/<path>, which runs after it
-  local ft = rel:match("^ftplugin/(.+)$")
-  if ft then return config .. "/after/ftplugin/" .. ft, "ftplugin" end
-
-  return nil, nil
-end
 
 --- Every distinct `owner/repo` string in a spec file, in source order.
 ---
