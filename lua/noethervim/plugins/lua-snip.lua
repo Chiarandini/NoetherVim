@@ -67,9 +67,10 @@ return {
 	specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("LuaSnip", {
 		{ SearchLeader .. "es", "<cmd>LuaSnipEdit<cr>", desc = "edit snippets" },
 		-- Tab/S-Tab snippet navigation is handled by blink.cmp (snippets.preset = "luasnip").
-		-- <c-q> for choice nodes stays a Vimscript expr-map (not in blink's domain).
-		{ "<c-q>", "luasnip#choice_active() ? '<Plug>luasnip-next-choice' : '<c-q>'",
-			mode = { "i", "s" }, expr = true, silent = true, remap = true, desc = "next choice" },
+		-- <c-q> cycles a choice node (not in blink's domain), and is itself elsewhere.
+		{ "<c-q>", function()
+				return require("luasnip").choice_active() and "<Plug>luasnip-next-choice" or "<c-q>"
+			end, mode = { "i", "s" }, expr = true, silent = true, remap = true, desc = "next choice" },
 		-- jk expand/jump: personal preference -- add to lua/user/ if desired.
 		{ "<leader>u", function() require("luasnip").unlink_current() end, desc = "unlink current snippet" },
 		-- Put the cursor back inside a snippet you have already walked out of,

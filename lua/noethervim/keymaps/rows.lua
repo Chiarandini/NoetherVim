@@ -60,7 +60,10 @@ local function keymap_args(row)
   -- A <Plug> target only works remapped, as lazy.nvim's keys assume too.
   if remap == nil and type(rhs) == "string" and rhs:lower():find("^<plug>") then remap = true end
   opts.noremap = not remap
-  if opts.expr and opts.replace_keycodes ~= false then opts.replace_keycodes = true end
+  -- Only for a Lua callback. A string rhs is a Vimscript expression whose
+  -- <> notation is converted once, when it is mapped, as with `:map <expr>`;
+  -- converting its result again turns a returned <Plug> into typed text.
+  if opts.expr and type(rhs) == "function" and opts.replace_keycodes ~= false then opts.replace_keycodes = true end
   if type(rhs) == "function" then
     opts.callback = rhs
     rhs = ""
