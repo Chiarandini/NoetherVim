@@ -642,6 +642,30 @@ end
 ---                            plugins (marks.nvim, mini.ai, ...). Off by
 ---                            default; toggled from inside the picker.
 
+--- The line of yours that deletes `lhs`: a `keymap.del` naming it in a Lua
+--- file under your config directory.
+---@param lhs string resolved lhs
+---@return string? file, integer? line
+local function deletion_site(lhs)
+  local forms = require("noethervim.util.keymap_forms").source_forms(lhs)
+  local cfg = vim.fn.stdpath("config")
+  local files = {}
+  for _, glob in ipairs({ "lua/user/**/*.lua", "plugin/**/*.lua", "after/**/*.lua" }) do
+    vim.list_extend(files, vim.fn.globpath(cfg, glob, false, true))
+  end
+  for _, file in ipairs(files) do
+    for n, line in ipairs(vim.fn.readfile(file)) do
+      if line:find("keymap.del", 1, true) then
+        for _, f in ipairs(forms) do
+          if line:find('"' .. f .. '"', 1, true) or line:find("'" .. f .. "'", 1, true) then
+            return file, n
+          end
+        end
+      end
+    end
+  end
+end
+
 --- Picker over every keymap NoetherVim or the user is responsible for,
 --- tagged by how it got there and by which part of the config owns it.
 ---@param opts? noethervim.inspect.DiffKeymapOpts
@@ -893,6 +917,11 @@ function M.diff_keymaps(opts)
                                item.label ~= "" and (item.label .. "  ") or "",
                                item.desc or "")
 
+    if item.tag == "[DELETED]" then
+      local file, line = deletion_site(item.lhs)
+      if file then return { filename = file, lnum = line, col = 1, text = text } end
+    end
+
     local entry = registry.lookup(item.mode, item.lhs)
     if entry and entry.file and entry.line then
       return { filename = entry.file, lnum = entry.line, col = 1, text = text }
@@ -1002,6 +1031,16 @@ function M.diff_keymaps(opts)
     },
     confirm = function(picker, item)
       picker:close()
+      -- A deleted key lands on the line of yours that deletes it, when one
+      -- can be found; NoetherVim's definition otherwise.
+      if item.tag == "[DELETED]" then
+        local file, line = deletion_site(item.lhs)
+        if file then
+          vim.cmd("edit " .. vim.fn.fnameescape(file))
+          vim.api.nvim_win_set_cursor(0, { line, 0 })
+          return
+        end
+      end
       -- jump_to_keymap consults the registry first, so USER/OVERRIDE
       -- items land in the exact user file+line that registered them --
       -- not just user/keymaps.lua.

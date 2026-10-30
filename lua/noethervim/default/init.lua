@@ -38,7 +38,8 @@ local runtime = vim.env.VIMRUNTIME and real(vim.env.VIMRUNTIME)
 ---@field source string file:line of the call
 ---@field plugin? string the plugin whose config made the call
 ---@field desc? string
----@field by? string who set the value that was kept
+---@field by? string who set the value that was kept, or why a row is off
+---@field off? boolean the row was switched off rather than yielding to a mapping
 
 --- Writes made, keyed by kind then name ("mode lhs" for maps).
 ---@type table<string, table<string, noethervim.DefaultRecord>>

@@ -34,17 +34,19 @@ local forms = require("noethervim.util.keymap_forms")
 ---@param resolved_lhs string
 ---@return { file: string, line?: integer }?
 function M.lookup(mode, resolved_lhs)
-  local rec = require("noethervim.default").owned.map[mode .. " " .. vim.keycode(resolved_lhs)]
-  if rec and rec.source then
+  local default = require("noethervim.default")
+  local m = vim.fn.maparg(resolved_lhs, mode, false, true)
+  local live = not vim.tbl_isempty(m) and m.buffer == 0
+  -- NoetherVim's record describes the mapping only while it is still the
+  -- one in place: a mapping of yours made over it is what to show.
+  local rec = default.owned.map[mode .. " " .. vim.keycode(resolved_lhs)]
+  if rec and rec.source and (not live or default.class(m.sid) == "distro") then
     local file, line = rec.source:match("^(.+):(%d+)$")
     if file then return { file = vim.fn.expand(file), line = tonumber(line) } end
   end
-  local m = vim.fn.maparg(resolved_lhs, mode, false, true)
-  if vim.tbl_isempty(m) or m.buffer ~= 0 or (m.sid or 0) <= 0 then return nil end
-  local class = require("noethervim.default").class(m.sid)
+  if not live or (m.sid or 0) <= 0 then return nil end
   local info = vim.fn.getscriptinfo({ sid = m.sid })[1]
-  local user = vim.fs.normalize(vim.fn.stdpath("config") .. "/lua/user/")
-  if info and (class == "distro" or vim.startswith(vim.fs.normalize(info.name), user)) then
+  if info and (default.class(m.sid) == "distro" or require("noethervim.user_layer").is_yours(m.sid)) then
     return { file = info.name, line = (m.lnum or 0) > 0 and m.lnum or nil }
   end
 end

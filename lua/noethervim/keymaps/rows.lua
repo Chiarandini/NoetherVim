@@ -187,7 +187,7 @@ function M.free(row, mode)
   local rec = record(row, mode)
   local why = M.off(row, mode)
   if why then
-    rec.by = why
+    rec.by, rec.off = why, true
     table.insert(default.yielded, rec)
     return false
   end

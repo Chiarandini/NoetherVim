@@ -118,9 +118,17 @@ function M.key(lhs)
           owned.plugin and (owned.plugin .. ", ") or "", owned.source, owned.desc and (' "' .. owned.desc .. '"') or ""))
       end
       for _, r in ipairs(yielded) do
-        table.insert(lines, ("     yielded  NoetherVim, %s%s: %s%s"):format(
+        table.insert(lines, ("     %s  NoetherVim, %s%s: %s%s"):format(
+          r.off and "off    " or "yielded",
           r.plugin and (r.plugin .. ", ") or "", r.source, r.desc and ('"' .. r.desc .. '" ') or "",
-          "skipped because " .. (r.by and r.by:find("set `") and r.by or "yours was there first")))
+          r.off and ("skipped: " .. r.by)
+            or ("skipped because yours was there first" .. (r.by and (" (" .. r.by .. ")") or ""))))
+        if r.off and r.by:find("false } on", 1, true) then
+          table.insert(lines, "     undo     remove that `{ lhs, false }` from your spec for "
+            .. (r.plugin or "the plugin") .. " and restart")
+        elseif r.off and r.by:find("set `", 1, true) then
+          table.insert(lines, "     undo     remove the set from `keymaps` in lua/user/config.lua and restart")
+        end
       end
       for _, s in ipairs(specs) do
         local url = s.plugin[1] or s.plugin.name
