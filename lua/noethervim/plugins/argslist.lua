@@ -13,13 +13,17 @@ local function arglist_size(verb)
 end
 
 ---@param fn string argmark function
----@param arg? fun(): any its argument, read when the key is pressed
+---@param arg? fun(): ... its arguments, read when the key is pressed
 ---@param level? integer
 ---@param done? fun(): string the confirmation, once it worked
-local function argmark(fn, arg, level, done)
+---@param idle? fun(): string? why there is nothing to do, checked first
+local function argmark(fn, arg, level, done, idle)
 	return function()
+		local why = idle and idle()
+		if why then return require("noethervim.toggles").notify(why) end
 		local mod = require("argmark")
-		local ok, err = pcall(mod[fn], arg and arg())
+		local ok, err
+		if arg then ok, err = pcall(mod[fn], arg()) else ok, err = pcall(mod[fn]) end
 		if not ok then
 			vim.notify(err or ("argmark: " .. fn .. " failed"), level or vim.log.levels.WARN)
 		elseif done then
@@ -29,6 +33,32 @@ local function argmark(fn, arg, level, done)
 end
 
 local function count() return vim.v.count end
+
+--- `<Leader>ax` without a count removes this buffer's file, which has to be
+--- in the arglist; an empty arglist has nothing to clear.
+local function not_listed()
+	if vim.v.count > 0 then return nil end
+	local here = vim.api.nvim_buf_get_name(0)
+	for _, f in ipairs(vim.fn.argv()) do
+		if here ~= "" and vim.fn.fnamemodify(f, ":p") == here then return nil end
+	end
+	return "arglist: this buffer is not in it"
+end
+local function empty()
+	return vim.fn.argc() == 0 and "arglist: already empty" or nil
+end
+--- `<Leader>ac` copies the global arglist, or with a count the one of that id.
+local function nothing_to_copy()
+	local id, files = vim.v.count, nil
+	if id == 0 then
+		files = vim.fn.argv(-1, -1)
+	else
+		for _, w in ipairs(vim.api.nvim_list_wins()) do
+			if vim.fn.arglistid(w) == id then files = vim.fn.argv(-1, w) break end
+		end
+	end
+	return #(files or {}) == 0 and "arglist: nothing to copy" or nil
+end
 
 return {
 	'BirdeeHub/argmark',
@@ -53,15 +83,18 @@ return {
 	specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("argmark", {
 		{ SearchLeader .. "ae", argmark("edit", function() return edit_opts end, vim.log.levels.ERROR),
 		  silent = true, desc = "edit arglist in floating window" },
-		{ "<leader>ax", argmark("rm", count, nil, arglist_size("removed")),
+		{ "<leader>ax", argmark("rm", count, nil, arglist_size("removed"), not_listed),
 		  silent = true, desc = "Remove buffer at count (or current) from arglist" },
 		{ "<leader>a<leader>", argmark("go", count),
 		  silent = true, desc = "Go to buffer at count in arglist" },
 		{ "<leader>aa", argmark("add", count, vim.log.levels.ERROR, arglist_size("added")),
 		  silent = true, desc = "Add buffer (count or current) to arglist" },
-		{ "<leader>ac", argmark("copy", count, vim.log.levels.ERROR, arglist_size("copied to a local arglist")),
+		-- Window 0, the current one: argmark's copy needs a window to give the
+		-- local arglist to.
+		{ "<leader>ac", argmark("copy", function() return vim.v.count, 0 end, vim.log.levels.ERROR,
+			arglist_size("copied to a local arglist"), nothing_to_copy),
 		  silent = true, desc = "Copy (count or global) arglist to current (or new) local arglist" },
-		{ "<leader>aX", argmark("rm", function() return "*" end, nil, arglist_size("cleared")), desc = "Clear arglist" },
+		{ "<leader>aX", argmark("rm", function() return "*" end, nil, arglist_size("cleared"), empty), desc = "Clear arglist" },
 		{ "<leader>aA", argmark("add_windows", nil, nil, arglist_size("added every window's buffer")), desc = "Add current buffers for all windows to arglist" },
 	}) } },
 }
