@@ -145,7 +145,7 @@ local function image_math(on)
     -- what the inline renderer listens on that costs nothing to fake.
     vim.api.nvim_exec_autocmds("WinScrolled", { modeline = false })
   end
-  T._notify("inline math " .. (on and "enabled" or "disabled"))
+  T.notify("inline math " .. (on and "enabled" or "disabled"))
 end
 
 row("n", "[om", function() image_math(true)  end, { desc = "enable inline math" })
@@ -155,7 +155,7 @@ row("n", "]om", function() image_math(false) end, { desc = "disable inline math"
 vim.g.blink_toggle = true
 local function toggle_cmp(bool)
   vim.g.blink_toggle = bool
-  T._notify("completion " .. (bool and "enabled" or "disabled"))
+  T.notify("completion " .. (bool and "enabled" or "disabled"))
 end
 row("n", "[oC", function() toggle_cmp(true)  end, { desc = "enable completion", owner = "blink.cmp" })
 row("n", "]oC", function() toggle_cmp(false) end, { desc = "disable completion", owner = "blink.cmp" })

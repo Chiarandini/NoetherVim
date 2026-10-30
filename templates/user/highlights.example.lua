@@ -18,7 +18,7 @@
 -- The nvim_set_hl calls above are wiped the moment you change colorscheme
 -- (<Space>C). Register them through the tweak helper instead and they are
 -- re-applied on every switch. See :help noethervim-colorscheme-tweaks.
--- require("noethervim.util.colorscheme").tweak({
+-- require("noethervim.theme").tweak({
 --     Comment    = { italic = true },
 --     CursorLine = { bg = "#1a1a2e" },
 -- })

@@ -6,6 +6,17 @@ where they are listed.
 
 ## 2026-10-29
 
+- **Public names for the modules configs reach into:** rename these
+  requires.
+  - `noethervim.util.colorscheme` is `noethervim.theme`: `tweak()` and
+    `apply()` as before, and `palette()` in place of
+    `require("noethervim.util.palette").resolve()`.
+  - `noethervim.util.run` is `noethervim.run`, and `noethervim.util.spell`
+    is `noethervim.profiles.spell`.
+  - `require("noethervim.toggles")._notify` is `.notify`.
+  - `noethervim.util.filetypes` is private: `require("noethervim.profiles").classes()`
+    maps each filetype with a class of its own to `"writing"`, `"code"` or
+    `false`.
 - **`lua/user/config.lua` groups its settings by concept:** rename these
   keys; `:checkhealth noethervim` names any key it no longer knows.
   - `completion_style = "x"` is now `completion = { style = "x" }`.

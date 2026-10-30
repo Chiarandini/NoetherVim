@@ -447,7 +447,7 @@ Plain `nvim_set_hl` calls are lost when you switch colorschemes. Use the
 tweak helper instead; tweaks re-apply automatically on every colorscheme
 change. This is a core feature and needs no bundle: >lua
     -- lua/user/highlights.lua
-    require("noethervim.util.colorscheme").tweak({
+    require("noethervim.theme").tweak({
         Comment    = { italic = true },
         CursorLine = { bg = "#1a1a2e" },
         LineNr     = { fg = "#555555" },
@@ -2108,7 +2108,7 @@ Customize statusline colors and extra components in `lua/user/config.lua`: >lua
       },
     }
 <
-    Available color keys (from `util/palette.lua`): ~
+    Available color keys (from `theme/palette.lua`): ~
     `mode_n`, `mode_i`, `mode_v`, `mode_c`, `mode_t`, `mode_R`,
     `green`, `blue`, `orange`, `red`, `purple`, `default_gray`,
     `lazy_updates`, `text_gray`, `profile_writing`, `profile_code`

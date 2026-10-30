@@ -293,7 +293,7 @@ else
 	-- Red when: no command is produced, it exits non-zero, or its stdout is
 	-- not what the fixture prints. Building the command is not the claim;
 	-- running it is.
-	local run = require("noethervim.util.run")
+	local run = require("noethervim.run")
 	local function check_run(kind, cp, expected)
 		if expected == false then
 			record(cp, "N/A", "no project-level run convention for " .. LANG)
@@ -301,7 +301,7 @@ else
 		end
 		local cmd, cwd = run.command(kind, buf)
 		if not cmd or not cwd then
-			record(cp, "FAIL", "util.run produced no " .. kind .. " command")
+			record(cp, "FAIL", "noethervim.run produced no " .. kind .. " command")
 			return
 		end
 		local res = vim.system({ "sh", "-c", cmd }, { cwd = cwd, text = true }):wait(120000)

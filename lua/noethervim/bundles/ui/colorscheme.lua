@@ -13,7 +13,7 @@
 -- is breadth only: the machinery that makes theming work lives in core, and
 -- keeps working without it.
 --   - SearchLeader+C picks the active scheme and the pick survives restarts
---   - require("noethervim.util.colorscheme").tweak() overrides highlights
+--   - require("noethervim.theme").tweak() overrides highlights
 --     across theme switches
 --
 -- All schemes are lazy=true, so only the active one loads and startup cost is

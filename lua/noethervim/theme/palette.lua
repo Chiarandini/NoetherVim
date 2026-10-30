@@ -1,4 +1,4 @@
--- NoetherVim statusline palette resolver.
+-- The statusline palette resolver behind noethervim.theme.palette().
 -- Returns the full color table expected by the heirline statusline config.
 --
 -- When gruvbox is active, returns the hand-tuned gruvbox palette that

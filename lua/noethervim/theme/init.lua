@@ -1,4 +1,7 @@
--- NoetherVim colorscheme utilities.
+-- noethervim.theme: the colorscheme, and the highlights you keep across it.
+--
+-- Public (:help noethervim-api): apply(name), tweak(groups), palette().
+-- The rest is NoetherVim's own:
 -- Persistence: saves/restores the active colorscheme across sessions.
 -- Tweaks: re-applies user highlight overrides when the colorscheme changes.
 -- Provenance: records what put the active scheme on screen, so
@@ -14,13 +17,13 @@ local M = {}
 local _file = vim.fn.stdpath("state") .. "/noethervim/colorscheme"
 local _tweaks = {} ---@type table<string, vim.api.keyset.highlight>
 
---- The scheme the distribution ships and pins. `util.palette` hand-tunes the
+--- The scheme the distribution ships and pins. `theme/palette.lua` hand-tunes the
 --- statusline against it and `highlights.lua` special-cases it twice, so it is
 --- also the safe landing spot when a requested scheme cannot be loaded.
 M.DEFAULT = "gruvbox"
 
 --- What put the active colorscheme on screen.
----@type "config"|"persisted"|"default"|"fallback"|nil
+---@type "config"|"persisted"|"default"|"fallback"|"call"|nil
 M.source = nil
 
 --- Scheme named in `lua/user/config.lua` that could not be loaded.
@@ -103,11 +106,12 @@ end
 --- Apply `scheme`, reporting failure instead of swallowing it. A colorscheme
 --- that is named but not installed otherwise leaves Neovim on its built-in
 --- default with no signal at all, which reads as "my config file is ignored".
+--- A lazy-loaded theme is loaded first, and your tweaks survive the switch.
 ---@param scheme string
----@param source "config"|"default"
+---@param source? "config"|"default" what asked for it; omitted from your code
 function M.apply(scheme, source)
   if load_scheme(scheme) then
-    M.source = source
+    M.source = source or "call"
     return
   end
 
@@ -131,6 +135,7 @@ function M.status()
     persisted = "picked interactively; overrides lua/user/config.lua",
     default   = "distribution default",
     fallback  = "distribution default, after the requested scheme failed to load",
+    call      = "applied by noethervim.theme.apply()",
   })[M.source] or "not set by NoetherVim"
   return (vim.g.colors_name or "(Neovim built-in default)") .. " -- " .. from
 end
@@ -195,11 +200,19 @@ local function apply_tweaks()
 end
 
 --- Register highlight overrides that persist across colorscheme changes.
---- Call from user/highlights.lua or anywhere after setup.
+--- Call from lua/user/highlights.lua or anywhere after setup.
 ---@param tweaks table<string, vim.api.keyset.highlight>
 function M.tweak(tweaks)
   _tweaks = vim.tbl_deep_extend("force", _tweaks, tweaks)
   apply_tweaks()
+end
+
+--- The color table NoetherVim's statusline draws with, resolved for the
+--- active colorscheme: hand-tuned for gruvbox, derived from highlight
+--- groups for any other. Keys: theme/palette.lua.
+---@return table<string, string>
+function M.palette()
+  return require("noethervim.theme.palette").resolve()
 end
 
 function M.setup_tweaks()

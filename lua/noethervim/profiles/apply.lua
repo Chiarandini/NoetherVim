@@ -96,19 +96,19 @@ local function writing_keys(buf)
   -- keeps the correction its own undo step.
   if row_free(buf, "i", "<c-l>") then
     vim.keymap.set("i", "<c-l>",
-      "<c-g>u<Cmd>lua require('noethervim.util.spell').fix_previous()<CR><c-g>u",
+      "<c-g>u<Cmd>lua require('noethervim.profiles.spell').fix_previous()<CR><c-g>u",
       { buffer = buf, silent = true, desc = "fix spelling" })
   end
   -- Adding a word also adds the forms you will go on to write; see
-  -- util/spell.lua for which, and why those.
+  -- profiles/spell.lua for which, and why those.
   if row_free(buf, "n", "zg") then
     vim.keymap.set("n", "zg", function()
-      require("noethervim.util.spell").add_under_cursor(false)
+      require("noethervim.profiles.spell").add_under_cursor(false)
     end, { buffer = buf, desc = "add word to spellfile (with variants)" })
   end
   if row_free(buf, "n", "zG") then
     vim.keymap.set("n", "zG", function()
-      require("noethervim.util.spell").add_under_cursor(true)
+      require("noethervim.profiles.spell").add_under_cursor(true)
     end, { buffer = buf, desc = "add word for this session (with variants)" })
   end
   vim.b[buf].noethervim_writing_keymap = true

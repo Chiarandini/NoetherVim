@@ -235,7 +235,7 @@ function M.setup(opts)
   -- saved pick shadows `colorscheme` in lua/user/config.lua -- reported by
   -- :checkhealth noethervim, and switched off with
   -- `colorscheme_persistence = false`.
-  local cs = require("noethervim.util.colorscheme")
+  local cs = require("noethervim.theme")
   cs.setup_tweaks()
   local persist = user_cfg.colorscheme_persistence ~= false
   if persist then
@@ -244,7 +244,7 @@ function M.setup(opts)
   -- Fall back to gruvbox when the user has not picked a scheme. It is the
   -- shipped default, and the dashboard / statusline fallback colours are
   -- chosen against it, so an unconfigured install still looks coherent.
-  -- Its spec is `lazy = true`; util.colorscheme loads it on demand here.
+  -- Its spec is `lazy = true`; noethervim.theme loads it on demand here.
   -- Skip only when persistence actually restored a saved pick:
   -- `vim.g.colors_name` is not a safe test on its own, since lazy.nvim
   -- applies its own `install.colorscheme` fallback while it installs missing

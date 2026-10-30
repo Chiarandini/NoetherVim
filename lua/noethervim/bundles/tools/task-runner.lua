@@ -19,11 +19,11 @@
 --   <leader>rp    run the project around it (cargo, go.mod, npm, Maven, make)
 --   <c-w><c-r>   toggle task list
 
--- What each language runs comes from `noethervim.util.run`, shared with core's
+-- What each language runs comes from `noethervim.run`, shared with core's
 -- code_runner so a language is taught once. What is local to this bundle is
 -- running it through overseer, and resolving the interpreter through whichever
 -- version manager governs the directory.
-local run = require("noethervim.util.run")
+local run = require("noethervim.run")
 
 -- General-purpose version managers, tried first in order.
 -- All support `<manager> which <bin>` and respect per-directory config.

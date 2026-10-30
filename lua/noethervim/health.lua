@@ -635,7 +635,7 @@ function M.check()
   -- Colorscheme provenance. An interactive pick outlives the session that
   -- made it and takes priority over `colorscheme` in lua/user/config.lua, so
   -- "my colorscheme setting does nothing" has to be answerable from here.
-  local cs = require("noethervim.util.colorscheme")
+  local cs = require("noethervim.theme")
   h.info("Colorscheme: " .. cs.status())
   if cs.missing then
     h.warn(("colorscheme %q is not installed"):format(cs.missing),

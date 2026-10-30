@@ -5,7 +5,7 @@
 -- Run the current file in a float, or send it to a betterTerm terminal.
 --
 -- What each language runs is not decided here: it comes from
--- `noethervim.util.run`, which the task-runner bundle reads too, so `cargo`
+-- `noethervim.run`, which the task-runner bundle reads too, so `cargo`
 -- and `go.mod` are understood once rather than once per runner.
 --
 -- Both keys live under `<leader>r` (Run/REPL), alongside the REPL bundle's
@@ -14,7 +14,7 @@
 -- load trigger, so a map created inside `config` would not exist until the
 -- other one fired.
 
-local run = require("noethervim.util.run")
+local run = require("noethervim.run")
 
 --- Hand code_runner a fully-built command for `ft`.
 ---
@@ -36,7 +36,7 @@ local function command_for(ft)
 end
 
 -- code_runner keys off the filetype table it is given, so every language
--- util/run knows about has to appear here for `:RunCode` to reach it.
+-- noethervim.run knows about has to appear here for `:RunCode` to reach it.
 local filetype = {}
 for ft in pairs(run.languages) do
 	filetype[ft] = command_for(ft)

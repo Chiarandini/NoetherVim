@@ -46,7 +46,7 @@ return {
       -- Populate the shared colors table (mutated in-place so all modules
       -- that close over ctx.colors stay up-to-date).
       local resolved = vim.tbl_extend("force",
-        require("noethervim.util.palette").resolve(),
+        require("noethervim.theme").palette(),
         nv_sl.get_colors())
       for k, v in pairs(resolved) do ctx.colors[k] = v end
       local mc = ctx.make_mode_colors(ctx.colors)
@@ -245,7 +245,7 @@ return {
         group = vim.api.nvim_create_augroup("noethervim_heirline_colors", { clear = true }),
         callback = function()
           local new = vim.tbl_extend("force",
-            require("noethervim.util.palette").resolve(),
+            require("noethervim.theme").palette(),
             nv_sl.get_colors())
           for k, v in pairs(new) do ctx.colors[k] = v end
           local new_mc = ctx.make_mode_colors(ctx.colors)

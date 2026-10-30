@@ -23,7 +23,7 @@ local function argmark(fn, arg, level, done)
 		if not ok then
 			vim.notify(err or ("argmark: " .. fn .. " failed"), level or vim.log.levels.WARN)
 		elseif done then
-			require("noethervim.toggles")._notify(done())
+			require("noethervim.toggles").notify(done())
 		end
 	end
 end

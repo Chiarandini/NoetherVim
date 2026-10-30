@@ -19,12 +19,12 @@ local function feedback_style()
   return type(style) == "string" and style or "notify"
 end
 
---- Emit a toggle confirmation message via the user-chosen channel. Exposed
---- so the keymap RHS strings can route through a single dispatcher rather
---- than inlining vim.notify -- changing feedback_style flips every toggle
---- at once.
+--- Emit a toggle confirmation message through the channel `toggle_feedback`
+--- in lua/user/config.lua names. Public (:help noethervim-api), so a toggle
+--- of yours reports the way NoetherVim's do, and changing the channel flips
+--- every one of them at once.
 ---@param text string
-function M._notify(text)
+function M.notify(text)
   local style = feedback_style()
   if style == "off" then return end
   if style == "echo" then
@@ -44,12 +44,12 @@ function M.map(lhs, rhs, desc, echo, row)
   local descr = desc or ""
   local opts = vim.tbl_extend("force", { desc = descr, _source = rows.here(1) }, row or {})
   if echo ~= false and type(rhs) == "string" then
-    rhs = rhs .. '<cmd>lua require("noethervim.toggles")._notify("' .. descr .. '")<cr>'
+    rhs = rhs .. '<cmd>lua require("noethervim.toggles").notify("' .. descr .. '")<cr>'
   elseif echo ~= false then
     local fn = rhs
     rhs = function()
       fn()
-      M._notify(descr)
+      M.notify(descr)
     end
   end
   rows.map("n", lhs, rhs, opts)
