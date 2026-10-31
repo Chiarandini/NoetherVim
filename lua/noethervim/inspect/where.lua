@@ -318,6 +318,29 @@ local function spec_files(plugin)
   end, files)
 end
 
+--- When a `config` that is neither NoetherVim's nor a plugin's own replaces
+--- one NoetherVim's specs give `plugin`: both functions' places. lazy keeps
+--- only the last `config`, so what NoetherVim's set up does not run.
+---@param plugin table lazy.nvim plugin
+---@return { yours: string, distro: string }?
+function M.replaced_config(plugin)
+  local function place(fn)
+    local info = debug.getinfo(fn, "S")
+    if info.source:sub(1, 1) ~= "@" then return nil end
+    local who, shown = owner_of(info.source:sub(2))
+    return who, shown .. ":" .. info.linedefined
+  end
+  if type(plugin.config) ~= "function" then return nil end
+  local who, yours = place(plugin.config)
+  if not who or who == "NoetherVim" or who:find("^plugin ") then return nil end
+  for _, frag in pairs(require("lazy.core.config").spec.meta.fragments.fragments) do
+    if frag.name == plugin.name and type(frag.spec.config) == "function" then
+      local by, distro = place(frag.spec.config)
+      if by == "NoetherVim" then return { yours = yours, distro = distro } end
+    end
+  end
+end
+
 --- What is known about lazy.nvim plugin `name`, or nil when there is none.
 ---@param name string
 ---@return string[]?
@@ -361,6 +384,11 @@ function M.plugin(name)
   for _, file in ipairs(disabled and {} or spec_files(plugin)) do
     local who, shown = owner_of(file)
     table.insert(lines, ("  spec     %s: %s"):format(who, shown))
+  end
+  local replaced = not disabled and M.replaced_config(plugin)
+  if replaced then
+    table.insert(lines, ("  config   yours, %s, replaces NoetherVim's at %s, so what that"):format(replaced.yours, replaced.distro))
+    table.insert(lines, "           set up does not run; change settings through `opts` instead")
   end
 
   local default = require("noethervim.default")

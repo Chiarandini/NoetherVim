@@ -653,6 +653,25 @@ function M.check()
     end
   end
 
+  -- ── Plugin configs of yours ──────────────────────────────────────────
+  h.start("Plugin configs")
+  local where = require("noethervim.inspect.where")
+  local replaced = 0
+  local plugins = require("lazy.core.config").plugins
+  local plugin_names = vim.tbl_keys(plugins)
+  table.sort(plugin_names)
+  for _, name in ipairs(plugin_names) do
+    local r = where.replaced_config(plugins[name])
+    if r then
+      replaced = replaced + 1
+      -- Often deliberate, so information rather than a warning; it is the
+      -- fact a surprising behavior traces back to.
+      h.info(("%s: your `config` (%s) replaces NoetherVim's (%s), so NoetherVim's does not run;"
+        .. " `opts` changes settings and keeps it (:help noethervim-user-plugins)"):format(name, r.yours, r.distro))
+    end
+  end
+  if replaced == 0 then h.ok("no `config` of yours replaces one of NoetherVim's") end
+
   -- ── Search leader ────────────────────────────────────────────────────
   h.start("Search leader")
   local search_leader = require("noethervim.util").search_leader
