@@ -669,13 +669,31 @@ To add extra keymaps to an existing plugin: >lua
     }
 <
 lazy.nvim unions `keys`, `cmd`, `event`, and `ft` tables from all specs
-for the same plugin.
+for the same plugin, and your `lazy`, `enabled` or `cond` replaces the
+distro's: `{ "mrcjkb/rustaceanvim", lazy = true, ft = "rust" }` loads it on
+Rust buffers only, and `enabled = false` removes the plugin with every key
+and toggle that came with it. `{ "<lhs>", false }` in a plugin's `keys`
+removes one NoetherVim key that plugin brought.
 
 If you prefer keeping all keymaps in one place, set them in
-`lua/user/keymaps.lua` instead. That file loads early, before lazy-loaded
-plugins, so map to a `<cmd>...<cr>` (which triggers the load) or wrap the
-call, (function() ... end) rather than referencing a plugin function that may
-not be loaded yet.
+`lua/user/keymaps.lua` instead. It runs after NoetherVim's own keys, so a
+key there replaces one of NoetherVim's; call a plugin inside a function,
+`function() require("plugin").fn() end`, so it loads when the key is
+pressed.
+
+Plugins without setup(): ~                *noethervim-user-plugins-globals*
+
+`opts` works on every plugin NoetherVim configures in Lua, including those
+that read their settings from a global instead of a setup() function
+(rustaceanvim, neominimap): your `opts` merge with the distro's as they
+do anywhere else. A Vimscript plugin is configured with Vim variables
+instead, and `opts` on its spec is an error. Set the variable: above
+`lazy.setup()` in `init.lua` when the plugin loads at startup, or in
+`lua/user/options.lua` when it loads later. A value you set wins over
+NoetherVim's: >lua
+    -- lua/user/options.lua
+    vim.g.startuptime_tries = 20
+<
 
 Array-valued opts: ~                    *noethervim-user-plugins-arrays*
 
@@ -701,8 +719,8 @@ Two patterns to extend an array key without replacing it: >lua
       end }
 <
 Pattern 2 receives the resolved upstream `opts` table as the second
-argument. Mutating it (rather than returning a new table) lets you apend your
-entries at runtime.
+argument. Mutating it (rather than returning a new table) lets you append
+your entries at runtime.
 
 NOTE: if you specify `config = function()` in your override spec, it
 REPLACES the upstream config function entirely. Only do this as a last
@@ -813,6 +831,7 @@ Contributor: ~
     require("noethervim.default")
     require("noethervim.util.mason_install").ensure(tools)
     require("noethervim.util").labels(spec)
+    require("noethervim.util").opts_of(plugin)
     require("noethervim.toggles").rows(lhs, enable, disable, desc)
     require("noethervim.pick").row(lhs, verb, fields)
     require("noethervim.pick").served(engine)

@@ -49,9 +49,9 @@
 -- rustaceanvim manages its own LSP client, so there is no lspconfig setup for
 -- rust-analyzer here. Just make sure rust-analyzer is installed.
 --
--- Override settings in user/plugins/. rustaceanvim has no setup() function; it
--- reads `vim.g.rustaceanvim` once, when its config module is first required:
---   vim.g.rustaceanvim = { server = { settings = { ... } } }
+-- Override settings in user/plugins/, through the plugin's opts, as with any
+-- plugin; they merge with these:
+--   { "mrcjkb/rustaceanvim", opts = { server = { default_settings = { ... } } } }
 --
 -- Debugging needs no fragment here: rustaceanvim reads its debug targets from
 -- rust-analyzer once the client attaches, so enabling tools/debug.lua is
@@ -64,10 +64,17 @@ return {
 		"mrcjkb/rustaceanvim",
 		version = "^6",
 
-		-- rustaceanvim reads this global once and has no setup() to merge
-		-- with, so a user config that sets it owns the whole table: `g` data
-		-- is only set while nobody else has.
-		specs = { { "NoetherVim", optional = true, opts = { g = { rustaceanvim = {
+		-- rustaceanvim has no setup(): it reads `vim.g.rustaceanvim` when its
+		-- config module is first required, and takes a function there. The
+		-- global returns this spec's opts merged with yours, so opts work as
+		-- they do on any plugin. A `vim.g.rustaceanvim` of your own, set above
+		-- lazy.setup(), replaces it instead. `config` is empty so lazy does not
+		-- call the setup() rustaceanvim lacks.
+		specs = { { "NoetherVim", optional = true, opts = { g = {
+			rustaceanvim = require("noethervim.util").opts_of("rustaceanvim"),
+		} } } },
+		config = function() end,
+		opts = {
 			server = {
 				---@param project_root string|nil
 				---@param default_settings table|nil
@@ -88,7 +95,7 @@ return {
 					return settings
 				end,
 			},
-		} } } } },
+		},
 
 		-- Upstream's own guidance ("this plugin is already lazy"): rustaceanvim
 		-- does all its work from ftplugin files, so loading it is little more

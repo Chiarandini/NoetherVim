@@ -46,15 +46,14 @@ return {
     "dmtrKovalenko/fff",
     build = function() require("fff.download").download_or_build_binary() end,
     cmd = { "FFFFind", "FFFResume", "FFFScan", "FFFRefreshGit", "FFFClearCache", "FFFHealth", "FFFDebug", "FFFOpenLog" },
+    -- lazy_sync indexes on first use instead of the startup cwd (often ~);
+    -- enable_home_dir_scanning = false keeps a `:cd ~` from indexing $HOME.
+    opts = { lazy_sync = true, enable_home_dir_scanning = false },
     specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("fff",
       require("noethervim.toggles").rows("oF",
         function() enabled = true end,
         function() enabled = false end,
         "fff for files and grep"), {
-      -- fff has no setup() of its own and reads vim.g.fff when it loads.
-      -- lazy_sync indexes on first use instead of the startup cwd (often ~);
-      -- enable_home_dir_scanning = false keeps a `:cd ~` from indexing $HOME.
-      g = { fff = { lazy_sync = true, enable_home_dir_scanning = false } },
       engines = { fff = {
         files = serve("find_files"),
         grep = serve("live_grep"),

@@ -6,6 +6,11 @@ where they are listed.
 
 ## 2026-10-30
 
+- **`opts` on rustaceanvim, neominimap and fff merge with NoetherVim's,**
+  as on any plugin; they used to raise an error (rustaceanvim, neominimap)
+  or replace the bundle's settings (fff). A `vim.g.rustaceanvim` or
+  `vim.g.neominimap` of yours, set above `lazy.setup()`, still replaces
+  NoetherVim's (`:help noethervim-user-plugins-globals`).
 - **Picker keys open a verb, which any engine can serve:** SearchLeader
   ff, fp, fo, fb, gg, gp, r, t and w, the dashboard's `f` and `o`, Oil's
   `gf`/`gG` and insert `<C-S-c>` open `files`, `grep`, `recent`,

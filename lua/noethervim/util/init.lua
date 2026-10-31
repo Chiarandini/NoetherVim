@@ -26,6 +26,23 @@ function M.labels(spec)
   end
 end
 
+--- A plugin's merged `opts` (every spec's, yours included), resolved when it
+--- is called: the value for the `g` section of a plugin that has no setup()
+--- and reads its settings from a global accepting a function
+--- (rustaceanvim, neominimap), so `opts` on that plugin's spec reaches it as
+--- on any other.
+---
+---   specs = { { "NoetherVim", optional = true, opts = { g = {
+---     rustaceanvim = require("noethervim.util").opts_of("rustaceanvim") } } } }
+---@param plugin string lazy.nvim name of the plugin
+---@return fun(): table
+function M.opts_of(plugin)
+  return function()
+    local p = require("lazy.core.config").plugins[plugin]
+    return p and require("lazy.core.plugin").values(p, "opts", false) or {}
+  end
+end
+
 --- Plain (non-magic) string replacement.
 ---@param s string
 ---@param substring string

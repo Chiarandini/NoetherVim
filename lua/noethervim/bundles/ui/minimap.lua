@@ -38,38 +38,45 @@ return {
 				{ "<leader>mbo", "<cmd>Neominimap BufEnable<cr>",   desc = "Minimap on (buffer)" },
 				{ "<leader>mbc", "<cmd>Neominimap BufDisable<cr>",  desc = "Minimap off (buffer)" },
 			}, {
-				-- neominimap is configured through vim.g.neominimap, read once at
-				-- load; it exposes no setup() function, so its config is `g` data.
-				g = { neominimap = {
-				auto_enable          = true,
-				log_level            = vim.log.levels.OFF,
-				notification_level   = vim.log.levels.INFO,
-				log_path             = vim.fn.stdpath("data") .. "/neominimap.log",
-				exclude_filetypes    = { "help", "tex" },
-				exclude_buftypes     = { "nofile", "nowrite", "quickfix", "terminal", "prompt" },
-				buf_filter           = function() return true end,
-				win_filter           = function() return true end,
-				max_minimap_height   = nil,
-				minimap_width        = 20,
-				x_multiplier         = 4,
-				y_multiplier         = 1,
-				delay                = 200,
-				sync_cursor          = true,
-				click                = { enabled = true, auto_switch_focus = true },
-				diagnostic = {
-					enabled  = true,
-					severity = vim.diagnostic.severity.WARN,
-					mode     = "line",
-					priority = { ERROR = 100, WARN = 90, INFO = 80, HINT = 70 },
-				},
-				git        = { enabled = true, mode = "sign", priority = 6 },
-				search     = { enabled = true, mode = "line", priority = 20 },
-				treesitter = { enabled = true, priority = 200 },
-				margin     = { right = 0, top = 0, bottom = 0 },
-				fold       = { enabled = true },
-				z_index    = 1,
+				-- neominimap has no setup(): it reads `vim.g.neominimap` as it
+				-- loads, and takes a function there. The global returns this
+				-- spec's opts merged with yours, so opts work as on any plugin.
+				g = { neominimap = require("noethervim.util").opts_of("neominimap.nvim") },
+			}) },
+		},
+		-- Empty, so lazy does not call the setup() neominimap lacks.
+		config = function() end,
+		opts = {
+			auto_enable          = true,
+			log_level            = vim.log.levels.OFF,
+			notification_level   = vim.log.levels.INFO,
+			log_path             = vim.fn.stdpath("data") .. "/neominimap.log",
+			exclude_filetypes    = { "help", "tex" },
+			exclude_buftypes     = { "nofile", "nowrite", "quickfix", "terminal", "prompt" },
+			buf_filter           = function() return true end,
+			win_filter           = function() return true end,
+			x_multiplier         = 4,
+			y_multiplier         = 1,
+			delay                = 200,
+			sync_cursor          = true,
+			click                = { enabled = true, auto_switch_focus = true },
+			diagnostic = {
+				enabled  = true,
+				severity = vim.diagnostic.severity.WARN,
+				mode     = "line",
+				priority = { ERROR = 100, WARN = 90, INFO = 80, HINT = 70 },
+			},
+			git        = { enabled = true, mode = "sign", priority = 6 },
+			search     = { enabled = true, mode = "line", priority = 20 },
+			treesitter = { enabled = true, priority = 200 },
+			fold       = { enabled = true },
+			-- The floating minimap (the default layout).
+			float = {
+				minimap_width = 20,
+				margin        = { right = 0, top = 0, bottom = 0 },
+				z_index       = 1,
 				window_border = "single",
-			} } }) },
+			},
 		},
 	},
 }
