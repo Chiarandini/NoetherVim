@@ -55,7 +55,7 @@ local SearchLeader = require("noethervim.util").search_leader
 return {
 
   -- ── smart-enter.nvim: LaTeX environment continuation ──────────────────────
-  -- The plugin and its global <S-CR> come from core (plugins/editing.lua).
+  -- The plugin and its global <S-CR> come from core (plugins/smart-enter.lua).
   -- This only adds the LaTeX rules, merged into core's opts by lazy:
   -- "\\" in math rows, "\\" then "&= " in align, "\item " in lists.
   {

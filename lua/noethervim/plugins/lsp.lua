@@ -1,7 +1,5 @@
--- NoetherVim plugin: LSP Setup
---  ╔══════════════════════════════════════════════════════════╗
---  ║                        LSP Setup                         ║
---  ╚══════════════════════════════════════════════════════════╝
+-- NoetherVim plugin: LSP (nvim-lspconfig, mason, lazydev, fidget, glance)
+
 -- Uses Neovim built-in LSP (vim.lsp.config / vim.lsp.enable) for all servers.
 -- nvim-lspconfig supplies each server's base config (its lsp/<name>.lua).
 -- NoetherVim's settings for a server are in after/lsp/<name>.lua, which a
@@ -132,122 +130,6 @@ return {
 		"j-hui/fidget.nvim",
 		event = "LspAttach",
 		opts = {},
-	},
-
-	{
-		"rachartier/tiny-inline-diagnostic.nvim",
-		event = "VeryLazy",
-		priority = 1000,
-		-- A message too long for the rest of the line is clipped, not wrapped.
-		-- The plugin's wrapping modes draw the overflow on top of the buffer
-		-- lines below with `virt_text_pos = "overlay"`, so a verbose message
-		-- replaces two or three lines of real code, cut mid-identifier, with
-		-- nothing marking where the code ends and the message begins.
-		-- `gl` and `]d` / `[d` open the full text in a float.
-		opts = {
-			options = {
-				overflow = { mode = "oneline" },
-
-				-- `DiagnosticChanged` alongside the plugin's own `LspAttach`:
-				-- this renderer replaces Neovim's inline message (turned off
-				-- below), so a buffer it never watches shows a sign and an
-				-- underline with the text nowhere but `gl`. That is every
-				-- buffer whose diagnostics come from a linter rather than a
-				-- language server.
-				overwrite_events = { "LspAttach", "DiagnosticChanged" },
-			},
-		},
-		config = function(_, opts)
-			require("tiny-inline-diagnostic").setup(opts)
-			vim.diagnostic.config({ virtual_text = false })
-		end,
-	},
-
-	-- ── conform.nvim: formatter stack ────────────────────────────────────
-	-- Replaces none-ls.nvim + mason-null-ls.nvim + prettier.nvim.
-	-- <Leader>ff (set in LspAttach below) calls conform with LSP fallback.
-	{
-		"stevearc/conform.nvim",
-		event = { "BufWritePre" },
-		cmd   = { "ConformInfo" },
-		opts  = {
-			formatters_by_ft = {
-				lua             = { "stylua" },
-				bib             = { "bibclean" },
-				javascript      = { "prettierd" },
-				javascriptreact = { "prettierd" },
-				typescript      = { "prettierd" },
-				typescriptreact = { "prettierd" },
-				css             = { "prettierd" },
-				html            = { "prettierd" },
-				json            = { "prettierd" },
-				yaml            = { "prettierd" },
-				markdown        = { "prettierd" },
-				sh              = { "shfmt" },
-			},
-			-- No format_on_save -- use <Leader>ff for explicit formatting.
-
-			-- Mason packages backing the claims above. The rule is that
-			-- whoever claims a filetype installs its formatter: core claims
-			-- the ones every install meets regardless of language (Lua for the
-			-- config itself, shell scripts, and the JSON / YAML / Markdown
-			-- that prettierd covers), and a language bundle claims its own.
-			-- `bib` is the one claim core makes without installing, because a
-			-- .bib file is not something a user without LaTeX opens; the latex
-			-- bundle adds `bibclean` to this list.
-			--
-			-- A list, not a second `config`: lazy keeps only the last config
-			-- function it sees, so a bundle defining one would silently drop
-			-- this whole block. Bundles append with
-			-- `opts = function(_, opts) ... end`, the same way they extend
-			-- `ensure_installed`.
-			mason_install = { "stylua", "prettierd", "shfmt" },
-		},
-		config = function(_, opts)
-			local tools = opts.mason_install or {}
-			opts.mason_install = nil   -- conform would reject the unknown key
-			require("conform").setup(opts)
-			require("noethervim.util.mason_install").ensure(tools)
-		end,
-	},
-
-	-- ── nvim-lint: linter stack ──────────────────────────────────────────
-	-- Companion to conform.nvim: conform handles formatting, nvim-lint
-	-- handles diagnostics from non-LSP linters. Most filetypes are already
-	-- covered by their LSP server; add entries here for tools that run
-	-- outside the LSP (shellcheck, markdownlint, vale, etc.).
-	--
-	-- Override via user plugin spec:
-	--   { "mfussenegger/nvim-lint", opts = { linters_by_ft = { sh = { "shellcheck" } } } }
-	{
-		"mfussenegger/nvim-lint",
-		event = { "BufReadPost", "BufWritePost", "InsertLeave" },
-		opts = {
-			linters_by_ft = {
-				-- Most linting is provided by LSP servers (basedpyright, ruff,
-				-- eslint, lua_ls, …). Add non-LSP linters here or via opts override.
-			},
-			-- Same contract as conform's list above: a bundle that adds a
-			-- linter to `linters_by_ft` names its Mason package here, and the
-			-- binary arrives with the bundle instead of being a manual step
-			-- the reader only learns about from :checkhealth.
-			mason_install = {},
-		},
-		config = function(_, opts)
-			local lint = require("lint")
-			lint.linters_by_ft = opts.linters_by_ft
-			require("noethervim.util.mason_install").ensure(opts.mason_install)
-
-			vim.api.nvim_create_autocmd({ "BufReadPost", "BufWritePost", "InsertLeave" }, {
-				group = vim.api.nvim_create_augroup("noethervim_lint", { clear = true }),
-				callback = function()
-					-- Only lint buffers backed by a real file
-					if vim.bo.buftype == "" then
-						lint.try_lint()
-					end
-				end,
-			})
-		end,
 	},
 
 	-- ── nvim-lspconfig + Mason + LSP keymaps ─────────────────────────────
@@ -492,15 +374,6 @@ return {
 	{ "artemave/workspace-diagnostics.nvim", lazy = true, opts = {} },
 	-- Loaded at VeryLazy by lspconfig's config to install `ensure_installed`.
 	{ "williamboman/mason-lspconfig.nvim", lazy = true, dependencies = { "williamboman/mason.nvim" } },
-	{
-		"hedyhli/outline.nvim",
-		cmd = { "Outline", "OutlineOpen" },
-		opts = {
-			outline_window = { auto_close = true },
-			preview_window = { auto_preview = true },
-			symbol_folding = { autofold_depth = 1 },
-		},
-	},
 
 	{
 		"dnlhc/glance.nvim",
