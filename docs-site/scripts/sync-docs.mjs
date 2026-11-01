@@ -119,6 +119,7 @@ const LINKS = [
   [/\]\(\.\.\/latex-setup\.md(#[a-z0-9-]*)?\)/g, '](/noethervim/guides/latex-setup/)'],
   [/\]\(docs\/latex-setup\.md(#[a-z0-9-]*)?\)/g, '](/noethervim/guides/latex-setup/)'],
   [/\]\(docs\/user-config-examples\.md\)/g, '](/noethervim/guides/recipes/)'],
+  [/\]\(NEWS\.md\)/g, '](https://github.com/Chiarandini/NoetherVim/blob/main/NEWS.md)'],
   [/\]\(`?docs\/bundles\.md`?(#[a-z-]*)?\)/g, '](/noethervim/guides/bundles/)'],
   [/\]\(#configuration\)/g, '](/noethervim/guides/configuration/)'],
   [/\]\(#bundles\)/g, '](/noethervim/guides/bundles/)'],
