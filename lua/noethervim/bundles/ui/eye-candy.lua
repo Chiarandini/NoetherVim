@@ -90,13 +90,21 @@ return {
 	{
 		"petertriho/nvim-scrollbar",
 		event = "VeryLazy",
-		opts = {
-			excluded_filetypes = {
-				"cmp_docs", "cmp_menu", "noice", "prompt",
-				"neo-tree", "NvimTree", "neo-tree-popup",
-				"lazy", "alpha", "TelescopePrompt", "mpv",
-				"snacks_dashboard",
-			},
-		},
+		-- v2 replaces v1 on the main branch on 2026-11-16 and takes other
+		-- options; these serve whichever is installed. The dashboard is the
+		-- one normal window left bare (v2 already skips floats).
+		opts = function(plugin)
+			if vim.uv.fs_stat(plugin.dir .. "/lua/scrollbar/config/schema.lua") then
+				return { exclude = { filetypes = { snacks_dashboard = true } } }
+			end
+			return {
+				excluded_filetypes = {
+					"cmp_docs", "cmp_menu", "noice", "prompt", "lazy", "TelescopePrompt", "snacks_dashboard",
+				},
+			}
+		end,
+		-- Both versions are handled here, so v1's notice about v2 has nothing
+		-- to ask of you.
+		specs = { { "NoetherVim", optional = true, opts = { g = { scrollbar_v2_notice = false } } } },
 	},
 }

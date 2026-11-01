@@ -50,7 +50,7 @@ return {
         -- the old `nvim_cmp`/`blink` toggles are deprecated (removed in 4.0).
         completion = { create_new = true },
         picker = {
-          name = "snacks.pick",
+          name = "snacks.picker",
           note_mappings  = { new = "<c-n>", insert_link = "<C-l>" },
           tag_mappings   = { tag_note = "<C-x>", insert_tag = "<C-l>" },
         },
@@ -69,15 +69,9 @@ return {
           date_format = "%Y-%m-%d-%a",
           time_format = "%H:%M",
         },
-        checkbox = {
-          order = {
-            [" "] = { char = "󰄱", hl_group = "ObsidianTodo"       },
-            ["x"] = { char = "",  hl_group = "ObsidianDone"       },
-            [">"] = { char = "",  hl_group = "ObsidianRightArrow" },
-            ["~"] = { char = "󰰱", hl_group = "ObsidianTilde"      },
-            ["!"] = { char = "",  hl_group = "ObsidianImportant"  },
-          },
-        },
+        -- The states a checkbox cycles through; render-markdown draws them
+        -- (obsidian.nvim's own UI is off below).
+        checkbox = { order = { " ", "x", ">", "~", "!" } },
         ui = {
           enable = false,
           ignore_conceal_warn = false,
