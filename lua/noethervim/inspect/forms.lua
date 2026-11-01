@@ -3,7 +3,7 @@
 --- `nvim_get_keymap` reports an lhs in one canonical notation, while source
 --- files write it any of several ways: `<leader>x`, `<C-a>`, a
 --- SearchLeader concatenation. These helpers produce the plausible written
---- forms so the keymap source finder (util.keymap_source) and the keymap
+--- forms so the keymap source finder (inspect/source.lua) and the keymap
 --- diff picker can locate the line that defines a key.
 
 local M = {}

@@ -1,7 +1,7 @@
 --- Keymap source attribution and navigation.
 ---
 --- Answers two questions about a `(mode, resolved_lhs)` pair:
----   1. Where was it defined? (`M.owner_file`, `M.origin`)
+---   1. Where was it defined? (`M.owner_file`, `M.origin_of_file`)
 ---   2. Take me there. (`M.jump`)
 ---
 --- Attribution is driven by four data sources, in priority order:
@@ -9,7 +9,7 @@
 ---   1. `M.lookup`: the record noethervim.default keeps for every row and
 ---      every write it made, and the script id Neovim keeps for a mapping
 ---      made while a NoetherVim or `lua/user/` file was being sourced.
----   2. `util.keymap_sources()`: maps lazy.nvim handler keys to the plugin
+---   2. `keymap_sources()`: maps lazy.nvim handler keys to the plugin
 ---      spec file that owns them. Used for `keys = { ... }` entries that
 ---      bypass the wrapper.
 ---   3. Callback introspection via `debug.getinfo(callback, "S")`: for
@@ -24,7 +24,7 @@
 
 local M = {}
 
-local forms = require("noethervim.util.keymap_forms")
+local forms = require("noethervim.inspect.forms")
 
 --- Where a global mapping was made, when that is known exactly: a row or
 --- a write through noethervim.default records its source; a mapping made
@@ -202,7 +202,7 @@ end
 ---@return string? spec_file
 function M.spec_file_for_plugin(plugin_name)
   if not plugin_name then return nil end
-  local by_plugin = require("noethervim.util").plugin_spec_files()
+  local by_plugin = M.plugin_spec_files()
   local files = by_plugin[plugin_name]
   return files and files[1] or nil
 end
@@ -955,6 +955,168 @@ function M.jump(mode, lhs, opts)
       ("NoetherVim: could not locate a source file for [%s] %s"):format(mode, lhs),
       vim.log.levels.INFO)
   end
+end
+
+--- Map each lazy plugin name to every spec file that declares it, in scan
+--- order (distro `plugins/`, then `lua/user/plugins/`, then bundles).
+---
+--- A plugin is matched by finding its lazy name as a quoted string in a
+--- spec file, which handles both the common `"user/repo"` form and dev
+--- specs like `"KeyboardMode.nvim"` that carry no slash. Mentions inside
+--- a `dependencies = { ... }` block are skipped: the file that lists a
+--- plugin as someone else's dependency is not the file that configures it.
+---
+--- Memoized. The scan reads every spec file, and spec files do not change
+--- within a session.
+---
+---@return table<string, string[]> by_plugin  plugin name -> spec file paths
+function M.plugin_spec_files()
+  if M._plugin_spec_files then return M._plugin_spec_files end
+
+  local by_plugin = {}
+  local init = vim.api.nvim_get_runtime_file("lua/noethervim/init.lua", false)[1]
+  local root = init and vim.fn.fnamemodify(init, ":h:h:h")
+  if not root then return by_plugin end
+
+  -- Collect files: user/plugins/ (flat), core/ and bundles/ (category subdirs).
+  local files = {}
+  local user = vim.fn.stdpath("config") .. "/lua/user/plugins"
+  for name, ftype in vim.fs.dir(user) do
+    if (ftype == "file" or ftype == "link") and name:match("%.lua$") then
+      files[#files + 1] = vim.fs.joinpath(user, name)
+    end
+  end
+  for _, dir in ipairs({ "core", "bundles" }) do
+    for _, entry in ipairs(require("noethervim.util").scan_bundles(root .. "/lua/noethervim/" .. dir)) do
+      files[#files + 1] = entry.path
+    end
+  end
+
+  local plugin_names = {}
+  local ok_cfg, lazy_cfg = pcall(require, "lazy.core.config")
+  if ok_cfg and lazy_cfg.plugins then
+    for name, _ in pairs(lazy_cfg.plugins) do plugin_names[name] = true end
+  end
+
+  for _, filepath in ipairs(files) do
+    local deps_depth = nil
+    local depth = 0
+    local seen_in_file = {}
+    for _, line in ipairs(vim.fn.readfile(filepath)) do
+      if line:find("dependencies") and line:find("{") then
+        deps_depth = depth
+      end
+      for c in line:gmatch("[{}]") do
+        depth = depth + (c == "{" and 1 or -1)
+      end
+      if deps_depth and depth <= deps_depth then
+        deps_depth = nil
+      end
+      if not deps_depth then
+        for token in line:gmatch('"([^"]+)"') do
+          local tail = token:match("([^/]+)$") or token
+          local name = plugin_names[token] and token
+                    or plugin_names[tail] and tail
+          if name and not seen_in_file[name] then
+            seen_in_file[name] = true
+            by_plugin[name] = by_plugin[name] or {}
+            by_plugin[name][#by_plugin[name] + 1] = filepath
+          end
+        end
+      end
+    end
+  end
+
+  M._plugin_spec_files = by_plugin
+  return by_plugin
+end
+
+--- Map resolved keymap lhs values to the spec file that defines them.
+--- Combines lazy.nvim's key handler data (key_id -> plugin_name) with a
+--- scan of NoetherVim spec files (plugin_name -> file path).
+---
+--- Both tables are keyed by `<mode>|<resolved_lhs>` (e.g. `"n|<Space>fb"`).
+--- Keymaps set directly via vim.keymap.set (not in a lazy spec) are absent
+--- from both tables; M.lookup attributes those instead.
+---
+---@return table<string, string> sources
+---     Mapping from `<mode>|<resolved_lhs>` to absolute path of the spec
+---     file that registered the key.
+---@return table<string, true> managed
+---     Set of `<mode>|<resolved_lhs>` for ALL lazy handler keys, including
+---     dev/user-only plugins without a mapped spec file. Membership without
+---     a corresponding `sources` entry means "lazy registered this but we
+---     can't attribute it to a file."
+function M.keymap_sources()
+  local sources, managed = {}, {}
+
+  -- Build plugin_name -> spec file by scanning for repo strings
+  local init = vim.api.nvim_get_runtime_file("lua/noethervim/init.lua", false)[1]
+  local root = init and vim.fn.fnamemodify(init, ":h:h:h")
+  if not root then return sources, managed end
+
+  local plugin_files_all = M.plugin_spec_files()
+
+  -- File-content cache for attribution-by-lhs.
+  local _content = {}
+  local function content_of(path)
+    if _content[path] == nil then
+      local ok, lines = pcall(vim.fn.readfile, path)
+      _content[path] = ok and table.concat(lines, "\n") or ""
+    end
+    return _content[path]
+  end
+
+  local registry = forms
+
+  --- Pick the file from `candidates` that actually mentions a source
+  --- form of `lhs`; falls back to the first candidate if none match.
+  local function pick_file_for_lhs(candidates, lhs)
+    if not candidates or #candidates == 0 then return nil end
+    if #candidates == 1 then return candidates[1] end
+    local forms = registry.source_forms(lhs)
+    for _, file in ipairs(candidates) do
+      local c = registry.canon(content_of(file))
+      for _, f in ipairs(forms) do
+        local cf = registry.canon(f)
+        if cf ~= ""
+           and (c:find('"' .. cf .. '"', 1, true)
+                or c:find("'" .. cf .. "'", 1, true)) then
+          return file
+        end
+      end
+    end
+    return candidates[1]
+  end
+
+  -- Iterate over each plugin's own key handlers to get the defining
+  -- plugin (not the handler plugin, which managed would give us).
+  local ok_cfg, lazy_cfg = pcall(require, "lazy.core.config")
+  if ok_cfg and lazy_cfg.plugins then
+    for name, plugin in pairs(lazy_cfg.plugins) do
+      local candidates = plugin_files_all[name]
+      local keys = plugin._ and plugin._.handlers and plugin._.handlers.keys
+      if keys then
+        for id in pairs(keys) do
+          -- Handler ids are resolved terminal codes. Convert back to
+          -- the notation nvim_get_keymap uses (keytrans, but with
+          -- literal space instead of <Space>).
+          local base, mode_suffix = id:match("^(.+) %(([^,)]+)%)$")
+          if not base or not mode_suffix or #mode_suffix > 2 then
+            base = id
+            mode_suffix = "n"
+          end
+          local lhs = vim.fn.keytrans(base):gsub("<Space>", " ")
+          local key = mode_suffix .. "|" .. lhs
+          managed[key] = true
+          local file = pick_file_for_lhs(candidates, lhs)
+          if file then sources[key] = file end
+        end
+      end
+    end
+  end
+
+  return sources, managed
 end
 
 return M

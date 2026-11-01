@@ -479,7 +479,7 @@ function M.check()
     if not root then
       h.info("Skipped -- cannot locate the NoetherVim source directory")
     else
-      local base    = require("noethervim.util.override_base")
+      local base    = require("noethervim.inspect.override_base")
       local tracked = vim.tbl_count(base.load())
       local drifted = base.scan(root)
 
@@ -785,7 +785,7 @@ function M.check()
     local stranded = {}
 
     if lazy_ok then
-      for name, files in pairs(util.plugin_spec_files()) do
+      for name, files in pairs(require("noethervim.inspect.source").plugin_spec_files()) do
         local user_file, live_spec, dormant_bundle
         for _, path in ipairs(files) do
           if path:find(user_dir, 1, true) then

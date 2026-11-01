@@ -309,7 +309,7 @@ end
 --- The spec files that declare `plugin`: NoetherVim's, enabled bundles',
 --- and yours.
 local function spec_files(plugin)
-  local files = require("noethervim.util").plugin_spec_files()[plugin.name] or {}
+  local files = require("noethervim.inspect.source").plugin_spec_files()[plugin.name] or {}
   local modules = {}
   for _, mod in ipairs(require("lazy.core.config").spec.modules or {}) do modules[mod] = true end
   return vim.tbl_filter(function(file)

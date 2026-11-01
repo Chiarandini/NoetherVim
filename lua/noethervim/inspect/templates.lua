@@ -2,6 +2,14 @@
 -- the user's config dir with diff confirmation. Pairs with the
 -- :NoetherVim templates picker.
 
+---@diagnostic disable: undefined-doc-name
+
+local Snacks = require("snacks")
+local ui = require("noethervim.inspect.ui")
+local effective_root = ui.effective_root
+local confirm_readonly = ui.confirm_readonly
+local hint_footer = ui.hint_footer
+
 local M = {}
 
 local function read_file(path)
@@ -129,7 +137,7 @@ function M.write(src, dest)
   local diff = ("--- %s\n+++ %s (template)\n%s"):format(dest, src, body or "")
 
   local action = file_exists(dest) and "Overwrite" or "Create"
-  require("noethervim.util.diff_modal").confirm({
+  require("noethervim.inspect.diff_modal").confirm({
     title   = ("%s %s"):format(action, vim.fn.fnamemodify(dest, ":~")),
     diff    = diff,
     on_done = function(accepted)
@@ -152,6 +160,73 @@ function M.write(src, dest)
         vim.cmd("edit " .. vim.fn.fnameescape(dest))
       end)
     end,
+  })
+end
+
+--- The template picker; <C-y> writes one into lua/user/.
+function M.open()
+  local root = effective_root()
+  if not root then return vim.notify("NoetherVim: cannot locate source directory", vim.log.levels.ERROR) end
+
+  local templates = M
+  local items = templates.list(root)
+  if #items == 0 then
+    return vim.notify("NoetherVim: no templates found under templates/", vim.log.levels.WARN)
+  end
+
+  local picker_items = {}
+  for _, t in ipairs(items) do
+    picker_items[#picker_items + 1] = {
+      text     = t.rel .. " " .. t.desc .. (t.exists and " exists" or ""),
+      file     = t.src,
+      rel      = t.rel,
+      src      = t.src,
+      dest     = t.dest,
+      exists   = t.exists,
+      desc     = t.desc,
+    }
+  end
+
+  Snacks.picker({
+    title   = "NoetherVim Templates",
+    items   = picker_items,
+    preview = "file",
+    confirm = confirm_readonly,
+    format  = function(item)
+      local ret = {} ---@type snacks.picker.Highlight[]
+      if item.exists then
+        ret[#ret + 1] = { "[exists] ", "DiagnosticHint" }
+      else
+        ret[#ret + 1] = { "[new]    ", "DiagnosticOk" }
+      end
+      ret[#ret + 1] = { string.format("%-32s", item.rel) }
+      ret[#ret + 1] = { item.desc, "Comment" }
+      return ret
+    end,
+    actions = {
+      write_template = function(picker)
+        local item = picker:current()
+        if not item or not item.src or not item.dest then return end
+        picker:close()
+        M.write(item.src, item.dest)
+      end,
+    },
+    win = {
+      input = {
+        footer     = hint_footer({ { "<cr>", "open" }, { "<c-y>", "write" } }),
+        footer_pos = "center",
+        keys = {
+          ["<CR>"]  = { "confirm",        mode = { "i", "n" }, desc = "open template (readonly)" },
+          ["<C-y>"] = { "write_template", mode = { "i", "n" }, desc = "write template into lua/user/" },
+        },
+      },
+      list = {
+        keys = {
+          ["<CR>"]  = { "confirm",        desc = "open template (readonly)" },
+          ["<C-y>"] = { "write_template", desc = "write template into lua/user/" },
+        },
+      },
+    },
   })
 end
 

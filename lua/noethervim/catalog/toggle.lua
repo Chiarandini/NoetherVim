@@ -221,7 +221,7 @@ function M.enable(category, name)
   end
 
   local diff = M.unified_diff(lines, new_lines, path)
-  require("noethervim.util.diff_modal").confirm({
+  require("noethervim.inspect.diff_modal").confirm({
     title   = ("Enable bundle: %s (%s)"):format(name, op),
     diff    = diff,
     on_done = function(accepted)
@@ -264,7 +264,7 @@ function M.disable(category, name)
 
   local new_lines = M.comment_line(lines, hit.idx)
   local diff = M.unified_diff(lines, new_lines, path)
-  require("noethervim.util.diff_modal").confirm({
+  require("noethervim.inspect.diff_modal").confirm({
     title   = ("Disable bundle: %s"):format(name),
     diff    = diff,
     on_done = function(accepted)

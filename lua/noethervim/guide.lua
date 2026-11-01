@@ -186,7 +186,7 @@ local function bracket_pairs(mode_kms)
 end
 
 -- ── Source jumping ──────────────────────────────────────────────
--- Delegates to the shared jump_to_keymap function in inspect.lua,
+-- Delegates to inspect.jump_to_keymap (inspect/source.lua),
 -- which handles context-aware search patterns, mode-aware matching,
 -- comment skipping, lazy handler resolution, and user file fallback.
 

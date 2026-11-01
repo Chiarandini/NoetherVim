@@ -592,7 +592,7 @@ end, { set = "remaps", desc = "context menu" })
 -- ──────────────────────────────────────────────────────────────
 --  Inspection (SearchLeader+c prefix)
 -- ──────────────────────────────────────────────────────────────
--- Registered here rather than alongside the pickers in inspect.lua, which
+-- Registered here rather than alongside the pickers in inspect/, which
 -- only runs at VeryLazy: a key made after your files could not be removed
 -- from them with vim.keymap.del.
 --

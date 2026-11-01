@@ -39,12 +39,8 @@ local USER_TREE_OK = {
   ["config/init.lua"] = true,
   ["init.lua"] = true,
   ["health.lua"] = true,
-  ["inspect.lua"] = true,
   ["guide.lua"] = true,
-  ["util/templates.lua"] = true,
   ["catalog/toggle.lua"] = true,
-  ["util/keymap_source.lua"] = true,
-  ["util/init.lua"] = true,
   -- the SearchLeader+c pickers, which open the config directory on request
   ["core/foundation/snacks.lua"] = true,
 }
