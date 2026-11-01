@@ -1,6 +1,6 @@
 -- Git statusline components.
 
-local ctx = require("noethervim.plugins.statusline.context")
+local ctx = require("noethervim.lib.statusline.context")
 local sl = require("noethervim.statusline")
 local conditions = require("heirline.conditions")
 

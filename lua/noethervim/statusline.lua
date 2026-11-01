@@ -13,8 +13,8 @@
 -- Visibility is kept here, by id, so the `<C-w>s` keys and the presets work
 -- the same for core blocks and unit segments.
 --
--- The heirline renderer in plugins/statusline/ reads all of it; its adapter
--- for segments is plugins/statusline/segments.lua.
+-- The heirline renderer in lib/statusline/ reads all of it; its adapter
+-- for segments is lib/statusline/segments.lua.
 
 local M = {}
 

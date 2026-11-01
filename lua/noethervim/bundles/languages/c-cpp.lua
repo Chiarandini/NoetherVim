@@ -33,7 +33,7 @@
 
 return {
 	-- ── C / C++ LSP (Mason install scoped to this bundle) ──────────────────
-	-- clangd is in core's enable list (plugins/lsp.lua) and idle until its
+	-- clangd is in core's enable list (core/coding/lsp.lua) and idle until its
 	-- binary is installed; this only installs it.
 	{ "neovim/nvim-lspconfig",
 		opts = function(_, opts)

@@ -104,8 +104,7 @@ vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
   spec = {
-    { dir = "$REPO_ROOT", name = "NoetherVim", import = "noethervim.plugins",
-      config = function() require("noethervim").setup() end },
+    { dir = "$REPO_ROOT", name = "NoetherVim", import = "noethervim.core" },
     { import = "noethervim.bundles.$1" },
     -- Checkpoints 5 and 6 only exist when a tool bundle is enabled alongside
     -- the language bundle; 7 and 8 want the task runner present too.

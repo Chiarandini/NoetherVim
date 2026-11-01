@@ -50,12 +50,13 @@ local CORE_OVERRIDE_MODULES = {
 ---@param rel string
 ---@return string?, string?
 local function counterpart(rel)
-  -- lua/noethervim/plugins/<dir>/<file> → user/plugins/<dir>.lua
-  local plugin_subdir = rel:match("^lua/noethervim/plugins/([^/]+)/")
-  if plugin_subdir then return "lua/user/plugins/" .. plugin_subdir .. ".lua", "plugin" end
-  -- lua/noethervim/plugins/<name>.lua → user/plugins/<name>.lua
-  local plugin = rel:match("^lua/noethervim/plugins/(.+%.lua)$")
-  if plugin then return "lua/user/plugins/" .. plugin, "plugin" end
+  -- lua/noethervim/core/<category>/<name>.lua → user/plugins/<name>.lua
+  local unit = rel:match("^lua/noethervim/core/[^/]+/([^/]+%.lua)$")
+  if unit then return "lua/user/plugins/" .. unit, "plugin" end
+  -- lua/noethervim/lib/<unit>/<file> → user/plugins/<unit>.lua, the unit
+  -- that file belongs to
+  local lib = rel:match("^lua/noethervim/lib/([^/]+)/")
+  if lib then return "lua/user/plugins/" .. lib:gsub("_", "-") .. ".lua", "plugin" end
   -- lua/noethervim/bundles/<category>/<name>.lua → user/plugins/<name>.lua
   -- User overrides target the bundle by its bare name -- the category
   -- subdirectory is purely organizational in the distro.
@@ -1347,7 +1348,6 @@ local function open_diff_split(module_name)
   local upstream = nil
   local candidates = {
     root .. "/lua/noethervim/" .. module_name .. ".lua",
-    root .. "/lua/noethervim/plugins/" .. module_name .. ".lua",
     root .. "/after/lsp/" .. module_name .. ".lua",
   }
   for _, path in ipairs(candidates) do
@@ -1356,13 +1356,11 @@ local function open_diff_split(module_name)
       break
     end
   end
-  if not upstream then
-    -- Bundles live under category subdirectories; search by basename.
-    for _, entry in ipairs(require("noethervim.util").scan_bundles(root .. "/lua/noethervim/bundles")) do
-      if entry.name == module_name then
-        upstream = entry.path
-        break
-      end
+  -- Core units and bundles live under category subdirectories; search by
+  -- basename.
+  for _, dir in ipairs({ "core", "bundles" }) do
+    for _, entry in ipairs(require("noethervim.util").scan_bundles(root .. "/lua/noethervim/" .. dir)) do
+      if not upstream and entry.name == module_name then upstream = entry.path end
     end
   end
 
@@ -1397,11 +1395,10 @@ function M.diff_file(module_name)
   local icons = require("noethervim.util.icons")
 
   local diff_cat_order = { Core = 1, Plugin = 2, Bundle = 3, LSP = 4 }
-  -- Flat-scan groups (bundles are handled separately -- they live under
-  -- category subdirectories, not directly in bundles/).
+  -- Flat-scan groups (core units and bundles are handled separately: they
+  -- live under category subdirectories).
   local groups = {
     { cat = "Core",   dir = root .. "/lua/noethervim" },
-    { cat = "Plugin", dir = root .. "/lua/noethervim/plugins" },
     { cat = "LSP",    dir = root .. "/after/lsp" },
   }
 
@@ -1446,7 +1443,9 @@ function M.diff_file(module_name)
     end
   end
 
-  -- Bundles (category subdirectories)
+  for _, entry in ipairs(require("noethervim.util").scan_bundles(root .. "/lua/noethervim/core")) do
+    add_item("Plugin", entry.name, entry.path, true)
+  end
   for _, entry in ipairs(require("noethervim.util").scan_bundles(root .. "/lua/noethervim/bundles")) do
     add_item("Bundle", entry.name, entry.path, enabled_bundles[entry.name] or false)
   end
@@ -1526,7 +1525,6 @@ local function diff_targets()
   local modules = {}
   for _, dir in ipairs({
     root .. "/lua/noethervim",
-    root .. "/lua/noethervim/plugins",
     root .. "/after/lsp",
   }) do
     for _, mod in ipairs(scan_lua_modules(dir)) do
@@ -1536,10 +1534,13 @@ local function diff_targets()
       end
     end
   end
-  for _, entry in ipairs(require("noethervim.util").scan_bundles(root .. "/lua/noethervim/bundles")) do
-    if not seen[entry.name] then
-      seen[entry.name] = true
-      modules[#modules + 1] = entry.name
+  local util = require("noethervim.util")
+  for _, dir in ipairs({ "core", "bundles" }) do
+    for _, entry in ipairs(util.scan_bundles(root .. "/lua/noethervim/" .. dir)) do
+      if not seen[entry.name] then
+        seen[entry.name] = true
+        modules[#modules + 1] = entry.name
+      end
     end
   end
   table.sort(modules)

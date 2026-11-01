@@ -208,23 +208,18 @@ function M.plugin_spec_files()
   local root = init and vim.fn.fnamemodify(init, ":h:h:h")
   if not root then return by_plugin end
 
-  -- Collect files: plugins/ (flat), user/plugins/ (flat), bundles/ (category subdirs).
+  -- Collect files: user/plugins/ (flat), core/ and bundles/ (category subdirs).
   local files = {}
-  for _, dir in ipairs({ root .. "/lua/noethervim/plugins",
-                         vim.fn.stdpath("config") .. "/lua/user/plugins" }) do
-    local handle = vim.uv.fs_scandir(dir)
-    if handle then
-      while true do
-        local name, ftype = vim.uv.fs_scandir_next(handle)
-        if not name then break end
-        if (ftype == "file" or ftype == "link") and name:match("%.lua$") then
-          files[#files + 1] = vim.fs.joinpath(dir, name)
-        end
-      end
+  local user = vim.fn.stdpath("config") .. "/lua/user/plugins"
+  for name, ftype in vim.fs.dir(user) do
+    if (ftype == "file" or ftype == "link") and name:match("%.lua$") then
+      files[#files + 1] = vim.fs.joinpath(user, name)
     end
   end
-  for _, entry in ipairs(M.scan_bundles(root .. "/lua/noethervim/bundles")) do
-    files[#files + 1] = entry.path
+  for _, dir in ipairs({ "core", "bundles" }) do
+    for _, entry in ipairs(M.scan_bundles(root .. "/lua/noethervim/" .. dir)) do
+      files[#files + 1] = entry.path
+    end
   end
 
   local plugin_names = {}

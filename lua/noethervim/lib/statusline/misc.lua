@@ -1,6 +1,6 @@
 -- Small utility and miscellaneous statusline components.
 
-local ctx = require("noethervim.plugins.statusline.context")
+local ctx = require("noethervim.lib.statusline.context")
 local icons = require("noethervim.util.icons")
 local utils = require("heirline.utils")
 

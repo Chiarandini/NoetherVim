@@ -1,4 +1,8 @@
--- NoetherVim's own spec, merged over the one in your init.lua. It is a start
+-- `import = "noethervim.core"` in init.lua: NoetherVim's own spec, then
+-- every core unit, one import per directory under core/ (a category), so a
+-- new category loads without editing a list.
+--
+-- NoetherVim's spec merges over the one in your init.lua. It is a start
 -- plugin whatever lazy.nvim's defaults say, and loads first among them, so
 -- its defaults, plugin globals and key rows are in place before any other
 -- plugin's config runs.
@@ -19,7 +23,7 @@ require("noethervim.default")
 -- sources nothing from your plugin/, after/ or ftplugin/ either.
 if config.user_off() then config.prune_rtp() end
 
-return {
+local specs = { {
   "NoetherVim",
   lazy = false,
   priority = 10000,
@@ -33,4 +37,16 @@ return {
     return opts
   end,
   config = function(_, opts) require("noethervim").setup(opts) end,
-}
+} }
+
+local dir = vim.fs.dirname(debug.getinfo(1, "S").source:sub(2)) .. "/core"
+local categories = {}
+for name, kind in vim.fs.dir(dir) do
+  if kind == "directory" then table.insert(categories, name) end
+end
+table.sort(categories)
+for _, name in ipairs(categories) do
+  table.insert(specs, { import = "noethervim.core." .. name })
+end
+
+return specs

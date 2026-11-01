@@ -1,6 +1,6 @@
 -- Winbar components (diff-side labels).
 
-local ctx = require("noethervim.plugins.statusline.context")
+local ctx = require("noethervim.lib.statusline.context")
 local conditions = require("heirline.conditions")
 local utils = require("heirline.utils")
 

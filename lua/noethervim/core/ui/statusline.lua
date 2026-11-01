@@ -2,20 +2,20 @@
 --
 -- Where things are, because three files answer to "statusline":
 --
---   plugins/statusline/init.lua        THIS FILE. The plugin spec. Resolves
+--   core/ui/statusline.lua             THIS FILE. The plugin spec. Resolves
 --                                      colours and edge style, requires the
 --                                      component modules in the order their
 --                                      construction demands, and calls
 --                                      heirline.setup().
---   plugins/statusline/statuslines.lua Which bar each kind of window gets --
+--   lib/statusline/statuslines.lua     Which bar each kind of window gets --
 --                                      normal, help, terminal, quickfix,
 --                                      dashboard -- and the order they are
 --                                      tried in. The assembly step.
---   plugins/statusline/<name>.lua      One component each: the mode chip, the
+--   lib/statusline/<name>.lua          One component each: the mode chip, the
 --                                      git counters, the ruler, the filename
 --                                      block. context.lua holds the colours
 --                                      and helpers they share.
---   plugins/statusline/segments.lua   Heirline's side of the segments units
+--   lib/statusline/segments.lua        Heirline's side of the segments units
 --                                      and you declare: one component each,
 --                                      laid out by id among the core blocks.
 --   noethervim/statusline.lua          NOT part of the build. The data any
@@ -28,7 +28,7 @@ return {
     event = 'UIEnter',
     specs = {
       { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute(
-        "heirline.nvim", require("noethervim.plugins.statusline.keymaps").rows()) },
+        "heirline.nvim", require("noethervim.lib.statusline.keymaps").rows()) },
       { "which-key.nvim", optional = true, opts = require("noethervim.util").labels({
         { "<c-w>s", icon = { icon = require("noethervim.util").icons.plus, color = "red" }, group = "Statusline" },
       }) },
@@ -39,7 +39,7 @@ return {
 
       -- ── Shared context ───────────────────────────────────────
 
-      local ctx = require("noethervim.plugins.statusline.context")
+      local ctx = require("noethervim.lib.statusline.context")
       local nv_sl = require("noethervim.statusline")
 
       -- Populate the shared colors table (mutated in-place so all modules
@@ -62,16 +62,16 @@ return {
 
       -- ── Component modules ────────────────────────────────────
 
-      local vimode    = require("noethervim.plugins.statusline.vimode")
-      local filename  = require("noethervim.plugins.statusline.filename")
-      local diag      = require("noethervim.plugins.statusline.diagnostics")
-      local git       = require("noethervim.plugins.statusline.git")
-      local lsp       = require("noethervim.plugins.statusline.lsp")
-      local ruler     = require("noethervim.plugins.statusline.ruler")
-      local misc      = require("noethervim.plugins.statusline.misc")
-      local segments  = require("noethervim.plugins.statusline.segments")
-      local tabline   = require("noethervim.plugins.statusline.tabline")
-      local winbar    = require("noethervim.plugins.statusline.winbar")
+      local vimode    = require("noethervim.lib.statusline.vimode")
+      local filename  = require("noethervim.lib.statusline.filename")
+      local diag      = require("noethervim.lib.statusline.diagnostics")
+      local git       = require("noethervim.lib.statusline.git")
+      local lsp       = require("noethervim.lib.statusline.lsp")
+      local ruler     = require("noethervim.lib.statusline.ruler")
+      local misc      = require("noethervim.lib.statusline.misc")
+      local segments  = require("noethervim.lib.statusline.segments")
+      local tabline   = require("noethervim.lib.statusline.tabline")
+      local winbar    = require("noethervim.lib.statusline.winbar")
 
       -- ── Assembly ─────────────────────────────────────────────
 
@@ -117,7 +117,7 @@ return {
       -- Which window gets which bar: see statuslines.lua next door. Passed
       -- the already-required components, because their require order is
       -- load-bearing (see the note above `edges`).
-      local StatusLines = require("noethervim.plugins.statusline.statuslines")(
+      local StatusLines = require("noethervim.lib.statusline.statuslines")(
         conditions, ctx, edges, vimode, filename, git, lsp, ruler, misc,
         insert_aware_bg, CircleComponent, MainComponent)
 

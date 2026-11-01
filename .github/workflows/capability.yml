@@ -29,7 +29,7 @@ on:
       - "lua/noethervim/bundles/tools/task-runner.lua"
       - "lua/noethervim/util/run.lua"
       - "lua/noethervim/util/mason_install.lua"
-      - "lua/noethervim/plugins/lsp.lua"
+      - "lua/noethervim/core/coding/lsp.lua"
       - "lua/noethervim/lsp/**"
       - "tests/capability*"
       - "tests/fixtures/lang/**"

@@ -55,7 +55,7 @@ local SearchLeader = require("noethervim.util").search_leader
 return {
 
   -- ── smart-enter.nvim: LaTeX environment continuation ──────────────────────
-  -- The plugin and its global <S-CR> come from core (plugins/smart-enter.lua).
+  -- The plugin and its global <S-CR> come from core (core/editing/smart-enter.lua).
   -- This only adds the LaTeX rules, merged into core's opts by lazy:
   -- "\\" in math rows, "\\" then "&= " in align, "\item " in lists.
   {
@@ -69,7 +69,7 @@ return {
 
   -- ── texlab LSP (Mason install scoped to this bundle) ──────────────────────
   -- texlab's settings are in after/lsp/texlab.lua, and texlab is in core's
-  -- enable list (plugins/lsp.lua), idle until its binary is installed.
+  -- enable list (core/coding/lsp.lua), idle until its binary is installed.
   { "neovim/nvim-lspconfig",
     opts = function(_, opts)
       opts.ensure_installed = opts.ensure_installed or {}

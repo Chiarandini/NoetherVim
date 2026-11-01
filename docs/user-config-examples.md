@@ -223,7 +223,7 @@ local ns = vim.api.nvim_create_augroup("user_mode_linenr", { clear = true })
 -- Read the colours off the statusline palette so this tracks the theme,
 -- and the mode colours you may already have overridden in config.lua.
 local function mode_fg()
-    local ctx = require("noethervim.plugins.statusline.context")
+    local ctx = require("noethervim.lib.statusline.context")
     return ctx.mode_colors[vim.fn.mode(1):sub(1, 1)] or ctx.colors.text_gray
 end
 

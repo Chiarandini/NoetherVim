@@ -46,7 +46,7 @@ local USER_TREE_OK = {
   ["util/keymap_source.lua"] = true,
   ["util/init.lua"] = true,
   -- the SearchLeader+c pickers, which open the config directory on request
-  ["plugins/snacks.lua"] = true,
+  ["core/foundation/snacks.lua"] = true,
 }
 
 local hits = {}
@@ -87,7 +87,7 @@ for _, rel in ipairs(files()) do
       end
     end
 
-    local spec_file = vim.startswith(rel, "plugins/") or vim.startswith(rel, "bundles/")
+    local spec_file = vim.startswith(rel, "core/") or vim.startswith(rel, "bundles/")
 
     -- R6: a spec init. Heirline components take `self`; a spec's init
     -- takes the plugin, which distro specs never use.

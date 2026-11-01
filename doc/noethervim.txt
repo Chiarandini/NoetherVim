@@ -1894,8 +1894,8 @@ These keymaps activate only in their respective filetype, except for the
                         The confirmation itself is the one `:w` would show
     Note: to go without the confirmation on small edits, set
     `skip_confirm_for_simple_edits` in a user override for oil. Open
-    NoetherVim's `plugins/oil.lua` and run `:NoetherVim override`, or write
-    `lua/user/plugins/oil.lua` yourself: >lua
+    NoetherVim's `core/navigation/oil.lua` and run `:NoetherVim override`,
+    or write `lua/user/plugins/oil.lua` yourself: >lua
         return {
           "stevearc/oil.nvim",
           opts = { skip_confirm_for_simple_edits = true },
@@ -2871,8 +2871,8 @@ A: No; auto-formatting is deliberately off. Use `<Leader>ff` for
 Q: How do I change a picker keymap?~
 A: NoetherVim uses snacks.picker as the core UI. Default picker keymaps live
    in bundles (e.g. `bundles/languages/latex.lua`) or core plugin files (e.g.
-   `plugins/snacks.lua`). Override them in `user/keymaps.lua` or by specifying
-   `keys` in your plugin override spec.
+   `core/foundation/snacks.lua`). Override them in `user/keymaps.lua` or by
+   specifying `keys` in your plugin override spec.
 
 Q: Why does my override have no effect?~
 A: Check `:NoetherVim status` to verify your files are loaded. Check

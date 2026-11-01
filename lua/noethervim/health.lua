@@ -493,7 +493,9 @@ function M.check()
         local name = vim.fn.fnamemodify(d.user_path, ":t:r")
         if d.current == nil then
           h.warn(("%s overrides %s, which no longer exists upstream"):format(
-            vim.fn.fnamemodify(d.user_path, ":~"), d.rel))
+            vim.fn.fnamemodify(d.user_path, ":~"), d.rel),
+            { ("If it moved, `:NoetherVim diff %s` opens it; run `:NoetherVim override` from there "
+              .. "to clear this"):format(name) })
         else
           h.warn(("%s changed since you overrode it -- compare with `:NoetherVim diff %s`, "
             .. "then re-run `:NoetherVim override` from it to clear this"):format(d.rel, name))
@@ -503,9 +505,34 @@ function M.check()
   end
 
   -- ── Template version ─────────────────────────────────────────────────
-  -- Skip in dev mode: the local-testing init.lua is a wrapper, not a
-  -- user-template instance, so it intentionally has no version marker.
   h.start("Template version")
+  local lazy_cfg = require("lazy.core.config")
+  -- noethervim.core imports one module per category; lazy records those.
+  local core = vim.iter(lazy_cfg.spec.modules):any(function(m) return vim.startswith(m, "noethervim.core.") end)
+  if not core then
+    h.error("NoetherVim's core is not imported, so none of its plugins are loaded", {
+      'In init.lua, set `import = "noethervim.core"` on the NoetherVim spec '
+        .. '(template v3 and older import "noethervim.plugins"); see NEWS.md',
+    })
+  else
+    -- A plugin NoetherVim replaces with another is switched off by the unit
+    -- that replaces it, so disabling that unit brings Neovim's back. In
+    -- disabled_plugins as well, it stays off either way.
+    local replaced_by = { netrwPlugin = "oil.nvim", matchit = "vim-matchup", matchparen = "vim-matchup" }
+    for _, name in ipairs(lazy_cfg.options.performance.rtp.disabled_plugins or {}) do
+      local by = replaced_by[name]
+      if by and lazy_cfg.plugins[by] then
+        h.info(("`%s` in disabled_plugins is redundant: %s switches it off, and back on when you disable %s")
+          :format(name, by, by))
+      elseif by then
+        h.warn(("`%s` is in disabled_plugins and %s is off, so nothing replaces it"):format(name, by),
+          { ("Remove `%s` from performance.rtp.disabled_plugins in init.lua"):format(name) })
+      end
+    end
+  end
+
+  -- Skip the version check in dev mode: the local-testing init.lua is a
+  -- wrapper, not a user-template instance, so it has no version marker.
   if vim.g.noethervim_dev then
     h.info("Skipped (vim.g.noethervim_dev set -- not a user-template install)")
   else

@@ -70,7 +70,7 @@ end
 return {
 
   -- ── marksman LSP (Mason install scoped to this bundle) ────────────────────
-  -- marksman is in core's enable list (plugins/lsp.lua), idle until its
+  -- marksman is in core's enable list (core/coding/lsp.lua), idle until its
   -- binary is installed. Cross-file completion needs a project root: an
   -- empty .marksman.toml at the repo root, or a git repo.
   { "neovim/nvim-lspconfig",

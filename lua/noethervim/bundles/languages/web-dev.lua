@@ -26,7 +26,7 @@
 
 return {
 	-- ── Web LSPs (Mason install scoped to this bundle) ─────────────────────
-	-- ts_ls, cssls and eslint are in core's enable list (plugins/lsp.lua)
+	-- ts_ls, cssls and eslint are in core's enable list (core/coding/lsp.lua)
 	-- and idle until their binaries are installed; this only installs them.
 	{ "neovim/nvim-lspconfig",
 		opts = function(_, opts)

@@ -4,6 +4,24 @@ Breaking and behavior changes, newest first, each with what to do about it.
 During the alpha, changes land without deprecation periods; this file is
 where they are listed.
 
+## 2026-11-01
+
+- **`init.lua` imports `noethervim.core`:** in the NoetherVim spec, change
+  `import = "noethervim.plugins"` to `import = "noethervim.core"`. Until
+  then lazy.nvim reports `No specs found for module "noethervim.plugins"`
+  and none of NoetherVim's plugins load. The
+  `config = function() require("noethervim").setup() end` line can go too,
+  and so can `matchit`, `matchparen` and `netrwPlugin` in
+  `disabled_plugins`: vim-matchup and oil switch those off, and back on
+  when you disable them. `init.lua.example` (template v4) has the new
+  shape; `:checkhealth noethervim` names whatever is left.
+- **NoetherVim's spec files moved to `lua/noethervim/core/<category>/`.**
+  An override created with `:NoetherVim override` before the move is
+  reported by `:checkhealth noethervim` as overriding a file that no
+  longer exists; run `:NoetherVim override` from the file's new place to
+  clear it. `require("noethervim.plugins.statusline.context")` is now
+  `require("noethervim.lib.statusline.context")`.
+
 ## 2026-10-30
 
 - **`opts` on rustaceanvim, neominimap and fff merge with NoetherVim's,**

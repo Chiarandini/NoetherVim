@@ -1,4 +1,4 @@
--- noethervim-template-version: 3
+-- noethervim-template-version: 4
 -- NoetherVim user config template.
 -- Copy this file to ~/.config/nvim/init.lua
 --
@@ -47,8 +47,11 @@ if not vim.uv.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
-local noethervimpath = vim.fn.stdpath("data") .. "/lazy/NoetherVim"
-if not vim.uv.fs_stat(noethervimpath) then
+-- With vim.g.noethervim_dev set to a checkout (before this file runs),
+-- NoetherVim loads from that checkout instead of the clone.
+local dev = vim.g.noethervim_dev and vim.fn.expand(vim.g.noethervim_dev)
+local noethervimpath = dev or (vim.fn.stdpath("data") .. "/lazy/NoetherVim")
+if not dev and not vim.uv.fs_stat(noethervimpath) then
 	vim.fn.system({
 		"git", "clone", "--filter=blob:none",
 		"https://github.com/Chiarandini/NoetherVim.git",
@@ -70,15 +73,11 @@ require("lazy").setup({
 
 		-- ── Distro core ──────────────────────────────────────────────────
 		-- Installs NoetherVim as a lazy plugin and imports all core plugins.
-		-- Update with :Lazy update (or :Lazy sync).
-		{
-			"Chiarandini/NoetherVim",
-			import = "noethervim.plugins",
-			-- All user-facing options (colorscheme, statusline, bundle
-			-- settings, etc.) live in lua/user/config.lua.  This entry
-			-- is just the lazy spec; setup() reads the user config itself.
-			config = function() require("noethervim").setup() end,
-		},
+		-- Update with :Lazy update (or :Lazy sync). All user-facing options
+		-- (colorscheme, statusline, bundle settings, etc.) live in
+		-- lua/user/config.lua.
+		dev and { dir = dev, name = "NoetherVim", import = "noethervim.core" }
+			or { "Chiarandini/NoetherVim", import = "noethervim.core" },
 
 		-- ── Bundles (opt-in) ─────────────────────────────────────────────
 		-- Uncomment the bundles you want.  Each import string maps to a
@@ -164,15 +163,11 @@ require("lazy").setup({
 
 	performance = {
 		rtp = {
-			-- Keep the user config dir on the rtp after lazy's reset,
-			-- so that user.plugins and user.configs are importable.
-			paths = { vim.fn.stdpath("config") },
 			-- `tutor` is deliberately absent: it defines `:Tutor`, which
-			-- NoetherVim's own lessons are delivered through.
-			disabled_plugins = {
-				"gzip", "matchit", "matchparen", "netrwPlugin",
-				"tarPlugin", "zipPlugin",
-			},
+			-- NoetherVim's own lessons are delivered through. netrw, matchit
+			-- and matchparen are switched off by the plugins that replace
+			-- them (oil, vim-matchup), so disabling one brings Neovim's back.
+			disabled_plugins = { "gzip", "tarPlugin", "zipPlugin" },
 		},
 	},
 

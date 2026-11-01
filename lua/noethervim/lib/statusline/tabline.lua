@@ -1,6 +1,6 @@
 -- Tabline statusline components.
 
-local ctx = require("noethervim.plugins.statusline.context")
+local ctx = require("noethervim.lib.statusline.context")
 local utils = require("heirline.utils")
 
 local M = {}

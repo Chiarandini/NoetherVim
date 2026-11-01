@@ -1,6 +1,6 @@
 -- Position, percentage, and file size statusline components.
 
-local ctx = require("noethervim.plugins.statusline.context")
+local ctx = require("noethervim.lib.statusline.context")
 
 local M = {}
 

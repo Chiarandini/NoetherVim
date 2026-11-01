@@ -1,6 +1,6 @@
 --- How to run the current file, and how to run the project around it.
 ---
---- This used to live in two places that disagreed: `plugins/code-runner.lua`
+--- This used to live in two places that disagreed: `core/tools/code-runner.lua`
 --- knew java, python, typescript and rust, while `bundles/tools/task-runner.lua`
 --- knew a different thirteen and not rust. Adding a language meant remembering
 --- both, and nobody did. One table, two consumers.

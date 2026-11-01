@@ -1,6 +1,6 @@
 -- ViMode component: mode indicator with search results, oil, and keyboard overlays.
 
-local ctx = require("noethervim.plugins.statusline.context")
+local ctx = require("noethervim.lib.statusline.context")
 local utils = require("heirline.utils")
 
 local M = {}

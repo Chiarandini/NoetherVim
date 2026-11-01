@@ -104,35 +104,21 @@ if [ -z "$dev_path" ]; then
 	cp "$template" "$config_dir/init.lua"
 	echo "Wrote $config_dir/init.lua (clones NoetherVim from GitHub on first launch)."
 else
-	# Two edits, both anchored on lines that have been stable since the
-	# template existed. Anchors are verified before rewriting so a template
-	# reshuffle fails here rather than producing a config that silently
-	# tests the GitHub clone instead of the local checkout.
-	for anchor in 'local noethervimpath = ' '"Chiarandini/NoetherVim",'; do
-		grep -qF "$anchor" "$template" || {
-			echo "init.lua.example no longer contains: $anchor" >&2
-			echo "tools/fresh-install.sh needs updating." >&2
-			exit 1
-		}
-	done
-
-	awk -v dev="$dev_path" '
-		# Point the runtimepath prepend at the working tree. The clone block
-		# below it is then skipped, because the directory already exists.
-		/^local noethervimpath = / {
-			print "local noethervimpath = \"" dev "\""
-			next
-		}
-		# Give the lazy spec an explicit dir so lazy.nvim manages the local
-		# checkout in place instead of cloning its own copy.
-		/"Chiarandini\/NoetherVim",/ {
-			print
-			match($0, /^[ \t]*/)
-			print substr($0, 1, RLENGTH) "dir = \"" dev "\","
-			next
-		}
-		{ print }
-	' "$template" > "$config_dir/init.lua"
+	# The template loads NoetherVim from a checkout when vim.g.noethervim_dev
+	# names one, so the install is the template plus that line, set after the
+	# version marker. Nothing else in the template is rewritten, so a
+	# reshuffle of it cannot break this; a template that stops reading the
+	# variable fails here instead of testing the GitHub clone.
+	grep -qF 'vim.g.noethervim_dev' "$template" || {
+		echo "init.lua.example no longer reads vim.g.noethervim_dev;" >&2
+		echo "tools/fresh-install.sh needs updating." >&2
+		exit 1
+	}
+	{
+		head -n 1 "$template"
+		printf 'vim.g.noethervim_dev = "%s"\n' "$dev_path"
+		tail -n +2 "$template"
+	} > "$config_dir/init.lua"
 
 	echo "Wrote $config_dir/init.lua (loads NoetherVim from $dev_path)."
 fi

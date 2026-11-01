@@ -181,7 +181,8 @@ NoetherVim.
 
 ### Updating
 
-Run `:Lazy update` inside Neovim. This updates the distro and all plugins.
+Run `:Lazy update` inside Neovim. This updates the distro and all plugins. During the alpha,
+changes land without deprecation periods; [NEWS.md](NEWS.md) lists each one with what to change.
 
 ### Migrating from an existing config
 

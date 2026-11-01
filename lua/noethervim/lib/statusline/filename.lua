@@ -1,6 +1,6 @@
 -- Filename-related statusline components.
 
-local ctx = require("noethervim.plugins.statusline.context")
+local ctx = require("noethervim.lib.statusline.context")
 local sl = require("noethervim.statusline")
 local icons = require("noethervim.util.icons")
 local nv = require("noethervim.util")
