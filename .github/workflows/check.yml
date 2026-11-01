@@ -69,7 +69,7 @@ jobs:
           version: stable
 
       # Under NOETHERVIM_NO_USER nothing of the user's may be read, and only
-      # lua/noethervim/config.lua knows that, so every read of lua/user/ or
+      # lua/noethervim/config/init.lua knows that, so every read of lua/user/ or
       # of the config directory goes through it. The same pass checks that
       # the files setup() sources are never required, and that a plugin
       # config hands the spec's opts to setup(). tools/lint-layers.lua

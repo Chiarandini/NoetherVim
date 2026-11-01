@@ -18,7 +18,7 @@ local _file = vim.fn.stdpath("state") .. "/noethervim/colorscheme"
 local _tweaks = {} ---@type table<string, vim.api.keyset.highlight>
 
 --- The scheme the distribution ships and pins. `theme/palette.lua` hand-tunes the
---- statusline against it and `highlights.lua` special-cases it twice, so it is
+--- statusline against it and `theme/highlights.lua` special-cases it twice, so it is
 --- also the safe landing spot when a requested scheme cannot be loaded.
 M.DEFAULT = "gruvbox"
 

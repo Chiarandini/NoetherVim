@@ -121,7 +121,7 @@ function M.check()
 
     if root and #keys > 0 then
       h.start("Bundle requirements")
-      local bundle_meta = require("noethervim.util.bundle_meta")
+      local bundle_meta = require("noethervim.catalog.meta")
       local bundles_dir = root .. "/lua/noethervim/bundles"
       local found_any = false
 
@@ -322,7 +322,7 @@ function M.check()
     -- every run: a snippet that is missing because you switched it off months
     -- ago is indistinguishable from one that never loaded, and this is the
     -- only place that tells the two apart.
-    local store_ok, store = pcall(require, "noethervim.util.snippet_store")
+    local store_ok, store = pcall(require, "noethervim.snippets.store")
     if store_ok then
       local audit_ok, report = pcall(store.audit)
       if audit_ok and report then
@@ -372,7 +372,7 @@ function M.check()
     -- A snippet LuaSnip did not record a source for cannot be written down,
     -- only switched off until the next restart. Worth saying plainly, since
     -- the switch appears to work and then does not survive.
-    local id_ok, snippet_id = pcall(require, "noethervim.util.snippet_id")
+    local id_ok, snippet_id = pcall(require, "noethervim.snippets.id")
     if id_ok then
       local nameless = 0
       for _, ft in ipairs(names) do
@@ -594,7 +594,7 @@ function M.check()
     h.info("Clean room: the user layer is off (NOETHERVIM_NO_USER), so lua/user/config.lua is not read")
   else
     local user_cfg = config.get()
-    local cfg_validator = require("noethervim.util.config")
+    local cfg_validator = require("noethervim.config.validate")
     local errors, unknowns = cfg_validator.validate_user_config(user_cfg)
     for _, err in ipairs(errors) do h.warn(err) end
     if #unknowns > 0 then

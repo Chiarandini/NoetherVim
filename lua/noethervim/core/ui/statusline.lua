@@ -18,7 +18,7 @@
 --   lib/statusline/segments.lua        Heirline's side of the segments units
 --                                      and you declare: one component each,
 --                                      laid out by id among the core blocks.
---   noethervim/statusline.lua          NOT part of the build. The data any
+--   noethervim/statusline/init.lua     NOT part of the build. The data any
 --                                      statusline reads: segments, busy
 --                                      entries, visibility by id, presets,
 --                                      and your `statusline` settings.

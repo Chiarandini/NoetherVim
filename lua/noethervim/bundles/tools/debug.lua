@@ -557,7 +557,7 @@ return {
 			-- texthl uses DiagnosticSign* (not Diagnostic*) so colorscheme
 			-- attrs meant for virtual text (italic, bg, underline) don't leak
 			-- into the signcolumn glyph. Sign groups are normalized to fg-only
-			-- in highlights.lua.
+			-- in theme/highlights.lua.
 			local signs = {
 				Stopped             = { ic.dap_stopped,              "DiagnosticSignWarn",  "DapStoppedLine" },
 				Breakpoint          = { ic.dap_breakpoint,           "DiagnosticSignError" },

@@ -76,7 +76,7 @@ return {
 		}, {
 			-- ── Clicking a glyph ──────────────────────────────────────────
 			-- The status consumer marks every test's line in the sign column,
-			-- and a sign has no click callback of its own; util/gutter.lua owns
+			-- and a sign has no click callback of its own; gutter.lua owns
 			-- the 'statuscolumn' click region that lends it one.
 			--
 			-- The action follows the glyph. A result glyph has something to

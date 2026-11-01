@@ -39,8 +39,8 @@ local LAYOUT = { layout = true }
 -- Both strings put the sign item inside a click region. A sign has no click
 -- callback of its own, and `%@...@` in a 'statuscolumn' is the only hook
 -- Neovim offers, which is why the column is set even where there is no wrap
--- marker to draw. What a click does lives in util/gutter.lua.
-local sign_click = "%@v:lua.require'noethervim.util.gutter'.on_click@%s%X"
+-- marker to draw. What a click does lives in gutter.lua.
+local sign_click = "%@v:lua.require'noethervim.gutter'.on_click@%s%X"
 
 local wrap_statuscolumn =
   "%C" .. sign_click

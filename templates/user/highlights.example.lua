@@ -6,7 +6,7 @@
 -- This file runs AFTER the colorscheme is applied, so your overrides
 -- are not wiped by the theme.
 --
--- See noethervim/highlights.lua for the distro's highlight tweaks.
+-- See noethervim/theme/highlights.lua for the distro's highlight tweaks.
 -- See :help noethervim-user-highlights for documentation.
 
 -- ── Override highlight groups ────────────────────────────────────────────────

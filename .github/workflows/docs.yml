@@ -18,7 +18,7 @@ on:
       # the run entirely, and the drift gate that exists to catch exactly
       # that would never fire.
       - "lua/noethervim/bundles/**"
-      - "lua/noethervim/util/bundle_meta.lua"
+      - "lua/noethervim/catalog/meta.lua"
       - "tools/gen-docs.lua"
       # The vimdoc is published as the site's reference manual by
       # sync-docs.mjs, and gen-docs.lua writes its bundle count. A change to

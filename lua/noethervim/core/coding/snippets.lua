@@ -152,7 +152,7 @@ return {
 						transform_items = function(_, items)
 							local ok, ls = pcall(require, "luasnip")
 							if not ok then return items end
-							local snippets = require("noethervim.util.snippets")
+							local snippets = require("noethervim.snippets.engine")
 							return vim.tbl_filter(function(item)
 								local id = item.data and item.data.snip_id
 								if not id then return true end
@@ -242,7 +242,7 @@ config = function(_, opts)
 	-- snippets during this call. Installed afterwards, the listener would miss
 	-- that first batch and snippets you had switched off would come back until
 	-- the next load.
-	require("noethervim.util.snippet_store").install()
+	require("noethervim.snippets.store").install()
 
 	-- Your snippets, unless the user layer is off.
 	local user_dir = require("noethervim.config").user_dir()

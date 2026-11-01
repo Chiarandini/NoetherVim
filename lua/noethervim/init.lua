@@ -268,12 +268,12 @@ function M.setup(opts)
     cs.apply(user_cfg.colorscheme or cs.DEFAULT,
       user_cfg.colorscheme and "config" or "default")
   end
-  source("highlights.lua")
+  source("theme/highlights.lua")
 
   -- A bundle that recommends itself for a filetype is offered once, on the
   -- first buffer of that filetype, in an install without it. Not in a
   -- session without a UI, which could not show it.
-  if #vim.api.nvim_list_uis() > 0 then require("noethervim.util.recommend").setup() end
+  if #vim.api.nvim_list_uis() > 0 then require("noethervim.catalog.recommend").setup() end
 
   -- Registrations units need from the start, in id order, once NoetherVim
   -- itself is set up.

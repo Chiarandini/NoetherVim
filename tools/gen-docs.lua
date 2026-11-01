@@ -16,7 +16,7 @@
 local root = vim.fn.fnamemodify(debug.getinfo(1, 'S').source:sub(2), ':h:h')
 vim.opt.rtp:prepend(root)
 
-local bundle_meta = require('noethervim.util.bundle_meta')
+local bundle_meta = require('noethervim.catalog.meta')
 local metas = bundle_meta.scan(root .. '/lua/noethervim/bundles')
 
 local errors = {}
@@ -78,7 +78,7 @@ local known = {}
 for _, cat in ipairs(CATEGORIES) do known[cat.key] = true end
 for _, b in ipairs(bundles) do
   if not known[b.category] then
-    error(('bundles/%s/ is not in CATEGORIES (lua/noethervim/util/bundle_meta.lua); '
+    error(('bundles/%s/ is not in CATEGORIES (lua/noethervim/catalog/meta.lua); '
       .. 'add it there or its bundles are left out of the docs'):format(b.category), 0)
   end
   by_category[b.category] = by_category[b.category] or {}

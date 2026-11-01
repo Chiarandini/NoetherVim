@@ -24,8 +24,8 @@
 
 local M = {}
 
-local id_mod = require('noethervim.util.snippet_id')
-local engine = require('noethervim.util.snippets')
+local id_mod = require('noethervim.snippets.id')
+local engine = require('noethervim.snippets.engine')
 
 local function toggle_path()
   return vim.fs.joinpath(

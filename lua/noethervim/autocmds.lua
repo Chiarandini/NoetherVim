@@ -10,7 +10,7 @@
 
 vim.api.nvim_create_autocmd("FileType", {
   group = vim.api.nvim_create_augroup("noethervim_q_close", { clear = true }),
-  pattern = require("noethervim.util.filetypes").q_close,
+  pattern = require("noethervim.profiles.classes").q_close,
   callback = function(ev)
     vim.keymap.set("n", "q", "<cmd>close<cr>", { buf = ev.buf, silent = true, nowait = true })
   end,

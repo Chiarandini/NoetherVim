@@ -61,7 +61,7 @@ local function drawn_sign(buf, lnum)
 end
 
 --- 'statuscolumn' click callback, wired in as
---- `%@v:lua.require'noethervim.util.gutter'.on_click@%s%X`.
+--- `%@v:lua.require'noethervim.gutter'.on_click@%s%X`.
 ---
 --- Neovim moves the cursor to the clicked line before this runs, but the
 --- window and line come from the mouse rather than from the cursor: a click

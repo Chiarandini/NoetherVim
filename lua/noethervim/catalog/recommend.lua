@@ -44,7 +44,7 @@ local function scan()
     if key then enabled[key] = true end
   end
   local bundles = vim.fn.fnamemodify(init, ":h") .. "/bundles"
-  for _, meta in ipairs(require("noethervim.util.bundle_meta").scan(bundles)) do
+  for _, meta in ipairs(require("noethervim.catalog.meta").scan(bundles)) do
     local key = meta.category .. "." .. meta.name
     if meta.recommended and not enabled[key] and not done[key] then
       for _, ft in ipairs(meta.recommended) do
@@ -101,7 +101,7 @@ local function show(meta)
   end
   vim.keymap.set("n", "<CR>", function()
     close()
-    require("noethervim.util.bundle_toggle").enable(meta.category, meta.name)
+    require("noethervim.catalog.toggle").enable(meta.category, meta.name)
   end, { buf = buf, nowait = true, desc = "review and enable the bundle" })
   for _, lhs in ipairs({ "<Esc>", "q" }) do
     vim.keymap.set("n", lhs, close, { buf = buf, nowait = true, desc = "close" })

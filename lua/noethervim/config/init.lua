@@ -53,7 +53,7 @@ end
 --- bad field, and the keys nothing reads (dotted when nested).
 ---@return string[] errors, string[] unknowns
 function M.validate()
-  return require("noethervim.util.config").validate_user_config(M.get())
+  return require("noethervim.config.validate").validate_user_config(M.get())
 end
 
 --- Take the config directory and its after/ off 'runtimepath', so Neovim

@@ -4,7 +4,7 @@
 --   nvim --headless -l tools/lint-layers.lua
 --
 -- R5   No distro module requires `user.*` except the config ingress
---      (lua/noethervim/config.lua) and the user-file loader in init.lua, and
+--      (lua/noethervim/config/init.lua) and the user-file loader in init.lua, and
 --      none builds a path from stdpath("config") outside the ingress, the
 --      loader and read-only tooling. Under NOETHERVIM_NO_USER nothing of the
 --      user's may be read, and the ingress is what knows that.
@@ -29,20 +29,20 @@ local root = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":p:h:h")
 local lua_dir = root .. "/lua/noethervim"
 
 local SOURCED = {
-  "options", "keymaps", "autocmds", "highlights", "commands",
+  "options", "keymaps", "autocmds", "theme.highlights", "commands",
   "toggles.options", "default.broker", "keymaps.apply", "profiles.apply",
 }
 
 -- Modules allowed to read the user's tree: the ingress, the loader, and
 -- tooling that only reads it on an explicit command.
 local USER_TREE_OK = {
-  ["config.lua"] = true,
+  ["config/init.lua"] = true,
   ["init.lua"] = true,
   ["health.lua"] = true,
   ["inspect.lua"] = true,
   ["guide.lua"] = true,
   ["util/templates.lua"] = true,
-  ["util/bundle_toggle.lua"] = true,
+  ["catalog/toggle.lua"] = true,
   ["util/keymap_source.lua"] = true,
   ["util/init.lua"] = true,
   -- the SearchLeader+c pickers, which open the config directory on request

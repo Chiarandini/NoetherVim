@@ -126,14 +126,14 @@ return {
 					-- ── Step 3: custom native blink sources ───────────────────────────
 					todos = {
 						name   = "todos",
-						module = "noethervim.sources.todos",
+						module = "noethervim.lib.completion.todos",
 					},
 					-- Values for the fixed-vocabulary fields in
 					-- lua/user/config.lua. Gates itself on the filename, so it
 					-- costs nothing in every other Lua buffer.
 					user_config = {
 						name   = "NoetherVim config",
-						module = "noethervim.sources.user_config",
+						module = "noethervim.lib.completion.user_config",
 					},
 				},
 			},

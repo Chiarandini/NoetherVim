@@ -35,7 +35,7 @@ return {
 		event = "VeryLazy",
 		opts = {
 			-- Mirrors the writing profile's filetype list (see
-			-- noethervim.util.filetypes), since those are the buffers the
+			-- noethervim.profiles.classes), since those are the buffers the
 			-- distro hard-wraps.
 			filetypes = {
 				"tex", "plaintex", "markdown", "norg", "text",

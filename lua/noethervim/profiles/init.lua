@@ -37,7 +37,7 @@ function M.class(ft)
   if over == false then return nil end
   if over == "writing" or over == "code" then return over end
   if ft == "" then return nil end
-  local fts = require("noethervim.util.filetypes")
+  local fts = require("noethervim.profiles.classes")
   if fts.non_code[ft] then return nil end
   return fts.writing[ft] and "writing" or "code"
 end
@@ -52,7 +52,7 @@ end
 --- filetype at all is code.
 ---@return table<string, "writing"|"code"|false>
 function M.classes()
-  local fts = require("noethervim.util.filetypes")
+  local fts = require("noethervim.profiles.classes")
   local out = {}
   for ft in pairs(fts.writing) do out[ft] = "writing" end
   for ft in pairs(fts.non_code) do out[ft] = false end

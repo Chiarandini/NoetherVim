@@ -78,7 +78,7 @@ return {
       ["abolish.spell-gate"] = function()
         vim.cmd([[
           function! NoetherAbolishSpell(typo, correction) abort
-            return luaeval('require("noethervim.abolish_ctx").in_spell_region()')
+            return luaeval('require("noethervim.lib.abolish.ctx").in_spell_region()')
                   \ ? a:correction : a:typo
           endfunction
         ]])

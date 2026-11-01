@@ -38,10 +38,15 @@ local function user_dir()
   return vim.fn.stdpath("config") .. "/lua/user/"
 end
 
---- Hook files that sit on top of a distro file of the same name.
-local CORE_OVERRIDE_MODULES = {
-  options = true, keymaps = true, autocmds = true, highlights = true,
+--- The hook files (lua/user/<name>.lua) and the distro file each sits on top of.
+local HOOKS = {
+  options    = "lua/noethervim/options.lua",
+  keymaps    = "lua/noethervim/keymaps.lua",
+  autocmds   = "lua/noethervim/autocmds.lua",
+  highlights = "lua/noethervim/theme/highlights.lua",
 }
+local HOOK_OF = {}
+for name, rel in pairs(HOOKS) do HOOK_OF[rel] = name end
 
 --- The file of yours that changes the NoetherVim file at `rel`, and its
 --- category. Both paths are relative: `rel` to the distribution root, the
@@ -65,11 +70,9 @@ local function counterpart(rel)
   -- after/lsp/<name>.lua → your after/lsp/<name>.lua, which loads after it
   local lsp = rel:match("^after/lsp/(.+%.lua)$")
   if lsp then return "after/lsp/" .. lsp, "lsp" end
-  -- lua/noethervim/{options,keymaps,autocmds,highlights}.lua → the hook file
-  local core = rel:match("^lua/noethervim/([^/]+)%.lua$")
-  if core and CORE_OVERRIDE_MODULES[core] then
-    return "lua/user/" .. core .. ".lua", core == "keymaps" and "keys" or "core"
-  end
+  -- options, keymaps, autocmds, theme/highlights → the hook file
+  local hook = HOOK_OF[rel]
+  if hook then return "lua/user/" .. hook .. ".lua", hook == "keymaps" and "keys" or "core" end
   if rel == "lua/noethervim/toggles/options.lua" then return "lua/user/keymaps.lua", "keys" end
   -- the profiles → after/ftplugin/<ft>.lua, the native per-filetype place
   if rel == "lua/noethervim/profiles/apply.lua" then return "after/ftplugin/", "profile" end
@@ -173,7 +176,7 @@ end
 -- category present on disk but missing from bundle_meta.CATEGORIES renders
 -- as its raw name at the end of the list.
 local cat_order, cat_label = {}, {}
-for i, cat in ipairs(require("noethervim.util.bundle_meta").CATEGORIES) do
+for i, cat in ipairs(require("noethervim.catalog.meta").CATEGORIES) do
   cat_order[cat.key], cat_label[cat.key] = i, cat.short
 end
 
@@ -240,7 +243,7 @@ function M.bundles()
   end
 
   local icons = require("noethervim.util.icons")
-  local bundle_meta = require("noethervim.util.bundle_meta")
+  local bundle_meta = require("noethervim.catalog.meta")
   local items = {}
   for _, meta in ipairs(bundle_meta.scan(root .. "/lua/noethervim/bundles")) do
     local entry = { name = meta.name, category = meta.category, path = meta.path }
@@ -286,13 +289,13 @@ function M.bundles()
         local item = picker:current()
         if not item or not item.bundle_name or not item.category then return end
         picker:close()
-        require("noethervim.util.bundle_toggle").enable(item.category, item.bundle_name)
+        require("noethervim.catalog.toggle").enable(item.category, item.bundle_name)
       end,
       disable_bundle = function(picker)
         local item = picker:current()
         if not item or not item.bundle_name or not item.category then return end
         picker:close()
-        require("noethervim.util.bundle_toggle").disable(item.category, item.bundle_name)
+        require("noethervim.catalog.toggle").disable(item.category, item.bundle_name)
       end,
       -- Seeding an override is the step that follows reading a bundle, so the
       -- affordance belongs where that decision gets made. `:NoetherVim
@@ -344,9 +347,9 @@ function M.snippets(opts)
     return vim.notify("NoetherVim: LuaSnip is not loaded yet; type in a buffer first",
       vim.log.levels.WARN)
   end
-  local engine = require("noethervim.util.snippets")
-  local store  = require("noethervim.util.snippet_store")
-  local snipid = require("noethervim.util.snippet_id")
+  local engine = require("noethervim.snippets.engine")
+  local store  = require("noethervim.snippets.store")
+  local snipid = require("noethervim.snippets.id")
 
   -- Which list is responsible for a snippet being off, recomputed after every
   -- change so the marks stay true while the picker is open.
@@ -1343,6 +1346,7 @@ local function open_diff_split(module_name)
 
   local upstream = nil
   local candidates = {
+    HOOKS[module_name] and (root .. "/" .. HOOKS[module_name]) or "",
     root .. "/lua/noethervim/" .. module_name .. ".lua",
     root .. "/after/lsp/" .. module_name .. ".lua",
   }
@@ -1391,10 +1395,9 @@ function M.diff_file(module_name)
   local icons = require("noethervim.util.icons")
 
   local diff_cat_order = { Core = 1, Plugin = 2, Bundle = 3, LSP = 4 }
-  -- Flat-scan groups (core units and bundles are handled separately: they
-  -- live under category subdirectories).
+  -- Flat-scan groups (the hook files, core units and bundles are handled
+  -- separately).
   local groups = {
-    { cat = "Core",   dir = root .. "/lua/noethervim" },
     { cat = "LSP",    dir = root .. "/after/lsp" },
   }
 
@@ -1433,6 +1436,7 @@ function M.diff_file(module_name)
     })
   end
 
+  for name, rel in pairs(HOOKS) do add_item("Core", name, root .. "/" .. rel, true) end
   for _, group in ipairs(groups) do
     for _, mod in ipairs(scan_lua_modules(group.dir)) do
       add_item(group.cat, mod, vim.fs.joinpath(group.dir, mod .. ".lua"), true)
@@ -1519,6 +1523,12 @@ local function diff_targets()
   if not root then return targets end
 
   local modules = {}
+  for name in pairs(HOOKS) do
+    if not seen[name] then
+      seen[name] = true
+      modules[#modules + 1] = name
+    end
+  end
   for _, dir in ipairs({
     root .. "/lua/noethervim",
     root .. "/after/lsp",

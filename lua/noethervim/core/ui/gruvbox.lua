@@ -1,7 +1,7 @@
 -- NoetherVim plugin: Gruvbox Colorscheme
 -- Ships with core NoetherVim as the default theme, and stays the only
 -- scheme in core: theme/palette.lua hand-tunes the statusline against it and
--- highlights.lua special-cases it, so it is the look the distribution is
+-- theme/highlights.lua special-cases it, so it is the look the distribution is
 -- actually maintained against. The ui.colorscheme bundle adds the rest.
 return {
 	{
