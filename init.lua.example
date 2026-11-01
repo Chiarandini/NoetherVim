@@ -36,28 +36,34 @@ vim.g.mapsearchleader   = "<space>"  -- search/navigation prefix (default: <Spac
 -- Nothing else can install lazy.nvim, and NoetherVim has to be present for
 -- the require() a few lines below to work on a first launch.
 
-local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-if not vim.uv.fs_stat(lazypath) then
-	vim.fn.system({
-		"git", "clone", "--filter=blob:none",
-		"https://github.com/folke/lazy.nvim.git",
-		"--branch=stable",
-		lazypath,
-	})
+-- Clone `url` to `path` unless it is already there. Nothing below runs
+-- without both, so a clone that fails (offline, GitHub unreachable) stops
+-- here with git's message.
+local function clone(url, path, branch)
+	if vim.uv.fs_stat(path) then return end
+	local cmd = { "git", "clone", "--filter=blob:none", url, path }
+	if branch then table.insert(cmd, 4, "--branch=" .. branch) end
+	local out = vim.fn.system(cmd)
+	if vim.v.shell_error ~= 0 then
+		vim.api.nvim_echo({
+			{ "Failed to clone " .. url .. ":\n", "ErrorMsg" },
+			{ out, "WarningMsg" },
+			{ "\nCheck the connection and start Neovim again. Press any key to exit." },
+		}, true, {})
+		if #vim.api.nvim_list_uis() > 0 then vim.fn.getchar() end
+		os.exit(1)
+	end
 end
+
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+clone("https://github.com/folke/lazy.nvim.git", lazypath, "stable")
 vim.opt.rtp:prepend(lazypath)
 
 -- With vim.g.noethervim_dev set to a checkout (before this file runs),
 -- NoetherVim loads from that checkout instead of the clone.
 local dev = vim.g.noethervim_dev and vim.fn.expand(vim.g.noethervim_dev)
 local noethervimpath = dev or (vim.fn.stdpath("data") .. "/lazy/NoetherVim")
-if not dev and not vim.uv.fs_stat(noethervimpath) then
-	vim.fn.system({
-		"git", "clone", "--filter=blob:none",
-		"https://github.com/Chiarandini/NoetherVim.git",
-		noethervimpath,
-	})
-end
+if not dev then clone("https://github.com/Chiarandini/NoetherVim.git", noethervimpath) end
 vim.opt.rtp:prepend(noethervimpath)
 
 -- Show startup errors (e.g. a bundle import below that no longer exists) as
@@ -146,10 +152,10 @@ require("lazy").setup({
 		-- Drop .lua files in lua/user/plugins/ to add new plugins or
 		-- override existing plugin opts.  See templates/user/plugins/example.lua.
 		-- Skipped when NOETHERVIM_NO_USER is set, vim.g.noethervim_no_user is
-		-- true, or lua/user/plugins/ doesn't exist.
+		-- true, or lua/user/plugins/ holds no .lua file yet.
 		not vim.env.NOETHERVIM_NO_USER
 			and not vim.g.noethervim_no_user
-			and vim.uv.fs_stat(vim.fn.stdpath("config") .. "/lua/user/plugins")
+			and vim.fn.glob(vim.fn.stdpath("config") .. "/lua/user/plugins/**/*.lua") ~= ""
 			and { import = "user.plugins" } or nil,
 
 	},

@@ -21,6 +21,10 @@ where they are listed.
   longer exists; run `:NoetherVim override` from the file's new place to
   clear it. `require("noethervim.plugins.statusline.context")` is now
   `require("noethervim.lib.statusline.context")`.
+- **A Neovim older than 0.12 is named at startup:** NoetherVim needs 0.12,
+  and on an older one parts of it fail one by one with no common cause in
+  sight. The README's Requirements section lists ways to install a current
+  Neovim.
 
 ## 2026-10-30
 

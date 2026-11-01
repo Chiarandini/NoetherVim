@@ -154,6 +154,14 @@ M._host = {}
 ---@param opts? noethervim.HostOpts  the NoetherVim spec's merged opts
 function M.setup(opts)
   M._host = opts or {}
+  -- An older Neovim starts without a word and fails piecemeal later (the
+  -- statusline never appears, say); distribution packages often lag.
+  if vim.fn.has("nvim-0.12") == 0 then
+    local v = vim.version()
+    vim.notify(("NoetherVim needs Neovim 0.12 or newer, and this is %d.%d.%d: parts of it will not work. "
+      .. "The README's Requirements section has ways to install a current Neovim."):format(v.major, v.minor, v.patch),
+      vim.log.levels.ERROR)
+  end
   local config = require("noethervim.config")
   local load_user = not config.user_off()
   M._user_loaded = load_user

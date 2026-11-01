@@ -39,9 +39,13 @@ local function store_path()
   return vim.fs.joinpath(vim.fn.stdpath('state'), 'noethervim', 'override-base.json')
 end
 
+--- Nil when `path` is missing. Checked first: inside `:checkhealth` on
+--- Neovim 0.13 a failing readfile() returns an empty list rather than
+--- raising, and a deleted upstream file would read as an empty one.
 ---@param path string
 ---@return string? content
 local function read(path)
+  if not vim.uv.fs_stat(path) then return nil end
   local ok, lines = pcall(vim.fn.readfile, path)
   if not ok or type(lines) ~= 'table' then return nil end
   return table.concat(lines, '\n')

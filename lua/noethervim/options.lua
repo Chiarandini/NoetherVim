@@ -21,9 +21,34 @@ end
 -- top of init.lua, or in a plugin's init): Neovim records who set each
 -- option, and an option that is yours is left as it is.
 local claimed = require("noethervim.default").claimed
+
+-- On a first launch lazy.nvim's install window is current while this runs,
+-- and `vim.o` would set a window or buffer option there. The option goes to
+-- the editor's windows and their buffers instead; a global-local one only
+-- gets its global value.
+local in_float = vim.api.nvim_win_get_config(0).relative ~= ""
+local function set(name, value)
+  local info = vim.api.nvim_get_option_info2(name, {})
+  if not in_float or info.scope == "global" then
+    vim.o[name] = value
+    return
+  end
+  vim.go[name] = value
+  if info.global_local then return end
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    if vim.api.nvim_win_get_config(win).relative == "" then
+      if info.scope == "win" then
+        vim.wo[win][name] = value
+      else
+        vim.bo[vim.api.nvim_win_get_buf(win)][name] = value
+      end
+    end
+  end
+end
+
 local opt = setmetatable({}, {
   __newindex = function(_, name, value)
-    if not claimed(name) then vim.o[name] = value end
+    if not claimed(name) then set(name, value) end
   end,
 })
 local function append(name, value)

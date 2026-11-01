@@ -116,14 +116,27 @@ function M.apply(scheme, source)
   end
 
   M.missing = scheme
-  vim.notify(
-    ("colorscheme %q is not installed. Enable the ui.colorscheme bundle, or "
-      .. "add the plugin to lua/user/plugins/."):format(scheme),
-    vim.log.levels.WARN)
+  vim.notify(("colorscheme %q is not installed: %s"):format(scheme, M.missing_remedy()), vim.log.levels.WARN)
 
   if scheme ~= M.DEFAULT and load_scheme(M.DEFAULT) then
     M.source = "fallback"
   end
+end
+
+--- What to do about a scheme that is not installed. When lazy.nvim has
+--- plugins it could not install (offline on a first launch, an interrupted
+--- install), the scheme's plugin is likely one of them.
+---@return string
+function M.missing_remedy()
+  local missing = 0
+  for _, p in pairs(require("lazy.core.config").plugins) do
+    if not p._.installed then missing = missing + 1 end
+  end
+  if missing > 0 then
+    return ("%s not installed (an install failed or was cut short); `:Lazy install` retries.")
+      :format(missing == 1 and "a plugin is" or (missing .. " plugins are"))
+  end
+  return "enable the ui.colorscheme bundle, or add the plugin to lua/user/plugins/."
 end
 
 ---readable account of the active scheme and what set it.

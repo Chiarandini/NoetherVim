@@ -531,11 +531,6 @@ function M.check()
     end
   end
 
-  -- Skip the version check in dev mode: the local-testing init.lua is a
-  -- wrapper, not a user-template instance, so it has no version marker.
-  if vim.g.noethervim_dev then
-    h.info("Skipped (vim.g.noethervim_dev set -- not a user-template install)")
-  else
   local user_init = vim.fn.stdpath("config") .. "/init.lua"
   local upstream_init = vim.api.nvim_get_runtime_file("init.lua.example", false)[1]
 
@@ -552,7 +547,11 @@ function M.check()
   local user_version     = read_template_version(user_init)
   local upstream_version = read_template_version(upstream_init)
 
-  if not upstream_version then
+  -- In dev mode init.lua may be a wrapper around another config rather than
+  -- a copy of the template; one without a version marker is not compared.
+  if vim.g.noethervim_dev and not user_version then
+    h.info("Skipped (vim.g.noethervim_dev set and init.lua has no template marker)")
+  elseif not upstream_version then
     -- Upstream has no marker -- version 1 (pre-release).
     -- Any user template (with or without a marker) is current.
     h.ok("Template version: current")
@@ -571,7 +570,6 @@ function M.check()
     ))
   else
     h.ok("Template version: " .. user_version .. " (up to date)")
-  end
   end
 
   -- ── Configuration ────────────────────────────────────────────────────
@@ -614,8 +612,7 @@ function M.check()
   local cs = require("noethervim.theme")
   h.info("Colorscheme: " .. cs.status())
   if cs.missing then
-    h.warn(("colorscheme %q is not installed"):format(cs.missing),
-      { "Enable the ui.colorscheme bundle, or add the plugin to lua/user/plugins/" })
+    h.warn(("colorscheme %q is not installed"):format(cs.missing), { cs.missing_remedy() })
   end
   if cs.dropped then
     h.warn(("saved colorscheme pick %q is no longer installed"):format(cs.dropped),
