@@ -283,6 +283,14 @@ The neotest framework, with results shown beside the code they cover. The runner
 { import = "noethervim.bundles.tools.test" }
 ```
 
+### `trouble`
+
+trouble.nvim lists diagnostics grouped by file and updated as they change. &lt;C-w&gt;Q toggles its panel in place of core's quickfix list of diagnostics, and ]q, [q, ]Q and [Q walk Trouble's items while the panel is open, the quickfix list otherwise.
+
+```lua
+{ import = "noethervim.bundles.tools.trouble" }
+```
+
 ## Editing
 
 ### `comment-box`

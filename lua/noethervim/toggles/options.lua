@@ -37,40 +37,6 @@ toggle("o<c-i>",
   function() vim.lsp.inlay_hint.enable(false) end,
   "inlay hints")
 
--- Quickfix / Trouble navigation (context-aware)
--- When Trouble is open, ]q/[q/]Q/[Q navigate its items.
--- When Trouble is closed, they navigate the native quickfix list, as
--- Neovim's own ]q/[q/]Q/[Q do.
-local function trouble_or_qf(trouble_fn, qf_cmd)
-  return function()
-    local ok, trouble = pcall(require, "trouble")
-    if ok and trouble.is_open() then
-      trouble_fn(trouble)
-    else
-      local success, err = pcall(vim.cmd, qf_cmd)
-      if not success and err then
-        vim.notify(err:gsub("^.*:%s*", ""), vim.log.levels.WARN)
-      end
-    end
-  end
-end
-
-row("n", "]q", trouble_or_qf(
-  function(t) t.next({ jump = true }) end, "cnext"
-), { desc = "next quickfix/Trouble item", set = "remaps" })
-
-row("n", "[q", trouble_or_qf(
-  function(t) t.prev({ jump = true }) end, "cprev"
-), { desc = "prev quickfix/Trouble item", set = "remaps" })
-
-row("n", "]Q", trouble_or_qf(
-  function(t) t.last({ jump = true }) end, "clast"
-), { desc = "last quickfix/Trouble item", set = "remaps" })
-
-row("n", "[Q", trouble_or_qf(
-  function(t) t.first({ jump = true }) end, "cfirst"
-), { desc = "first quickfix/Trouble item", set = "remaps" })
-
 -- Unimpaired-style option toggles
 map("[ob", "<cmd>set background=light<cr>",    "light background")
 map("]ob", "<cmd>set background=dark<cr>",     "dark background")

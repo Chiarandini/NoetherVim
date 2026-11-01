@@ -1,4 +1,4 @@
--- NoetherVim plugin: diagnostics (tiny-inline-diagnostic, trouble.nvim)
+-- NoetherVim plugin: diagnostics (tiny-inline-diagnostic)
 
 return {
 	{
@@ -28,17 +28,5 @@ return {
 			require("tiny-inline-diagnostic").setup(opts)
 			vim.diagnostic.config({ virtual_text = false })
 		end,
-	},
-
-	-- Multi-file diagnostic panel. Toggle: <C-w>Q
-	-- Navigate: ]q / [q (context-aware: Trouble when open, quickfix otherwise)
-	{
-		"folke/trouble.nvim",
-		dependencies = "nvim-tree/nvim-web-devicons",
-		cmd = "Trouble",
-		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("trouble.nvim", {
-			{ "<C-w>Q", "<cmd>Trouble diagnostics toggle<cr>", desc = "Trouble diagnostics panel" },
-		}) } },
-		opts = {},
 	},
 }

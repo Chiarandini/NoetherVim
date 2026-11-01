@@ -19,10 +19,7 @@ vim.api.nvim_create_user_command("Reset", function(opts)
       pcall(vim.api.nvim_buf_delete, buf, { force = opts.bang })
     end
   end
-  -- Try Snacks dashboard first, then Alpha as fallback
-  if not pcall(function() require("snacks").dashboard() end) then
-    pcall(vim.cmd, "Alpha")
-  end
+  pcall(function() require("snacks").dashboard() end)
 end, {
   bang = true,
   desc = "close all buffers and open dashboard",

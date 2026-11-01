@@ -109,6 +109,17 @@ map("n", "<c-l>", "<cmd>wincmd l<cr>", { set = "remaps", desc = "window right" }
 map("n", "<c-w><a-h>", "<cmd>tabm -<cr>", { desc = "move tab left" })
 map("n", "<c-w><a-l>", "<cmd>tabm +<cr>", { desc = "move tab right" })
 map("n", "<c-w><c-q>", "<cmd>copen<cr>",  { set = "remaps", desc = "open quickfix" })
+-- Every diagnostic, the whole project's once workspace-diagnostics has read
+-- it, in the quickfix list, where ]q and [q walk it; pressed again, it
+-- closes. The trouble bundle puts its panel on this key instead.
+map("n", "<c-w>Q", function()
+  local qf = vim.fn.getqflist({ winid = 0, title = 0 })
+  if qf.winid ~= 0 and qf.title == "Diagnostics" then
+    vim.cmd.cclose()
+  else
+    vim.diagnostic.setqflist({ title = "Diagnostics" })
+  end
+end, { desc = "diagnostics in the quickfix list" })
 -- Undo tree: mbbill/undotree. Selecting a node shows the diff in a
 -- side pane WITHOUT applying it; press <CR> to actually move the
 -- buffer to that state. This is the non-destructive counterpart to
@@ -562,11 +573,7 @@ map({ "n", "v" }, "<Esc>", function()  -- clear highlights, dismiss notification
       end
     end
   end
-  if package.loaded["notify"]  then require("notify").dismiss() end
-  if package.loaded["snacks"]  then require("snacks").notifier.hide() end
-  if package.loaded["nvim-dap-virtual-text"] then
-    require("nvim-dap-virtual-text").refresh()
-  end
+  if package.loaded["snacks"] then require("snacks").notifier.hide() end
   vim.cmd("echo ''")
   -- `:noh` above clears v:hlsearch, which the statusline's search counter
   -- reads. Nothing else here moves the cursor or changes the mode, so on a
@@ -575,19 +582,6 @@ map({ "n", "v" }, "<Esc>", function()  -- clear highlights, dismiss notification
   -- unrelated forces one.
   vim.cmd.redrawstatus()
 end, { set = "remaps", silent = true })
-
--- ──────────────────────────────────────────────────────────────
---  Mouse
--- ──────────────────────────────────────────────────────────────
-
-map({ "n", "v" }, "<RightMouse>", function()
-  vim.cmd.exec('"normal! \\<RightMouse>"')
-  local ok, menu = pcall(require, "menu")
-  if ok then
-    local options = vim.bo.ft == "snacks_layout_box" and "nvimtree" or "default"
-    menu.open(options, { mouse = true })
-  end
-end, { set = "remaps", desc = "context menu" })
 
 -- ──────────────────────────────────────────────────────────────
 --  Inspection (SearchLeader+c prefix)

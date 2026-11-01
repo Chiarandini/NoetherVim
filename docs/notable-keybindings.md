@@ -152,7 +152,6 @@ vim.keymap.set({ "n", "v" }, "<Esc>", function()
   end
 
   if package.loaded["snacks"] then require("snacks").notifier.hide() end
-  if package.loaded["notify"] then require("notify").dismiss() end
 end, { silent = true })
 ```
 

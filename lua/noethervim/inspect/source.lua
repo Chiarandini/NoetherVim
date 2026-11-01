@@ -58,7 +58,7 @@ end
 --- call, so identity comparison fails for Neovim defaults. When both
 --- have callbacks and the same rhs, fall back to comparing `desc`: two
 --- distinct Lua mappings on the same lhs (e.g. Neovim's `:cnext` default
---- versus NoetherVim's quickfix/Trouble wrapper) are otherwise
+--- versus the trouble bundle's quickfix/Trouble wrapper) are otherwise
 --- indistinguishable and would be silently filtered as "unchanged".
 function M.same_mapping(a, b)
   if a.rhs ~= b.rhs then return false end

@@ -38,7 +38,7 @@ CONTENTS                                                  *noethervim-contents*
 1. INTRODUCTION                                    *noethervim* *neothervim*
 
 NoetherVim is an opinionated Neovim distribution built on lazy.nvim. It
-ships sensible defaults, 30+ core plugins, and 42 opt-in bundles, with a
+ships sensible defaults, 30+ core plugins, and 43 opt-in bundles, with a
 user configuration system that survives upstream updates.
 
 This help file covers in-editor usage and reference. For design rationale,
@@ -940,6 +940,9 @@ Available bundles (grouped by category): ~
     `octo`           GitHub PRs / issues / reviews via the `gh` CLI.
                      `<C-w>O` opens the PR list. Requires `gh` (and
                      a one-time `gh auth login`).
+    `trouble`        trouble.nvim's diagnostics panel on `<C-w>Q`, grouped
+                     by file and updated as diagnostics change; `]q` and
+                     `[q` walk its items while the panel is open.
     `nvim-dev`       Neovim config development: :StartupTime, :Luapad,
                      vimls LSP for .vim files.
     `named-sessions` Sessions saved under a name (mini.sessions):
@@ -1511,7 +1514,7 @@ Prefixes: ~
                                                         *noethervim-ctrl-w*
     `<C-w>`             Windows & panels
                       l(azy)  s(tatusline)  t(erminal)  F(ugit2)
-                      Q (Trouble diagnostics)  <C-q> (quickfix)
+                      Q (diagnostics list)  <C-q> (quickfix)
                       [d / ]d (diffview)  <C-h> (harpoon)  <C-e> (explorer)
                       <C-o> (Oil)
                                                         *noethervim-g*
@@ -1525,7 +1528,7 @@ Prefixes: ~
                                                         *noethervim-brackets*
     `[x` / `]x`         Directional navigation
                       d(iagnostic)  t(ab)  b(uffer)  f(ile)
-                      q(uickfix / Trouble when open)
+                      q(uickfix)
                       T(odo)  e(xchange line)  <Space>(blank line)
                                                         *noethervim-option-toggles*
     `[ox` / `]ox`       Toggle options
@@ -1778,7 +1781,9 @@ Shadowed defaults: ~
                     (default: go to next line, first non-blank)
     `<C-w><C-q>`    Open quickfix
                     (default: close window: use `<C-w>q` or `:q`)
-    `<C-w>Q`        Toggle Trouble diagnostics panel
+    `<C-w>Q`        Toggle every diagnostic, the project's included, in the
+                    quickfix list; `]q` and `[q` walk it. With the trouble
+                    bundle, its panel instead.
     `<C-w>t`        Toggle a 12-line terminal along the bottom. Reuses
                     the same terminal buffer each time rather than
                     opening a new one, and drops you straight into

@@ -18,6 +18,17 @@
 -- KEYS No lazy.nvim `keys` list in a distro spec. lazy maps those again each
 --      time the plugin loads, over the user's own keys; distro keys are rows
 --      (lua/noethervim/keymaps/rows.lua).
+-- R1   The runtime (everything outside core/, bundles/ and lib/) requires
+--      Neovim, other runtime modules, util/ and lazy.core.*, and no unit.
+--      A plugin only where R1_PLUGINS says why; anything else reaches a
+--      plugin through the unit that owns it (a row, a fragment, a seam).
+-- R2   A unit (core/, bundles/ and its lib/) requires no other unit's file:
+--      units cooperate through host fragments and runtime seams.
+-- R3   Core names no bundle module: core works the same with none enabled.
+-- R4   lib/<unit>/ is required only from that unit (core/*/<unit>.lua or
+--      bundles/*/<unit>.lua, underscores for hyphens) and lib/<unit>/ itself.
+-- R10  Unit names (file names under core/ and bundles/) are unique across
+--      both trees: a user's lua/user/plugins/<name>.lua names one unit.
 -- TEX  No code outside the latex bundle (bundles/languages/latex.lua and
 --      lib/latex/) names VimTeX: the flagship reaches core only through the
 --      contracts every bundle has (rows, segments, `g`, fragments), so it
@@ -43,6 +54,55 @@ local USER_TREE_OK = {
   -- the SearchLeader+c pickers, which open the config directory on request
   ["core/foundation/snacks.lua"] = true,
 }
+
+-- Plugins the runtime may require, by file or directory (`*`: any), and why.
+local R1_PLUGINS = {
+  -- Read-only tooling: the :NoetherVim pickers are snacks pickers, and health
+  -- probes what is installed.
+  ["inspect/"] = "*",
+  ["health/"] = "*",
+  -- The picker seam's snacks engine.
+  ["pick/snacks_engine.lua"] = { snacks = true },
+  -- Foundation snacks: the notifier <Esc> hides, the dashboard :CloseAll opens.
+  ["keymaps.lua"] = { snacks = true },
+  ["commands.lua"] = { snacks = true },
+  -- The snippet store and engine helpers drive LuaSnip, the snippet engine.
+  ["snippets/"] = { luasnip = true },
+  -- The shipped colorscheme's palette, which the statusline is tuned against.
+  ["theme/palette.lua"] = { gruvbox = true },
+  -- The contributor helper that installs a bundle's tools through Mason.
+  ["util/mason_install.lua"] = { ["mason-registry"] = true },
+}
+
+---@param rel string
+---@param mod string
+local function plugin_ok(rel, mod)
+  for key, allowed in pairs(R1_PLUGINS) do
+    if rel == key or (key:sub(-1) == "/" and vim.startswith(rel, key)) then
+      if allowed == "*" or allowed[mod] or allowed[mod:match("^[^.]+")] then return true end
+    end
+  end
+  return false
+end
+
+---@param rel string
+---@return "core"|"bundle"|"lib"|"runtime"
+local function layer(rel)
+  if vim.startswith(rel, "core/") then return "core" end
+  if vim.startswith(rel, "bundles/") then return "bundle" end
+  if vim.startswith(rel, "lib/") then return "lib" end
+  return "runtime"
+end
+
+--- The modules a line requires: require("x") and pcall(require, "x").
+---@param code string
+---@return string[]
+local function required(code)
+  local mods = {}
+  for m in code:gmatch("require%s*%(?%s*[\"']([^\"']+)[\"']") do table.insert(mods, m) end
+  for m in code:gmatch("pcall%s*%(%s*require%s*,%s*[\"']([^\"']+)[\"']") do table.insert(mods, m) end
+  return mods
+end
 
 local hits = {}
 local function hit(rel, lnum, rule, msg)
@@ -98,6 +158,33 @@ for _, rel in ipairs(files()) do
       end
     end
 
+    -- R1-R4
+    local where = layer(rel)
+    local unit = rel:match("([^/]+)%.lua$"):gsub("-", "_")
+    for _, mod in ipairs(required(code)) do
+      local sub = mod:match("^noethervim%.(.+)$")
+      local is_unit = sub and (vim.startswith(sub, "core.") or vim.startswith(sub, "bundles."))
+      local lib_owner = sub and sub:match("^lib%.([^.]+)")
+      if where == "runtime" then
+        if is_unit or lib_owner then
+          hit(rel, i, "R1", mod .. ": the runtime requires no unit")
+        elseif not sub and mod ~= "noethervim" and not vim.startswith(mod, "lazy.core.")
+          and not vim.startswith(mod, "vim.") and not vim.startswith(mod, "user.")
+          and not plugin_ok(rel, mod) then
+          hit(rel, i, "R1", mod .. ": the runtime reaches plugins through their units (or R1_PLUGINS, with a reason)")
+        end
+      elseif is_unit then
+        hit(rel, i, "R2", mod .. ": units cooperate through host fragments and seams, not each other's files")
+      end
+      if where == "core" and sub and vim.startswith(sub, "bundles.") then
+        hit(rel, i, "R3", mod .. ": core works the same with no bundle enabled")
+      end
+      if lib_owner and not vim.startswith(rel, "lib/" .. lib_owner .. "/")
+        and not ((where == "core" or where == "bundle") and unit == lib_owner) then
+        hit(rel, i, "R4", mod .. ": lib/" .. lib_owner .. "/ belongs to the " .. lib_owner .. " unit")
+      end
+    end
+
     -- R7: a parameterless config whose next lines call setup()
     if code:find("config%s*=%s*function%s*%(%s*%)") then
       for j = i + 1, math.min(i + 3, #lines) do
@@ -109,6 +196,19 @@ for _, rel in ipairs(files()) do
     end
 
     ::continue::
+  end
+end
+
+-- R10
+local units = {}
+for _, rel in ipairs(files()) do
+  local where = layer(rel)
+  if where == "core" or where == "bundle" then
+    local name = rel:match("([^/]+)%.lua$")
+    if units[name] then
+      table.insert(hits, ("lua/noethervim/%s: R10: unit name %s is taken by %s"):format(rel, name, units[name]))
+    end
+    units[name] = rel
   end
 end
 

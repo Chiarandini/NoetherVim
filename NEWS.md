@@ -28,6 +28,14 @@ where they are listed.
   session of a directory (the dashboard's Restore Session) stays in core.
 - **`navigation.editing-extras` is `editing.comment-box`:** change the
   import in `init.lua`.
+- **trouble.nvim is the `tools.trouble` bundle:** core's `<C-w>Q` lists
+  every diagnostic in the quickfix list, where `]q`, `[q`, `]Q` and `[Q`
+  are Neovim's own and walk it. Import the bundle for Trouble's panel on
+  `<C-w>Q` and for `]q` following it while it is open.
+- **`<RightMouse>` comes with nvzone/menu:** disabling it gives the key back
+  to Neovim's own popup menu; a second right-click no longer stacks a second
+  menu. `<Esc>` no longer dismisses nvim-notify toasts or refreshes DAP
+  virtual text; `:DapVirtualTextForceRefresh` does the latter.
 - **A Neovim older than 0.12 is named at startup:** NoetherVim needs 0.12,
   and on an older one parts of it fail one by one with no common cause in
   sight. The README's Requirements section lists ways to install a current

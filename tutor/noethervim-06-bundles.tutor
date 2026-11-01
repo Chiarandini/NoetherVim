@@ -34,7 +34,7 @@ The categories say what kind of thing each is:
     `languages/`    a language worked in seriously: latex, rust, go, python,
                   java, c-cpp, web-dev
     `tools/`        debug, test, git, repl, database, http, ai, task-runner,
-                  refactoring, octo, nvim-dev, named-sessions
+                  refactoring, octo, nvim-dev, named-sessions, trouble
     `editing/`      comment-box
     `navigation/`   harpoon, flash, fff, projects, yanky, argmark
     `writing/`      markdown, obsidian, neorg, zotero, wrapsearch
