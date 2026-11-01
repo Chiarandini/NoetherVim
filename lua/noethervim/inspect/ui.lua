@@ -72,17 +72,27 @@ local function counterpart(rel)
   if ft then return "after/ftplugin/" .. ft, "ftplugin" end
 end
 
+--- `path` relative to the NoetherVim root, or nil outside it. Symlinks are
+--- resolved on both sides, so a root under a linked directory (/tmp on
+--- macOS) still matches.
+---@param path string
+---@return string?
+local function relative(path)
+  local root = effective_root()
+  if not root then return nil end
+  path = vim.uv.fs_realpath(path) or vim.fs.normalize(path)
+  root = vim.uv.fs_realpath(root) or vim.fs.normalize(root)
+  if not vim.startswith(path, root .. "/") then return nil end
+  return path:sub(#root + 2)
+end
+
 --- Map a NoetherVim source file to the file of yours that changes it.
 --- Returns (user_path, category) or (nil, nil) for a file nothing of yours
 --- can stand in for.
 local function map_to_user_path(bufpath)
-  local root = effective_root()
-  if not root then return nil, nil end
-  -- Resolve real paths so symlinks don't break the prefix check.
-  bufpath = vim.uv.fs_realpath(bufpath) or vim.fs.normalize(bufpath)
-  root = vim.uv.fs_realpath(root) or vim.fs.normalize(root)
-  if not vim.startswith(bufpath, root .. "/") then return nil, nil end
-  local target, category = counterpart(bufpath:sub(#root + 2))
+  local rel = relative(bufpath)
+  if not rel then return nil, nil end
+  local target, category = counterpart(rel)
   if not target then return nil, nil end
   return vim.fn.stdpath("config") .. "/" .. target, category
 end
@@ -159,6 +169,7 @@ M.effective_root = effective_root
 M.user_dir = user_dir
 M.HOOKS = HOOKS
 M.counterpart = counterpart
+M.relative = relative
 M.map_to_user_path = map_to_user_path
 M.snapshots = snapshots
 M.confirm_readonly = confirm_readonly

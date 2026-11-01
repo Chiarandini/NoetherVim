@@ -38,7 +38,6 @@ local SOURCED = {
 local USER_TREE_OK = {
   ["config/init.lua"] = true,
   ["init.lua"] = true,
-  ["health.lua"] = true,
   ["guide.lua"] = true,
   ["catalog/toggle.lua"] = true,
   -- the SearchLeader+c pickers, which open the config directory on request
@@ -61,7 +60,7 @@ end
 
 for _, rel in ipairs(files()) do
   local lines = vim.fn.readfile(lua_dir .. "/" .. rel)
-  local tree_ok = USER_TREE_OK[rel] or vim.startswith(rel, "inspect/")
+  local tree_ok = USER_TREE_OK[rel] or vim.startswith(rel, "inspect/") or vim.startswith(rel, "health/")
   for i, line in ipairs(lines) do
     local code = line:gsub("%-%-.*$", "")
     if code:find("^%s*$") then goto continue end

@@ -2,7 +2,6 @@
 --- the distro file in the current buffer.
 
 local ui = require("noethervim.inspect.ui")
-local effective_root = ui.effective_root
 local map_to_user_path = ui.map_to_user_path
 
 local M = {}
@@ -162,8 +161,7 @@ function M.override()
       .. "lua/user/config.lua or after/plugin/ change what it does", vim.log.levels.WARN)
   end
 
-  local root = vim.fs.normalize(effective_root())
-  local rel  = vim.fs.normalize(bufpath):sub(#root + 2)
+  local rel = ui.relative(bufpath) --[[@as string]]
 
   ---@cast category string
   local function finish(path, ft)
