@@ -38,7 +38,7 @@ CONTENTS                                                  *noethervim-contents*
 1. INTRODUCTION                                    *noethervim* *neothervim*
 
 NoetherVim is an opinionated Neovim distribution built on lazy.nvim. It
-ships sensible defaults, 30+ core plugins, and 40 opt-in bundles, with a
+ships sensible defaults, 30+ core plugins, and 42 opt-in bundles, with a
 user configuration system that survives upstream updates.
 
 This help file covers in-editor usage and reference. For design rationale,
@@ -942,6 +942,13 @@ Available bundles (grouped by category): ~
                      a one-time `gh auth login`).
     `nvim-dev`       Neovim config development: :StartupTime, :Luapad,
                      vimls LSP for .vim files.
+    `named-sessions` Sessions saved under a name (mini.sessions):
+                     `:SaveSession [name]` writes one, the dashboard's
+                     Sessions key loads one. Core restores the last
+                     session of a directory without it.
+
+    editing/ ~
+    `comment-box`    Decorative comment boxes.
 
     navigation/ ~
     `harpoon`        Fast per-project file marks.
@@ -952,7 +959,9 @@ Available bundles (grouped by category): ~
     `projects`       Project switcher via snacks.picker.
     `fff`            fff for a project's files and grep; see
                      |noethervim-pick|.
-    `editing-extras` Decorative comment boxes.
+    `argmark`        The arglist, edited in a float (SearchLeader+ae)
+                     and changed from any buffer with `<Leader>aa`, `ax`,
+                     `ac`, `aX` and `aA`.
     `yanky`          Yank ring: cycle through paste history with
                      `<C-p>`/`<C-n>` after a paste; SearchLeader+y opens
                      a fuzzy picker over the full history.

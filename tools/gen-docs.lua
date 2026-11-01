@@ -54,16 +54,8 @@ if #errors > 0 then
   os.exit(1)
 end
 
--- Category display order and labels, mirroring the bundles picker.
-local CATEGORIES = {
-  { key = 'languages',  label = 'Programming languages' },
-  { key = 'tools',      label = 'Tools' },
-  { key = 'navigation', label = 'Navigation & editing' },
-  { key = 'writing',    label = 'Writing & notes' },
-  { key = 'terminal',   label = 'Terminal & environment' },
-  { key = 'ui',         label = 'UI & appearance' },
-  { key = 'practice',   label = 'Practice & utilities' },
-}
+-- Category display order and labels, shared with the bundles picker.
+local CATEGORIES = bundle_meta.CATEGORIES
 
 -- ── docs-site bundle reference ───────────────────────────────────────
 -- Committed rather than generated at site-build time: the site is built by
@@ -82,7 +74,13 @@ local function write(path, body)
 end
 
 local by_category = {}
+local known = {}
+for _, cat in ipairs(CATEGORIES) do known[cat.key] = true end
 for _, b in ipairs(bundles) do
+  if not known[b.category] then
+    error(('bundles/%s/ is not in CATEGORIES (lua/noethervim/util/bundle_meta.lua); '
+      .. 'add it there or its bundles are left out of the docs'):format(b.category), 0)
+  end
   by_category[b.category] = by_category[b.category] or {}
   table.insert(by_category[b.category], b)
 end

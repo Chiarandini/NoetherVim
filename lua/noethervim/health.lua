@@ -872,8 +872,8 @@ function M.check()
       h.warn(("%d buffer(s) have spelllang differing from global -- "
         .. "likely a stale session restoring `localoptions`:"):format(#drift))
       for _, line in ipairs(drift) do h.info(line) end
-      h.info("Fix: re-save the session with :SaveSession, or delete the "
-        .. "stale session file under " .. vim.fn.stdpath("state") .. "/sessions/")
+      h.info("Fix: save the session again, or delete the stale session file under "
+        .. vim.fn.stdpath("state") .. "/sessions/")
     end
   end
 

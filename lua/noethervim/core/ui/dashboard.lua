@@ -52,7 +52,6 @@ return {
 						{ icon = " ", key = "f", desc = "Find File",          action = function() require("noethervim.pick").open("files") end },
 						{ icon = " ", key = "o", desc = "Old Files",          action = function() require("noethervim.pick").open("recent") end },
 						{ icon = " ", key = "r", desc = "Restore Session",    action = ":lua require('persistence').load({ last = true })" },
-						{ icon = " ", key = "s", desc = "Sessions",           action = ":lua require('mini.sessions').select()" },
 						{ icon = " ", key = "c", desc = "Config",             action = ":e $MYVIMRC" },
 						{ icon = " ", key = "q", desc = "Quit",               action = ":qa" },
 					},

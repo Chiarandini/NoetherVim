@@ -1,3 +1,13 @@
+---@bundle argmark
+---@desc the arglist, edited in a float and changed from any buffer
+---@about argmark edits the arglist in a floating window: SearchLeader ae opens it,
+---       <Leader>aa and ax add and remove a buffer, ac copies the list to a
+---       window-local one, aX clears it and aA adds every window's buffer. Each
+---       says what changed.
+---@requires none
+-- NoetherVim bundle: argmark
+-- Enable with: { import = "noethervim.bundles.navigation.argmark" }
+
 local SearchLeader = require("noethervim.util").search_leader
 
 -- argmark maps its keys itself in setup(); they are off there and rows here.

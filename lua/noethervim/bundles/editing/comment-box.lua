@@ -1,10 +1,10 @@
----@bundle editing-extras
+---@bundle comment-box
 ---@desc decorative comment boxes
 ---@about comment-box.nvim draws decorative ASCII boxes and dividers around
 ---       comments.
 ---@requires none
--- NoetherVim bundle: Editing Extras
--- Enable with: { import = "noethervim.bundles.navigation.editing-extras" }
+-- NoetherVim bundle: comment boxes
+-- Enable with: { import = "noethervim.bundles.editing.comment-box" }
 --
 -- Provides:
 --   comment-box.nvim: decorative ASCII comment boxes

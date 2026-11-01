@@ -34,13 +34,13 @@ The categories say what kind of thing each is:
     `languages/`    a language worked in seriously: latex, rust, go, python,
                   java, c-cpp, web-dev
     `tools/`        debug, test, git, repl, database, http, ai, task-runner,
-                  refactoring, octo, nvim-dev
-    `navigation/`   harpoon, flash, projects, yanky, editing-extras
-    `writing/`      markdown, obsidian, neorg, zotero, wrapsearch,
-                  presentation
+                  refactoring, octo, nvim-dev, named-sessions
+    `editing/`      comment-box
+    `navigation/`   harpoon, flash, fff, projects, yanky, argmark
+    `writing/`      markdown, obsidian, neorg, zotero, wrapsearch
     `terminal/`     better-term, tmux, remote-dev
     `ui/`           colorscheme, eye-candy, minimap, helpview, tableaux
-    `practice/`     training, hardtime
+    `practice/`     training, hardtime, presentation
 
 Each bundle's own file documents what it installs, what it binds, and what
 it needs on your system. `<CR>` in the picker opens it, which is the honest

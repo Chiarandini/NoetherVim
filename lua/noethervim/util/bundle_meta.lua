@@ -38,6 +38,21 @@ local M = {}
 --- at the very top of every bundle; reading further just wastes IO.
 local MAX_HEADER_LINES = 60
 
+--- Bundle categories (the directories under bundles/) in display order:
+--- `label` for the generated docs, `short` for the bundles picker. A
+--- category missing here sorts last in the picker under its own name, and
+--- tools/gen-docs.lua refuses to run until it is added.
+M.CATEGORIES = {
+  { key = 'languages',  label = 'Programming languages',  short = 'Languages' },
+  { key = 'tools',      label = 'Tools',                  short = 'Tools' },
+  { key = 'editing',    label = 'Editing',                short = 'Editing' },
+  { key = 'navigation', label = 'Navigation',             short = 'Navigation' },
+  { key = 'writing',    label = 'Writing & notes',        short = 'Writing' },
+  { key = 'terminal',   label = 'Terminal & environment', short = 'Terminal' },
+  { key = 'ui',         label = 'UI & appearance',        short = 'UI' },
+  { key = 'practice',   label = 'Practice & utilities',   short = 'Practice' },
+}
+
 ---@class noethervim.BundleRequirement
 ---@field kind "exe"|"env"|"app"|"note"  how to verify it
 ---@field value string            executable, env var, application name, or prose

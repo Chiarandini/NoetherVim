@@ -207,6 +207,14 @@ Requires:
 - **curl**: kulala sends every request through it
   <br />preinstalled on macOS and most Linux distributions
 
+### `named-sessions`
+
+mini.sessions keeps sessions under names you choose: :SaveSession [name] writes one and the dashboard's Sessions key picks one to load. Without it, core still restores the last session of a directory (the dashboard's Restore Session).
+
+```lua
+{ import = "noethervim.bundles.tools.named-sessions" }
+```
+
 ### `nvim-dev`
 
 :StartupTime benchmarks startup averaged over ten runs, :Luapad gives a live Lua scratchpad, and the vimls server provides completion and diagnostics for legacy .vim files.
@@ -275,14 +283,24 @@ The neotest framework, with results shown beside the code they cover. The runner
 { import = "noethervim.bundles.tools.test" }
 ```
 
-## Navigation & editing
+## Editing
 
-### `editing-extras`
+### `comment-box`
 
 comment-box.nvim draws decorative ASCII boxes and dividers around comments.
 
 ```lua
-{ import = "noethervim.bundles.navigation.editing-extras" }
+{ import = "noethervim.bundles.editing.comment-box" }
+```
+
+## Navigation
+
+### `argmark`
+
+argmark edits the arglist in a floating window: SearchLeader ae opens it, &lt;Leader&gt;aa and ax add and remove a buffer, ac copies the list to a window-local one, aX clears it and aA adds every window's buffer. Each says what changed.
+
+```lua
+{ import = "noethervim.bundles.navigation.argmark" }
 ```
 
 ### `fff`

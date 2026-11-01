@@ -169,17 +169,13 @@ end
 -- annotation feeds :checkhealth and the docs site. A bundle whose header
 -- lacks @desc shows "(no description)".
 
--- Display order and readable labels for filesystem category names.
--- Any category present on disk but missing here renders as its raw name at
--- the end of the list.
-local cat_order = {
-  languages = 1, tools = 2, navigation = 3, writing = 4,
-  terminal = 5, ui = 6, practice = 7,
-}
-local cat_label = {
-  languages = "Languages", tools = "Tools", navigation = "Navigation",
-  writing = "Writing", terminal = "Terminal", ui = "UI", practice = "Practice",
-}
+-- Display order and readable labels for filesystem category names. Any
+-- category present on disk but missing from bundle_meta.CATEGORIES renders
+-- as its raw name at the end of the list.
+local cat_order, cat_label = {}, {}
+for i, cat in ipairs(require("noethervim.util.bundle_meta").CATEGORIES) do
+  cat_order[cat.key], cat_label[cat.key] = i, cat.short
+end
 
 -- ── File & Grep Pickers (Phase 5) ───────────────────────────────
 
@@ -952,8 +948,8 @@ function M.diff_keymaps(opts)
     if item.origin == "core" or item.origin == "user" then
       item.label = ""
     else
-      -- `editing-extras` is the only bundle name that overflows; a bounded
-      -- column beats a 15-wide gutter that is blank on almost every row.
+      -- A few bundle names overflow (named-sessions); a bounded column
+      -- beats a wide gutter that is blank on almost every row.
       item.label = #item.origin > ORIGIN_MAX
         and (item.origin:sub(1, ORIGIN_MAX - 1) .. "…") or item.origin
       origin_w = math.max(origin_w, vim.fn.strdisplaywidth(item.label))

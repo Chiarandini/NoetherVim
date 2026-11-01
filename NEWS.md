@@ -21,6 +21,13 @@ where they are listed.
   longer exists; run `:NoetherVim override` from the file's new place to
   clear it. `require("noethervim.plugins.statusline.context")` is now
   `require("noethervim.lib.statusline.context")`.
+- **argmark and mini.sessions are bundles:** the arglist keys
+  (SearchLeader ae, `<Leader>aa`, `ax`, `a<Leader>`, `ac`, `aX`, `aA`) come
+  with `navigation.argmark`; `:SaveSession` and the dashboard's Sessions key
+  with `tools.named-sessions`. Import either to keep it. Restoring the last
+  session of a directory (the dashboard's Restore Session) stays in core.
+- **`navigation.editing-extras` is `editing.comment-box`:** change the
+  import in `init.lua`.
 - **A Neovim older than 0.12 is named at startup:** NoetherVim needs 0.12,
   and on an older one parts of it fail one by one with no common cause in
   sight. The README's Requirements section lists ways to install a current

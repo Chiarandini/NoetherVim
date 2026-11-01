@@ -114,6 +114,10 @@ require("lazy").setup({
 		-- { import = "noethervim.bundles.tools.refactoring" },   -- extract function/variable/block
 		-- { import = "noethervim.bundles.tools.octo" },         -- GitHub PRs/issues (needs gh CLI)
 		-- { import = "noethervim.bundles.tools.nvim-dev" },     -- StartupTime, Luapad, vimls (config-dev)
+		-- { import = "noethervim.bundles.tools.named-sessions" }, -- named sessions, :SaveSession
+
+		-- editing/
+		-- { import = "noethervim.bundles.editing.comment-box" }, -- comment boxes
 
 		-- navigation/
 		-- { import = "noethervim.bundles.navigation.harpoon" },        -- fast per-project file marks
@@ -121,7 +125,7 @@ require("lazy").setup({
 		-- { import = "noethervim.bundles.navigation.fff" },            -- fff for a project's files and grep
 		--   lighter alternative: drop yorickpeterse/nvim-jump into user/plugins/
 		-- { import = "noethervim.bundles.navigation.projects" },       -- project switcher (snacks.picker)
-		-- { import = "noethervim.bundles.navigation.editing-extras" }, -- comment boxes
+		-- { import = "noethervim.bundles.navigation.argmark" },        -- arglist editor and keys
 		-- { import = "noethervim.bundles.navigation.yanky" },          -- yank ring (<C-p>/<C-n> after paste)
 
 		-- writing/
