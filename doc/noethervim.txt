@@ -1431,6 +1431,9 @@ Disable all user overrides for debugging.
 Environment variable (before starting Neovim): >bash
     NOETHERVIM_NO_USER=1 nvim
 <
+Setting the variable is the switch, whatever its value: `0` or an empty
+value turns your files off too.
+
 Vim global (set in init.lua before lazy.setup): >lua
     vim.g.noethervim_no_user = true
 <
