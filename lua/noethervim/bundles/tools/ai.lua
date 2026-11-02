@@ -24,13 +24,15 @@
 --       adapter = "openai",   -- or "gemini", "ollama", "copilot", etc.
 --   } }
 
+local COMMANDS = { "CodeCompanion", "CodeCompanionChat", "CodeCompanionActions" }
+
 return {
 	{
 		"olimorris/codecompanion.nvim",
 		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("codecompanion.nvim", {
 			{ "<leader>ac", "<cmd>CodeCompanionChat<cr>", desc = "[a]i [c]hat" },
 		}) } },
-		cmd = { "CodeCompanion", "CodeCompanionChat", "CodeCompanionActions" },
+		cmd = COMMANDS,
 		opts = {
 			-- Default adapter; override via user/plugins/ to switch provider.
 			adapter = "anthropic",
@@ -63,10 +65,15 @@ return {
 				local api_key = (ok and secrets[key_info.key] and secrets[key_info.key].api_key)
 					or os.getenv(key_info.env)
 				if not api_key then
-					vim.notify(
-						"AI bundle: set " .. key_info.env .. " or add " .. key_info.key .. " to lua/secrets.lua",
-						vim.log.levels.WARN
-					)
+					-- Without a key CodeCompanion is not set up and defines no
+					-- commands; these say what is missing instead.
+					local msg = "AI bundle: set " .. key_info.env .. " or add " .. key_info.key
+						.. " to lua/secrets.lua, then restart Neovim"
+					for _, name in ipairs(COMMANDS) do
+						vim.api.nvim_create_user_command(name, function()
+							vim.notify(msg, vim.log.levels.WARN)
+						end, { nargs = "*", range = true, bang = true })
+					end
 					return
 				end
 				opts.adapters = opts.adapters or {}
