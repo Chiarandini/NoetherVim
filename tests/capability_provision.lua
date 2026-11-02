@@ -40,6 +40,12 @@ end
 -- session installs the server is a question only an interactive run can
 -- answer, and it is recorded as such in the plan.
 do
+	-- A fresh root has no registry index yet: every package lookup answers
+	-- "not found" until it is fetched (util/mason_install.lua refreshes first
+	-- for the same reason).
+	local refreshed = false
+	registry.refresh(function() refreshed = true end)
+	vim.wait(120000, function() return refreshed end, 100)
 	local ok_lazy, lazy_cfg = pcall(require, "lazy.core.config")
 	local ok_map, mappings  = pcall(require, "mason-lspconfig.mappings")
 	if ok_lazy and ok_map then

@@ -6,6 +6,10 @@ where they are listed.
 
 ## 2026-11-02
 
+- **The java bundle needs a JDK 25:** jdtls 1.63 and later bundle an Eclipse
+  compiler built for Java 25, and on an older JDK the language server starts
+  and never comes up. The first Java buffer says so when the JDK is older,
+  and `:checkhealth noethervim` names the one it found.
 - **NoetherVim's own files open read-only,** however they are opened, unless
   you load a checkout with `vim.g.noethervim_dev`: lazy.nvim manages the
   installed copy, and an edit there is lost on the next `:Lazy update` or

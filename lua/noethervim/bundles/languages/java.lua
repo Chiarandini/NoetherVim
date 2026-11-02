@@ -5,8 +5,8 @@
 ---       a workspace directory of its own. With the debug bundle also enabled
 ---       it loads the Java debug and test jars into the server, which is what
 ---       makes breakpoints and the JUnit adapter work.
----@requires exe=java label="a JDK 21 or newer"
----          why="jdtls itself runs on 21; the project it indexes may target older"
+---@requires exe=java label="a JDK 25 or newer"
+---          why="jdtls 1.63 and later run on 25; the project it indexes may target older"
 ---          install="https://adoptium.net/"
 ---@requires note="Maven or Gradle"
 ---          why="neotest-java builds and runs through the project's own tool,
@@ -64,9 +64,20 @@ return {
 		"mfussenegger/nvim-jdtls",
 		ft = "java",
 		config = function(_, opts)
+			local warned = false
 			local function start(bufnr)
 				if vim.bo[bufnr].filetype ~= "java" then return end
 				if vim.fn.executable("java") ~= 1 then return end
+				-- jdtls's launcher accepts an older Java and then never comes up,
+				-- with nothing on screen to say why. Not a refusal: a jdtls pinned
+				-- to an older release still runs there.
+				local java = require("noethervim.lib.java")
+				local major = java.major()
+				if not warned and major and major < java.MIN then
+					warned = true
+					vim.notify(("jdtls needs Java %d or newer and finds Java %d, so the Java language server may not start: %s.")
+						:format(java.MIN, major, java.REMEDY), vim.log.levels.WARN)
+				end
 				local config = vim.tbl_deep_extend("force", jdtls_config(), opts or {})
 
 				-- nvim-jdtls registers no DAP configurations by itself, the same

@@ -64,7 +64,7 @@ jdtls needs workspace management and jar paths that plain lspconfig cannot suppl
 
 Requires:
 
-- **a JDK 21 or newer**: jdtls itself runs on 21; the project it indexes may target older
+- **a JDK 25 or newer**: jdtls 1.63 and later run on 25; the project it indexes may target older
   <br />https://adoptium.net/
 - **Maven or Gradle** *(optional)*: neotest-java builds and runs through the project's own tool, when the test bundle is also enabled
   <br />whichever your project already uses

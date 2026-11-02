@@ -3,9 +3,10 @@
 --- A unit declares its keys in its anchor plugin's spec rather than in that
 --- plugin's lazy.nvim `keys`:
 ---
----   specs = { { "NoetherVim", optional = true, opts = { rows = {
----     { "L", peek, desc = "peek fold", owner = "nvim-ufo" },
----   } } } }
+---   specs = { { "NoetherVim", optional = true,
+---     opts = require("noethervim.keymaps.rows").contribute("nvim-ufo", {
+---       { "L", peek, desc = "peek fold" },
+---     }) } }
 ---
 --- setup() maps every row once, at startup, through a sourced file, so each
 --- mapping carries NoetherVim's script id. Nothing maps a row again later,

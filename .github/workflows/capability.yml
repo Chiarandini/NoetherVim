@@ -27,10 +27,13 @@ on:
       - "lua/noethervim/bundles/tools/debug.lua"
       - "lua/noethervim/bundles/tools/test.lua"
       - "lua/noethervim/bundles/tools/task-runner.lua"
-      - "lua/noethervim/util/run.lua"
+      - "lua/noethervim/bundles/tools/repl.lua"
+      - "lua/noethervim/run.lua"
+      - "lua/noethervim/core/tools/code-runner.lua"
       - "lua/noethervim/util/mason_install.lua"
       - "lua/noethervim/core/coding/lsp.lua"
-      - "lua/noethervim/lsp/**"
+      - "lua/noethervim/lib/**"
+      - "after/lsp/**"
       - "tests/capability*"
       - "tests/fixtures/lang/**"
       - ".github/workflows/capability.yml"
@@ -82,9 +85,10 @@ jobs:
         with: { python-version: "3.12" }
 
       - uses: actions/setup-java@v4
-        # 21, not 17: jdtls itself runs on 21, and on 17 it does not start at
-        # all, which reads as "the Java bundle attaches no language server".
-        with: { distribution: temurin, java-version: "21" }
+        # 25: jdtls 1.63 bundles an Eclipse JDT compiled for Java 25, and on an
+        # older JDK it starts and never comes up, which reads as "the Java
+        # bundle attaches no language server".
+        with: { distribution: temurin, java-version: "25" }
 
       - uses: actions/setup-node@v4
         with: { node-version: "22" }
