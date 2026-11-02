@@ -5,7 +5,7 @@
 --  Philosophy: any window you can't usefully edit should close
 --  with a single `q` keypress (no macro-recording concern there).
 -- ──────────────────────────────────────────────────────────────
--- The list lives in noethervim.util.filetypes, with `q_close` from
+-- The list lives in noethervim.profiles.classes, with `q_close` from
 -- lua/user/config.lua already applied to it.
 
 vim.api.nvim_create_autocmd("FileType", {
@@ -15,6 +15,31 @@ vim.api.nvim_create_autocmd("FileType", {
     vim.keymap.set("n", "q", "<cmd>close<cr>", { buf = ev.buf, silent = true, nowait = true })
   end,
 })
+
+-- ──────────────────────────────────────────────────────────────
+--  NoetherVim's own files open read-only
+--  However one is opened (gf or <C-]> on an import string, gd into a
+--  module, :e): lazy.nvim manages the installed copy, and an edit there is
+--  overwritten by the next :Lazy update or stops it. A checkout loaded with
+--  vim.g.noethervim_dev stays editable.
+-- ──────────────────────────────────────────────────────────────
+
+if not vim.g.noethervim_dev then
+  local init = vim.api.nvim_get_runtime_file("lua/noethervim/init.lua", false)[1]
+  local root = init and vim.uv.fs_realpath(vim.fn.fnamemodify(init, ":h:h:h"))
+  if root then
+    vim.api.nvim_create_autocmd("BufReadPost", {
+      group = vim.api.nvim_create_augroup("noethervim_readonly_source", { clear = true }),
+      callback = function(ev)
+        local file = vim.uv.fs_realpath(ev.match)
+        if file and vim.startswith(file, root .. "/") then
+          vim.bo[ev.buf].readonly = true
+          vim.bo[ev.buf].modifiable = false
+        end
+      end,
+    })
+  end
+end
 
 -- ──────────────────────────────────────────────────────────────
 --  Auto-disable diff mode when a diff buffer is no longer visible.

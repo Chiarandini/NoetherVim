@@ -851,6 +851,10 @@ template, enable them by uncommenting the corresponding `import` line in your
     { import = "noethervim.bundles.languages.latex" },
     { import = "noethervim.bundles.tools.debug" },
 <
+`gf` or `<C-]>` on an import string opens that bundle's file, and `<C-t>`
+comes back. NoetherVim's own files open read-only, unless you load a
+checkout with `vim.g.noethervim_dev`.
+
 The first time you open a TeX file in an install without the latex
 bundle, a window offers it, once: it says what the bundle adds, `<CR>`
 shows the change to `init.lua` that enables it (nothing is written
@@ -1441,10 +1445,12 @@ This is NOT a runtime toggle; restart Neovim to apply.
 Check current status: `:NoetherVim status`
 
                                                         *noethervim-dashboard*
-Disabling the startup dashboard: ~
+The startup dashboard: ~
 
-The Snacks dashboard shown on empty-arg startup (`nvim` with no file) is
-a snacks.nvim feature, turned off in its options: >lua
+`nvim` with no file opens the Snacks dashboard. Each entry shows its key;
+`l` opens lazy.nvim, as `<C-w>ll` does from anywhere. A bundle can add an
+entry (named-sessions adds Sessions). It is a snacks.nvim feature, turned
+off in its options: >lua
     -- lua/user/plugins/snacks.lua
     return { "folke/snacks.nvim", opts = { dashboard = { enabled = false } } }
 <
@@ -1781,7 +1787,7 @@ Shadowed defaults: ~
                     (default: go to next line, first non-blank)
     `<C-w><C-q>`    Open quickfix
                     (default: close window: use `<C-w>q` or `:q`)
-    `<C-w>Q`        Toggle every diagnostic, the project's included, in the
+    `<C-w>Q`        Toggle every diagnostic Neovim knows of in the
                     quickfix list; `]q` and `[q` walk it. With the trouble
                     bundle, its panel instead.
     `<C-w>t`        Toggle a 12-line terminal along the bottom. Reuses
@@ -2733,22 +2739,28 @@ user_config ~
 ==============================================================================
 12. HEALTH CHECK                                         *noethervim-health*
 
-Run `:checkhealth noethervim` to verify your setup. Checks include:
+Run `:checkhealth noethervim` to verify your setup. The report has one
+group of sections per part of the setup:
 
-- Required tools: git, rg (ripgrep), fd
-- Optional tools: node, zoxide, lazygit, tree-sitter
-- Terminal: true color, `<S-CR>` support, Nerd Font (heuristic, see below)
-- LaTeX toolchain (if latex bundle enabled)
-- Snippets: how many are loaded per filetype, where your own live, and a
-  warning when a trigger is defined more than once (which shows up as a
-  duplicated entry in the completion menu)
-- Template version: warns if your init.lua is outdated
-- Override drift: warns when a file you overrode has changed upstream
-  (see |noethervim-override-drift|)
-- User override status: lists loaded user modules
-- Configuration: user config dir, plugin dir, vault paths
-- Active bundles, spec errors, option drift, override conflicts
-- LSP servers and feature flags
+- Environment: the Neovim version; required tools (git, rg, fd) and
+  optional ones (node, zoxide, lazygit, tree-sitter); the terminal (true
+  color, `<S-CR>`, a Nerd Font; a heuristic, see below)
+- Install: whether `init.lua` imports `noethervim.core`, its template
+  version, `disabled_plugins` entries for a plugin NoetherVim replaces,
+  and lazy.nvim spec errors
+- Configuration: `lua/user/config.lua` against its schema, the
+  colorscheme and where it came from, the search leader
+- Your files: which hook files ran, overrides whose upstream file changed
+  (|noethervim-override-drift|), a `config` of yours that replaces
+  NoetherVim's, overrides with nothing left to extend, core keys you
+  redefined, and buffers whose 'spelllang' drifted
+- Bundles: the ones enabled and what each needs installed
+- Snippets: what is loaded per filetype, where your own live, and a
+  trigger defined more than once (a duplicated completion entry)
+- Statusline, pickers (which engine serves each verb) and language
+  servers
+- Each enabled bundle's own checks (the latex toolchain, test discovery)
+- Feature flags
 
                                                   *noethervim-health-terminal*
 About the terminal section: ~

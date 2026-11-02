@@ -109,9 +109,9 @@ map("n", "<c-l>", "<cmd>wincmd l<cr>", { set = "remaps", desc = "window right" }
 map("n", "<c-w><a-h>", "<cmd>tabm -<cr>", { desc = "move tab left" })
 map("n", "<c-w><a-l>", "<cmd>tabm +<cr>", { desc = "move tab right" })
 map("n", "<c-w><c-q>", "<cmd>copen<cr>",  { set = "remaps", desc = "open quickfix" })
--- Every diagnostic, the whole project's once workspace-diagnostics has read
--- it, in the quickfix list, where ]q and [q walk it; pressed again, it
--- closes. The trouble bundle puts its panel on this key instead.
+-- Every diagnostic Neovim knows of in the quickfix list, where ]q and [q
+-- walk it; pressed again, it closes. The trouble bundle puts its panel here
+-- instead.
 map("n", "<c-w>Q", function()
   local qf = vim.fn.getqflist({ winid = 0, title = 0 })
   if qf.winid ~= 0 and qf.title == "Diagnostics" then

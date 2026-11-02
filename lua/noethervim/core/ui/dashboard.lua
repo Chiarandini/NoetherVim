@@ -36,6 +36,17 @@ local function _header()
 	return vim.o.columns >= 87 and _wordmark or _wordmark_narrow
 end
 
+--- The key that opens Lazy from anywhere, read from the live keymaps so a
+--- rebind of yours is what the dashboard names.
+---@return string?
+local function lazy_key()
+	local best
+	for _, km in ipairs(vim.api.nvim_get_keymap("n")) do
+		if (km.rhs or ""):lower() == "<cmd>lazy<cr>" and (not best or #km.lhs < #best) then best = km.lhs end
+	end
+	return best and vim.fn.keytrans(vim.api.nvim_replace_termcodes(best, true, true, true))
+end
+
 return {
 	{
 		"folke/snacks.nvim",
@@ -53,9 +64,18 @@ return {
 						{ icon = " ", key = "o", desc = "Old Files",          action = function() require("noethervim.pick").open("recent") end },
 						{ icon = " ", key = "r", desc = "Restore Session",    action = ":lua require('persistence').load({ last = true })" },
 						{ icon = " ", key = "c", desc = "Config",             action = ":e $MYVIMRC" },
+						{ icon = "󰒲 ", key = "l", desc = "Lazy",               action = ":Lazy" },
 						{ icon = " ", key = "q", desc = "Quit",               action = ":qa" },
 					},
 				},
+				-- Run by snacks at each opening, after your keymaps exist: the
+				-- Lazy entry names the key that opens it from anywhere.
+				config = function(opts)
+					local key = lazy_key()
+					for _, item in ipairs(key and opts.preset.keys or {}) do
+						if item.action == ":Lazy" then item.desc = ("Lazy  (%s anywhere)"):format(key) end
+					end
+				end,
 				sections = {
 					{ section = "header" },
 					{ section = "keys", gap = 1, padding = 1 },

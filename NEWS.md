@@ -4,6 +4,14 @@ Breaking and behavior changes, newest first, each with what to do about it.
 During the alpha, changes land without deprecation periods; this file is
 where they are listed.
 
+## 2026-11-02
+
+- **NoetherVim's own files open read-only,** however they are opened, unless
+  you load a checkout with `vim.g.noethervim_dev`: lazy.nvim manages the
+  installed copy, and an edit there is lost on the next `:Lazy update` or
+  stops it. `gf` or `<C-]>` on an `import` string in `init.lua` opens that
+  bundle's file.
+
 ## 2026-11-01
 
 - **`init.lua` imports `noethervim.core`:** in the NoetherVim spec, change
