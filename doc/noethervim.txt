@@ -1479,7 +1479,10 @@ environment, where a second copy under Mason is at best redundant and at
 worst a version you did not choose.
 
 Language servers in lspconfig's `ensure_installed` are covered too: with
-the flag set, install them with `:Mason`.
+the flag set, install them with `:Mason`. So are treesitter parsers, both
+the ones core and your bundles list and the one for each filetype you
+open: install them with `:TSInstall`, and `:checkhealth noethervim` lists
+the ones missing.
 
 ==============================================================================
 9. KEYMAP NAMESPACES                     *noethervim-keymaps* *neothervim-keymaps*

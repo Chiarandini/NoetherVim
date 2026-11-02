@@ -220,21 +220,24 @@ return {
 			end
 
 		-- ensure_installed / auto_install: nvim-treesitter's new API no
-		-- longer processes these via setup(), so we handle them directly.
-		-- All parsers require the tree-sitter CLI (nvim-treesitter now
-		-- uses `tree-sitter build`); warn once if missing.
+		-- longer processes these via setup(), so we handle them directly,
+		-- unless vim.g.noethervim_auto_install = false declines every fetch
+		-- (health then lists the parsers missing). All parsers require the
+		-- tree-sitter CLI (nvim-treesitter now uses `tree-sitter build`);
+		-- warn once if missing.
+		local fetch = vim.g.noethervim_auto_install ~= false
 		local ok_parsers, parsers = pcall(require, "nvim-treesitter.parsers")
 		local has_ts_cli = vim.fn.executable("tree-sitter") == 1
 
-		if not has_ts_cli then
+		if fetch and not has_ts_cli then
 			vim.notify(
-				"tree-sitter CLI not found -- parser auto-install is disabled.\n"
+				"tree-sitter CLI not found: parsers cannot be installed.\n"
 				.. "Install it (e.g. `brew install tree-sitter`) then restart Neovim.",
 				vim.log.levels.WARN
 			)
 		end
 
-		if opts.ensure_installed and has_ts_cli then
+		if fetch and opts.ensure_installed and has_ts_cli then
 			local installed = require("nvim-treesitter.config").get_installed()
 			local to_install = vim.tbl_filter(function(lang)
 				return not vim.tbl_contains(installed, lang)
@@ -244,7 +247,7 @@ return {
 			end
 		end
 
-		if opts.auto_install and has_ts_cli and ok_parsers then
+		if fetch and opts.auto_install and has_ts_cli and ok_parsers then
 			vim.api.nvim_create_autocmd("FileType", {
 				group = vim.api.nvim_create_augroup("noethervim_ts_auto_install", { clear = true }),
 				callback = function()

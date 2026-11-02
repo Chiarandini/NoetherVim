@@ -27,8 +27,9 @@ vim.g.mapsearchleader   = "<space>"  -- search/navigation prefix (default: <Spac
 
 -- Enabling a bundle is how you ask for the tools it drives: the formatter,
 -- linter and debug adapter it names are fetched through Mason, the same way
--- its language server already was. Uncomment to decline, and install those
--- yourself (see :help noethervim-auto-install).
+-- its language server already was, and treesitter parsers are installed as
+-- files need them. Uncomment to decline, and install those yourself (see
+-- :help noethervim-auto-install).
 -- vim.g.noethervim_auto_install = false
 
 -- ── 2. Bootstrap lazy.nvim and NoetherVim ─────────────────────────────────

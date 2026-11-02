@@ -6,6 +6,10 @@ where they are listed.
 
 ## 2026-11-02
 
+- **`vim.g.noethervim_auto_install = false` also stops treesitter parser
+  installs,** both the parsers core and your bundles list and the one for
+  each filetype you open. Install them with `:TSInstall`;
+  `:checkhealth noethervim` lists the ones missing.
 - **The java bundle needs a JDK 25:** jdtls 1.63 and later bundle an Eclipse
   compiler built for Java 25, and on an older JDK the language server starts
   and never comes up. The first Java buffer says so when the JDK is older,
