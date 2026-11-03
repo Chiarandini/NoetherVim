@@ -14,7 +14,8 @@
 # exist when a language bundle and a tool bundle are enabled together.
 #
 # The install root is SHARED across runs and never wiped, so plugins and Mason
-# packages install once. Force a clean rebuild with NVCAP_FRESH=1.
+# packages install once. Force a clean rebuild with NVCAP_FRESH=1. Runs side
+# by side each need their own: NVCAP_ROOT and NVCAP_APPNAME set it per run.
 #
 # Usage:
 #   tests/capability.sh rust
@@ -32,8 +33,8 @@ FIXTURES="$SCRIPT_DIR/fixtures/lang"
 
 LANGS=(rust go python c cpp java web latex)
 
-APPNAME="nvim-captest"
-HARNESS_ROOT="${TMPDIR:-/tmp}/noethervim-capability-harness"
+APPNAME="${NVCAP_APPNAME:-nvim-captest}"
+HARNESS_ROOT="${NVCAP_ROOT:-${TMPDIR:-/tmp}/noethervim-capability-harness}"
 
 if [ "${NVCAP_FRESH:-0}" = "1" ]; then
     echo "NVCAP_FRESH=1 -- wiping $HARNESS_ROOT"
@@ -76,13 +77,18 @@ if command -v timeout >/dev/null 2>&1; then NVTIMEOUT="timeout ${NVCAP_TIMEOUT:-
 elif command -v gtimeout >/dev/null 2>&1; then NVTIMEOUT="gtimeout ${NVCAP_TIMEOUT:-420}"; fi
 
 # Build artifacts from a previous run would let a stale binary answer for a
-# broken command, so every fixture starts clean.
-clean_fixtures() {
-    rm -rf "$FIXTURES/rust/target" "$FIXTURES/rust/Cargo.lock" \
-           "$FIXTURES/rust-ws/target" "$FIXTURES/rust-ws/Cargo.lock" \
-           "$FIXTURES/go/capfixture" "$FIXTURES/c/main" "$FIXTURES/c/main_debug" "$FIXTURES/c/build" \
-           "$FIXTURES/java/target" \
-           "$FIXTURES"/*/__pycache__ "$FIXTURES"/*/.pytest_cache 2>/dev/null
+# broken command, so the fixtures of the language being run start clean.
+# Only those: another language's run may be using its own at the same time.
+clean_fixtures() { # lang
+    case "$1" in
+        rust)   rm -rf "$FIXTURES/rust/target" "$FIXTURES/rust/Cargo.lock" \
+                       "$FIXTURES/rust-ws/target" "$FIXTURES/rust-ws/Cargo.lock" ;;
+        go)     rm -f "$FIXTURES/go/capfixture" ;;
+        c|cpp)  rm -rf "$FIXTURES/$1/main" "$FIXTURES/$1/main_debug" "$FIXTURES/$1/build" ;;
+        java)   rm -rf "$FIXTURES/java/target" ;;
+        python) find "$FIXTURES/python" \( -name __pycache__ -o -name .pytest_cache \) -prune -exec rm -rf {} + ;;
+    esac
+    return 0
 }
 
 write_init() {
@@ -182,7 +188,7 @@ run_one() {
     echo "==================================================================="
     echo "LANGUAGE: $lang   bundle: $bundle"
     echo "isolated env: NVIM_APPNAME=$APPNAME  root=$HARNESS_ROOT"
-    clean_fixtures
+    clean_fixtures "$lang"
     write_init "$bundle"
 
     echo "--- phase 1: lazy install + Mason (shared root; first run slow) ---"
