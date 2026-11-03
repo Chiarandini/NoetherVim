@@ -16,11 +16,8 @@ function M.confirm(opts)
   local on_done   = opts.on_done or function() end
 
   local lines = vim.split(diff_text, "\n", { plain = true })
-  -- Drop the trailing empty line that vim.diff's output usually carries so
-  -- the prompt sits flush with the diff body.
+  -- Drop the trailing empty line that vim.diff's output usually carries.
   if lines[#lines] == "" then table.remove(lines) end
-  table.insert(lines, "")
-  table.insert(lines, "[y]es / <CR>   [n]o   (Esc / q to cancel)")
 
   local buf = vim.api.nvim_create_buf(false, true)
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
@@ -44,6 +41,9 @@ function M.confirm(opts)
     border    = "rounded",
     title     = " " .. title .. " ",
     title_pos = "center",
+    -- In the border, so the keys stay in sight however long the diff runs.
+    footer     = " [y]es / <CR>   [n]o   (Esc / q to cancel) ",
+    footer_pos = "center",
   })
 
   local closed = false
