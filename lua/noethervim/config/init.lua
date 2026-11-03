@@ -31,8 +31,21 @@ function M.lsp_off(name)
 end
 
 local cache ---@type noethervim.UserConfig?
+local type_errors = {} ---@type string[]
 
---- `lua/user/config.lua`, or `{}`.
+--- Remove the value at dotted `path` from `cfg`.
+local function drop(cfg, path)
+  local parts = vim.split(path, ".", { plain = true })
+  local t = cfg
+  for i = 1, #parts - 1 do
+    t = type(t) == "table" and t[parts[i]] or nil
+  end
+  if type(t) == "table" then t[parts[#parts]] = nil end
+end
+
+--- `lua/user/config.lua`, or `{}`. A value of the wrong type is left out,
+--- so the session runs on the default rather than on a value it cannot
+--- use; `validate()` still names it.
 ---@return noethervim.UserConfig
 function M.get()
   if cache then return cache end
@@ -40,7 +53,12 @@ function M.get()
   if M.user_off() then return cache end
   local ok, loaded = pcall(require, "user.config")
   if ok and type(loaded) == "table" then
-    cache = loaded
+    cache = vim.deepcopy(loaded)
+    type_errors = require("noethervim.config.validate").validate_types(cache)
+    for _, err in ipairs(type_errors) do
+      local path = err:match("^user%.config%.([^:]+):")
+      if path then drop(cache, path) end
+    end
   elseif ok and loaded ~= nil then
     vim.notify("lua/user/config.lua: expected a table, got " .. type(loaded), vim.log.levels.WARN)
   elseif not ok and not tostring(loaded):find("module 'user.config' not found", 1, true) then
@@ -50,10 +68,19 @@ function M.get()
 end
 
 --- What is wrong in `lua/user/config.lua`: type errors, one message per
---- bad field, and the keys nothing reads (dotted when nested).
+--- bad field (each left out of `get()`), and the keys nothing reads (dotted
+--- when nested).
 ---@return string[] errors, string[] unknowns
 function M.validate()
-  return require("noethervim.config.validate").validate_user_config(M.get())
+  local errors, unknowns = require("noethervim.config.validate").validate_user_config(M.get())
+  local all, seen = {}, {}
+  for _, err in ipairs(vim.list_extend(vim.list_slice(type_errors), errors)) do
+    if not seen[err] then
+      seen[err] = true
+      table.insert(all, err)
+    end
+  end
+  return all, unknowns
 end
 
 --- Take the config directory and its after/ off 'runtimepath', so Neovim

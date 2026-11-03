@@ -24,9 +24,7 @@ local function configuration()
   if config.user_off() then
     h.info("Clean room: the user layer is off (NOETHERVIM_NO_USER), so lua/user/config.lua is not read")
   else
-    local user_cfg = config.get()
-    local cfg_validator = require("noethervim.config.validate")
-    local errors, unknowns = cfg_validator.validate_user_config(user_cfg)
+    local errors, unknowns = config.validate()
     for _, err in ipairs(errors) do h.warn(err) end
     if #unknowns > 0 then
       h.warn("Unknown user.config keys: " .. table.concat(unknowns, ", "),
