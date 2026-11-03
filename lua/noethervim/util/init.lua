@@ -137,13 +137,21 @@ function M.buffer_notify()
         vim.notify = orig
       end
       vim.schedule(function()
+        -- An install that left plugins out has been named once by setup();
+        -- lazy.nvim's word on each of them would only stack "Press ENTER"
+        -- prompts, with no notifier installed to show them.
+        local missing = (package.loaded.noethervim or {})._missing or 0
         for _, n in ipairs(pending) do
           local msg, level, opts = n[1], n[2], n[3]
-          if level == vim.log.levels.ERROR then
-            opts = vim.tbl_extend("keep", opts or {}, { timeout = 0 })
-            msg = msg .. "\n\n" .. persistent_hint(msg)
+          local about_missing = type(msg) == "string" and (msg:match("^Plugin .+ is not installed$")
+            or msg:find("Too many rounds of missing plugins", 1, true))
+          if not (missing > 0 and about_missing) then
+            if level == vim.log.levels.ERROR then
+              opts = vim.tbl_extend("keep", opts or {}, { timeout = 0 })
+              msg = msg .. "\n\n" .. persistent_hint(msg)
+            end
+            vim.notify(msg, level, opts)
           end
-          vim.notify(msg, level, opts)
         end
       end)
     end,

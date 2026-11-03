@@ -114,7 +114,11 @@ function M.apply(scheme, source)
   end
 
   M.missing = scheme
-  vim.notify(("colorscheme %q is not installed: %s"):format(scheme, M.missing_remedy()), vim.log.levels.WARN)
+  -- With plugins missing, setup() has said so once, and the scheme's plugin
+  -- is likely one of them.
+  if (require("noethervim")._missing or 0) == 0 then
+    vim.notify(("colorscheme %q is not installed: %s"):format(scheme, M.missing_remedy()), vim.log.levels.WARN)
+  end
 
   if scheme ~= M.DEFAULT and load_scheme(M.DEFAULT) then
     M.source = "fallback"

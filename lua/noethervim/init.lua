@@ -162,6 +162,23 @@ function M.setup(opts)
       .. "The README's Requirements section has ways to install a current Neovim."):format(v.major, v.minor, v.patch),
       vim.log.levels.ERROR)
   end
+  -- An install that failed or was cut short (offline on a first launch)
+  -- leaves plugins lazy.nvim would still load on their events, each load
+  -- an error stopping on "Press ENTER", since snacks, which shows notices,
+  -- is missing too. Their triggers go, and one line short enough not to
+  -- prompt says what happened.
+  M._missing = 0
+  for _, p in pairs(require("lazy.core.config").plugins) do
+    if not p._.installed then
+      M._missing = M._missing + 1
+      require("lazy.core.handler").disable(p)
+    end
+  end
+  if M._missing > 0 then
+    vim.notify(("NoetherVim: %s not installed; :Lazy install retries")
+      :format(M._missing == 1 and "a plugin is" or (M._missing .. " plugins are")), vim.log.levels.WARN)
+  end
+
   local config = require("noethervim.config")
   local load_user = not config.user_off()
   M._user_loaded = load_user
