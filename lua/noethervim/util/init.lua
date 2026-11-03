@@ -187,4 +187,29 @@ function M.scan_bundles(bundles_dir)
   return result
 end
 
+local warned_state = false
+
+--- Write one of NoetherVim's state files (under stdpath("state")),
+--- creating its directory. A file that cannot be written, left owned by
+--- root by `sudo nvim` say, is reported once a session, with the fix,
+--- instead of raising: the change it records still holds until Neovim quits.
+---@param path string
+---@param lines string[]
+---@return boolean written
+function M.write_state(path, lines)
+  local ok, res = pcall(function()
+    vim.fn.mkdir(vim.fs.dirname(path), "p")
+    return vim.fn.writefile(lines, path)
+  end)
+  if ok and res == 0 then return true end
+  if not warned_state then
+    warned_state = true
+    local state = vim.fn.fnamemodify(vim.fn.stdpath("state"), ":~")
+    vim.notify(("NoetherVim cannot write %s, so this change lasts until Neovim quits. "
+      .. "If `sudo nvim` left files there owned by root: sudo chown -R $USER %s")
+      :format(vim.fn.fnamemodify(path, ":~"), state), vim.log.levels.WARN)
+  end
+  return false
+end
+
 return M

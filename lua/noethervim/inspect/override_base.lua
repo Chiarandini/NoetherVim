@@ -72,13 +72,11 @@ end
 
 ---@param records table<string, { rel: string, hash: string }>
 local function save(records)
-  local path = store_path()
-  vim.fn.mkdir(vim.fn.fnamemodify(path, ':h'), 'p')
   -- An empty Lua table encodes as `[]`, which reads back as a list. Writing
   -- an explicit empty object keeps the file's shape stable once the last
   -- record is pruned.
   local payload = next(records) and records or vim.empty_dict()
-  vim.fn.writefile(vim.split(vim.json.encode(payload), '\n'), path)
+  require('noethervim.util').write_state(store_path(), vim.split(vim.json.encode(payload), '\n'))
 end
 
 --- Record that `user_path` was written against the current contents of the

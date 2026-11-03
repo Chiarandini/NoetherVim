@@ -25,8 +25,7 @@ local function mark(key)
   local keys = vim.tbl_keys(offered())
   table.insert(keys, key)
   table.sort(keys)
-  vim.fn.mkdir(vim.fs.dirname(state_file), "p")
-  vim.fn.writefile(keys, state_file)
+  require("noethervim.util").write_state(state_file, keys)
 end
 
 --- Bundles not enabled and not yet offered, by the filetypes they ask for.

@@ -56,9 +56,7 @@ end
 
 --- @param records table[]
 local function write_toggles(records)
-  local path = toggle_path()
-  vim.fn.mkdir(vim.fs.dirname(path), 'p')
-  vim.fn.writefile(vim.split(vim.json.encode(records), '\n'), path)
+  require('noethervim.util').write_state(toggle_path(), vim.split(vim.json.encode(records), '\n'))
 end
 
 --- The reader's durable list, straight from their config.

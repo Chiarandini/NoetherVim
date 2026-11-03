@@ -19,8 +19,7 @@ local function enable()
 			end
 		end
 	end
-	vim.fn.mkdir(vim.fs.dirname(state_file), "p")
-	vim.fn.writefile({ "1" }, state_file)
+	require("noethervim.util").write_state(state_file, { "1" })
 end
 
 local function disable()
@@ -39,8 +38,7 @@ local function disable()
 		vim.wo[win].winhl = vim.wo[win].winhl:gsub("ColorColumn:[^,]*", "")
 			:gsub(",+", ","):gsub("^,", ""):gsub(",$", "")
 	end
-	vim.fn.mkdir(vim.fs.dirname(state_file), "p")
-	vim.fn.writefile({ "0" }, state_file)
+	require("noethervim.util").write_state(state_file, { "0" })
 end
 
 local icons = require("noethervim.util").icons

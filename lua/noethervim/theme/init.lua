@@ -64,9 +64,7 @@ end
 -- ── Persistence ─────────────────────────────────────────────────────────────
 
 local function save(name)
-  vim.fn.mkdir(vim.fs.dirname(_file), "p")
-  local f = io.open(_file, "w")
-  if f then f:write(name); f:close() end
+  require("noethervim.util").write_state(_file, { name })
 end
 
 local function load()
