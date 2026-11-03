@@ -16,14 +16,13 @@
 -- (Sieve of Eratosthenes, Collatz, π convergents), live dynamical systems
 -- (Conway's Game of Life, Lorenz attractor), topological objects (Königsberg
 -- bridges, fundamental polygons), and contemplative scenes (time-of-day sky
--- with twinkling stars and weather overlay, daily-rotating mathematician
--- quotes, an Obsidian-vault gem).
+-- with twinkling stars, daily-rotating mathematician quotes, an Obsidian-vault
+-- gem).
 --
 -- Commands:
 --   :Tableau [name]    switch (no arg → picker)
 --   :TableauNext       cycle forward
 --   :TableauPrev       cycle backward
---   :TableauWeather    force-refresh weather cache
 --   :Dash, :DashNext, :DashPrev -- backwards-compat aliases.
 --
 -- Default keymaps (disable with `keymaps = false`):
