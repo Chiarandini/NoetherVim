@@ -254,6 +254,15 @@ function M.disable(category, name)
 
   local hit = M.find_active_import(lines, module_path)
   if not hit then
+    -- Imported from one of your plugin files instead: that is where it goes.
+    local dir = vim.fn.stdpath("config") .. "/lua/user/plugins"
+    for _, file in ipairs(vim.fn.glob(dir .. "/**/*.lua", false, true)) do
+      local text = read_file(file) or ""
+      if text:find('import%s*=%s*"' .. pat_escape(module_path) .. '"') then
+        return vim.notify(("NoetherVim: bundle %q is imported from %s, not init.lua; remove the import there")
+          :format(name, vim.fn.fnamemodify(file, ":~")), vim.log.levels.WARN)
+      end
+    end
     vim.notify(
       ("NoetherVim: bundle %q is not enabled via init.lua " ..
        "(loaded via another mechanism, or already disabled?)"):format(name),
