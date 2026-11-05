@@ -16,7 +16,7 @@ local function dashboard_key(_, opts)
 	for i, k in ipairs(keys) do
 		if k.key == "r" then at = i + 1 break end
 	end
-	table.insert(keys, at, { icon = " ", key = "s", desc = "Sessions",
+	table.insert(keys, at, { icon = "󰆓 ", key = "s", desc = "Sessions",
 		action = function() require("mini.sessions").select() end })
 end
 

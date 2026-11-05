@@ -58,15 +58,15 @@ return {
 				preset = {
 					header = _header(),
 					keys = {
-						{ icon = " ", key = "i", desc = "New File (insert)",  action = ":ene | startinsert" },
-						{ icon = " ", key = "e", desc = "New File (normal)",  action = ":ene" },
-						{ icon = " ", key = "f", desc = "Find File",          action = function() require("noethervim.pick").open("files") end },
-						{ icon = " ", key = "o", desc = "Old Files",          action = function() require("noethervim.pick").open("recent") end },
+						{ icon = "󰏫 ", key = "i", desc = "New File (insert)",  action = ":ene | startinsert" },
+						{ icon = "󰝒 ", key = "e", desc = "New File (normal)",  action = ":ene" },
+						{ icon = "󰈞 ", key = "f", desc = "Find File",          action = function() require("noethervim.pick").open("files") end },
+						{ icon = "󰋚 ", key = "o", desc = "Old Files",          action = function() require("noethervim.pick").open("recent") end },
 						{ icon = "󰉋 ", key = ".", desc = "Browse Directory",   action = ":e ." },
-						{ icon = " ", key = "r", desc = "Restore Session",    action = ":lua require('persistence').load({ last = true })" },
-						{ icon = " ", key = "c", desc = "Config",             action = ":e $MYVIMRC" },
+						{ icon = "󰦛 ", key = "r", desc = "Restore Session",    action = ":lua require('persistence').load({ last = true })" },
+						{ icon = "󰒓 ", key = "c", desc = "Config",             action = ":e $MYVIMRC" },
 						{ icon = "󰒲 ", key = "l", desc = "Lazy",               action = ":Lazy" },
-						{ icon = " ", key = "q", desc = "Quit",               action = ":qa" },
+						{ icon = "󰈆 ", key = "q", desc = "Quit",               action = ":qa" },
 					},
 				},
 				-- Run by snacks at each opening, after your keymaps exist: the
