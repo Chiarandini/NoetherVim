@@ -119,6 +119,10 @@ return {
   -- so that headless nvim can respond to InverseSearch from the PDF viewer.
   {
     "lervag/vimtex",
+    -- Releases, not master: master raises VimTeX's Neovim floor ahead of
+    -- them (0.12.4, a day after v2.18 required 0.10), and below it every
+    -- .tex buffer opens on an error.
+    version = "*",
     lazy = false,
     -- Its keys, the LaTeX globals (set before vimtex loads), and the compile
     -- state and PDF size in the statusline.
