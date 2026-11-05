@@ -62,6 +62,7 @@ return {
 						{ icon = " ", key = "e", desc = "New File (normal)",  action = ":ene" },
 						{ icon = " ", key = "f", desc = "Find File",          action = function() require("noethervim.pick").open("files") end },
 						{ icon = " ", key = "o", desc = "Old Files",          action = function() require("noethervim.pick").open("recent") end },
+						{ icon = "󰉋 ", key = ".", desc = "Browse Directory",   action = ":e ." },
 						{ icon = " ", key = "r", desc = "Restore Session",    action = ":lua require('persistence').load({ last = true })" },
 						{ icon = " ", key = "c", desc = "Config",             action = ":e $MYVIMRC" },
 						{ icon = "󰒲 ", key = "l", desc = "Lazy",               action = ":Lazy" },
@@ -85,7 +86,14 @@ return {
 			},
 		},
 		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("snacks.nvim", {}, {
-			startup = { ["dashboard.wipe-guard"] = function()
+			startup = { ["dashboard.command"] = function()
+				-- :Dashboard brings the dashboard back without touching your
+				-- buffers (:Reset closes them first). Yields to a :Dashboard of
+				-- yours, or one from dashboard-nvim.
+				require("noethervim.default").command("Dashboard", function()
+					require("snacks").dashboard()
+				end, { desc = "open the dashboard" })
+			end, ["dashboard.wipe-guard"] = function()
 				-- Workaround for snacks.nvim #2724: the dashboard registers one handler
 				-- on both BufDelete and BufWipeout that calls nvim_del_augroup_by_id.
 				-- When the bufhidden=wipe dashboard buffer is replaced (e.g. selecting
