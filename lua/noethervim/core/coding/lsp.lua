@@ -128,6 +128,7 @@ end
 return {
 	{
 		"j-hui/fidget.nvim",
+		version = "*",
 		event = "LspAttach",
 		opts = {},
 	},
@@ -328,6 +329,7 @@ return {
 	-- lazydev: Neovim-API completions for lua_ls. luvit-meta covers vim.uv types.
 	{
 		"folke/lazydev.nvim",
+		version = "*",
 		ft = "lua",
 		opts = {
 			library = {
@@ -345,6 +347,7 @@ return {
 	{ "Bilal2453/luvit-meta", lazy = true },
 	{
 		"williamboman/mason.nvim",
+		version = "*",
 		build = function()
 			pcall(vim.cmd, "MasonUpdate")
 		end,

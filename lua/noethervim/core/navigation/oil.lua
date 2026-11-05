@@ -25,6 +25,7 @@
 return {
 	{
 		"stevearc/oil.nvim",
+		version = "*",
 		-- Loaded on demand rather than at startup, which costs ~3.5 ms on
 		-- every launch. Nothing is lost in exchange: netrw is off from the
 		-- start (`g` data below), and the startup entry loads oil the moment

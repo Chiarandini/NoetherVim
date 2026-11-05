@@ -5,6 +5,7 @@ local rows = require("noethervim.keymaps.rows")
 return {
 	{ -- for less distractions
 		"folke/zen-mode.nvim",
+		version = "*",
 		cmd          = "ZenMode",
 		dependencies = { "folke/twilight.nvim" },
 		specs = {

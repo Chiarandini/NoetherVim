@@ -1,6 +1,7 @@
 -- NoetherVim plugin: TODO Comments
 -- Highlights and indexes TODO/FIXME/HACK/BUG/ISSUE comments.
  return {'folke/todo-comments.nvim',
+ version = '*',
  event = 'VeryLazy',
 specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("todo-comments.nvim", {
 	{ "]T", function() require("todo-comments").jump_next() end, desc = "Next todo comment" },

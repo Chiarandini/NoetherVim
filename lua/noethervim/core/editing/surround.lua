@@ -3,6 +3,7 @@
 return {
 	{ -- https://github.com/kylechui/nvim-surround/blob/main/lua/nvim-surround/config.lua
 		"kylechui/nvim-surround",
+		version = "*",
 		event = "VeryLazy",
 		opts = {},
 		specs = {

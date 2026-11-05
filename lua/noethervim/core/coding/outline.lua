@@ -3,6 +3,7 @@
 return {
 	{
 		"hedyhli/outline.nvim",
+		version = "*",
 		cmd = { "Outline", "OutlineOpen" },
 		opts = {
 			outline_window = { auto_close = true },

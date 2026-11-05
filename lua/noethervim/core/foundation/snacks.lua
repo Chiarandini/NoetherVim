@@ -214,6 +214,7 @@ local SearchLeader = require("noethervim.util").search_leader
 
 return {
 	"folke/snacks.nvim",
+	version = "*",
 	priority = 1000,
 	lazy = false,
 	-- Type provided by snacks.nvim itself; visible to lazydev users, not to

@@ -10,6 +10,7 @@
 return {
 	{
 		"monaqa/dial.nvim",
+		version = "*",
 		-- Loaded by the first key below, through require("dial.map").
 		lazy = true,
 		specs = { { "NoetherVim", optional = true, opts = require("noethervim.keymaps.rows").contribute("dial.nvim", {
