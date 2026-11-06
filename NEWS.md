@@ -4,6 +4,16 @@ Breaking and behavior changes, newest first, each with what to do about it.
 During the alpha, changes land without deprecation periods; this file is
 where they are listed.
 
+## 2026-11-05
+
+- **Zen mode is snacks.nvim's,** in place of zen-mode.nvim and
+  twilight.nvim: twilight, unmaintained since October 2025, broke zen
+  mode in any buffer without a treesitter parser on Neovim 0.12.
+  `<leader>z` and `:ZenMode` work as before. Options set for either
+  plugin in `lua/user/plugins/` now go to snacks:
+  `opts = { zen = { ... }, dim = { ... } }` (`:h snacks-zen`). Without
+  such a spec, `:Lazy clean` removes the two plugins.
+
 ## 2026-11-02
 
 - **`vim.g.noethervim_auto_install = false` also stops treesitter parser
