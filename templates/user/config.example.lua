@@ -187,6 +187,12 @@ return {
     -- there would shadow macro recording. `oil` is the common addition.
     -- q_close = { oil = true },
 
+    -- With no pair around the cursor, `cs` and `ds` take the nearest one
+    -- within this many lines, and otherwise do nothing, so a mistyped
+    -- `cs[` cannot rewrite brackets a screen away. Quotes stay on the
+    -- cursor line. Default: 15.
+    -- surround = { reach = 15 },
+
 
     -- ── Toggle feedback ───────────────────────────────────────────────────────
     -- Channel for the confirmation message shown when a bracket-prefix toggle

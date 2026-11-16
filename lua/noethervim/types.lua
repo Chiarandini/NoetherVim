@@ -102,6 +102,9 @@
 ---@field route? table<string, string> Verb to the engine that serves it: `{ files = "fff" }`. A verb with no route here keeps its bundle's, else snacks.
 ---@field engines? table<string, table<string, fun(opts: table): boolean?>> Engines of yours by name, each a table of functions by verb. A function gets the verb's opts (`cwd` always set) and returns `false` to hand the call to snacks.
 
+---@class noethervim.SurroundConfig
+---@field reach? integer How many lines from the cursor `cs` and `ds` look for a pair when none is around it. A pair around the cursor always counts; quotes stay on the cursor line. `0` keeps them to the cursor line. Default: 15.
+
 ---@class noethervim.UserConfig
 ---
 --- The data table returned from `lua/user/config.lua`: everything
@@ -113,6 +116,7 @@
 ---@field colorscheme_persistence? boolean If true, restore the last interactively picked colorscheme on startup, in preference to `colorscheme`. Set false to make `colorscheme` authoritative. Default: true.
 ---@field statusline? noethervim.StatuslineConfig The statusline: segments and their layout by id, the bars drawn, and heirline's look.
 ---@field completion? noethervim.CompletionConfig How the completion menu takes Tab.
+---@field surround? noethervim.SurroundConfig Which pair `cs` and `ds` act on when none is around the cursor.
 ---@field q_close? table<string, boolean> Filetypes where a bare `q` closes the window: `true` adds one, `false` removes one of the defaults. Editable filetypes (`oil`, `markdown`, ...) are left out by default because `q` there shadows macro recording.
 ---@field profiles? false|noethervim.ProfilesConfig `false` turns the writing and code profiles off. `classes` moves a filetype to "writing" or "code", or leaves it alone with `false`; `spell_in_code` and `conservative` tune the profiles.
 ---@field lsp? table<string, false> `[name] = false` drops NoetherVim's settings for that server (after/lsp/<name>.lua); lspconfig's and yours remain.

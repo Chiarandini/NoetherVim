@@ -39,6 +39,9 @@ local SCHEMA = {
     spell_in_code = "boolean",
     conservative  = "table",
   },
+  surround = {
+    reach = "number",
+  },
   q_close           = "table",
   toggle_feedback   = "string",
   snippets_disabled = "table",

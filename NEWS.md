@@ -4,6 +4,16 @@ Breaking and behavior changes, newest first, each with what to do about it.
 During the alpha, changes land without deprecation periods; this file is
 where they are listed.
 
+## 2026-11-16
+
+- **`cs` and `ds` stay near the cursor:** with no pair around the cursor
+  they take the nearest one within 15 lines, and otherwise do nothing,
+  where a mistyped `cs[` used to rewrite brackets anywhere in the buffer.
+  Quotes stay on the cursor line. A pair around the cursor still counts,
+  and deep inside a long block it is now the block's own rather than a
+  nested pair. Change the distance with
+  `surround = { reach = 30 }` in `lua/user/config.lua`.
+
 ## 2026-11-05
 
 - **Zen mode is snacks.nvim's,** in place of zen-mode.nvim and
